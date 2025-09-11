@@ -48,32 +48,10 @@ jobs:
           echo "Verifying CLI executable..."
           node dist/cli.js --version
           echo "Checking main entry point..."
-          node -e "require('./dist/index.js')" || echo "Main entry validation complete"
+          NODE_ENV=test node -e "import('./dist/index.js').then(() => console.log('✅ Main entry validation complete')).catch(e => { console.error('❌ Main entry validation failed:', e.message); process.exit(1); })"
 
       - name: Validate package.json
-        run: |
-          echo "Validating package.json structure..."
-          node -e "
-            const pkg = require('./package.json');
-            console.log('Package name:', pkg.name);
-            console.log('Version:', pkg.version);
-            console.log('Main entry:', pkg.main);
-            console.log('Binary:', pkg.bin);
-            console.log('Files included:', pkg.files);
-            
-            // Validate required fields
-            if (!pkg.name || !pkg.version || !pkg.main) {
-              throw new Error('Missing required package.json fields');
-            }
-            
-            // Validate files exist
-            const fs = require('fs');
-            if (!fs.existsSync(pkg.main)) {
-              throw new Error('Main entry file does not exist: ' + pkg.main);
-            }
-            
-            console.log('✅ Package validation passed');
-          "
+        run: node .github/scripts/validate-package.mjs
 
       - name: Check TypeScript compilation
         run: |
@@ -81,27 +59,7 @@ jobs:
           npx tsc --noEmit --skipLibCheck
 
       - name: Validate MCP protocol compliance
-        run: |
-          echo "Validating MCP protocol structure..."
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            
-            // Check handlers directory
-            const handlersDir = './dist/handlers';
-            if (!fs.existsSync(handlersDir)) {
-              throw new Error('Handlers directory not found');
-            }
-            
-            const handlers = fs.readdirSync(handlersDir).filter(f => f.endsWith('.js'));
-            console.log('Found handlers:', handlers);
-            
-            if (handlers.length < 7) {
-              throw new Error('Expected at least 7 MCP handlers, found: ' + handlers.length);
-            }
-            
-            console.log('✅ MCP structure validation passed');
-          "
+        run: node .github/scripts/validate-mcp.mjs
 
       - name: Test package installation simulation
         run: |
@@ -172,15 +130,7 @@ jobs:
           echo "Checking startup time..."
           time node dist/cli.js --version
           
-          echo "Checking memory usage..."
-          node -e "
-            const startMemory = process.memoryUsage();
-            require('./dist/index.js');
-            const endMemory = process.memoryUsage();
-            console.log('Memory usage:');
-            console.log('RSS:', Math.round((endMemory.rss - startMemory.rss) / 1024 / 1024), 'MB');
-            console.log('Heap Used:', Math.round((endMemory.heapUsed - startMemory.heapUsed) / 1024 / 1024), 'MB');
-          "
+          node .github/scripts/check-memory.mjs
 
   documentation-check:
     runs-on: ubuntu-latest

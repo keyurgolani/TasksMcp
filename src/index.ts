@@ -868,10 +868,11 @@ class McpTaskManagerServer {
 // Export the server class for CLI usage
 export { McpTaskManagerServer };
 
-// Start the server if this file is run directly
+// Start the server if this file is run directly (not imported)
 if (
   process.argv[1] !== undefined &&
-  import.meta.url === `file://${process.argv[1]}`
+  import.meta.url === `file://${process.argv[1]}` &&
+  process.env['NODE_ENV'] !== 'test'
 ) {
   const server = new McpTaskManagerServer();
 
