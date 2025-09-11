@@ -1,0 +1,71 @@
+{
+  "name": "task-list-mcp",
+  "version": "1.0.0",
+  "description": "An intelligent Model Context Protocol (MCP) server for task management with AI-powered complexity analysis",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "task-list-mcp": "./dist/cli.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md",
+    "examples/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keyurgolani/task-list-mcp.git"
+  },
+  "homepage": "https://github.com/keyurgolani/task-list-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/keyurgolani/task-list-mcp/issues"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && tsc && chmod +x dist/cli.js",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "task-management",
+    "ai",
+    "todo",
+    "productivity",
+    "claude",
+    "anthropic",
+    "automation",
+    "workflow",
+    "intelligent-tasks",
+    "complexity-analysis"
+  ],
+  "author": {
+    "name": "Keyur Golani",
+    "url": "https://github.com/keyurgolani/task-list-mcp"
+  },
+  "license": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/keyurgolani"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "@types/uuid": "^9.0.7",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

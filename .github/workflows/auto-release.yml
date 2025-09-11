@@ -1,0 +1,391 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      skip-ci:
+        description: 'Skip CI checks'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      release-type: ${{ steps.check.outputs.release-type }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze changes and determine release need
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "release-type=${{ github.event.inputs.release-type }}" >> $GITHUB_OUTPUT
+            echo "Manual release triggered: ${{ github.event.inputs.release-type }}"
+            exit 0
+          fi
+          
+          echo "🔍 Analyzing changes to determine release necessity..."
+          
+          # Get changed files
+          CHANGED_FILES=$(git diff HEAD~1 HEAD --name-only)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check for version changes in package.json
+          if echo "$CHANGED_FILES" | grep -q "package.json"; then
+            echo "📦 package.json changed, checking version..."
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            git checkout HEAD~1 -- package.json
+            PREVIOUS_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
+            git checkout HEAD -- package.json
+            
+            if [[ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]]; then
+              echo "✅ Version manually changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+              echo "should-release=true" >> $GITHUB_OUTPUT
+              echo "release-type=manual" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          
+          # Analyze types of changes
+          CORE_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/core/" || echo "0")
+          HANDLER_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/handlers/" || echo "0")
+          TYPE_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/types/" || echo "0")
+          CONFIG_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/config/" || echo "0")
+          
+          # Check for breaking changes in commit messages
+          BREAKING_COMMITS=$(git log HEAD~1..HEAD --pretty=format:"%s" | grep -c "!" || echo "0")
+          
+          # Check commit types for semantic versioning
+          FEAT_COMMITS=$(git log HEAD~1..HEAD --pretty=format:"%s" | grep -c "^feat" || echo "0")
+          FIX_COMMITS=$(git log HEAD~1..HEAD --pretty=format:"%s" | grep -c "^fix" || echo "0")
+          
+          echo "📊 Change Analysis:"
+          echo "- Core changes: $CORE_CHANGES"
+          echo "- Handler changes: $HANDLER_CHANGES"
+          echo "- Type changes: $TYPE_CHANGES"
+          echo "- Config changes: $CONFIG_CHANGES"
+          echo "- Breaking commits: $BREAKING_COMMITS"
+          echo "- Feature commits: $FEAT_COMMITS"
+          echo "- Fix commits: $FIX_COMMITS"
+          
+          # Determine release type based on changes
+          if [[ $BREAKING_COMMITS -gt 0 ]]; then
+            echo "🚨 Breaking changes detected - major release needed"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "release-type=major" >> $GITHUB_OUTPUT
+          elif [[ $FEAT_COMMITS -gt 0 ]] || [[ $HANDLER_CHANGES -gt 0 ]] || [[ $CORE_CHANGES -gt 1 ]]; then
+            echo "🚀 New features or significant core changes - minor release needed"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "release-type=minor" >> $GITHUB_OUTPUT
+          elif [[ $FIX_COMMITS -gt 0 ]] || [[ $CORE_CHANGES -gt 0 ]] || [[ $TYPE_CHANGES -gt 0 ]] || [[ $CONFIG_CHANGES -gt 0 ]]; then
+            echo "🐛 Bug fixes or minor changes - patch release needed"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "release-type=patch" >> $GITHUB_OUTPUT
+          else
+            # Check if any source files changed at all
+            SRC_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/" || echo "0")
+            if [[ $SRC_CHANGES -gt 0 ]]; then
+              echo "📝 Source code changes detected - patch release needed"
+              echo "should-release=true" >> $GITHUB_OUTPUT
+              echo "release-type=patch" >> $GITHUB_OUTPUT
+            else
+              echo "ℹ️ No significant changes detected - skipping release"
+              echo "should-release=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  run-ci:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-release == 'true' && github.event.inputs.skip-ci != 'true'
+    uses: ./.github/workflows/ci.yml
+
+  auto-version-and-release:
+    needs: [check-changes, run-ci]
+    if: |
+      always() && 
+      needs.check-changes.outputs.should-release == 'true' && 
+      (needs.run-ci.result == 'success' || github.event.inputs.skip-ci == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine version bump
+        id: version
+        run: |
+          RELEASE_TYPE="${{ needs.check-changes.outputs.release-type }}"
+          
+          if [[ "$RELEASE_TYPE" == "manual" ]]; then
+            # Version already changed manually, just get current version
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+            echo "tag=v${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+            echo "Manual version: ${CURRENT_VERSION}"
+          else
+            # Auto-bump version
+            echo "Auto-bumping version: ${RELEASE_TYPE}"
+            NEW_VERSION=$(npm version ${RELEASE_TYPE} --no-git-tag-version)
+            echo "version=${NEW_VERSION#v}" >> $GITHUB_OUTPUT
+            echo "tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
+            echo "New version: ${NEW_VERSION}"
+          fi
+
+      - name: Update package-lock.json
+        run: |
+          npm install --package-lock-only
+          git add package.json package-lock.json
+
+      - name: Generate dynamic changelog entry
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          echo "Generating changelog for version ${VERSION}"
+          echo "Previous tag: ${LAST_TAG}"
+          
+          # Create dynamic changelog entry
+          CHANGELOG_ENTRY="## [${VERSION}] - $(date +%Y-%m-%d)
+
+### 🔄 Auto-Release Summary
+This version was automatically generated based on detected changes."
+          
+          if [[ -n "$LAST_TAG" ]]; then
+            # Get actual commits with categorization
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s (%h)" --no-merges)
+            
+            if [[ -n "$COMMITS" ]]; then
+              # Count different types of changes
+              FEAT_COUNT=$(echo "$COMMITS" | grep -c "^feat" || echo "0")
+              FIX_COUNT=$(echo "$COMMITS" | grep -c "^fix" || echo "0")
+              DOCS_COUNT=$(echo "$COMMITS" | grep -c "^docs" || echo "0")
+              CHORE_COUNT=$(echo "$COMMITS" | grep -c "^chore" || echo "0")
+              OTHER_COUNT=$(echo "$COMMITS" | grep -cv "^(feat|fix|docs|chore)" || echo "0")
+              TOTAL_COUNT=$(echo "$COMMITS" | wc -l)
+              
+              CHANGELOG_ENTRY+="
+
+### 📊 Change Summary
+- **Total commits:** ${TOTAL_COUNT}
+- **New features:** ${FEAT_COUNT}
+- **Bug fixes:** ${FIX_COUNT}
+- **Documentation:** ${DOCS_COUNT}
+- **Maintenance:** ${CHORE_COUNT}
+- **Other changes:** ${OTHER_COUNT}
+
+### 📝 Detailed Changes"
+              
+              # Add categorized commits
+              if [[ $FEAT_COUNT -gt 0 ]]; then
+                CHANGELOG_ENTRY+="
+
+#### 🚀 Features"
+                echo "$COMMITS" | grep "^feat" | while read commit; do
+                  CHANGELOG_ENTRY+="
+- $commit"
+                done
+              fi
+              
+              if [[ $FIX_COUNT -gt 0 ]]; then
+                CHANGELOG_ENTRY+="
+
+#### 🐛 Bug Fixes"
+                echo "$COMMITS" | grep "^fix" | while read commit; do
+                  CHANGELOG_ENTRY+="
+- $commit"
+                done
+              fi
+              
+              if [[ $DOCS_COUNT -gt 0 ]]; then
+                CHANGELOG_ENTRY+="
+
+#### 📚 Documentation"
+                echo "$COMMITS" | grep "^docs" | while read commit; do
+                  CHANGELOG_ENTRY+="
+- $commit"
+                done
+              fi
+              
+              if [[ $CHORE_COUNT -gt 0 ]]; then
+                CHANGELOG_ENTRY+="
+
+#### 🔧 Maintenance"
+                echo "$COMMITS" | grep "^chore" | while read commit; do
+                  CHANGELOG_ENTRY+="
+- $commit"
+                done
+              fi
+              
+              if [[ $OTHER_COUNT -gt 0 ]]; then
+                CHANGELOG_ENTRY+="
+
+#### 📋 Other Changes"
+                echo "$COMMITS" | grep -v "^(feat|fix|docs|chore)" | while read commit; do
+                  CHANGELOG_ENTRY+="
+- $commit"
+                done
+              fi
+              
+              # Add file change statistics
+              FILES_CHANGED=$(git diff --name-only ${LAST_TAG}..HEAD | wc -l)
+              LINES_ADDED=$(git diff --shortstat ${LAST_TAG}..HEAD | grep -o '[0-9]* insertion' | cut -d' ' -f1 || echo "0")
+              LINES_DELETED=$(git diff --shortstat ${LAST_TAG}..HEAD | grep -o '[0-9]* deletion' | cut -d' ' -f1 || echo "0")
+              
+              CHANGELOG_ENTRY+="
+
+### 📈 Code Changes
+- **Files modified:** ${FILES_CHANGED}
+- **Lines added:** ${LINES_ADDED:-0}
+- **Lines removed:** ${LINES_DELETED:-0}"
+              
+            else
+              CHANGELOG_ENTRY+="
+
+### Changes
+No commits found since ${LAST_TAG}"
+            fi
+          else
+            # Initial release
+            TOTAL_COMMITS=$(git rev-list --count HEAD)
+            TOTAL_FILES=$(find src -type f -name "*.ts" | wc -l)
+            
+            CHANGELOG_ENTRY+="
+
+### 🎉 Initial Release Highlights
+- **Total development commits:** ${TOTAL_COMMITS}
+- **TypeScript source files:** ${TOTAL_FILES}
+- **MCP tools implemented:** 7
+- **Production ready:** ✅
+
+### 🚀 Core Features
+- Complete MCP server implementation
+- AI-powered task complexity analysis
+- Advanced filtering and search capabilities
+- Docker containerization support
+- Comprehensive documentation"
+          fi
+          
+          # Add installation instructions
+          CHANGELOG_ENTRY+="
+
+### 📦 Installation
+\`\`\`bash
+npx task-list-mcp@${VERSION}
+\`\`\`
+
+**Full changelog:** https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${VERSION}"
+          
+          echo "changelog-entry<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Commit version bump
+        if: needs.check-changes.outputs.release-type != 'manual'
+        run: |
+          # Get dynamic commit summary
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [[ -n "$LAST_TAG" ]]; then
+            COMMITS_COUNT=$(git rev-list ${LAST_TAG}..HEAD --count)
+            FILES_CHANGED=$(git diff --name-only ${LAST_TAG}..HEAD | wc -l)
+            
+            # Get primary change types
+            CHANGE_TYPES=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s" --no-merges | \
+              grep -o "^[a-z]*" | sort | uniq -c | sort -nr | head -3 | \
+              awk '{print $2}' | tr '\n' ', ' | sed 's/,$//')
+          else
+            COMMITS_COUNT=$(git rev-list --count HEAD)
+            FILES_CHANGED=$(find src -type f -name "*.ts" | wc -l)
+            CHANGE_TYPES="initial release"
+          fi
+          
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}
+
+          Auto-generated version bump for release.
+          
+          📊 Release Summary:
+          - Commits: ${COMMITS_COUNT}
+          - Files changed: ${FILES_CHANGED}
+          - Primary changes: ${CHANGE_TYPES}
+          - Release type: ${{ needs.check-changes.outputs.release-type }}
+          
+          This version bump was automatically generated based on detected
+          source code changes and follows semantic versioning principles."
+
+      - name: Create and push tag
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin main --tags
+
+      - name: Trigger release workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'publish.yml',
+              ref: '${{ steps.version.outputs.tag }}',
+              inputs: {
+                version: '${{ steps.version.outputs.version }}'
+              }
+            });
+
+  notify-auto-release:
+    needs: [check-changes, auto-version-and-release]
+    runs-on: ubuntu-latest
+    if: always() && needs.check-changes.outputs.should-release == 'true'
+    steps:
+      - name: Auto-release notification
+        run: |
+          if [[ "${{ needs.auto-version-and-release.result }}" == "success" ]]; then
+            echo "🚀 Auto-release initiated successfully!"
+            echo "📦 Version: ${{ needs.auto-version-and-release.outputs.version }}"
+            echo "🏷️ Tag: ${{ needs.auto-version-and-release.outputs.tag }}"
+            echo "⏳ Release workflow will start shortly..."
+          else
+            echo "❌ Auto-release failed. Check the logs for details."
+            exit 1
+          fi

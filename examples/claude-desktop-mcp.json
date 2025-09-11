@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "task-manager": {
+      "command": "npx",
+      "args": ["task-list-mcp@latest"],
+      "env": {
+        "NODE_ENV": "production",
+        "MCP_LOG_LEVEL": "info",
+        "DATA_DIRECTORY": "~/.claude/task-manager-data"
+      }
+    }
+  }
+}

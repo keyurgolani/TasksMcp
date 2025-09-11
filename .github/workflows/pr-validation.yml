@@ -1,0 +1,275 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-info:
+    runs-on: ubuntu-latest
+    outputs:
+      is-draft: ${{ steps.pr-info.outputs.is-draft }}
+      has-breaking-changes: ${{ steps.pr-info.outputs.has-breaking-changes }}
+      affects-core: ${{ steps.pr-info.outputs.affects-core }}
+    steps:
+      - name: Get PR information
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const isDraft = pr.draft;
+            
+            // Check for breaking changes in title or body
+            const title = pr.title.toLowerCase();
+            const body = (pr.body || '').toLowerCase();
+            const hasBreakingChanges = title.includes('breaking') || 
+                                     body.includes('breaking change') ||
+                                     title.includes('!:');
+            
+            // Check if PR affects core functionality
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const affectsCore = files.some(file => 
+              file.filename.startsWith('src/handlers/') ||
+              file.filename.startsWith('src/core/') ||
+              file.filename === 'package.json'
+            );
+            
+            core.setOutput('is-draft', isDraft);
+            core.setOutput('has-breaking-changes', hasBreakingChanges);
+            core.setOutput('affects-core', affectsCore);
+            
+            console.log('PR Info:', {
+              isDraft,
+              hasBreakingChanges,
+              affectsCore,
+              filesChanged: files.length
+            });
+
+  validate-pr:
+    needs: pr-info
+    if: needs.pr-info.outputs.is-draft == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and validate
+        run: |
+          echo "Building PR changes..."
+          npm run build
+          
+          echo "Validating build artifacts..."
+          node dist/cli.js --version
+          
+          echo "Checking TypeScript compilation..."
+          npx tsc --noEmit --skipLibCheck
+
+      - name: Check for version conflicts
+        if: needs.pr-info.outputs.affects-core == 'true'
+        run: |
+          echo "Checking for version conflicts..."
+          
+          # Get base branch version
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          BASE_VERSION=$(git show origin/${{ github.event.pull_request.base.ref }}:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version")
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          
+          echo "Base version: $BASE_VERSION"
+          echo "PR version: $CURRENT_VERSION"
+          
+          if [[ "$BASE_VERSION" == "$CURRENT_VERSION" && "${{ needs.pr-info.outputs.affects-core }}" == "true" ]]; then
+            echo "⚠️ Warning: Core changes detected but version not bumped"
+            echo "Consider bumping the version in package.json for this PR"
+          fi
+
+      - name: Validate MCP compliance
+        run: |
+          echo "Validating MCP protocol compliance..."
+          
+          # Check that all required handlers exist
+          REQUIRED_HANDLERS=(
+            "create-todo-list"
+            "get-todo-list" 
+            "update-todo-list"
+            "list-todo-lists"
+            "delete-todo-list"
+            "analyze-task-complexity"
+            "search-todo-lists"
+          )
+          
+          for handler in "${REQUIRED_HANDLERS[@]}"; do
+            if [[ ! -f "dist/handlers/${handler}.js" ]]; then
+              echo "❌ Missing required MCP handler: ${handler}"
+              exit 1
+            else
+              echo "✅ Found handler: ${handler}"
+            fi
+          done
+
+  security-check:
+    needs: pr-info
+    if: needs.pr-info.outputs.is-draft == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Security audit
+        run: |
+          echo "Running security audit..."
+          npm audit --audit-level=moderate || echo "Security issues found - please review"
+
+      - name: Check for sensitive data
+        run: |
+          echo "Checking for sensitive data patterns..."
+          
+          # Check for common sensitive patterns
+          if grep -r -i "password\|secret\|key\|token" src/ --exclude-dir=node_modules || true; then
+            echo "⚠️ Potential sensitive data found - please review"
+          fi
+          
+          # Check for hardcoded URLs or IPs
+          if grep -r -E "https?://[^/]+|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" src/ --exclude-dir=node_modules || true; then
+            echo "⚠️ Hardcoded URLs or IPs found - please review"
+          fi
+
+  breaking-changes-check:
+    needs: pr-info
+    if: needs.pr-info.outputs.has-breaking-changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Breaking changes validation
+        run: |
+          echo "🚨 Breaking changes detected in this PR"
+          echo "Please ensure:"
+          echo "1. Version is bumped appropriately (major version for breaking changes)"
+          echo "2. CHANGELOG.md is updated with breaking change details"
+          echo "3. Migration guide is provided if needed"
+          echo "4. All affected documentation is updated"
+
+  pr-size-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const totalChanges = files.reduce((sum, file) => sum + file.changes, 0);
+            const filesChanged = files.length;
+            
+            console.log(`PR Size: ${filesChanged} files, ${totalChanges} changes`);
+            
+            if (totalChanges > 1000) {
+              console.log('⚠️ Large PR detected (>1000 changes)');
+              console.log('Consider breaking this into smaller PRs for easier review');
+            }
+            
+            if (filesChanged > 50) {
+              console.log('⚠️ Many files changed (>50 files)');
+              console.log('Consider breaking this into smaller, focused PRs');
+            }
+
+  auto-assign-reviewers:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+      - name: Auto-assign reviewers
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Don't assign reviewers to draft PRs
+            if (pr.draft) {
+              console.log('Skipping reviewer assignment for draft PR');
+              return;
+            }
+            
+            // Auto-assign based on files changed
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const coreFiles = files.some(f => f.filename.startsWith('src/core/'));
+            const handlerFiles = files.some(f => f.filename.startsWith('src/handlers/'));
+            const docsFiles = files.some(f => f.filename.endsWith('.md'));
+            
+            let labels = [];
+            
+            if (coreFiles) labels.push('core');
+            if (handlerFiles) labels.push('handlers');
+            if (docsFiles) labels.push('documentation');
+            if (files.some(f => f.filename === 'package.json')) labels.push('dependencies');
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: labels
+              });
+            }
+
+  pr-summary:
+    needs: [pr-info, validate-pr, security-check]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: PR Validation Summary
+        run: |
+          echo "## PR Validation Summary"
+          echo "Draft PR: ${{ needs.pr-info.outputs.is-draft }}"
+          echo "Has Breaking Changes: ${{ needs.pr-info.outputs.has-breaking-changes }}"
+          echo "Affects Core: ${{ needs.pr-info.outputs.affects-core }}"
+          echo ""
+          echo "Validation Results:"
+          echo "- Build & Validate: ${{ needs.validate-pr.result }}"
+          echo "- Security Check: ${{ needs.security-check.result }}"
+          
+          if [[ "${{ needs.validate-pr.result }}" == "success" && "${{ needs.security-check.result }}" == "success" ]]; then
+            echo "✅ All PR validations passed!"
+          else
+            echo "❌ Some validations failed. Please review and fix issues."
+          fi

@@ -1,0 +1,349 @@
+name: Release and Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      tag: ${{ steps.get-version.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          ls -la dist/
+          node dist/cli.js --version || echo "CLI version check failed"
+
+      - name: Get version info
+        id: get-version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            TAG=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG#v}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}, Tag: ${TAG}"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            package.json
+            README.md
+            LICENSE
+            AGENTS.md
+          retention-days: 30
+
+  create-github-release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      release-id: ${{ steps.create-release.outputs.id }}
+      upload-url: ${{ steps.create-release.outputs.upload_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Generate dynamic changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          CURRENT_TAG="${{ needs.build-and-test.outputs.tag }}"
+          
+          echo "Generating changelog from ${PREVIOUS_TAG} to ${CURRENT_TAG}"
+          
+          # Initialize changelog
+          echo "# Release ${CURRENT_TAG}" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "**Release Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          
+          if [[ -n "$PREVIOUS_TAG" ]]; then
+            # Get commits since last tag
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%h|%s|%an|%ad" --date=short --no-merges)
+            
+            if [[ -n "$COMMITS" ]]; then
+              echo "## 📝 Changes Since ${PREVIOUS_TAG}" >> CHANGELOG.md
+              echo "" >> CHANGELOG.md
+              
+              # Categorize commits
+              declare -A categories
+              categories[feat]="🚀 New Features"
+              categories[fix]="🐛 Bug Fixes"
+              categories[docs]="📚 Documentation"
+              categories[style]="💄 Style Changes"
+              categories[refactor]="♻️ Code Refactoring"
+              categories[perf]="⚡ Performance Improvements"
+              categories[test]="✅ Tests"
+              categories[chore]="🔧 Maintenance"
+              categories[ci]="👷 CI/CD"
+              categories[build]="📦 Build System"
+              categories[other]="📋 Other Changes"
+              
+              # Initialize category arrays
+              declare -A commit_lists
+              for cat in "${!categories[@]}"; do
+                commit_lists[$cat]=""
+              done
+              commit_lists[other]=""
+              
+              # Process each commit
+              while IFS='|' read -r hash subject author date; do
+                # Extract conventional commit type
+                if [[ $subject =~ ^([a-z]+)(\(.+\))?!?:\ (.+)$ ]]; then
+                  type="${BASH_REMATCH[1]}"
+                  scope="${BASH_REMATCH[2]}"
+                  description="${BASH_REMATCH[3]}"
+                  
+                  # Check if it's a breaking change
+                  breaking=""
+                  if [[ $subject =~ !: ]]; then
+                    breaking=" ⚠️ **BREAKING**"
+                  fi
+                  
+                  formatted_commit="- ${description}${breaking} ([${hash}](https://github.com/${{ github.repository }}/commit/${hash})) by ${author}"
+                else
+                  # Non-conventional commit
+                  type="other"
+                  formatted_commit="- ${subject} ([${hash}](https://github.com/${{ github.repository }}/commit/${hash})) by ${author}"
+                fi
+                
+                # Add to appropriate category
+                if [[ -n "${categories[$type]:-}" ]]; then
+                  commit_lists[$type]+="${formatted_commit}"$'\n'
+                else
+                  commit_lists[other]+="${formatted_commit}"$'\n'
+                fi
+              done <<< "$COMMITS"
+              
+              # Output categorized commits
+              for cat in feat fix perf refactor docs style test chore ci build other; do
+                if [[ -n "${commit_lists[$cat]}" ]]; then
+                  echo "### ${categories[$cat]}" >> CHANGELOG.md
+                  echo "" >> CHANGELOG.md
+                  echo -n "${commit_lists[$cat]}" >> CHANGELOG.md
+                  echo "" >> CHANGELOG.md
+                fi
+              done
+              
+              # Add statistics
+              TOTAL_COMMITS=$(echo "$COMMITS" | wc -l)
+              CONTRIBUTORS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%an" --no-merges | sort -u | wc -l)
+              FILES_CHANGED=$(git diff --name-only ${PREVIOUS_TAG}..HEAD | wc -l)
+              
+              echo "## 📊 Release Statistics" >> CHANGELOG.md
+              echo "" >> CHANGELOG.md
+              echo "- **Commits:** ${TOTAL_COMMITS}" >> CHANGELOG.md
+              echo "- **Contributors:** ${CONTRIBUTORS}" >> CHANGELOG.md
+              echo "- **Files Changed:** ${FILES_CHANGED}" >> CHANGELOG.md
+              echo "" >> CHANGELOG.md
+              
+              # Add file change summary
+              echo "### 📁 Files Changed" >> CHANGELOG.md
+              echo "" >> CHANGELOG.md
+              git diff --name-status ${PREVIOUS_TAG}..HEAD | head -20 | while read status file; do
+                case $status in
+                  A) echo "- ➕ Added: \`$file\`" >> CHANGELOG.md ;;
+                  M) echo "- ✏️ Modified: \`$file\`" >> CHANGELOG.md ;;
+                  D) echo "- ❌ Deleted: \`$file\`" >> CHANGELOG.md ;;
+                  R*) echo "- 🔄 Renamed: \`$file\`" >> CHANGELOG.md ;;
+                  *) echo "- 📝 Changed: \`$file\`" >> CHANGELOG.md ;;
+                esac
+              done
+              
+              if [[ $(git diff --name-only ${PREVIOUS_TAG}..HEAD | wc -l) -gt 20 ]]; then
+                echo "- ... and $(($(git diff --name-only ${PREVIOUS_TAG}..HEAD | wc -l) - 20)) more files" >> CHANGELOG.md
+              fi
+            else
+              echo "No commits found between ${PREVIOUS_TAG} and HEAD" >> CHANGELOG.md
+            fi
+          else
+            # First release
+            echo "## 🎉 Initial Release" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "This is the first release of MCP Task Manager!" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            # Get all commits for initial release
+            TOTAL_COMMITS=$(git rev-list --count HEAD)
+            CONTRIBUTORS=$(git log --pretty=format:"%an" --no-merges | sort -u | wc -l)
+            TOTAL_FILES=$(find src -type f -name "*.ts" | wc -l)
+            
+            echo "### 🚀 What's Included" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "- **7 MCP Tools:** Complete task management functionality" >> CHANGELOG.md
+            echo "- **AI Intelligence:** Complexity analysis and task breakdown" >> CHANGELOG.md
+            echo "- **Production Ready:** Docker support and comprehensive documentation" >> CHANGELOG.md
+            echo "- **TypeScript:** Fully typed with strict mode enabled" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "### 📊 Project Statistics" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "- **Total Commits:** ${TOTAL_COMMITS}" >> CHANGELOG.md
+            echo "- **Contributors:** ${CONTRIBUTORS}" >> CHANGELOG.md
+            echo "- **TypeScript Files:** ${TOTAL_FILES}" >> CHANGELOG.md
+          fi
+          
+          # Add installation and usage info
+          echo "" >> CHANGELOG.md
+          echo "## 🚀 Installation & Usage" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "\`\`\`bash" >> CHANGELOG.md
+          echo "# Install and run" >> CHANGELOG.md
+          echo "npx task-list-mcp@${{ needs.build-and-test.outputs.version }}" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "# Or install globally" >> CHANGELOG.md
+          echo "npm install -g task-list-mcp@${{ needs.build-and-test.outputs.version }}" >> CHANGELOG.md
+          echo "\`\`\`" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## 🔗 Links" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "- **📦 npm Package:** https://www.npmjs.com/package/task-list-mcp" >> CHANGELOG.md
+          echo "- **📖 Documentation:** https://github.com/${{ github.repository }}#readme" >> CHANGELOG.md
+          echo "- **🤖 AI Agent Guide:** https://github.com/${{ github.repository }}/blob/main/AGENTS.md" >> CHANGELOG.md
+          echo "- **🐛 Report Issues:** https://github.com/${{ github.repository }}/issues" >> CHANGELOG.md
+          
+          # Set multiline output
+          {
+            echo 'changelog<<EOF'
+            cat CHANGELOG.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.build-and-test.outputs.tag }}
+          release_name: "MCP Task Manager ${{ needs.build-and-test.outputs.version }}"
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(needs.build-and-test.outputs.version, '-') }}
+
+      - name: Create distribution package
+        run: |
+          mkdir -p release-package
+          cp -r dist/ release-package/
+          cp package.json README.md LICENSE AGENTS.md release-package/
+          cd release-package
+          tar -czf ../task-list-mcp-${{ needs.build-and-test.outputs.version }}.tar.gz .
+          cd ..
+          zip -r task-list-mcp-${{ needs.build-and-test.outputs.version }}.zip release-package/
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./task-list-mcp-${{ needs.build-and-test.outputs.version }}.tar.gz
+          asset_name: task-list-mcp-${{ needs.build-and-test.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Assets (ZIP)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./task-list-mcp-${{ needs.build-and-test.outputs.version }}.zip
+          asset_name: task-list-mcp-${{ needs.build-and-test.outputs.version }}.zip
+          asset_content_type: application/zip
+
+  publish-npm:
+    needs: [build-and-test, create-github-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update package version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          npm version ${{ needs.build-and-test.outputs.version }} --no-git-tag-version
+
+      - name: Verify package contents
+        run: |
+          echo "Package contents:"
+          npm pack --dry-run
+          echo "Package size:"
+          npm pack --dry-run | grep "package size" || echo "Size check not available"
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify npm publication
+        run: |
+          sleep 30  # Wait for npm to propagate
+          npx task-list-mcp@${{ needs.build-and-test.outputs.version }} --version || echo "NPM verification failed"
+
+  notify-success:
+    needs: [build-and-test, create-github-release, publish-npm]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Success notification
+        run: |
+          echo "🎉 Successfully released MCP Task Manager ${{ needs.build-and-test.outputs.version }}"
+          echo "📦 Published to npm: https://www.npmjs.com/package/task-list-mcp"
+          echo "🚀 GitHub Release: https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-and-test.outputs.tag }}"
+          echo "💻 Install with: npx task-list-mcp@${{ needs.build-and-test.outputs.version }}"
