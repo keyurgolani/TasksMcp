@@ -575,7 +575,7 @@ def main():
         
         # Analyze task complexity
         analysis = client.analyze_task_complexity(
-            "Build a microservices architecture with Docker and Kubernetes",
+            "Build a microservices architecture with Kubernetes and cloud services",
             context="devops-project",
             auto_create=True
         )

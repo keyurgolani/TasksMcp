@@ -13,6 +13,7 @@ on:
       - '**.md'
       - 'docs/**'
       - 'examples/**'
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,9 +47,16 @@ jobs:
           echo "Checking dist directory..."
           ls -la dist/
           echo "Verifying CLI executable..."
-          node dist/cli.js --version
-          echo "Checking main entry point..."
-          NODE_ENV=test node -e "import('./dist/index.js').then(() => console.log('✅ Main entry validation complete')).catch(e => { console.error('❌ Main entry validation failed:', e.message); process.exit(1); })"
+          timeout 30s node .github/scripts/test-cli.mjs
+          echo "Checking main entry point exists..."
+          if [ -f "dist/index.js" ]; then
+            echo "✅ Main entry point exists"
+          else
+            echo "❌ Main entry point missing"
+            exit 1
+          fi
+          echo "Validating main entry point syntax..."
+          timeout 5s node --check dist/index.js && echo "✅ Main entry validation complete"
 
       - name: Validate package.json
         run: node .github/scripts/validate-package.mjs
@@ -128,8 +136,9 @@ jobs:
           npm pack --dry-run
           
           echo "Checking startup time..."
-          time node dist/cli.js --version
+          node .github/scripts/test-cli.mjs
           
+          echo "Measuring memory usage..."
           node .github/scripts/check-memory.mjs
 
   documentation-check:

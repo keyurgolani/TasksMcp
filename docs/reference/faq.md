@@ -1,5 +1,8 @@
 # Frequently Asked Questions (FAQ)
 
+**Last Updated**: September 15, 2025  
+**Version**: 2.0.0 (Production Ready)
+
 ## General Questions
 
 ### What is the MCP Task Manager?
@@ -62,15 +65,30 @@ The MCP Task Manager is designed specifically for MCP protocol communication. Wh
 
 ### What MCP tools are available?
 
-The MCP Task Manager provides 7 core tools:
+The MCP Task Manager provides 15 focused tools organized in 4 categories:
 
-1. **create_todo_list** - Create new todo lists with optional initial tasks
-2. **get_todo_list** - Retrieve lists with advanced filtering and pagination
-3. **update_todo_list** - Add, modify, remove, and reorder items
-4. **list_todo_lists** - List all available todo lists with filtering
-5. **delete_todo_list** - Delete or archive todo lists
-6. **analyze_task_complexity** - AI-powered task complexity analysis
-7. **search_todo_lists** - Search across all lists with relevance scoring
+**List Management (4 tools):**
+1. **create_list** - Create new todo lists with simple parameters
+2. **get_list** - Retrieve a specific todo list by ID
+3. **list_all_lists** - Get all todo lists with basic information
+4. **delete_list** - Delete or archive a todo list
+
+**Task Management (6 tools):**
+5. **add_task** - Add a new task to a todo list
+6. **update_task** - Update basic task properties
+7. **remove_task** - Remove a task from a todo list
+8. **complete_task** - Mark a task as completed
+9. **set_task_priority** - Change task priority
+10. **add_task_tags** - Add tags to a task
+
+**Search & Display (3 tools):**
+11. **search_tasks** - Search tasks by text query
+12. **filter_tasks** - Filter tasks by specific criteria
+13. **show_tasks** - Display tasks in formatted output
+
+**Advanced Features (2 tools):**
+14. **analyze_task** - Analyze task complexity and get suggestions
+15. **get_task_suggestions** - Get AI-generated task suggestions for a list
 
 ### How does the AI complexity analysis work?
 
@@ -348,7 +366,7 @@ See the [Contributing Guide](../development/contributing.md) for detailed instru
 
 ### What's the development roadmap?
 
-**Current Version (1.0.0)**:
+**Current Version (2.0.0)**:
 - ✅ Complete CRUD operations
 - ✅ AI complexity analysis
 - ✅ File and memory storage

@@ -7,6 +7,7 @@ This directory contains the complete CI/CD pipeline configuration for the MCP Ta
 ## 🚀 Pipeline Overview
 
 Our CI/CD pipeline provides comprehensive automation for:
+
 - **Continuous Integration**: Build validation, testing, and quality checks
 - **Automated Releases**: Version management and GitHub releases
 - **NPM Publishing**: Automatic package publishing to npm registry
@@ -16,13 +17,13 @@ Our CI/CD pipeline provides comprehensive automation for:
 
 ### Core Workflows
 
-| Workflow | File | Trigger | Purpose |
-|----------|------|---------|---------|
-| **Continuous Integration** | `ci.yml` | Push/PR to main/develop | Build validation, security audit, performance checks |
-| **Pull Request Validation** | `pr-validation.yml` | Pull request events | PR validation, auto-labeling, reviewer assignment |
-| **Auto Release** | `auto-release.yml` | Push to main, manual | Automatic version bumping and release triggering |
-| **Release & Publish** | `publish.yml` | Git tags, manual | GitHub releases and npm publishing |
-| **Maintenance** | `maintenance.yml` | Weekly schedule, manual | Dependency updates, security audits |
+| Workflow                    | File                | Trigger                 | Purpose                                              |
+| --------------------------- | ------------------- | ----------------------- | ---------------------------------------------------- |
+| **Continuous Integration**  | `ci.yml`            | Push/PR to main/develop | Build validation, security audit, performance checks |
+| **Pull Request Validation** | `pr-validation.yml` | Pull request events     | PR validation, auto-labeling, reviewer assignment    |
+| **Auto Release**            | `auto-release.yml`  | Push to main, manual    | Automatic version bumping and release triggering     |
+| **Release & Publish**       | `publish.yml`       | Git tags, manual        | GitHub releases and npm publishing                   |
+| **Maintenance**             | `maintenance.yml`   | Weekly schedule, manual | Dependency updates, security audits                  |
 
 ### Workflow Dependencies
 
@@ -34,11 +35,11 @@ graph TD
     D --> E[Release & Publish]
     E --> F[NPM Package]
     E --> G[GitHub Release]
-    
+
     H[Pull Request] --> I[PR Validation]
     I --> J[Auto-assign Reviewers]
     I --> K[Security Check]
-    
+
     L[Weekly Schedule] --> M[Maintenance]
     M --> N[Dependency Updates]
     M --> O[Security Audit]
@@ -65,6 +66,7 @@ NPM_TOKEN=npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ### 3. Repository Permissions
 
 Ensure these permissions are enabled:
+
 - Actions: Read and write
 - Contents: Read and write
 - Issues: Read and write
@@ -75,16 +77,19 @@ Ensure these permissions are enabled:
 ### Continuous Integration (`ci.yml`)
 
 **Triggers:**
+
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop`
 
 **Jobs:**
+
 - **Build & Validate**: Multi-Node.js version testing (18, 20)
 - **Security Audit**: npm audit and vulnerability scanning
 - **Performance Check**: Package size, startup time, memory usage
 - **Documentation Check**: Validates required documentation files
 
 **Matrix Strategy:**
+
 ```yaml
 strategy:
   matrix:
@@ -94,6 +99,7 @@ strategy:
 ### Pull Request Validation (`pr-validation.yml`)
 
 **Features:**
+
 - Automatic PR size analysis
 - Breaking change detection
 - Auto-labeling based on changed files
@@ -101,6 +107,7 @@ strategy:
 - MCP protocol compliance checks
 
 **Auto-assigned Labels:**
+
 - `core` - Changes to core business logic
 - `handlers` - Changes to MCP handlers
 - `documentation` - Documentation updates
@@ -109,12 +116,14 @@ strategy:
 ### Auto Release (`auto-release.yml`)
 
 **Smart Release Detection:**
+
 - Detects source code changes in `src/`
 - Automatic patch version bumping
 - Manual version control support
 - Changelog generation
 
 **Release Types:**
+
 - `patch` - Bug fixes and minor updates
 - `minor` - New features (backward compatible)
 - `major` - Breaking changes
@@ -122,6 +131,7 @@ strategy:
 ### Release & Publish (`publish.yml`)
 
 **Comprehensive Release Process:**
+
 1. Build validation and artifact creation
 2. Changelog generation from git history
 3. GitHub release creation with assets
@@ -129,6 +139,7 @@ strategy:
 5. Publication verification
 
 **Release Assets:**
+
 - Source code (tar.gz, zip)
 - Built distribution package
 - Comprehensive changelog
@@ -136,6 +147,7 @@ strategy:
 ### Maintenance (`maintenance.yml`)
 
 **Automated Maintenance Tasks:**
+
 - **Weekly dependency updates** with PR creation
 - **Security vulnerability scanning** with issue creation
 - **Performance benchmarking** and monitoring
@@ -172,6 +184,7 @@ npm view task-list-mcp
 ### Performance Metrics
 
 The CI pipeline tracks:
+
 - **Build time**: TypeScript compilation duration
 - **Package size**: npm package size optimization
 - **Startup time**: CLI initialization performance
@@ -182,29 +195,38 @@ The CI pipeline tracks:
 ### Common Issues
 
 #### NPM Publishing Fails
+
 ```
 Error: 403 Forbidden - PUT https://registry.npmjs.org/task-list-mcp
 ```
+
 **Solutions:**
+
 1. Verify NPM_TOKEN is configured correctly
 2. Check npm token has publish permissions
 3. Ensure package name is available
 4. Verify npm account has 2FA configured properly
 
 #### GitHub Release Creation Fails
+
 ```
 Error: Resource not accessible by integration
 ```
+
 **Solutions:**
+
 1. Check repository permissions for Actions
 2. Verify GITHUB_TOKEN has sufficient permissions
 3. Ensure branch protection rules allow Actions
 
 #### Build Fails on Node Version Matrix
+
 ```
 Error: Cannot find module '@types/node'
 ```
+
 **Solutions:**
+
 1. Ensure all Node.js versions are supported
 2. Check package.json engines field
 3. Verify TypeScript compatibility
@@ -293,4 +315,4 @@ For CI/CD pipeline issues:
 
 ---
 
-*This CI/CD pipeline is designed to provide robust, automated release management while maintaining high quality standards and security practices.*
+_This CI/CD pipeline is designed to provide robust, automated release management while maintaining high quality standards and security practices._
