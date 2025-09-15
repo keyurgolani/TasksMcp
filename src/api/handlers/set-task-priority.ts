@@ -1,0 +1,107 @@
+/**
+ * MCP handler for changing task priority
+ */
+
+import { z } from 'zod';
+import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { SimpleTaskResponse } from '../../shared/types/mcp-types.js';
+import { Priority } from '../../shared/types/todo.js';
+import { logger } from '../../shared/utils/logger.js';
+
+const SetTaskPrioritySchema = z.object({
+  listId: z.string().uuid(),
+  taskId: z.string().uuid(),
+  priority: z.number().min(1).max(5),
+});
+
+export async function handleSetTaskPriority(
+  request: CallToolRequest,
+  todoListManager: TodoListManager
+): Promise<CallToolResult> {
+  try {
+    logger.debug('Processing set_task_priority request', {
+      params: request.params?.arguments,
+    });
+
+    // Validate input parameters
+    const args = SetTaskPrioritySchema.parse(request.params?.arguments);
+
+    // Convert priority number to Priority enum
+    const priority = args.priority as Priority;
+
+    // Update the task priority using the TodoListManager's updateTodoList method
+    const result = await todoListManager.updateTodoList({
+      listId: args.listId,
+      action: 'update_item',
+      itemId: args.taskId,
+      itemData: {
+        priority,
+      },
+    });
+
+    // Find the updated task
+    const updatedTask = result.items.find(item => item.id === args.taskId);
+    if (!updatedTask) {
+      throw new Error('Task not found after priority update');
+    }
+
+    // Verify the priority was actually updated
+    if (updatedTask.priority !== priority) {
+      throw new Error('Task priority was not successfully updated');
+    }
+
+    // Format response
+    const response: SimpleTaskResponse = {
+      id: updatedTask.id,
+      title: updatedTask.title,
+      description: updatedTask.description,
+      status: updatedTask.status,
+      priority: updatedTask.priority,
+      tags: updatedTask.tags,
+      createdAt: updatedTask.createdAt.toISOString(),
+      updatedAt: updatedTask.updatedAt.toISOString(),
+      estimatedDuration: updatedTask.estimatedDuration,
+    };
+
+    logger.info('Task priority updated successfully', {
+      listId: args.listId,
+      taskId: args.taskId,
+      title: updatedTask.title,
+      newPriority: priority,
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(response, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Failed to set task priority', { error });
+
+    if (error instanceof z.ZodError) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+}

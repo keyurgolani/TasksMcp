@@ -1102,7 +1102,7 @@ AI Intelligence Tool
 {
   "name": "analyze_task_complexity",
   "arguments": {
-    "taskDescription": "Build a distributed microservices architecture using Docker, Kubernetes, and Redis with monitoring and CI/CD pipeline",
+    "taskDescription": "Build a distributed microservices architecture using Kubernetes and Redis with monitoring and CI/CD pipeline",
     "context": "microservices-project",
     "autoCreate": true,
     "generateOptions": {

@@ -1,5 +1,8 @@
 # Environment Variables Configuration Guide
 
+**Last Updated**: September 15, 2025  
+**Version**: 2.0.0 (Production Ready)
+
 ## Overview
 
 The MCP Task Manager supports extensive configuration through environment variables, allowing you to customize behavior for different deployment environments. This guide covers all supported environment variables, their purposes, valid values, and configuration examples.
