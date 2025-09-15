@@ -11,7 +11,7 @@ on:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -48,23 +48,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Create Git Tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if tag already exists
+          if git rev-parse "v${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+            echo "Tag v${{ github.event.inputs.version }} already exists, skipping tag creation"
+          else
+            git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
+            git push origin "v${{ github.event.inputs.version }}"
+          fi
+
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/create-release@v1
+        run: |
+          # Check if release already exists
+          if gh release view "v${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+            echo "Release v${{ github.event.inputs.version }} already exists, skipping release creation"
+          else
+            gh release create "v${{ github.event.inputs.version }}" \
+              --title "Release v${{ github.event.inputs.version }}" \
+              --notes "## Release v${{ github.event.inputs.version }}
+
+            ### Installation
+            \`\`\`bash
+            npm install -g task-list-mcp@${{ github.event.inputs.version }}
+            \`\`\`
+
+            ### Changes
+            See the [changelog](https://github.com/keyurgolani/task-list-mcp/compare/v${{ github.event.inputs.version }}...main) for details."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-          release_name: Release v${{ github.event.inputs.version }}
-          body: |
-            ## Release v${{ github.event.inputs.version }}
-            
-            ### Installation
-            ```bash
-            npm install -g task-list-mcp@${{ github.event.inputs.version }}
-            ```
-            
-            ### Changes
-            See the [changelog](https://github.com/keyurgolani/task-list-mcp/compare/v${{ github.event.inputs.version }}...main) for details.
-          draft: false
-          prerelease: false
