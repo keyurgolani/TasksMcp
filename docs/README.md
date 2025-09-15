@@ -15,43 +15,38 @@ New to the MCP Task Manager? Start here:
 ### 🔧 API Documentation
 Complete reference for all MCP tools and interfaces:
 - **[API Overview](./api/README.md)** - Base configuration and response formats
+- **[MCP Tools](./mcp-tools.md)** - 15 focused, agent-friendly tools
+- **[Tool Schemas Reference](./api/tool-schemas.md)** - Quick schema reference
 - **[MCP Tools Reference](./api/mcp-tools.md)** - Detailed tool specifications with examples
 - **[Error Handling Guide](./api/error-handling.md)** - Comprehensive error management
 
-### 🚀 Deployment Guides
-Everything you need to deploy in any environment:
-- **[Quick Start](./deployment/quick-start.md)** - Get up and running quickly
-- **[Production Deployment](./deployment/production.md)** - Enterprise-grade deployment
-- **[Docker Deployment](./deployment/docker.md)** - Containerized deployment
-- **[Configuration Guide](./deployment/configuration.md)** - Environment and settings
+### 🚀 Configuration Guides
+Everything you need to configure and deploy:
+- **[Environment Variables](./configuration/environment-variables.md)** - Environment configuration
+- **[Environment-Specific Setup](./configuration/environment-specific.md)** - Development, production, testing
+- **[Troubleshooting](./configuration/troubleshooting.md)** - Common configuration issues
 
 ### 💻 Development Documentation
 For developers extending or contributing to the project:
-- **[Development Setup](./development/setup.md)** - Local development environment
-- **[Architecture Overview](./development/architecture.md)** - System design and patterns
-- **[Performance Guide](./development/performance.md)** - Optimization techniques
-- **[Contributing Guide](./development/contributing.md)** - How to contribute
+- **[Tool Performance](./api/tool-performance.md)** - Performance characteristics and optimization
+- **[Enhanced Tools](./api/enhanced-tools.md)** - Advanced tool features and capabilities
 
-### 🏗️ Architecture Documentation
-Deep dive into system design and implementation:
-- **[System Design](./architecture/system-design.md)** - High-level architecture
-- **[Data Models](./architecture/data-models.md)** - Database schema and structures
-- **[Storage Backends](./architecture/storage.md)** - Storage implementation details
-- **[Intelligence Layer](./architecture/intelligence.md)** - AI analysis components
+### 🏗️ Reference Documentation
+Additional resources and information:
+- **[FAQ](./reference/faq.md)** - Frequently asked questions
+- **[Post-Mortem Analysis](./reference/post-mortem-analysis.md)** - Development lessons learned
 
 ### 💡 Examples and Tutorials
 Practical guides and real-world usage:
 - **[Getting Started Tutorial](./tutorials/getting-started.md)** - Complete beginner guide
+- **[MCP Tool Examples](./examples/mcp-examples.md)** - Practical usage scenarios
 - **[AI Agent Integration](./examples/ai-agent-integration.md)** - Integration patterns
-- **[Advanced Workflows](./examples/advanced-workflows.md)** - Complex usage scenarios
 - **[Troubleshooting Guide](./examples/troubleshooting.md)** - Common issues and solutions
 
-### 📖 Reference Materials
-Additional resources and information:
-- **[FAQ](./reference/faq.md)** - Frequently asked questions
-- **[Glossary](./reference/glossary.md)** - Terms and definitions
-- **[Post-Mortem Analysis](./reference/post-mortem-analysis.md)** - Development lessons learned
-- **[Roadmap](./reference/roadmap.md)** - Future development plans
+### 📖 Tool Usage
+Detailed tool usage and patterns:
+- **[MCP Tool Usage Guide](./mcp-tool-usage.md)** - Practical usage examples for all 15 tools
+- **[MCP Tools Reference](./mcp-tools.md)** - Complete tool documentation with schemas
 
 ## 🎯 Key Features
 
@@ -112,7 +107,6 @@ Additional resources and information:
 
 ### Platforms
 - **Development** - Local development with hot reload
-- **Docker** - Containerized deployment with health checks
 - **Kubernetes** - Production orchestration with auto-scaling
 - **Cloud** - AWS, GCP, Azure deployment ready
 
@@ -151,10 +145,10 @@ Additional resources and information:
 4. **[Contributing Guide](./development/contributing.md)** - How to contribute
 
 ### For System Administrators
-1. **[Production Deployment](./deployment/production.md)** - Enterprise setup
-2. **[Performance Guide](./development/performance.md)** - Optimization techniques
+1. **[Environment Configuration](./configuration/environment-variables.md)** - Environment setup
+2. **[Tool Performance](./api/tool-performance.md)** - Performance optimization
 3. **[Troubleshooting Guide](./examples/troubleshooting.md)** - Issue resolution
-4. **[Monitoring Setup](./tutorials/monitoring.md)** - Observability configuration
+4. **[Configuration Troubleshooting](./configuration/troubleshooting.md)** - Configuration issues
 
 ## 🆘 Getting Help
 
@@ -182,10 +176,11 @@ npm run build && npm test
 
 ## 🔄 Version Information
 
-- **Current Version**: 1.0.0 (Production Ready)
+- **Current Version**: 2.0.0 (Production Ready)
 - **MCP Protocol**: Compatible with MCP SDK 1.0.0+
-- **Node.js**: Requires 18.0.0+, tested with 18.17.0
-- **Last Updated**: September 10, 2025
+- **Node.js**: Requires 18.0.0+, tested with 18.17.0+
+- **Total MCP Tools**: 15 focused tools for complete task management
+- **Last Updated**: September 15, 2025
 
 ## 📄 License
 
@@ -203,7 +198,7 @@ We welcome contributions! See the [Contributing Guide](./development/contributin
 
 ### Immediate Next Steps
 - **Set up your environment** with the [Getting Started Tutorial](./tutorials/getting-started.md)
-- **Deploy to production** using the [Production Guide](./deployment/production.md)
+- **Learn the tools** using the [MCP Tool Usage Guide](./mcp-tool-usage.md)
 - **Integrate with your AI agent** following [Integration Examples](./examples/ai-agent-integration.md)
 
 ### Future Development
@@ -214,6 +209,6 @@ We welcome contributions! See the [Contributing Guide](./development/contributin
 
 ---
 
-**Ready to get started?** Begin with the [Getting Started Tutorial](./tutorials/getting-started.md) or jump straight to the [Quick Start Guide](./deployment/quick-start.md) if you're experienced with MCP servers.
+**Ready to get started?** Begin with the [Getting Started Tutorial](./tutorials/getting-started.md) or jump straight to the [MCP Tool Usage Guide](./mcp-tool-usage.md) if you're experienced with MCP servers.
 
 The MCP Task Manager provides intelligent, scalable task management for the AI agent ecosystem. Whether you're building personal productivity tools or enterprise-scale AI workflows, this documentation will guide you through every step of the journey.

@@ -1,0 +1,111 @@
+name: Performance Benchmark
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc
+          npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Run performance benchmarks
+        timeout-minutes: 5
+        run: |
+          echo "Running performance benchmarks..."
+          
+          echo "Package size:"
+          npm pack --dry-run | grep "package size" || echo "Could not determine package size"
+          
+          echo "Verifying build output..."
+          ls -la dist/
+          echo "Checking if CLI exists..."
+          if [ -f "dist/app/cli.js" ]; then
+            echo "✅ CLI file exists"
+          else
+            echo "❌ CLI file missing"
+            exit 1
+          fi
+          
+          echo "Testing CLI version command..."
+          if node dist/app/cli.js --version; then
+            echo "✅ CLI version command works"
+          else
+            echo "❌ CLI version command failed"
+            echo "Checking CLI help instead..."
+            node dist/app/cli.js --help || echo "CLI help also failed"
+            exit 1
+          fi
+          
+          echo "Measuring startup time..."
+          echo "Running 5 startup time tests..."
+          TOTAL=0
+          SUCCESS_COUNT=0
+          for i in {1..5}; do
+            echo "Test $i/5..."
+            START_TIME=$(date +%s%N)
+            if timeout 10s node dist/app/cli.js --version > /dev/null 2>&1; then
+              END_TIME=$(date +%s%N)
+              DURATION=$((END_TIME - START_TIME))
+              DURATION_MS=$((DURATION / 1000000))
+              echo "  Duration: ${DURATION_MS}ms"
+              TOTAL=$((TOTAL + DURATION_MS))
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+              echo "  Test failed or timed out"
+            fi
+          done
+          
+          if [ $SUCCESS_COUNT -gt 0 ]; then
+            AVERAGE=$((TOTAL / SUCCESS_COUNT))
+            echo "Average startup time: ${AVERAGE}ms (${SUCCESS_COUNT}/5 successful)"
+          else
+            echo "❌ All startup time tests failed"
+            exit 1
+          fi
+          
+          echo "Measuring memory usage..."
+          if timeout 30s node .github/scripts/check-memory.mjs; then
+            echo "✅ Memory usage check completed"
+          else
+            echo "❌ Memory usage check failed"
+            exit 1
+          fi
+
+      - name: Package and test
+        run: |
+          echo "Creating package..."
+          npm pack
+          PACKAGE_FILE=$(ls *.tgz | head -1)
+          echo "Created package: $PACKAGE_FILE"
+          
+          echo "Package contents:"
+          tar -tzf "$PACKAGE_FILE" | head -20
+          
+          echo "Final startup time test..."
+          if time timeout 10s node dist/app/cli.js --version; then
+            echo "✅ Final test passed"
+          else
+            echo "❌ Final test failed"
+            exit 1
+          fi

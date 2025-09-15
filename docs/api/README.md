@@ -38,16 +38,29 @@ The MCP Task Manager runs as an MCP server that communicates via the Model Conte
 
 ## Available Tools
 
-### Core CRUD Operations
+### MCP Tools (Recommended)
+
+The **MCP Tools** provide 15 focused, agent-friendly tools designed for easy integration:
+
+- **[Tools Documentation](../mcp-tools.md)** - Complete guide to all 15 tools
+- **[Tool Schemas Reference](./tool-schemas.md)** - Quick schema reference
+- **[Practical Examples](../examples/mcp-examples.md)** - Real-world usage scenarios
+
+**Tool Categories:**
+- **List Management (4 tools)**: `create_list`, `get_list`, `list_all_lists`, `delete_list`
+- **Task Management (6 tools)**: `add_task`, `update_task`, `remove_task`, `complete_task`, `set_task_priority`, `add_task_tags`
+- **Search & Display (3 tools)**: `search_tasks`, `filter_tasks`, `show_tasks`
+- **Advanced Features (2 tools)**: `analyze_task`, `get_task_suggestions`
+
+### Legacy Complex Tools
+
+The original complex tools are still available but not recommended for new integrations:
 
 1. **[create_todo_list](./mcp-tools.md#create_todo_list)** - Create new todo lists with optional initial tasks
 2. **[get_todo_list](./mcp-tools.md#get_todo_list)** - Retrieve todo lists with advanced filtering and pagination
 3. **[update_todo_list](./mcp-tools.md#update_todo_list)** - Update lists with add/modify/remove/reorder operations
 4. **[list_todo_lists](./mcp-tools.md#list_todo_lists)** - List all todo lists with filtering options
 5. **[delete_todo_list](./mcp-tools.md#delete_todo_list)** - Delete or archive todo lists
-
-### Advanced Features
-
 6. **[analyze_task_complexity](./mcp-tools.md#analyze_task_complexity)** - AI-powered task complexity analysis and breakdown
 7. **[search_todo_lists](./mcp-tools.md#search_todo_lists)** - Search across all lists with relevance scoring
 
@@ -199,7 +212,8 @@ See [MCP Tools Documentation](./mcp-tools.md) for detailed examples of each tool
 - **MCP Protocol**: Compatible with MCP SDK 1.0.0+
 - **Node.js**: Requires Node.js 18.0.0+
 - **TypeScript**: Built with TypeScript 5.0+
-- **API Version**: 1.0.0 (stable)
+- **API Version**: 2.0.0 (stable)
+- **Last Updated**: September 15, 2025
 
 ## Rate Limiting
 
@@ -236,7 +250,16 @@ node dist/health-check.js
 
 ## Next Steps
 
+### For New Integrations (Recommended)
+- Start with [Tools Documentation](../mcp-tools.md) for agent-friendly tools
+- Review [Tool Schemas Reference](./tool-schemas.md) for quick parameter reference
+- Check [Practical Examples](../examples/mcp-examples.md) for real-world usage scenarios
+
+### For Legacy Integrations
 - Review [MCP Tools Documentation](./mcp-tools.md) for detailed tool specifications
 - Check [Error Handling Guide](./error-handling.md) for error management
 - See [Examples](../examples/) for practical usage scenarios
 - Visit [Development Guide](../development/) for integration details
+
+### Migration
+- Use the [Migration Guide](../mcp-tools.md#migration-from-complex-tools) to transition from complex tools

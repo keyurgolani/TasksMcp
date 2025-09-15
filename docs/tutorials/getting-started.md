@@ -1,5 +1,8 @@
 # Getting Started Tutorial
 
+**Last Updated**: September 15, 2025  
+**Version**: 2.0.0 (Production Ready)
+
 Welcome to the MCP Task Manager! This step-by-step tutorial will guide you through installation, configuration, and your first tasks. By the end, you'll have a fully functional task management system integrated with your AI agent.
 
 ## What You'll Learn

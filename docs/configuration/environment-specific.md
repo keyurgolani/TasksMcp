@@ -384,14 +384,11 @@ sudo chmod 750 /app/data /app/logs
 # Use secure environment variable management
 # Never commit production secrets to version control
 
-# Example using Docker secrets
-docker run -d \
-  --name task-manager \
-  -e NODE_ENV=production \
-  -e STORAGE_TYPE=file \
-  -e DATA_DIRECTORY=/app/data \
-  --secret postgres_password \
-  task-list-mcp:latest
+# Example using environment variables in production
+export NODE_ENV=production
+export STORAGE_TYPE=file
+export DATA_DIRECTORY=/app/data
+export POSTGRES_PASSWORD="$(cat /etc/secrets/postgres_password)"
 ```
 
 #### Network Security
@@ -417,7 +414,7 @@ curl http://localhost:3000/health
   "status": "healthy",
   "timestamp": "2024-01-15T10:30:00.000Z",
   "uptime": 3600,
-  "version": "1.0.0"
+  "version": "2.0.0"
 }
 ```
 
@@ -564,161 +561,62 @@ METRICS_ENABLED=true
 HEALTH_CHECK_ENABLED=true
 ```
 
-## Docker Production Deployment
 
-### Dockerfile Configuration
-```dockerfile
-FROM node:18-alpine AS production
 
-# Set production environment
-ENV NODE_ENV=production
-ENV STORAGE_TYPE=file
-ENV DATA_DIRECTORY=/app/data
-ENV LOG_LEVEL=info
+## Cloud Production Deployment
 
-# Create app user
-RUN addgroup -g 1001 -S mcpuser && \
-    adduser -S mcpuser -u 1001
+### Environment Variables Configuration
+For cloud deployments, configure the following environment variables through your cloud provider's environment management system:
 
-# Create directories
-WORKDIR /app
-RUN mkdir -p /app/data /app/logs && \
-    chown -R mcpuser:mcpuser /app
+```bash
+# Core Configuration
+NODE_ENV=production
+STORAGE_TYPE=postgresql
+LOG_LEVEL=info
 
-# Copy application
-COPY --chown=mcpuser:mcpuser dist/ ./dist/
-COPY --chown=mcpuser:mcpuser node_modules/ ./node_modules/
-COPY --chown=mcpuser:mcpuser package.json ./
+# Database Configuration
+POSTGRES_HOST=your-database-host
+POSTGRES_DB=task_manager_prod
+POSTGRES_USER=task_manager_user
+POSTGRES_PASSWORD=your_secure_password
 
-# Switch to app user
-USER mcpuser
+# Production Features
+BACKUP_ENABLED=true
+HEALTH_CHECK_ENABLED=true
+METRICS_ENABLED=true
+RATE_LIMIT_ENABLED=true
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node dist/health-check.js
-
-EXPOSE 3000 9090
-CMD ["node", "dist/index.js"]
+# Performance Settings
+MAX_LISTS_PER_CONTEXT=5000
+MAX_ITEMS_PER_LIST=10000
 ```
 
-### Docker Compose Production
-```yaml
-version: '3.8'
+### Cloud Platform Examples
 
-services:
-  task-manager:
-    image: task-list-mcp:latest
-    environment:
-      - NODE_ENV=production
-      - STORAGE_TYPE=file
-      - DATA_DIRECTORY=/app/data
-      - LOG_LEVEL=info
-      - BACKUP_ENABLED=true
-      - HEALTH_CHECK_ENABLED=true
-      - METRICS_ENABLED=true
-      - RATE_LIMIT_ENABLED=true
-      - ENABLE_COMPRESSION=true
-    volumes:
-      - task_data:/app/data
-      - task_logs:/app/logs
-    ports:
-      - "3000:3000"
-      - "9090:9090"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "dist/health-check.js"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+#### AWS Lambda / ECS
+```bash
+# Install and run via npx in your deployment script
+npx task-list-mcp@latest
 
-volumes:
-  task_data:
-  task_logs:
+# Or install globally
+npm install -g task-list-mcp
+task-list-mcp
 ```
 
-## Kubernetes Production Deployment
+#### Google Cloud Run / App Engine
+```bash
+# Use npx for serverless deployments
+npx task-list-mcp@latest
 
-### ConfigMap
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: task-manager-config
-data:
-  NODE_ENV: "production"
-  STORAGE_TYPE: "postgresql"
-  LOG_LEVEL: "info"
-  BACKUP_ENABLED: "true"
-  HEALTH_CHECK_ENABLED: "true"
-  METRICS_ENABLED: "true"
-  RATE_LIMIT_ENABLED: "true"
-  MAX_LISTS_PER_CONTEXT: "5000"
-  MAX_ITEMS_PER_LIST: "10000"
+# Configure environment variables through Cloud Console
 ```
 
-### Secret
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: task-manager-secrets
-type: Opaque
-stringData:
-  POSTGRES_HOST: "postgres.example.com"
-  POSTGRES_DB: "task_manager_prod"
-  POSTGRES_USER: "task_manager_user"
-  POSTGRES_PASSWORD: "secure_production_password"
-```
+#### Azure App Service
+```bash
+# Deploy using npx
+npx task-list-mcp@latest
 
-### Deployment
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: task-manager
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: task-manager
-  template:
-    metadata:
-      labels:
-        app: task-manager
-    spec:
-      containers:
-      - name: task-manager
-        image: task-list-mcp:latest
-        ports:
-        - containerPort: 3000
-        - containerPort: 9090
-        envFrom:
-        - configMapRef:
-            name: task-manager-config
-        - secretRef:
-            name: task-manager-secrets
-        livenessProbe:
-          exec:
-            command:
-            - node
-            - dist/health-check.js
-          initialDelaySeconds: 30
-          periodSeconds: 30
-        readinessProbe:
-          exec:
-            command:
-            - node
-            - dist/health-check.js
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+# Set environment variables through Azure Portal
 ```
 
 ## Environment Migration Guide
