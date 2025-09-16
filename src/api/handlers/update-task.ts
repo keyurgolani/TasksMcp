@@ -11,6 +11,7 @@ import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-typ
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
 import type { SimpleTaskResponse } from '../../shared/types/mcp-types.js';
 import { logger } from '../../shared/utils/logger.js';
+import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
 /**
  * Validation schema for update task request parameters
@@ -94,28 +95,8 @@ export async function handleUpdateTask(
       ],
     };
   } catch (error) {
-    logger.error('Failed to update task', { error });
-
-    if (error instanceof z.ZodError) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        },
-      ],
-      isError: true,
-    };
+    // Use enhanced error formatting with taskManagement configuration
+    const formatError = createHandlerErrorFormatter('update_task', ERROR_CONFIGS.taskManagement);
+    return formatError(error, request.params?.arguments);
   }
 }

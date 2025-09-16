@@ -104,6 +104,7 @@ export class PerformanceMonitor extends EventEmitter {
 
   constructor() {
     super();
+    this.setMaxListeners(50); // Increase max listeners for testing scenarios
   }
 
   /**

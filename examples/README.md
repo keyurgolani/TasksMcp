@@ -48,6 +48,14 @@ Set up the MCP server for different environments and clients:
 
 **Multiple configuration examples** covering development, production, team collaboration, and testing scenarios.
 
+### [06-dependency-management-examples.md](./06-dependency-management-examples.md)
+Master task relationships and workflow optimization with 3 dependency tools:
+- **set_task_dependencies** - Establish task prerequisites and relationships
+- **get_ready_tasks** - Find tasks ready to work on with no blocking dependencies
+- **analyze_task_dependencies** - Get project analysis with critical path and bottlenecks
+
+**15 examples total** - 5 scenarios per tool showing software development, content creation, event planning, and project management workflows.
+
 ## 🚀 Quick Start
 
 1. **Choose your MCP client** - See configuration examples for Claude Desktop or Kiro IDE
@@ -85,6 +93,7 @@ Set up the MCP server for different environments and clients:
 | **Task Operations** | 6 tools | Full CRUD operations for individual tasks |
 | **Search & Display** | 3 tools | Find, filter, and format task information |
 | **AI Features** | 2 tools | Intelligent analysis and suggestions |
+| **Dependency Management** | 3 tools | Task relationships and workflow optimization |
 
 ## 📖 How to Use These Examples
 
@@ -111,6 +120,6 @@ Set up the MCP server for different environments and clients:
 
 **Last Updated**: September 15, 2025  
 **Version**: 2.0.0 (Production Ready)  
-**Total Examples**: 75+ comprehensive scenarios across all 15 MCP tools  
+**Total Examples**: 90+ comprehensive scenarios across all 18 MCP tools  
 **Coverage**: Complete functionality demonstration with real-world use cases  
 **Format**: Ready-to-use JSON examples with expected responses

@@ -227,6 +227,33 @@ export class SchemaValidationError extends BaseError {
 }
 
 /**
+ * Dependency validation related errors
+ */
+export class DependencyValidationError extends BaseError {
+  constructor(message: string, taskId: string, dependencyIds: string[], context?: Record<string, unknown>) {
+    super(message, 'DEPENDENCY_VALIDATION_ERROR', false, { taskId, dependencyIds, ...context });
+  }
+}
+
+export class CircularDependencyError extends BaseError {
+  constructor(cycle: string[], context?: Record<string, unknown>) {
+    super(`Circular dependency detected: ${cycle.join(' → ')}`, 'CIRCULAR_DEPENDENCY_ERROR', false, { cycle, ...context });
+  }
+}
+
+export class InvalidDependencyError extends BaseError {
+  constructor(invalidIds: string[], context?: Record<string, unknown>) {
+    super(`Invalid dependency IDs: ${invalidIds.join(', ')}`, 'INVALID_DEPENDENCY_ERROR', false, { invalidIds, ...context });
+  }
+}
+
+export class SelfDependencyError extends BaseError {
+  constructor(taskId: string, context?: Record<string, unknown>) {
+    super(`Task ${taskId} cannot depend on itself`, 'SELF_DEPENDENCY_ERROR', false, { taskId, ...context });
+  }
+}
+
+/**
  * Business logic errors
  */
 export class BusinessLogicError extends BaseError {
@@ -351,6 +378,13 @@ export function isValidationError(error: Error): error is ValidationError | Sche
          error instanceof SchemaValidationError;
 }
 
+export function isDependencyValidationError(error: Error): error is DependencyValidationError | CircularDependencyError | InvalidDependencyError | SelfDependencyError {
+  return error instanceof DependencyValidationError || 
+         error instanceof CircularDependencyError || 
+         error instanceof InvalidDependencyError || 
+         error instanceof SelfDependencyError;
+}
+
 export function isSystemError(error: Error): error is SystemError | MemoryError | ResourceExhaustionError {
   return error instanceof SystemError || 
          error instanceof MemoryError || 
@@ -405,6 +439,12 @@ export const ERROR_CODES = {
   // Cleanup Errors
   CLEANUP_OPERATION_FAILED: 'CLEANUP_OPERATION_FAILED',
   CLEANUP_VALIDATION_ERROR: 'CLEANUP_VALIDATION_ERROR',
+
+  // Dependency Validation Errors
+  DEPENDENCY_VALIDATION_ERROR: 'DEPENDENCY_VALIDATION_ERROR',
+  CIRCULAR_DEPENDENCY_ERROR: 'CIRCULAR_DEPENDENCY_ERROR',
+  INVALID_DEPENDENCY_ERROR: 'INVALID_DEPENDENCY_ERROR',
+  SELF_DEPENDENCY_ERROR: 'SELF_DEPENDENCY_ERROR',
 
   // Enhanced Validation
   ENHANCED_VALIDATION_ERROR: 'ENHANCED_VALIDATION_ERROR',

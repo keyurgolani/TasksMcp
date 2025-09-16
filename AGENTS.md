@@ -5,8 +5,10 @@
 The MCP Task Manager is a production-ready Model Context Protocol (MCP) server that provides intelligent task management capabilities specifically designed for AI agents. This comprehensive guide covers the available MCP tools, configuration options, and AI agent integration patterns.
 
 **Key Features:**
-- 15 focused MCP tools for task management operations
+- 18 focused MCP tools for task management operations and multi-agent orchestration
 - AI-powered complexity analysis and task suggestions
+- Task dependency management for workflow orchestration
+- Multi-agent coordination with ready task discovery and parallel execution support
 - Simple, agent-friendly tool schemas with minimal parameters
 - Persistent file-based storage with atomic operations
 - Natural language usage patterns optimized for AI agents
@@ -985,9 +987,261 @@ ls -la ./data/lists/
 - 📋 Rate limiting and security hardening
 
 
+## Multi-Agent Orchestration
+
+The MCP Task Manager provides advanced support for **multi-agent orchestration environments** where multiple AI agents collaborate on complex projects with interdependent tasks.
+
+### Orchestration Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ Orchestration   │    │ MCP Task Manager │    │ Specialized     │
+│ Agent           │◄──►│                  │◄──►│ Agents          │
+│                 │    │ - Dependencies   │    │ - Frontend      │
+│ - Task Planning │    │ - Ready Tasks    │    │ - Backend       │
+│ - Agent Assign  │    │ - Progress Track │    │ - Testing       │
+│ - Progress Mon  │    │ - Critical Path  │    │ - Documentation │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+### Key Orchestration Tools
+
+#### 16. set_task_dependencies
+Set up task relationships and prerequisites:
+```json
+{
+  "name": "set_task_dependencies",
+  "arguments": {
+    "listId": "project-uuid",
+    "taskId": "deploy-task-uuid", 
+    "dependencyIds": ["test-task-uuid", "review-task-uuid"]
+  }
+}
+```
+
+#### 17. get_ready_tasks
+Find tasks available for immediate assignment:
+```json
+{
+  "name": "get_ready_tasks",
+  "arguments": {
+    "listId": "project-uuid",
+    "limit": 10
+  }
+}
+```
+
+#### 18. analyze_task_dependencies
+Analyze project structure and identify optimization opportunities:
+```json
+{
+  "name": "analyze_task_dependencies", 
+  "arguments": {
+    "listId": "project-uuid"
+  }
+}
+```
+
+### Multi-Agent Workflow Patterns
+
+#### Pattern 1: Parallel Feature Development
+```json
+// Setup: Create feature tasks with dependencies
+{
+  "name": "add_task",
+  "arguments": {
+    "listId": "web-app",
+    "title": "Implement user authentication",
+    "tags": ["backend", "security"],
+    "dependencies": ["setup-database"]
+  }
+}
+
+{
+  "name": "add_task", 
+  "arguments": {
+    "listId": "web-app",
+    "title": "Design user interface",
+    "tags": ["frontend", "ui"],
+    "dependencies": ["create-wireframes"]
+  }
+}
+
+// Orchestration: Find ready tasks
+{
+  "name": "get_ready_tasks",
+  "arguments": {"listId": "web-app", "limit": 5}
+}
+// Returns: ["setup-database", "create-wireframes"] - can be assigned to different agents
+
+// Assignment: 
+// - Database Agent → "setup-database"
+// - Design Agent → "create-wireframes"
+// Both work in parallel, unlocking more tasks when complete
+```
+
+#### Pattern 2: Pipeline Processing
+```json
+// Setup: Content creation pipeline
+{
+  "name": "set_task_dependencies",
+  "arguments": {
+    "listId": "content-pipeline",
+    "taskId": "publish-article",
+    "dependencyIds": ["write-draft", "edit-content", "create-graphics", "seo-review"]
+  }
+}
+
+// Orchestration: As each stage completes, next becomes ready
+// Stage 1: Writer Agent → "write-draft"
+// Stage 2: Editor Agent → "edit-content" (after draft complete)
+// Stage 3: Designer Agent → "create-graphics" (parallel with editing)
+// Stage 4: SEO Agent → "seo-review" (after content ready)
+// Stage 5: Publisher Agent → "publish-article" (after all complete)
+```
+
+#### Pattern 3: Quality Gates
+```json
+// Setup: Code deployment with multiple approvals
+{
+  "name": "set_task_dependencies",
+  "arguments": {
+    "listId": "deployment",
+    "taskId": "deploy-production",
+    "dependencyIds": ["code-review-1", "code-review-2", "security-scan", "performance-test"]
+  }
+}
+
+// Orchestration: Multiple review agents work in parallel
+// - Review Agent 1 → "code-review-1"
+// - Review Agent 2 → "code-review-2" 
+// - Security Agent → "security-scan"
+// - Performance Agent → "performance-test"
+// All must complete before deployment agent can proceed
+```
+
+### Benefits for Multi-Agent Systems
+
+#### Increased Throughput
+- **Parallel Execution**: Multiple agents work simultaneously on independent tasks
+- **No Idle Time**: Agents always have ready tasks available when dependencies are met
+- **Optimal Resource Utilization**: Computational resources used efficiently across agent fleet
+
+#### Intelligent Coordination
+- **Automatic Scheduling**: System identifies which tasks can be worked on immediately
+- **Dependency Resolution**: Prevents conflicts and ensures proper task sequencing
+- **Critical Path Optimization**: Focus effort on tasks that unlock the most subsequent work
+
+#### Scalable Management
+- **Complex Project Support**: Handle hundreds of interdependent tasks across multiple agents
+- **Dynamic Task Assignment**: Ready tasks automatically become available as dependencies complete
+- **Progress Visibility**: Real-time tracking of completion status across distributed workflows
+
+### Implementation Examples
+
+#### Large Software Development Project
+```bash
+# Orchestration Agent Workflow:
+
+# 1. Analyze current project state
+analyze_task_dependencies → Identify bottlenecks and critical path
+
+# 2. Find available work
+get_ready_tasks → Get list of unblocked tasks
+
+# 3. Assign tasks to specialized agents:
+# - Frontend Agent: UI components (if design complete)
+# - Backend Agent: API endpoints (if database ready)  
+# - Testing Agent: Unit tests (if code available)
+# - DevOps Agent: Infrastructure (if requirements defined)
+
+# 4. Monitor progress and reassign as tasks complete
+# 5. Repeat until project completion
+```
+
+#### Content Creation Pipeline
+```bash
+# Multi-Agent Content Workflow:
+
+# 1. Content Manager Agent sets up pipeline
+set_task_dependencies → Define content workflow stages
+
+# 2. Find ready content pieces
+get_ready_tasks → Identify articles ready for next stage
+
+# 3. Assign to specialized agents:
+# - Research Agent: Gather information and sources
+# - Writing Agent: Create initial drafts
+# - Editing Agent: Review and improve content
+# - SEO Agent: Optimize for search engines
+# - Publishing Agent: Format and publish
+
+# 4. Pipeline flows automatically as each stage completes
+```
+
+### Best Practices for Multi-Agent Orchestration
+
+#### Task Design
+- **Atomic Tasks**: Create tasks that can be completed independently by a single agent
+- **Clear Dependencies**: Only set dependencies that represent true prerequisites
+- **Balanced Workload**: Design tasks with similar complexity for even agent utilization
+
+#### Dependency Management
+- **Minimize Bottlenecks**: Avoid tasks that block many others unnecessarily
+- **Parallel Opportunities**: Structure work to maximize parallel execution possibilities
+- **Regular Analysis**: Use dependency analysis to identify and resolve workflow issues
+
+#### Agent Coordination
+- **Specialized Roles**: Assign agents to tasks matching their capabilities
+- **Dynamic Assignment**: Reassign ready tasks based on agent availability and expertise
+- **Progress Monitoring**: Track completion rates and adjust assignments as needed
+
+This multi-agent orchestration capability makes the MCP Task Manager uniquely suited for complex, collaborative AI workflows where multiple specialized agents need to coordinate their efforts efficiently.
+
+### Updated Configuration for Multi-Agent Support
+
+Add the dependency management tools to your auto-approve list:
+
+```json
+{
+  "mcpServers": {
+    "task-manager": {
+      "command": "npx",
+      "args": ["task-list-mcp@latest"],
+      "env": {
+        "NODE_ENV": "production",
+        "MCP_LOG_LEVEL": "info",
+        "DATA_DIRECTORY": "/tmp/task-list-mcp-data"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "create_list",
+        "get_list",
+        "list_all_lists",
+        "delete_list",
+        "add_task",
+        "update_task",
+        "remove_task",
+        "complete_task",
+        "set_task_priority",
+        "add_task_tags",
+        "search_tasks",
+        "filter_tasks",
+        "show_tasks",
+        "analyze_task",
+        "get_task_suggestions",
+        "set_task_dependencies",
+        "get_ready_tasks",
+        "analyze_task_dependencies"
+      ]
+    }
+  }
+}
+```
+
 ---
 
-**Last Updated**: September 15, 2025  
-**Version**: 2.0.0 (Production Ready)  
+**Last Updated**: September 16, 2025  
+**Version**: 2.2.0 (Multi-Agent Ready)  
 **MCP Protocol**: Compatible with MCP SDK 1.0.0+  
-**Total MCP Tools**: 15 focused tools for complete task management
+**Total MCP Tools**: 18 focused tools for complete task management and multi-agent orchestration

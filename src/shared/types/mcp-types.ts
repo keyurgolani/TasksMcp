@@ -101,3 +101,33 @@ export interface SimpleError {
   message: string;
   code?: string | undefined;
 }
+
+// Dependency Management Response Types
+export interface TaskWithDependencies extends SimpleTaskResponse {
+  dependencies: string[];
+  isReady: boolean;
+  blockedBy?: string[];
+}
+
+export interface ReadyTasksResponse {
+  listId: string;
+  readyTasks: SimpleTaskResponse[];
+  totalReady: number;
+  nextActions: string[];
+}
+
+export interface DependencyAnalysisResponse {
+  listId: string;
+  summary: {
+    totalTasks: number;
+    readyTasks: number;
+    blockedTasks: number;
+    tasksWithDependencies: number;
+  };
+  criticalPath: string[];
+  issues: {
+    circularDependencies: string[][];
+    bottlenecks: string[];
+  };
+  recommendations: string[];
+}

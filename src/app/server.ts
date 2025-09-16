@@ -42,9 +42,14 @@ import {
   handleShowTasks,
   handleAnalyzeTask,
   handleGetTaskSuggestions,
+  handleSetTaskDependencies,
+  handleGetReadyTasks,
+  handleAnalyzeTaskDependencies,
 } from "../api/handlers/index.js";
 import { MCP_TOOLS } from "../api/tools/definitions.js";
 import { logger } from "../shared/utils/logger.js";
+import { preprocessParameters, type PreprocessingResult } from "../shared/utils/parameter-preprocessor.js";
+import { formatZodError, createErrorContext } from "../shared/utils/error-formatter.js";
 
 class McpTaskManagerServer {
   private readonly server: Server;
@@ -88,6 +93,16 @@ class McpTaskManagerServer {
    * Configures event listeners to process benchmarks, memory alerts, and error reports
    */
   private setupMonitoring(): void {
+    // Increase max listeners to prevent warnings in test environments
+    performanceMonitor.setMaxListeners(50);
+    memoryMonitor.setMaxListeners(50);
+    errorHandler.setMaxListeners(50);
+
+    // Remove existing listeners to prevent duplicates
+    performanceMonitor.removeAllListeners("benchmark");
+    memoryMonitor.removeAllListeners("memoryAlert");
+    errorHandler.removeAllListeners("error");
+
     performanceMonitor.on("benchmark", (benchmark: PerformanceBenchmark) => {
       metricsCollector.recordOperation(
         benchmark.name,
@@ -112,6 +127,9 @@ class McpTaskManagerServer {
    * Sets up error event listeners to log and process application errors
    */
   private setupErrorHandling(): void {
+    // Remove existing listeners to prevent duplicates
+    errorHandler.removeAllListeners("error");
+    
     errorHandler.on("error", (errorReport: ErrorReport) => {
       logger.error("Application error handled", {
         errorId: errorReport.id,
@@ -165,33 +183,56 @@ class McpTaskManagerServer {
    * - Search and display tools (search, filter, show)
    * - Intelligence tools (analyze, suggestions)
    * 
+   * Includes parameter preprocessing and enhanced error formatting for agent-friendly responses.
+   * 
    * @param toolName - Name of the tool to execute
    * @param request - MCP request object containing parameters
    * @returns Promise<unknown> - Result from the tool handler
    * @throws Error - If tool name is not recognized
    */
-  private async routeToolCall(toolName: string, request: any): Promise<unknown> {
-    // List management tools
-    if (this.isListManagementTool(toolName)) {
-      return await this.handleListManagementTool(toolName, request);
-    }
+  public async routeToolCall(toolName: string, request: any): Promise<unknown> {
+    // Preprocess parameters for agent-friendly type coercion
+    const preprocessingResult = this.preprocessRequestParameters(toolName, request);
+    
+    // Update request with preprocessed parameters
+    const processedRequest = {
+      ...request,
+      params: {
+        ...request.params,
+        arguments: preprocessingResult.parameters,
+      },
+    };
+    try {
+      // List management tools
+      if (this.isListManagementTool(toolName)) {
+        return await this.handleListManagementTool(toolName, processedRequest);
+      }
 
-    // Task management tools
-    if (this.isTaskManagementTool(toolName)) {
-      return await this.handleTaskManagementTool(toolName, request);
-    }
+      // Task management tools
+      if (this.isTaskManagementTool(toolName)) {
+        return await this.handleTaskManagementTool(toolName, processedRequest);
+      }
 
-    // Search and display tools
-    if (this.isSearchDisplayTool(toolName)) {
-      return await this.handleSearchDisplayTool(toolName, request);
-    }
+      // Search and display tools
+      if (this.isSearchDisplayTool(toolName)) {
+        return await this.handleSearchDisplayTool(toolName, processedRequest);
+      }
 
-    // Intelligence tools
-    if (this.isIntelligenceTool(toolName)) {
-      return await this.handleIntelligenceTool(toolName, request);
-    }
+      // Intelligence tools
+      if (this.isIntelligenceTool(toolName)) {
+        return await this.handleIntelligenceTool(toolName, processedRequest);
+      }
 
-    throw new Error(`Unknown tool: ${toolName}`);
+      // Dependency management tools
+      if (this.isDependencyManagementTool(toolName)) {
+        return await this.handleDependencyManagementTool(toolName, processedRequest);
+      }
+
+      throw new Error(`Unknown tool: ${toolName}`);
+    } catch (error) {
+      // Enhanced error handling with agent-friendly messages
+      return this.handleToolCallError(error, toolName, request);
+    }
   }
 
   /**
@@ -301,6 +342,96 @@ class McpTaskManagerServer {
     }
   }
 
+  /**
+   * Handle dependency management tools (set_task_dependencies, get_ready_tasks, analyze_task_dependencies)
+   */
+  private async handleDependencyManagementTool(toolName: string, request: any): Promise<unknown> {
+    const todoListManager = this.ensureTodoListManager();
+
+    switch (toolName) {
+      case "set_task_dependencies":
+        return await this.executeWithMonitoring("set_task_dependencies", 
+          () => handleSetTaskDependencies(request, todoListManager), request);
+      
+      case "get_ready_tasks":
+        return await this.executeWithMonitoring("get_ready_tasks", 
+          () => handleGetReadyTasks(request, todoListManager), request);
+      
+      case "analyze_task_dependencies":
+        return await this.executeWithMonitoring("analyze_task_dependencies", 
+          () => handleAnalyzeTaskDependencies(request, todoListManager), request);
+      
+      default:
+        throw new Error(`Unknown dependency management tool: ${toolName}`);
+    }
+  }
+
+  /**
+   * Preprocess request parameters for agent-friendly type coercion
+   */
+  private preprocessRequestParameters(toolName: string, request: any): PreprocessingResult {
+    const parameters = request.params?.arguments || {};
+    
+    // Apply parameter preprocessing
+    const result = preprocessParameters(parameters);
+    
+    // Log preprocessing actions for debugging
+    if (result.conversions.length > 0) {
+      logger.debug('Parameter preprocessing applied', {
+        toolName,
+        conversionsCount: result.conversions.length,
+        conversions: result.conversions.map(c => ({
+          parameter: c.parameter,
+          type: c.conversionType,
+          from: typeof c.originalValue,
+          to: typeof c.convertedValue,
+        })),
+      });
+    }
+    
+    // Log any preprocessing errors
+    if (result.errors.length > 0) {
+      logger.warn('Parameter preprocessing errors', {
+        toolName,
+        errors: result.errors,
+      });
+    }
+    
+    return result;
+  }
+
+  /**
+   * Handle tool call errors with enhanced formatting
+   */
+  private handleToolCallError(error: unknown, toolName: string, request: any): never {
+    const errorContext = createErrorContext(toolName, true);
+    
+    // Check if it's a Zod validation error
+    if (error && typeof error === 'object' && 'issues' in error) {
+      const formattedError = formatZodError(error as any, errorContext);
+      
+      logger.warn('Tool validation error with enhanced formatting', {
+        toolName,
+        originalError: (error as any).message,
+        formattedError,
+        parameters: request.params?.arguments,
+      });
+      
+      throw new Error(formattedError);
+    }
+    
+    // Handle other errors
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    logger.error('Tool execution error', {
+      toolName,
+      error: errorMessage,
+      parameters: request.params?.arguments,
+    });
+    
+    throw error instanceof Error ? error : new Error(errorMessage);
+  }
+
   // Tool category helper methods
   private isListManagementTool(toolName: string): boolean {
     return ["create_list", "get_list", "list_all_lists", "delete_list"].includes(toolName);
@@ -316,6 +447,10 @@ class McpTaskManagerServer {
 
   private isIntelligenceTool(toolName: string): boolean {
     return ["analyze_task", "get_task_suggestions"].includes(toolName);
+  }
+
+  private isDependencyManagementTool(toolName: string): boolean {
+    return ["set_task_dependencies", "get_ready_tasks", "analyze_task_dependencies"].includes(toolName);
   }
 
   /**

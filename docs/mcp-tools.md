@@ -2,11 +2,32 @@
 
 ## Overview
 
-The MCP Task Manager provides 15 focused, easy-to-use tools for managing todo lists and tasks. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
+The MCP Task Manager provides 18 focused, easy-to-use tools for managing todo lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
 
-**Last Updated**: September 15, 2025  
-**Version**: 2.0.0 (Production Ready)  
-**Total Tools**: 15 organized in 4 categories
+**Last Updated**: September 16, 2025  
+**Version**: 2.2.0 (Multi-Agent Ready)  
+**Total Tools**: 18 organized in 5 categories
+
+## 🤖 Agent-Friendly Features
+
+### Smart Parameter Preprocessing
+All MCP tools now support automatic parameter conversion for common AI agent patterns:
+
+- **String Numbers**: `"5"` → `5` (for priority, estimatedDuration, etc.)
+- **JSON String Arrays**: `'["tag1", "tag2"]'` → `["tag1", "tag2"]` (for tags)
+- **Boolean Strings**: `"true"` → `true`, `"yes"` → `true` (for includeCompleted, etc.)
+
+### Enhanced Error Messages
+When validation fails, you'll receive helpful, actionable error messages:
+
+```json
+{
+  "error": "❌ priority: Expected number, but received string\n💡 Use numbers 1-5, where 5 is highest priority\n📝 Example: 5 (highest) to 1 (lowest)\n\n🔧 Common fixes:\n1. Use numbers 1-5 for priority\n   Example: {\"priority\": 5}"
+}
+```
+
+### Backward Compatibility
+All existing integrations continue to work without changes. The preprocessing only enhances the experience for new agent patterns.
 
 ## Tool Categories
 
@@ -14,6 +35,7 @@ The MCP Task Manager provides 15 focused, easy-to-use tools for managing todo li
 - **Task Management (6 tools)**: Add, update, remove, complete tasks and manage priorities/tags
 - **Search & Display (3 tools)**: Search, filter, and display tasks with formatting
 - **Advanced Features (2 tools)**: Task analysis and AI-generated suggestions
+- **Multi-Agent Orchestration (3 tools)**: Manage task relationships and workflow optimization for parallel execution
 
 ## Common Response Formats
 
@@ -292,6 +314,15 @@ Adds a new task to a todo list.
         "type": "number",
         "minimum": 1,
         "description": "Estimated duration in minutes"
+      },
+      "dependencies": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "maxItems": 10,
+        "description": "Array of task IDs that this task depends on (max 10 dependencies)"
       }
     },
     "required": ["listId", "title"]
@@ -307,9 +338,13 @@ Adds a new task to a todo list.
   "description": "Review the Q1 project proposal document",
   "priority": 4,
   "tags": ["review", "urgent"],
-  "estimatedDuration": 30
+  "estimatedDuration": 30,
+  "dependencies": ["456e7890-e89b-12d3-a456-426614174111"]
 }
 ```
+
+**Enhanced with Dependencies:**
+The `add_task` tool now supports setting initial dependencies when creating a task. This allows you to establish task relationships immediately upon creation.
 
 **Response:** Returns a `SimpleTaskResponse` object.
 
@@ -633,6 +668,18 @@ Filters tasks by specific criteria.
         "type": "string",
         "maxLength": 50,
         "description": "Filter by specific tag"
+      },
+      "hasDependencies": {
+        "type": "boolean",
+        "description": "Filter by whether tasks have dependencies (true) or not (false)"
+      },
+      "isReady": {
+        "type": "boolean",
+        "description": "Filter by whether tasks are ready to work on (true) or not (false)"
+      },
+      "isBlocked": {
+        "type": "boolean",
+        "description": "Filter by whether tasks are blocked by dependencies (true) or not (false)"
       }
     },
     "required": ["listId"]
@@ -645,9 +692,16 @@ Filters tasks by specific criteria.
 {
   "listId": "123e4567-e89b-12d3-a456-426614174000",
   "status": "pending",
-  "priority": 4
+  "priority": 4,
+  "isReady": true
 }
 ```
+
+**Enhanced with Dependency Filters:**
+The `filter_tasks` tool now supports dependency-based filtering:
+- `hasDependencies`: Find tasks with or without dependencies
+- `isReady`: Find tasks ready to work on (no incomplete dependencies)
+- `isBlocked`: Find tasks blocked by incomplete dependencies
 
 **Response:** Returns a `SimpleSearchResponse` object.
 
@@ -804,6 +858,143 @@ Gets AI-generated task suggestions for a list.
 ```
 
 **Response:** Returns an array of suggested tasks with titles and descriptions.
+
+---
+
+## Dependency Management Tools
+
+### 16. set_task_dependencies
+
+Set all dependencies for a task, replacing any existing dependencies.
+
+**Schema:**
+```json
+{
+  "name": "set_task_dependencies",
+  "description": "Set which tasks this task depends on (replaces all existing dependencies)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task to set dependencies for"
+      },
+      "dependencyIds": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "maxItems": 10,
+        "description": "Array of task IDs that this task depends on (empty array removes all dependencies)"
+      }
+    },
+    "required": ["listId", "taskId", "dependencyIds"]
+  }
+}
+```
+
+**Example Usage:**
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "taskId": "987fcdeb-51a2-43d1-9f4e-123456789abc",
+  "dependencyIds": [
+    "456e7890-e89b-12d3-a456-426614174111",
+    "789abcde-e89b-12d3-a456-426614174222"
+  ]
+}
+```
+
+**Response:** Returns updated task with dependency information and validation warnings if any.
+
+---
+
+### 17. get_ready_tasks
+
+Get tasks that are ready to work on (have no incomplete dependencies).
+
+**Schema:**
+```json
+{
+  "name": "get_ready_tasks",
+  "description": "Get tasks that are ready to work on (no incomplete dependencies)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list to get ready tasks from"
+      },
+      "limit": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 50,
+        "default": 20,
+        "description": "Maximum number of ready tasks to return"
+      }
+    },
+    "required": ["listId"]
+  }
+}
+```
+
+**Example Usage:**
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "limit": 10
+}
+```
+
+**Response:** Returns ready tasks sorted by priority with actionable next steps and project summary.
+
+---
+
+### 18. analyze_task_dependencies
+
+Get comprehensive analysis of task dependencies and project structure.
+
+**Schema:**
+```json
+{
+  "name": "analyze_task_dependencies",
+  "description": "Get a simple analysis of task dependencies and project structure",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list to analyze"
+      }
+    },
+    "required": ["listId"]
+  }
+}
+```
+
+**Example Usage:**
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000"
+}
+```
+
+**Response:** Returns dependency analysis with critical path, bottlenecks, issues, and plain-language recommendations.
+
+**Key Features:**
+- **Critical Path Analysis**: Identifies the longest chain of dependent tasks
+- **Bottleneck Detection**: Finds tasks that block multiple others
+- **Issue Identification**: Detects circular dependencies and other problems
+- **Actionable Recommendations**: Plain-language suggestions for improving workflow
 
 ---
 

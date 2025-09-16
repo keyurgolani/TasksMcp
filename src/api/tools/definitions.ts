@@ -39,6 +39,7 @@ export interface AddTaskParams {
   priority?: number;
   tags?: string[];
   estimatedDuration?: number;
+  dependencies?: string[];
 }
 
 export interface UpdateTaskParams {
@@ -82,6 +83,9 @@ export interface FilterTasksParams {
   status?: string;
   priority?: number;
   tag?: string;
+  hasDependencies?: boolean;
+  isReady?: boolean;
+  isBlocked?: boolean;
 }
 
 export interface ShowTasksParams {
@@ -103,6 +107,21 @@ export interface GetTaskSuggestionsParams {
   maxSuggestions?: number;
 }
 
+export interface SetTaskDependenciesParams {
+  listId: string;
+  taskId: string;
+  dependencyIds: string[];
+}
+
+export interface GetReadyTasksParams {
+  listId: string;
+  limit?: number;
+}
+
+export interface AnalyzeTaskDependenciesParams {
+  listId: string;
+}
+
 // ============================================================================
 // Tool Schema Definitions
 // ============================================================================
@@ -117,18 +136,18 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         title: {
           type: 'string',
-          description: 'Title of the todo list',
+          description: 'Title of the todo list (provide as a string, e.g., "My Project Tasks")',
           minLength: 1,
           maxLength: 200,
         },
         description: {
           type: 'string',
-          description: 'Optional description of the todo list',
+          description: 'Optional description of the todo list (provide as a string)',
           maxLength: 1000,
         },
         projectTag: {
           type: 'string',
-          description: 'Optional project tag for organization',
+          description: 'Optional project tag for organization (use lowercase with hyphens, e.g., "web-app" or "mobile-project")',
           maxLength: 50,
         },
       },
@@ -144,12 +163,12 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to retrieve',
+          description: 'UUID of the todo list to retrieve (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         includeCompleted: {
           type: 'boolean',
-          description: 'Whether to include completed tasks (default: true)',
+          description: 'Whether to include completed tasks (provide as boolean: true or false, default: true)',
           default: true,
         },
       },
@@ -165,17 +184,17 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         projectTag: {
           type: 'string',
-          description: 'Filter by project tag',
+          description: 'Filter by project tag (provide as string)',
           maxLength: 50,
         },
         includeArchived: {
           type: 'boolean',
-          description: 'Whether to include archived lists (default: false)',
+          description: 'Whether to include archived lists (provide as boolean: true or false, default: false)',
           default: false,
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of lists to return',
+          description: 'Maximum number of lists to return (provide as number, e.g., 20)',
           minimum: 1,
           maximum: 100,
           default: 50,
@@ -192,12 +211,12 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to delete',
+          description: 'UUID of the todo list to delete (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         permanent: {
           type: 'boolean',
-          description: 'Whether to permanently delete (true) or archive (false)',
+          description: 'Whether to permanently delete (true) or archive (false) - provide as boolean',
           default: false,
         },
       },
@@ -208,36 +227,36 @@ export const MCP_TOOLS: Tool[] = [
   // Task Management Tools (6 tools)
   {
     name: 'add_task',
-    description: 'Add a new task to a todo list',
+    description: 'Add a new task to a todo list with optional dependencies',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         title: {
           type: 'string',
-          description: 'Task title',
+          description: 'Task title (provide as string, e.g., "Implement user authentication")',
           minLength: 1,
           maxLength: 200,
         },
         description: {
           type: 'string',
-          description: 'Task description',
+          description: 'Task description (provide as string)',
           maxLength: 1000,
         },
         priority: {
           type: 'number',
-          description: 'Task priority (1-5, where 5 is highest)',
+          description: 'Task priority as a number: 5 (highest) to 1 (lowest), e.g., 5 for urgent tasks',
           minimum: 1,
           maximum: 5,
           default: 3,
         },
         tags: {
           type: 'array',
-          description: 'Task tags',
+          description: 'Task tags as an array of strings, e.g., ["urgent", "important", "bug-fix"]',
           items: {
             type: 'string',
             maxLength: 50,
@@ -246,8 +265,17 @@ export const MCP_TOOLS: Tool[] = [
         },
         estimatedDuration: {
           type: 'number',
-          description: 'Estimated duration in minutes',
+          description: 'Estimated duration in minutes as a number, e.g., 120 for 2 hours',
           minimum: 1,
+        },
+        dependencies: {
+          type: 'array',
+          description: 'Array of task UUIDs that this task depends on (provide as array of strings)',
+          items: {
+            type: 'string',
+            format: 'uuid',
+          },
+          maxItems: 10,
         },
       },
       required: ['listId', 'title'],
@@ -262,28 +290,28 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to update',
+          description: 'UUID of the task to update (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         title: {
           type: 'string',
-          description: 'New task title',
+          description: 'New task title (provide as string)',
           minLength: 1,
           maxLength: 200,
         },
         description: {
           type: 'string',
-          description: 'New task description',
+          description: 'New task description (provide as string)',
           maxLength: 1000,
         },
         estimatedDuration: {
           type: 'number',
-          description: 'New estimated duration in minutes',
+          description: 'New estimated duration in minutes (provide as number, e.g., 90)',
           minimum: 1,
         },
       },
@@ -299,12 +327,12 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to remove',
+          description: 'UUID of the task to remove (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
       },
@@ -320,12 +348,12 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to complete',
+          description: 'UUID of the task to complete (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
       },
@@ -341,17 +369,17 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task',
+          description: 'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         priority: {
           type: 'number',
-          description: 'New priority (1-5, where 5 is highest)',
+          description: 'New priority as a number: 5 (highest/urgent) to 1 (lowest), e.g., 5 for critical tasks',
           minimum: 1,
           maximum: 5,
         },
@@ -368,17 +396,17 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task',
+          description: 'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         tags: {
           type: 'array',
-          description: 'Tags to add to the task',
+          description: 'Tags to add as an array of strings, e.g., ["urgent", "frontend", "review-needed"]',
           items: {
             type: 'string',
             maxLength: 50,
@@ -400,18 +428,18 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         query: {
           type: 'string',
-          description: 'Text to search for in task titles and descriptions',
+          description: 'Text to search for in task titles and descriptions (provide as string, e.g., "authentication")',
           minLength: 1,
           maxLength: 200,
         },
         listId: {
           type: 'string',
-          description: 'Optional: limit search to specific list',
+          description: 'Optional: limit search to specific list (provide UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of results to return',
+          description: 'Maximum number of results to return (provide as number, e.g., 10)',
           minimum: 1,
           maximum: 100,
           default: 20,
@@ -423,30 +451,42 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'filter_tasks',
-    description: 'Filter tasks by specific criteria',
+    description: 'Filter tasks by specific criteria including dependency status',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to filter',
+          description: 'UUID of the todo list to filter (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         status: {
           type: 'string',
-          description: 'Filter by task status',
+          description: 'Filter by task status - use one of: "pending", "in_progress", "completed", "blocked", "cancelled"',
           enum: ['pending', 'in_progress', 'completed', 'blocked', 'cancelled'],
         },
         priority: {
           type: 'number',
-          description: 'Filter by priority level',
+          description: 'Filter by priority level (provide as number: 5 for highest priority tasks, 1 for lowest)',
           minimum: 1,
           maximum: 5,
         },
         tag: {
           type: 'string',
-          description: 'Filter by specific tag',
+          description: 'Filter by specific tag (provide as string, e.g., "urgent")',
           maxLength: 50,
+        },
+        hasDependencies: {
+          type: 'boolean',
+          description: 'Filter by whether tasks have dependencies - provide as boolean: true or false',
+        },
+        isReady: {
+          type: 'boolean',
+          description: 'Filter by whether tasks are ready to work on - provide as boolean: true or false',
+        },
+        isBlocked: {
+          type: 'boolean',
+          description: 'Filter by whether tasks are blocked by dependencies - provide as boolean: true or false',
         },
       },
       required: ['listId'],
@@ -461,24 +501,24 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to display',
+          description: 'UUID of the todo list to display (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         format: {
           type: 'string',
-          description: 'Display format style',
+          description: 'Display format style - use one of: "compact", "detailed", "summary"',
           enum: ['compact', 'detailed', 'summary'],
           default: 'detailed',
         },
         groupBy: {
           type: 'string',
-          description: 'How to group the tasks',
+          description: 'How to group the tasks - use one of: "status", "priority", "none"',
           enum: ['status', 'priority', 'none'],
           default: 'status',
         },
         includeCompleted: {
           type: 'boolean',
-          description: 'Whether to include completed tasks',
+          description: 'Whether to include completed tasks - provide as boolean: true or false',
           default: true,
         },
       },
@@ -495,18 +535,18 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         taskDescription: {
           type: 'string',
-          description: 'Description of the task to analyze',
+          description: 'Description of the task to analyze (provide as string, e.g., "Build user authentication system")',
           minLength: 1,
           maxLength: 2000,
         },
         context: {
           type: 'string',
-          description: 'Optional context or project information',
+          description: 'Optional context or project information (provide as string)',
           maxLength: 200,
         },
         maxSuggestions: {
           type: 'number',
-          description: 'Maximum number of suggestions to return',
+          description: 'Maximum number of suggestions to return (provide as number, e.g., 3)',
           minimum: 1,
           maximum: 10,
           default: 5,
@@ -524,21 +564,91 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list',
+          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         style: {
           type: 'string',
-          description: 'Style of suggestions to generate',
+          description: 'Style of suggestions to generate - use one of: "detailed", "concise", "technical", "business"',
           enum: ['detailed', 'concise', 'technical', 'business'],
           default: 'detailed',
         },
         maxSuggestions: {
           type: 'number',
-          description: 'Maximum number of suggestions to return',
+          description: 'Maximum number of suggestions to return (provide as number, e.g., 5)',
           minimum: 1,
           maximum: 10,
           default: 5,
+        },
+      },
+      required: ['listId'],
+    },
+  },
+
+  // Dependency Management Tools (3 tools)
+  {
+    name: 'set_task_dependencies',
+    description: 'Set which tasks this task depends on (replaces all existing dependencies)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description: 'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        taskId: {
+          type: 'string',
+          description: 'UUID of the task to set dependencies for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        dependencyIds: {
+          type: 'array',
+          description: 'Array of task UUIDs that this task depends on - provide as array of strings (empty array removes all dependencies)',
+          items: {
+            type: 'string',
+            format: 'uuid',
+          },
+          maxItems: 10,
+        },
+      },
+      required: ['listId', 'taskId', 'dependencyIds'],
+    },
+  },
+
+  {
+    name: 'get_ready_tasks',
+    description: 'Get tasks that are ready to work on (no incomplete dependencies)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description: 'UUID of the list to get ready tasks from (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of ready tasks to return (provide as number, e.g., 10)',
+          minimum: 1,
+          maximum: 50,
+          default: 20,
+        },
+      },
+      required: ['listId'],
+    },
+  },
+
+  {
+    name: 'analyze_task_dependencies',
+    description: 'Get a simple analysis of task dependencies and project structure',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description: 'UUID of the list to analyze (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
         },
       },
       required: ['listId'],

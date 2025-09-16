@@ -64,15 +64,11 @@ done
 # Check source code structure
 echo "🔧 Checking source code structure..."
 src_dirs=(
-    "src/handlers"
-    "src/managers"
-    "src/types"
-    "src/utils"
-    "src/storage"
-    "src/intelligence"
-    "src/monitoring"
-    "src/core"
-    "src/config"
+    "src/api"
+    "src/app"
+    "src/domain"
+    "src/infrastructure"
+    "src/shared"
 )
 
 for dir in "${src_dirs[@]}"; do
@@ -91,8 +87,8 @@ if [[ -d "dist" ]]; then
         echo "❌ Missing main build artifact: dist/index.js"
         exit 1
     fi
-    if [[ ! -f "dist/cli.js" ]]; then
-        echo "❌ Missing CLI build artifact: dist/cli.js"
+    if [[ ! -f "dist/app/cli.js" ]]; then
+        echo "❌ Missing CLI build artifact: dist/app/cli.js"
         exit 1
     fi
     echo "✅ Build artifacts present"

@@ -1,6 +1,6 @@
 # MCP Task Manager Documentation
 
-Welcome to the comprehensive documentation for the MCP Task Manager - an intelligent Model Context Protocol server that provides sophisticated task management capabilities for AI agents.
+Welcome to the comprehensive documentation for the MCP Task Manager - an intelligent Model Context Protocol server that provides sophisticated task management capabilities for AI agents, including advanced support for multi-agent orchestration environments.
 
 ## 🚀 Quick Start
 
@@ -16,9 +16,17 @@ New to the MCP Task Manager? Start here:
 Complete reference for all MCP tools and interfaces:
 - **[API Overview](./api/README.md)** - Base configuration and response formats
 - **[MCP Tools](./mcp-tools.md)** - 15 focused, agent-friendly tools
+- **[Dependency Management](./api/dependency-management.md)** - Task relationships and workflow optimization
 - **[Tool Schemas Reference](./api/tool-schemas.md)** - Quick schema reference
 - **[MCP Tools Reference](./api/mcp-tools.md)** - Detailed tool specifications with examples
 - **[Error Handling Guide](./api/error-handling.md)** - Comprehensive error management
+
+### 🤖 Agent-Friendly Features
+Documentation for the new agent-friendly improvements:
+- **[Parameter Preprocessing](./parameter-preprocessing.md)** - Smart type conversion and coercion rules
+- **[Troubleshooting Validation](./troubleshooting-validation.md)** - Common validation issues and solutions
+- **[Migration Guide](./migration-guide.md)** - Upgrading to agent-friendly features
+- **[Agent Integration Testing Results](./agent-integration-testing-results.md)** - Validation and performance metrics
 
 ### 🚀 Configuration Guides
 Everything you need to configure and deploy:
@@ -39,7 +47,10 @@ Additional resources and information:
 ### 💡 Examples and Tutorials
 Practical guides and real-world usage:
 - **[Getting Started Tutorial](./tutorials/getting-started.md)** - Complete beginner guide
+- **[Dependency Management Quick Start](./tutorials/dependency-management-quickstart.md)** - Task relationships and workflow optimization
 - **[MCP Tool Examples](./examples/mcp-examples.md)** - Practical usage scenarios
+- **[Dependency Management Examples](./examples/06-dependency-management-examples.md)** - Task dependency workflows
+- **[Multi-Agent Orchestration Guide](./multi-agent-orchestration.md)** - Complete guide for multi-agent coordination
 - **[AI Agent Integration](./examples/ai-agent-integration.md)** - Integration patterns
 - **[Troubleshooting Guide](./examples/troubleshooting.md)** - Common issues and solutions
 
@@ -54,6 +65,7 @@ Detailed tool usage and patterns:
 - ✅ **Complete CRUD Operations** - Create, read, update, delete todo lists and items
 - ✅ **AI-Powered Analysis** - Intelligent task complexity analysis and breakdown
 - ✅ **Dependency Management** - Handle complex task relationships and prerequisites
+- ✅ **Multi-Agent Orchestration** - Support for parallel task execution across multiple AI agents
 - ✅ **Advanced Filtering** - Powerful search, sort, and pagination capabilities
 - ✅ **Multiple Storage Backends** - File and memory storage options
 
@@ -176,11 +188,12 @@ npm run build && npm test
 
 ## 🔄 Version Information
 
-- **Current Version**: 2.0.0 (Production Ready)
+- **Current Version**: 2.2.0 (Agent-Friendly)
 - **MCP Protocol**: Compatible with MCP SDK 1.0.0+
 - **Node.js**: Requires 18.0.0+, tested with 18.17.0+
-- **Total MCP Tools**: 15 focused tools for complete task management
-- **Last Updated**: September 15, 2025
+- **Total MCP Tools**: 18 focused tools for complete task management and multi-agent orchestration
+- **Agent-Friendly Features**: Smart preprocessing, enhanced errors, backward compatible
+- **Last Updated**: September 16, 2025
 
 ## 📄 License
 

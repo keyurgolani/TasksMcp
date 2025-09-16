@@ -7,6 +7,7 @@ import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-typ
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
 import type { SimpleListResponse } from '../../shared/types/mcp-types.js';
 import { logger } from '../../shared/utils/logger.js';
+import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
 const ListAllListsSchema = z.object({
   projectTag: z.string().max(50).optional(),
@@ -65,28 +66,8 @@ export async function handleListAllLists(
       ],
     };
   } catch (error) {
-    logger.error('Failed to list todo lists', { error });
-
-    if (error instanceof z.ZodError) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        },
-      ],
-      isError: true,
-    };
+    // Use enhanced error formatting with listManagement configuration
+    const formatError = createHandlerErrorFormatter('list_all_lists', ERROR_CONFIGS.listManagement);
+    return formatError(error, request.params?.arguments);
   }
 }

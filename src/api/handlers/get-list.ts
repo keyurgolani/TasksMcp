@@ -5,7 +5,10 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskWithDependencies } from '../../shared/types/mcp-types.js';
+import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import { logger } from '../../shared/utils/logger.js';
+import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
 
 const GetListSchema = z.object({
@@ -32,16 +35,26 @@ export async function handleGetList(
       throw new Error(`Todo list not found: ${args.listId}`);
     }
 
-    const response = {
-      id: todoList.id,
-      title: todoList.title,
-      description: todoList.description,
-      taskCount: todoList.totalItems,
-      completedCount: todoList.completedItems,
-      progress: todoList.progress,
-      lastUpdated: todoList.updatedAt.toISOString(),
-      projectTag: todoList.projectTag,
-      tasks: todoList.items.map(task => ({
+    // Calculate dependency information for all tasks
+    const dependencyResolver = new DependencyResolver();
+    const readyItems = dependencyResolver.getReadyItems(todoList.items);
+    const readyItemIds = new Set(readyItems.map(item => item.id));
+    
+    const tasksWithDependencies: TaskWithDependencies[] = todoList.items.map(task => {
+      const isReady = readyItemIds.has(task.id);
+      const blockedBy: string[] = [];
+      
+      // Calculate what this task is blocked by if it's not ready
+      if (!isReady && task.dependencies.length > 0) {
+        for (const depId of task.dependencies) {
+          const depTask = todoList.items.find(item => item.id === depId);
+          if (depTask && depTask.status !== 'completed') {
+            blockedBy.push(depId);
+          }
+        }
+      }
+
+      const taskWithDeps: TaskWithDependencies = {
         id: task.id,
         title: task.title,
         description: task.description,
@@ -51,7 +64,30 @@ export async function handleGetList(
         createdAt: task.createdAt.toISOString(),
         updatedAt: task.updatedAt.toISOString(),
         estimatedDuration: task.estimatedDuration,
-      })),
+        dependencies: task.dependencies,
+        isReady,
+      };
+
+      // Only include blockedBy if there are blocking dependencies
+      if (blockedBy.length > 0) {
+        taskWithDeps.blockedBy = blockedBy;
+      }
+
+      return taskWithDeps;
+    });
+
+    dependencyResolver.cleanup();
+
+    const response = {
+      id: todoList.id,
+      title: todoList.title,
+      description: todoList.description,
+      taskCount: todoList.totalItems,
+      completedCount: todoList.completedItems,
+      progress: todoList.progress,
+      lastUpdated: todoList.updatedAt.toISOString(),
+      projectTag: todoList.projectTag,
+      tasks: tasksWithDependencies,
     };
 
     logger.info('Todo list retrieved successfully', {
@@ -69,28 +105,8 @@ export async function handleGetList(
       ],
     };
   } catch (error) {
-    logger.error('Failed to get todo list', { error });
-
-    if (error instanceof z.ZodError) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        },
-      ],
-      isError: true,
-    };
+    // Use enhanced error formatting with listManagement configuration
+    const formatError = createHandlerErrorFormatter('get_list', ERROR_CONFIGS.listManagement);
+    return formatError(error, request.params?.arguments);
   }
 }

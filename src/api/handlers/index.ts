@@ -40,3 +40,8 @@ export { handleShowTasks } from './show-tasks.js';
 // AI-powered intelligence handlers
 export { handleAnalyzeTask } from './analyze-task.js';
 export { handleGetTaskSuggestions } from './get-task-suggestions.js';
+
+// Dependency management handlers
+export { handleSetTaskDependencies } from './set-task-dependencies.js';
+export { handleGetReadyTasks } from './get-ready-tasks.js';
+export { handleAnalyzeTaskDependencies } from './analyze-task-dependencies.js';

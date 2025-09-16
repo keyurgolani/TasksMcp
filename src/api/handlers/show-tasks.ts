@@ -10,7 +10,9 @@ import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
 import { TaskStatus, Priority } from '../../shared/types/todo.js';
+import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import { logger } from '../../shared/utils/logger.js';
+import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
 /**
  * Validation schema for show tasks request parameters
@@ -62,7 +64,14 @@ export async function handleShowTasks(
       };
     }
 
-    const formattedOutput = formatTasks(list, args.format, args.groupBy, args.includeCompleted);
+    // Calculate dependency information
+    const dependencyResolver = new DependencyResolver();
+    const readyItems = dependencyResolver.getReadyItems(list.items);
+    const readyItemIds = new Set(readyItems.map(item => item.id));
+    
+    const formattedOutput = formatTasks(list, args.format, args.groupBy, args.includeCompleted, readyItemIds);
+    
+    dependencyResolver.cleanup();
 
     logger.info('Tasks formatted successfully', {
       listId: args.listId,
@@ -80,29 +89,9 @@ export async function handleShowTasks(
       ],
     };
   } catch (error) {
-    logger.error('Failed to show tasks', { error });
-
-    if (error instanceof z.ZodError) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        },
-      ],
-      isError: true,
-    };
+    // Use enhanced error formatting with searchDisplay configuration
+    const formatError = createHandlerErrorFormatter('show_tasks', ERROR_CONFIGS.searchDisplay);
+    return formatError(error, request.params?.arguments);
   }
 }
 
@@ -122,7 +111,8 @@ function formatTasks(
   list: any,
   format: 'compact' | 'detailed' | 'summary',
   groupBy: 'status' | 'priority' | 'none',
-  includeCompleted: boolean
+  includeCompleted: boolean,
+  readyItemIds: Set<string>
 ): string {
   const lines: string[] = [];
   
@@ -152,11 +142,11 @@ function formatTasks(
 
   // Apply grouping strategy
   if (groupBy === 'status') {
-    formatTasksByStatus(tasks, lines, format);
+    formatTasksByStatus(tasks, lines, format, readyItemIds);
   } else if (groupBy === 'priority') {
-    formatTasksByPriority(tasks, lines, format);
+    formatTasksByPriority(tasks, lines, format, readyItemIds);
   } else {
-    formatTasksUngrouped(tasks, lines, format);
+    formatTasksUngrouped(tasks, lines, format, readyItemIds);
   }
 
   return lines.join('\n');
@@ -219,7 +209,7 @@ function formatSummary(list: any): string {
  * @param lines - Output lines array to append formatted content
  * @param format - Display format (compact or detailed)
  */
-function formatTasksByStatus(tasks: any[], lines: string[], format: 'compact' | 'detailed'): void {
+function formatTasksByStatus(tasks: any[], lines: string[], format: 'compact' | 'detailed', readyItemIds: Set<string>): void {
   const tasksByStatus = groupTasksByStatus(tasks);
   const statusOrder = [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.COMPLETED, TaskStatus.CANCELLED];
   
@@ -233,7 +223,7 @@ function formatTasksByStatus(tasks: any[], lines: string[], format: 'compact' | 
     lines.push('');
     
     statusTasks.forEach(task => {
-      formatSingleTask(task, lines, format);
+      formatSingleTask(task, lines, format, readyItemIds);
     });
   });
 }
@@ -248,7 +238,7 @@ function formatTasksByStatus(tasks: any[], lines: string[], format: 'compact' | 
  * @param lines - Output lines array to append formatted content
  * @param format - Display format (compact or detailed)
  */
-function formatTasksByPriority(tasks: any[], lines: string[], format: 'compact' | 'detailed'): void {
+function formatTasksByPriority(tasks: any[], lines: string[], format: 'compact' | 'detailed', readyItemIds: Set<string>): void {
   const tasksByPriority = groupTasksByPriority(tasks);
   const priorityOrder = [Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW, Priority.MINIMAL];
   
@@ -262,7 +252,7 @@ function formatTasksByPriority(tasks: any[], lines: string[], format: 'compact' 
     lines.push('');
     
     priorityTasks.forEach(task => {
-      formatSingleTask(task, lines, format);
+      formatSingleTask(task, lines, format, readyItemIds);
     });
   });
 }
@@ -277,12 +267,12 @@ function formatTasksByPriority(tasks: any[], lines: string[], format: 'compact' 
  * @param lines - Output lines array to append formatted content
  * @param format - Display format (compact or detailed)
  */
-function formatTasksUngrouped(tasks: any[], lines: string[], format: 'compact' | 'detailed'): void {
+function formatTasksUngrouped(tasks: any[], lines: string[], format: 'compact' | 'detailed', readyItemIds: Set<string>): void {
   lines.push(`## Tasks (${tasks.length})`);
   lines.push('');
   
   tasks.forEach(task => {
-    formatSingleTask(task, lines, format);
+    formatSingleTask(task, lines, format, readyItemIds);
   });
 }
 
@@ -297,18 +287,20 @@ function formatTasksUngrouped(tasks: any[], lines: string[], format: 'compact' |
  * @param lines - Output lines array to append formatted content
  * @param format - Display format (compact or detailed)
  */
-function formatSingleTask(task: any, lines: string[], format: 'compact' | 'detailed'): void {
+function formatSingleTask(task: any, lines: string[], format: 'compact' | 'detailed', readyItemIds: Set<string>): void {
   const statusIcon = getStatusIcon(task.status);
   const priorityIcon = getPriorityIcon(task.priority);
+  const dependencyIcon = getDependencyIcon(task, readyItemIds);
   
   if (format === 'compact') {
     // Compact format: one line per task
     const tags = task.tags.length > 0 ? ` [${task.tags.join(', ')}]` : '';
     const duration = task.estimatedDuration ? ` (${task.estimatedDuration}min)` : '';
-    lines.push(`${statusIcon} ${priorityIcon} ${task.title}${tags}${duration}`);
+    const depCount = task.dependencies.length > 0 ? ` (${task.dependencies.length} deps)` : '';
+    lines.push(`${statusIcon} ${priorityIcon} ${dependencyIcon} ${task.title}${tags}${duration}${depCount}`);
   } else {
     // Detailed format: multiple lines per task
-    lines.push(`${statusIcon} **${task.title}** ${priorityIcon}`);
+    lines.push(`${statusIcon} **${task.title}** ${priorityIcon} ${dependencyIcon}`);
     
     if (task.description) {
       lines.push(`   ${task.description}`);
@@ -321,6 +313,14 @@ function formatSingleTask(task: any, lines: string[], format: 'compact' | 'detai
     if (task.estimatedDuration) {
       metadata.push(`Duration: ${task.estimatedDuration}min`);
     }
+    
+    // Add dependency information
+    if (task.dependencies.length > 0) {
+      const isReady = readyItemIds.has(task.id);
+      const depStatus = isReady ? 'Ready' : 'Blocked';
+      metadata.push(`Dependencies: ${task.dependencies.length} (${depStatus})`);
+    }
+    
     metadata.push(`Created: ${new Date(task.createdAt).toLocaleDateString()}`);
     
     if (metadata.length > 0) {
@@ -466,5 +466,21 @@ function getPriorityIcon(priority: number): string {
       return '🔵';
     default:
       return '⚪';
+  }
+}
+
+/**
+ * Get dependency status icon
+ */
+function getDependencyIcon(task: any, readyItemIds: Set<string>): string {
+  if (task.dependencies.length === 0) {
+    return '🆓'; // No dependencies
+  }
+  
+  const isReady = readyItemIds.has(task.id);
+  if (isReady) {
+    return '✅'; // Ready (all dependencies completed)
+  } else {
+    return '⛔'; // Blocked by dependencies
   }
 }

@@ -73,6 +73,7 @@ export class MemoryMonitor extends EventEmitter {
 
   constructor() {
     super();
+    this.setMaxListeners(50); // Increase max listeners for testing scenarios
     // Don't start GC monitoring automatically - only when monitoring starts
   }
 

@@ -5,15 +5,20 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { SimpleSearchResponse, SimpleTaskResponse } from '../../shared/types/mcp-types.js';
+import type { SimpleSearchResponse, TaskWithDependencies } from '../../shared/types/mcp-types.js';
 import { TaskStatus } from '../../shared/types/todo.js';
+import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import { logger } from '../../shared/utils/logger.js';
+import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
 const FilterTasksSchema = z.object({
   listId: z.string().uuid(),
   status: z.enum(['pending', 'in_progress', 'completed', 'blocked', 'cancelled']).optional(),
   priority: z.number().min(1).max(5).optional(),
   tag: z.string().max(50).optional(),
+  hasDependencies: z.boolean().optional(),
+  isReady: z.boolean().optional(),
+  isBlocked: z.boolean().optional(),
 });
 
 export async function handleFilterTasks(
@@ -44,7 +49,14 @@ export async function handleFilterTasks(
       };
     }
 
+    // Calculate dependency information for filtering
+    const dependencyResolver = new DependencyResolver();
+    const readyItems = dependencyResolver.getReadyItems(list.items);
+    const readyItemIds = new Set(readyItems.map(item => item.id));
+
     let filteredTasks = list.items;
+
+    // Apply existing filters
     if (args.status) {
       const statusEnum = mapStringToTaskStatus(args.status);
       filteredTasks = filteredTasks.filter(task => task.status === statusEnum);
@@ -58,17 +70,62 @@ export async function handleFilterTasks(
       );
     }
 
-    const results: SimpleTaskResponse[] = filteredTasks.map(task => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      tags: task.tags,
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      estimatedDuration: task.estimatedDuration,
-    }));
+    // Apply dependency-based filters
+    if (args.hasDependencies !== undefined) {
+      filteredTasks = filteredTasks.filter(task => 
+        args.hasDependencies ? task.dependencies.length > 0 : task.dependencies.length === 0
+      );
+    }
+    if (args.isReady !== undefined) {
+      filteredTasks = filteredTasks.filter(task => 
+        args.isReady ? readyItemIds.has(task.id) : !readyItemIds.has(task.id)
+      );
+    }
+    if (args.isBlocked !== undefined) {
+      filteredTasks = filteredTasks.filter(task => {
+        const isBlocked = task.dependencies.length > 0 && !readyItemIds.has(task.id);
+        return args.isBlocked ? isBlocked : !isBlocked;
+      });
+    }
+
+    // Create results with dependency information
+    const results: TaskWithDependencies[] = filteredTasks.map(task => {
+      const isReady = readyItemIds.has(task.id);
+      const blockedBy: string[] = [];
+      
+      // Calculate what this task is blocked by if it's not ready
+      if (!isReady && task.dependencies.length > 0) {
+        for (const depId of task.dependencies) {
+          const depTask = list.items.find(item => item.id === depId);
+          if (depTask && depTask.status !== 'completed') {
+            blockedBy.push(depId);
+          }
+        }
+      }
+
+      const taskWithDeps: TaskWithDependencies = {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        tags: task.tags,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString(),
+        estimatedDuration: task.estimatedDuration,
+        dependencies: task.dependencies,
+        isReady,
+      };
+
+      // Only include blockedBy if there are blocking dependencies
+      if (blockedBy.length > 0) {
+        taskWithDeps.blockedBy = blockedBy;
+      }
+
+      return taskWithDeps;
+    });
+
+    dependencyResolver.cleanup();
 
     const response: SimpleSearchResponse = {
       results,
@@ -95,29 +152,9 @@ export async function handleFilterTasks(
       ],
     };
   } catch (error) {
-    logger.error('Failed to filter tasks', { error });
-
-    if (error instanceof z.ZodError) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        },
-      ],
-      isError: true,
-    };
+    // Use enhanced error formatting with searchDisplay configuration
+    const formatError = createHandlerErrorFormatter('filter_tasks', ERROR_CONFIGS.searchDisplay);
+    return formatError(error, request.params?.arguments);
   }
 }
 
