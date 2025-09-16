@@ -15,8 +15,9 @@ New to the MCP Task Manager? Start here:
 ### 🔧 API Documentation
 Complete reference for all MCP tools and interfaces:
 - **[API Overview](./api/README.md)** - Base configuration and response formats
-- **[MCP Tools](./mcp-tools.md)** - 15 focused, agent-friendly tools
+- **[MCP Tools](./mcp-tools.md)** - 18 focused, agent-friendly tools
 - **[Dependency Management](./api/dependency-management.md)** - Task relationships and workflow optimization
+- **[DAG Visualization Guide](./dag-visualization.md)** - Visual dependency graphs in ASCII, DOT, and Mermaid formats
 - **[Tool Schemas Reference](./api/tool-schemas.md)** - Quick schema reference
 - **[MCP Tools Reference](./api/mcp-tools.md)** - Detailed tool specifications with examples
 - **[Error Handling Guide](./api/error-handling.md)** - Comprehensive error management
@@ -192,6 +193,7 @@ npm run build && npm test
 - **MCP Protocol**: Compatible with MCP SDK 1.0.0+
 - **Node.js**: Requires 18.0.0+, tested with 18.17.0+
 - **Total MCP Tools**: 18 focused tools for complete task management and multi-agent orchestration
+- **DAG Visualization**: Visual dependency graphs in ASCII, DOT (Graphviz), and Mermaid formats
 - **Agent-Friendly Features**: Smart preprocessing, enhanced errors, backward compatible
 - **Last Updated**: September 16, 2025
 

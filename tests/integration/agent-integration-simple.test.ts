@@ -6,7 +6,7 @@
  * provide better user experience for AI agents.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { McpTaskManagerServer } from '../../src/app/server.js';
 
 describe('Agent Integration Tests - Simplified', () => {
@@ -32,6 +32,17 @@ describe('Agent Integration Tests - Simplified', () => {
     const outerResponse = JSON.parse(createListResult.content[0].text);
     const listData = JSON.parse(outerResponse.content[0].text);
     testListId = listData.id;
+  });
+
+  afterEach(async () => {
+    // Clean up server resources
+    if (server) {
+      await server.close();
+    }
+    // Clean up environment variables
+    delete process.env.STORAGE_TYPE;
+    delete process.env.METRICS_ENABLED;
+    delete process.env.NODE_ENV;
   });
 
   describe('Parameter Preprocessing Validation', () => {

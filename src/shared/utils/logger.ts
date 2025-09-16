@@ -132,8 +132,12 @@ if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') 
       // Fallback: derive from current file location
       const currentFileUrl = import.meta.url;
       const currentFilePath = fileURLToPath(currentFileUrl);
-      const srcDir = dirname(currentFilePath);
-      projectRoot = dirname(srcDir); // Go up from src/ to project root
+      // Current file is at src/shared/utils/logger.ts
+      // Go up 3 levels: utils -> shared -> src -> project root
+      const utilsDir = dirname(currentFilePath);
+      const sharedDir = dirname(utilsDir);
+      const srcDir = dirname(sharedDir);
+      projectRoot = dirname(srcDir);
     }
     
     const logsDir = join(projectRoot, 'logs');

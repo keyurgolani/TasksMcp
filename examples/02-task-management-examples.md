@@ -1,383 +1,267 @@
 # Task Management Examples
 
-This document demonstrates how to use the 6 task management MCP tools with real-world examples. Each tool includes 5 different scenarios showing various ways to create, modify, and manage tasks within your todo lists.
+This document demonstrates comprehensive task management capabilities through real-world examples.
 
-## 1. add_task
+## Adding Tasks
 
-### Example 1: High Priority Development Task
+### Basic Task
 ```json
 {
-  "name": "add_task",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "title": "Implement user authentication",
-    "description": "Create secure login/logout functionality with JWT tokens",
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Set up development environment"
+  }
+}
+```
+
+### Complete Task with All Parameters
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Set up development environment",
+    "description": "Install Node.js, npm, and configure development tools",
     "priority": 5,
-    "estimatedDuration": 480,
-    "tags": ["auth", "security", "backend"]
-  }
-}
-```
-
-### Example 2: Simple Daily Task
-```json
-{
-  "name": "add_task",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
-    "title": "Review pull requests",
-    "description": "Review and approve pending pull requests from team members",
-    "priority": 3,
-    "estimatedDuration": 60,
-    "tags": ["review", "teamwork"]
-  }
-}
-```
-
-### Example 3: Learning Task with Resources
-```json
-{
-  "name": "add_task",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "title": "Study React Hooks",
-    "description": "Complete React Hooks tutorial and build practice project",
-    "priority": 4,
-    "estimatedDuration": 300,
-    "tags": ["learning", "react", "frontend"]
-  }
-}
-```
-
-### Example 4: Bug Fix Task
-```json
-{
-  "name": "add_task",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "title": "Fix memory leak in data processing",
-    "description": "Investigate and resolve memory leak causing performance issues",
-    "priority": 5,
-    "estimatedDuration": 240,
-    "tags": ["bugfix", "performance", "critical"]
-  }
-}
-```
-
-### Example 5: Documentation Task
-```json
-{
-  "name": "add_task",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "title": "Update API documentation",
-    "description": "Document new endpoints and update existing API specs",
-    "priority": 2,
     "estimatedDuration": 120,
-    "tags": ["documentation", "api"]
+    "tags": ["setup", "environment", "urgent"]
   }
 }
 ```
 
-## 2. update_task
-
-### Example 1: Update Task Title and Description
+**Response:**
 ```json
 {
-  "name": "update_task",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "taskId": "task1234-5678-9012-3456-789012345678",
-    "title": "Implement OAuth 2.0 authentication",
-    "description": "Create secure OAuth 2.0 login with Google and GitHub providers"
+  "id": "f47cd78e-962a-4860-a17e-49c67ab12da0",
+  "title": "Set up development environment",
+  "description": "Install Node.js, npm, and configure development tools",
+  "status": "pending",
+  "priority": 5,
+  "tags": ["setup", "environment", "urgent"],
+  "createdAt": "2025-09-16T21:16:40.611Z",
+  "updatedAt": "2025-09-16T21:16:40.611Z",
+  "estimatedDuration": 120,
+  "dependencies": [],
+  "isReady": true
+}
+```
+
+### Task with Dependencies
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Design database schema",
+    "description": "Create ERD and define table structures for user management, content, and analytics",
+    "priority": 4,
+    "estimatedDuration": 240,
+    "tags": ["database", "design", "backend"],
+    "dependencies": ["f47cd78e-962a-4860-a17e-49c67ab12da0"]
   }
 }
 ```
 
-### Example 2: Update Estimated Duration
+**Response:**
 ```json
 {
-  "name": "update_task",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
-    "taskId": "task2345-6789-0123-4567-890123456789",
-    "estimatedDuration": 180
+  "id": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+  "title": "Design database schema",
+  "description": "Create ERD and define table structures for user management, content, and analytics",
+  "status": "pending",
+  "priority": 4,
+  "tags": ["database", "design", "backend"],
+  "createdAt": "2025-09-16T21:16:46.741Z",
+  "updatedAt": "2025-09-16T21:16:46.741Z",
+  "estimatedDuration": 240,
+  "dependencies": ["f47cd78e-962a-4860-a17e-49c67ab12da0"],
+  "isReady": false,
+  "blockedBy": ["f47cd78e-962a-4860-a17e-49c67ab12da0"]
+}
+```
+
+## Updating Tasks
+
+### Update Task Details
+```json
+{
+  "tool": "update_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "f47cd78e-962a-4860-a17e-49c67ab12da0",
+    "title": "Set up development environment and tools",
+    "description": "Install Node.js 18+, npm, VS Code, and configure ESLint, Prettier, and Git hooks",
+    "estimatedDuration": 90
   }
 }
 ```
 
-### Example 3: Update Task Description Only
+**Response:**
 ```json
 {
-  "name": "update_task",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "taskId": "task3456-7890-1234-5678-901234567890",
-    "description": "Complete advanced React Hooks tutorial, build todo app, and write unit tests"
+  "id": "f47cd78e-962a-4860-a17e-49c67ab12da0",
+  "title": "Set up development environment and tools",
+  "description": "Install Node.js 18+, npm, VS Code, and configure ESLint, Prettier, and Git hooks",
+  "status": "pending",
+  "priority": 5,
+  "tags": ["setup", "environment", "urgent"],
+  "createdAt": "2025-09-16T21:16:40.611Z",
+  "updatedAt": "2025-09-16T21:17:14.145Z",
+  "estimatedDuration": 90
+}
+```
+
+## Task Status Management
+
+### Complete a Task
+```json
+{
+  "tool": "complete_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "f47cd78e-962a-4860-a17e-49c67ab12da0"
   }
 }
 ```
 
-### Example 4: Update Title for Clarity
+**Response:**
 ```json
 {
-  "name": "update_task",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "taskId": "task4567-8901-2345-6789-012345678901",
-    "title": "Fix critical memory leak in user data processing module"
-  }
+  "id": "f47cd78e-962a-4860-a17e-49c67ab12da0",
+  "title": "Set up development environment and tools",
+  "description": "Install Node.js 18+, npm, VS Code, and configure ESLint, Prettier, and Git hooks",
+  "status": "completed",
+  "priority": 5,
+  "tags": ["setup", "environment", "urgent"],
+  "createdAt": "2025-09-16T21:16:40.611Z",
+  "updatedAt": "2025-09-16T21:17:18.466Z",
+  "estimatedDuration": 90
 }
 ```
 
-### Example 5: Update All Fields
+### Change Task Priority
 ```json
 {
-  "name": "update_task",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "taskId": "task5678-9012-3456-7890-123456789012",
-    "title": "Create comprehensive API documentation with examples",
-    "description": "Document all REST endpoints, WebSocket events, and provide code examples in multiple languages",
-    "estimatedDuration": 360
-  }
-}
-```
-
-## 3. remove_task
-
-### Example 1: Remove Completed Task
-```json
-{
-  "name": "remove_task",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "taskId": "task1234-5678-9012-3456-789012345678"
-  }
-}
-```
-
-### Example 2: Remove Duplicate Task
-```json
-{
-  "name": "remove_task",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
-    "taskId": "task2345-6789-0123-4567-890123456789"
-  }
-}
-```
-
-### Example 3: Remove Cancelled Task
-```json
-{
-  "name": "remove_task",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "taskId": "task3456-7890-1234-5678-901234567890"
-  }
-}
-```
-
-### Example 4: Remove Outdated Task
-```json
-{
-  "name": "remove_task",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "taskId": "task4567-8901-2345-6789-012345678901"
-  }
-}
-```
-
-### Example 5: Remove Test Task
-```json
-{
-  "name": "remove_task",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "taskId": "task5678-9012-3456-7890-123456789012"
-  }
-}
-```
-
-## 4. complete_task
-
-### Example 1: Complete Development Task
-```json
-{
-  "name": "complete_task",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "taskId": "task1234-5678-9012-3456-789012345678"
-  }
-}
-```
-
-### Example 2: Complete Review Task
-```json
-{
-  "name": "complete_task",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
-    "taskId": "task2345-6789-0123-4567-890123456789"
-  }
-}
-```
-
-### Example 3: Complete Learning Task
-```json
-{
-  "name": "complete_task",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "taskId": "task3456-7890-1234-5678-901234567890"
-  }
-}
-```
-
-### Example 4: Complete Bug Fix
-```json
-{
-  "name": "complete_task",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "taskId": "task4567-8901-2345-6789-012345678901"
-  }
-}
-```
-
-### Example 5: Complete Documentation
-```json
-{
-  "name": "complete_task",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "taskId": "task5678-9012-3456-7890-123456789012"
-  }
-}
-```
-
-## 5. set_task_priority
-
-### Example 1: Set Critical Priority
-```json
-{
-  "name": "set_task_priority",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "taskId": "task1234-5678-9012-3456-789012345678",
+  "tool": "set_task_priority",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
     "priority": 5
   }
 }
 ```
 
-### Example 2: Set High Priority
+**Response:**
 ```json
 {
-  "name": "set_task_priority",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
-    "taskId": "task2345-6789-0123-4567-890123456789",
-    "priority": 4
+  "id": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+  "title": "Design database schema",
+  "description": "Create ERD and define table structures for user management, content, and analytics",
+  "status": "pending",
+  "priority": 5,
+  "tags": ["database", "design", "backend"],
+  "createdAt": "2025-09-16T21:16:46.741Z",
+  "updatedAt": "2025-09-16T21:17:22.601Z",
+  "estimatedDuration": 240
+}
+```
+
+### Add Tags to Task
+```json
+{
+  "tool": "add_task_tags",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+    "tags": ["critical", "architecture"]
   }
 }
 ```
 
-### Example 3: Set Medium Priority
+**Response:**
 ```json
 {
-  "name": "set_task_priority",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "taskId": "task3456-7890-1234-5678-901234567890",
-    "priority": 3
+  "id": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+  "title": "Design database schema",
+  "description": "Create ERD and define table structures for user management, content, and analytics",
+  "status": "pending",
+  "priority": 5,
+  "tags": ["database", "design", "backend", "critical", "architecture"],
+  "createdAt": "2025-09-16T21:16:46.741Z",
+  "updatedAt": "2025-09-16T21:17:27.397Z",
+  "estimatedDuration": 240
+}
+```
+
+## Task Removal
+
+### Remove Task from List
+```json
+{
+  "tool": "remove_task",
+  "parameters": {
+    "listId": "83aeb714-ae8a-43c9-a2bd-9ef687ed8575",
+    "taskId": "2bce2623-9e41-4220-aa67-eca6b627b0fd"
   }
 }
 ```
 
-### Example 4: Set Low Priority
+**Response:**
 ```json
 {
-  "name": "set_task_priority",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "taskId": "task4567-8901-2345-6789-012345678901",
-    "priority": 2
-  }
+  "success": true,
+  "message": "Task 2bce2623-9e41-4220-aa67-eca6b627b0fd removed from list 83aeb714-ae8a-43c9-a2bd-9ef687ed8575",
+  "listId": "83aeb714-ae8a-43c9-a2bd-9ef687ed8575",
+  "taskId": "2bce2623-9e41-4220-aa67-eca6b627b0fd"
 }
 ```
 
-### Example 5: Set Lowest Priority
-```json
-{
-  "name": "set_task_priority",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "taskId": "task5678-9012-3456-7890-123456789012",
-    "priority": 1
-  }
-}
-```
+## Priority Levels
 
-## 6. add_task_tags
+- **5 (Critical)**: Urgent tasks that block other work
+- **4 (High)**: Important tasks with significant impact
+- **3 (Medium)**: Standard priority tasks
+- **2 (Low)**: Nice-to-have tasks
+- **1 (Lowest)**: Optional or future tasks
 
-### Example 1: Add Development Tags
-```json
-{
-  "name": "add_task_tags",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "taskId": "task1234-5678-9012-3456-789012345678",
-    "tags": ["frontend", "react", "typescript"]
-  }
-}
-```
+## Task Status Flow
 
-### Example 2: Add Priority Tags
-```json
-{
-  "name": "add_task_tags",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
-    "taskId": "task2345-6789-0123-4567-890123456789",
-    "tags": ["urgent", "critical", "hotfix"]
-  }
-}
-```
+1. **pending** → Initial state when task is created
+2. **in_progress** → Task is actively being worked on
+3. **completed** → Task has been finished
+4. **blocked** → Task cannot proceed due to dependencies
+5. **cancelled** → Task has been cancelled
 
-### Example 3: Add Category Tags
-```json
-{
-  "name": "add_task_tags",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "taskId": "task3456-7890-1234-5678-901234567890",
-    "tags": ["learning", "tutorial", "practice"]
-  }
-}
-```
+## Best Practices
 
-### Example 4: Add Team Tags
-```json
-{
-  "name": "add_task_tags",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "taskId": "task4567-8901-2345-6789-012345678901",
-    "tags": ["backend-team", "database", "optimization"]
-  }
-}
-```
+1. **Use descriptive titles** that clearly state what needs to be done
+2. **Add detailed descriptions** for complex tasks
+3. **Set realistic time estimates** to help with planning
+4. **Use tags consistently** for better organization and filtering
+5. **Set appropriate priorities** based on urgency and importance
+6. **Define dependencies** to ensure proper task sequencing
+7. **Update task details** as requirements change
+8. **Complete tasks promptly** to unblock dependent tasks
 
-### Example 5: Add Status Tags
-```json
-{
-  "name": "add_task_tags",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "taskId": "task5678-9012-3456-7890-123456789012",
-    "tags": ["in-progress", "needs-review", "documentation"]
-  }
-}
-```
+## Common Task Patterns
+
+### Setup Tasks
+- High priority (4-5)
+- Tags: ["setup", "environment", "configuration"]
+- Often dependencies for other tasks
+
+### Development Tasks
+- Medium priority (3)
+- Tags: ["development", "feature", "implementation"]
+- May have dependencies on design/setup tasks
+
+### Testing Tasks
+- Medium to low priority (2-3)
+- Tags: ["testing", "quality", "validation"]
+- Usually depend on development tasks
+
+### Documentation Tasks
+- Low priority (1-2)
+- Tags: ["documentation", "writing"]
+- Often done after implementation

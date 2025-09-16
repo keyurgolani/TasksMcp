@@ -16,7 +16,10 @@ describe('Dependency Tool Registration', () => {
   });
 
   afterEach(async () => {
-    // Clean up server resources if needed
+    // Clean up server resources
+    if (server) {
+      await server.close();
+    }
   });
 
   describe('Tool Discovery', () => {
@@ -116,7 +119,7 @@ describe('Dependency Tool Registration', () => {
       
       expect(schema).toBeDefined();
       expect(schema?.name).toBe('analyze_task_dependencies');
-      expect(schema?.description).toContain('Get a simple analysis of task dependencies');
+      expect(schema?.description).toContain('Get analysis of task dependencies and project structure');
       
       const inputSchema = schema?.inputSchema;
       expect(inputSchema).toBeDefined();
@@ -238,7 +241,7 @@ describe('Dependency Tool Registration', () => {
       expect(readyTasksSchema?.description).toBe('Get tasks that are ready to work on (no incomplete dependencies)');
       
       const analyzeSchema = getToolSchema('analyze_task_dependencies');
-      expect(analyzeSchema?.description).toBe('Get a simple analysis of task dependencies and project structure');
+      expect(analyzeSchema?.description).toBe('Get analysis of task dependencies and project structure with optional DAG visualization');
     });
 
     it('should have clear parameter descriptions', () => {

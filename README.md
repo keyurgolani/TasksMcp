@@ -423,7 +423,7 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 ### Multi-Agent Orchestration (3 tools)
 16. **`set_task_dependencies`** - Set task prerequisites and relationships for workflow management
 17. **`get_ready_tasks`** - Find tasks ready for execution (no incomplete dependencies)
-18. **`analyze_task_dependencies`** - Analyze project structure, critical paths, and bottlenecks
+18. **`analyze_task_dependencies`** - Analyze project structure, critical paths, and bottlenecks with **DAG visualization**
 
 ### Quick Examples
 
@@ -492,6 +492,7 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 - **Set Prerequisites**: Define which tasks must be completed before others can begin
 - **Prevent Conflicts**: Automatic circular dependency detection and prevention
 - **Workflow Control**: Ensure proper task sequencing across multiple agents
+- **DAG Visualization**: Visual representation of task dependencies in multiple formats
 
 #### Ready Task Discovery
 - **Find Available Work**: Identify tasks with no incomplete dependencies
@@ -502,6 +503,7 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 - **Critical Path Analysis**: Identify the longest chain of dependent tasks
 - **Bottleneck Detection**: Find tasks that block multiple others
 - **Progress Monitoring**: Track completion status across distributed workflows
+- **Visual DAG Analysis**: ASCII, DOT (Graphviz), and Mermaid format dependency graphs
 
 ### Multi-Agent Workflow Example
 

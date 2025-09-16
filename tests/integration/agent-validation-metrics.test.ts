@@ -6,7 +6,7 @@
  * user experience improvements.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { McpTaskManagerServer } from '../../src/app/server.js';
 import { ConfigManager } from '../../src/infrastructure/config/index.js';
 import { z } from 'zod';
@@ -32,6 +32,17 @@ describe('Agent Validation Metrics', () => {
     const outerResult = JSON.parse(createListResult.content[0].text);
     const listData = JSON.parse(outerResult.content[0].text);
     testListId = listData.id;
+  });
+
+  afterEach(async () => {
+    // Clean up server resources
+    if (server) {
+      await server.close();
+    }
+    // Clean up environment variables
+    delete process.env.STORAGE_TYPE;
+    delete process.env.METRICS_ENABLED;
+    delete process.env.NODE_ENV;
   });
 
   describe('Error Rate Reduction Metrics', () => {

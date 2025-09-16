@@ -17,7 +17,11 @@ describe('Server Parameter Preprocessing Integration', () => {
   });
 
   afterEach(async () => {
-    // Clean up
+    // Clean up server resources
+    if (server) {
+      await server.close();
+    }
+    // Clean up environment variables
     delete process.env.STORAGE_TYPE;
   });
 

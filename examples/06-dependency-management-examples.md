@@ -1,37 +1,17 @@
 # Dependency Management Examples
 
-This guide provides comprehensive examples for the 3 dependency management tools that enable sophisticated task relationship management and project workflow optimization.
+This document demonstrates comprehensive dependency management capabilities including task relationships, critical path analysis, and workflow optimization.
 
-## Tool Overview
+## Basic Dependency Operations
 
-| Tool | Purpose | Key Features |
-|------|---------|--------------|
-| `set_task_dependencies` | Set task prerequisites | Circular dependency prevention, validation |
-| `get_ready_tasks` | Find available work | Priority sorting, actionable suggestions |
-| `analyze_task_dependencies` | Project analysis | Critical path, bottlenecks, recommendations |
-
----
-
-## set_task_dependencies
-
-Set all dependencies for a task, replacing any existing dependencies.
-
-### Example 1: Software Development Workflow
-
-Setting up a typical development task sequence:
-
-**Request:**
+### Setting Task Dependencies
 ```json
 {
-  "name": "set_task_dependencies",
-  "arguments": {
-    "listId": "dev-project-123",
-    "taskId": "deploy-prod-456",
-    "dependencyIds": [
-      "code-review-789",
-      "run-tests-abc",
-      "update-docs-def"
-    ]
+  "tool": "set_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+    "dependencyIds": ["f47cd78e-962a-4860-a17e-49c67ab12da0"]
   }
 }
 ```
@@ -39,80 +19,43 @@ Setting up a typical development task sequence:
 **Response:**
 ```json
 {
-  "id": "deploy-prod-456",
-  "title": "Deploy to production",
-  "description": "Deploy application to production environment",
+  "id": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+  "title": "Design database schema",
+  "description": "Create ERD and define table structures for user management, content, and analytics",
   "status": "pending",
   "priority": 5,
-  "tags": ["deployment", "production"],
-  "createdAt": "2025-01-15T10:00:00.000Z",
-  "updatedAt": "2025-01-15T14:30:00.000Z",
-  "estimatedDuration": 45,
-  "dependencies": [
-    "code-review-789",
-    "run-tests-abc", 
-    "update-docs-def"
-  ],
+  "tags": ["database", "design", "backend", "critical", "architecture"],
+  "createdAt": "2025-09-16T21:16:46.741Z",
+  "updatedAt": "2025-09-16T21:17:27.397Z",
+  "estimatedDuration": 240,
+  "dependencies": ["f47cd78e-962a-4860-a17e-49c67ab12da0"],
   "message": "Dependencies updated successfully",
   "warnings": []
 }
 ```
 
-### Example 2: Content Creation Pipeline
-
-Setting up content workflow dependencies:
-
-**Request:**
+### Multiple Dependencies
 ```json
 {
-  "name": "set_task_dependencies", 
-  "arguments": {
-    "listId": "content-pipeline-456",
-    "taskId": "publish-article-789",
+  "tool": "set_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "616496ad-87ad-4718-8ff1-68293c14077d",
     "dependencyIds": [
-      "write-draft-123",
-      "edit-content-456",
-      "create-graphics-789",
-      "seo-review-abc"
+      "bc54482d-0f70-416b-987c-a6f15a98f16a",
+      "62ab5565-5246-40be-953f-b2636c9753ba"
     ]
   }
 }
 ```
 
-**Response:**
+### Clearing Dependencies
 ```json
 {
-  "id": "publish-article-789",
-  "title": "Publish blog article",
-  "description": "Publish the completed article to the website",
-  "status": "pending",
-  "priority": 4,
-  "tags": ["content", "publishing"],
-  "createdAt": "2025-01-15T09:00:00.000Z",
-  "updatedAt": "2025-01-15T15:45:00.000Z",
-  "estimatedDuration": 15,
-  "dependencies": [
-    "write-draft-123",
-    "edit-content-456", 
-    "create-graphics-789",
-    "seo-review-abc"
-  ],
-  "message": "Dependencies updated successfully",
-  "warnings": []
-}
-```
-
-### Example 3: Removing All Dependencies
-
-Clearing dependencies from a task:
-
-**Request:**
-```json
-{
-  "name": "set_task_dependencies",
-  "arguments": {
-    "listId": "project-cleanup-789",
-    "taskId": "independent-task-123",
+  "tool": "set_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "62ab5565-5246-40be-953f-b2636c9753ba",
     "dependencyIds": []
   }
 }
@@ -121,37 +64,29 @@ Clearing dependencies from a task:
 **Response:**
 ```json
 {
-  "id": "independent-task-123",
-  "title": "Update team documentation",
-  "description": "Update the team wiki with recent changes",
+  "id": "62ab5565-5246-40be-953f-b2636c9753ba",
+  "title": "Build frontend application",
+  "description": "Create React components, routing, and state management for the user interface",
   "status": "pending",
-  "priority": 2,
-  "tags": ["documentation"],
-  "createdAt": "2025-01-15T11:00:00.000Z",
-  "updatedAt": "2025-01-15T16:20:00.000Z",
-  "estimatedDuration": 60,
+  "priority": 3,
+  "tags": ["frontend", "react", "ui"],
+  "createdAt": "2025-09-16T21:16:57.035Z",
+  "updatedAt": "2025-09-16T21:18:45.123Z",
+  "estimatedDuration": 360,
   "dependencies": [],
-  "message": "Dependencies updated successfully",
+  "message": "Dependencies cleared successfully",
   "warnings": []
 }
 ```
 
-### Example 4: Event Planning Dependencies
+## Finding Ready Tasks
 
-Setting up event planning task relationships:
-
-**Request:**
+### Get All Ready Tasks
 ```json
 {
-  "name": "set_task_dependencies",
-  "arguments": {
-    "listId": "conference-planning-abc",
-    "taskId": "send-invitations-def",
-    "dependencyIds": [
-      "finalize-venue-123",
-      "confirm-speakers-456",
-      "design-materials-789"
-    ]
+  "tool": "get_ready_tasks",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d"
   }
 }
 ```
@@ -159,444 +94,126 @@ Setting up event planning task relationships:
 **Response:**
 ```json
 {
-  "id": "send-invitations-def",
-  "title": "Send conference invitations",
-  "description": "Send invitations to all attendees with event details",
-  "status": "pending",
-  "priority": 4,
-  "tags": ["marketing", "communication"],
-  "createdAt": "2025-01-15T08:30:00.000Z",
-  "updatedAt": "2025-01-15T17:10:00.000Z",
-  "estimatedDuration": 120,
-  "dependencies": [
-    "finalize-venue-123",
-    "confirm-speakers-456",
-    "design-materials-789"
-  ],
-  "message": "Dependencies updated successfully",
-  "warnings": []
-}
-```
-
-### Example 5: Error - Circular Dependency
-
-Attempting to create a circular dependency:
-
-**Request:**
-```json
-{
-  "name": "set_task_dependencies",
-  "arguments": {
-    "listId": "circular-test-123",
-    "taskId": "task-a-456",
-    "dependencyIds": ["task-b-789"]
-  }
-}
-```
-
-**Error Response:**
-```json
-{
-  "content": [{
-    "type": "text",
-    "text": "Validation error: Circular dependency detected: task-a-456 -> task-b-789 -> task-c-abc -> task-a-456"
-  }],
-  "isError": true
-}
-```
-
----
-
-## get_ready_tasks
-
-Get tasks that are ready to work on (have no incomplete dependencies).
-
-### Example 1: Development Sprint Planning
-
-Finding ready tasks for a development sprint:
-
-**Request:**
-```json
-{
-  "name": "get_ready_tasks",
-  "arguments": {
-    "listId": "sprint-24-dev-123",
-    "limit": 5
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "sprint-24-dev-123",
+  "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
   "readyTasks": [
     {
-      "id": "setup-env-456",
-      "title": "Set up development environment",
-      "description": "Install Node.js, dependencies, and configure IDE",
+      "id": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+      "title": "Design database schema",
+      "description": "Create ERD and define table structures for user management, content, and analytics",
       "status": "pending",
       "priority": 5,
-      "tags": ["setup", "environment"],
-      "estimatedDuration": 30,
-      "createdAt": "2025-01-15T09:00:00.000Z",
-      "updatedAt": "2025-01-15T09:00:00.000Z"
+      "tags": ["database", "design", "backend", "critical", "architecture"],
+      "estimatedDuration": 240,
+      "createdAt": "2025-09-16T21:16:46.741Z",
+      "updatedAt": "2025-09-16T21:17:27.397Z"
     },
     {
-      "id": "write-tests-789",
-      "title": "Write unit tests for user service",
-      "description": "Create comprehensive unit tests for user authentication",
-      "status": "pending", 
-      "priority": 4,
-      "tags": ["testing", "backend"],
-      "estimatedDuration": 90,
-      "createdAt": "2025-01-15T09:15:00.000Z",
-      "updatedAt": "2025-01-15T09:15:00.000Z"
-    },
-    {
-      "id": "update-readme-abc",
-      "title": "Update project README",
-      "description": "Add installation and usage instructions",
+      "id": "62ab5565-5246-40be-953f-b2636c9753ba",
+      "title": "Build frontend application",
+      "description": "Create React components, routing, and state management for the user interface",
       "status": "pending",
-      "priority": 2,
-      "tags": ["documentation"],
-      "estimatedDuration": 45,
-      "createdAt": "2025-01-15T09:30:00.000Z",
-      "updatedAt": "2025-01-15T09:30:00.000Z"
+      "priority": 3,
+      "tags": ["frontend", "react", "ui"],
+      "estimatedDuration": 360,
+      "createdAt": "2025-09-16T21:16:57.035Z",
+      "updatedAt": "2025-09-16T21:16:57.035Z"
     }
   ],
-  "totalReady": 8,
+  "totalReady": 2,
   "nextActions": [
-    "Start with high-priority tasks: \"Set up development environment\"",
-    "3 tasks are ready to work on. Focus on one at a time for best results.",
-    "1 quick task (≤30 min) available for filling small time slots."
+    "Start with high-priority tasks: \"Design database schema\"",
+    "2 tasks are ready to work on. Focus on one at a time for best results."
   ],
   "summary": {
-    "totalTasks": 25,
-    "completedTasks": 8,
-    "readyTasks": 8,
-    "blockedTasks": 9
+    "totalTasks": 5,
+    "completedTasks": 1,
+    "readyTasks": 2,
+    "blockedTasks": 2
   }
 }
 ```
 
-### Example 2: Marketing Campaign Tasks
-
-Finding ready marketing tasks:
-
-**Request:**
+### Limited Ready Tasks
 ```json
 {
-  "name": "get_ready_tasks",
-  "arguments": {
-    "listId": "q1-marketing-456",
+  "tool": "get_ready_tasks",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
     "limit": 3
   }
 }
 ```
 
+## Dependency Analysis
+
+### Complete Analysis with Visualization
+```json
+{
+  "tool": "analyze_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "format": "both",
+    "dagStyle": "ascii"
+  }
+}
+```
+
 **Response:**
 ```json
 {
-  "listId": "q1-marketing-456",
-  "readyTasks": [
-    {
-      "id": "research-keywords-123",
-      "title": "Research SEO keywords",
-      "description": "Identify high-value keywords for Q1 content strategy",
-      "status": "pending",
-      "priority": 4,
-      "tags": ["seo", "research"],
-      "estimatedDuration": 120,
-      "createdAt": "2025-01-15T10:00:00.000Z",
-      "updatedAt": "2025-01-15T10:00:00.000Z"
-    },
-    {
-      "id": "design-social-templates-456",
-      "title": "Design social media templates",
-      "description": "Create reusable templates for social media posts",
-      "status": "pending",
-      "priority": 3,
-      "tags": ["design", "social-media"],
-      "estimatedDuration": 180,
-      "createdAt": "2025-01-15T10:15:00.000Z",
-      "updatedAt": "2025-01-15T10:15:00.000Z"
-    }
-  ],
-  "totalReady": 2,
-  "nextActions": [
-    "Begin with: \"Research SEO keywords\"",
-    "2 tasks are ready to work on. Focus on one at a time for best results."
-  ],
+  "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
   "summary": {
-    "totalTasks": 15,
-    "completedTasks": 5,
+    "totalTasks": 5,
     "readyTasks": 2,
-    "blockedTasks": 8
-  }
-}
-```
-
-### Example 3: No Ready Tasks - All Blocked
-
-When all tasks are blocked by dependencies:
-
-**Request:**
-```json
-{
-  "name": "get_ready_tasks",
-  "arguments": {
-    "listId": "blocked-project-789",
-    "limit": 10
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "blocked-project-789",
-  "readyTasks": [],
-  "totalReady": 0,
-  "nextActions": [
-    "No tasks are ready! Focus on completing \"Database setup\" which is blocking 5 other tasks.",
-    "3 tasks are in progress. Consider completing them before starting new ones."
-  ],
-  "summary": {
-    "totalTasks": 12,
-    "completedTasks": 2,
-    "readyTasks": 0,
-    "blockedTasks": 7
-  }
-}
-```
-
-### Example 4: Project Near Completion
-
-When most tasks are completed:
-
-**Request:**
-```json
-{
-  "name": "get_ready_tasks",
-  "arguments": {
-    "listId": "finishing-project-abc",
-    "limit": 5
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "finishing-project-abc",
-  "readyTasks": [
-    {
-      "id": "final-testing-123",
-      "title": "Perform final integration testing",
-      "description": "Run complete test suite before release",
-      "status": "pending",
-      "priority": 5,
-      "tags": ["testing", "final"],
-      "estimatedDuration": 60,
-      "createdAt": "2025-01-15T08:00:00.000Z",
-      "updatedAt": "2025-01-15T08:00:00.000Z"
-    }
-  ],
-  "totalReady": 1,
-  "nextActions": [
-    "Start with high-priority tasks: \"Perform final integration testing\"",
-    "Project is nearing completion! Focus on finishing remaining tasks and final reviews."
-  ],
-  "summary": {
-    "totalTasks": 20,
-    "completedTasks": 18,
-    "readyTasks": 1,
-    "blockedTasks": 1
-  }
-}
-```
-
-### Example 5: All Tasks Completed
-
-When project is finished:
-
-**Request:**
-```json
-{
-  "name": "get_ready_tasks",
-  "arguments": {
-    "listId": "completed-project-def",
-    "limit": 10
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "completed-project-def",
-  "readyTasks": [],
-  "totalReady": 0,
-  "nextActions": [
-    "All tasks are completed! Consider adding new tasks or archiving this list."
-  ],
-  "summary": {
-    "totalTasks": 15,
-    "completedTasks": 15,
-    "readyTasks": 0,
-    "blockedTasks": 0
-  }
-}
-```
-
----
-
-## analyze_task_dependencies
-
-Get comprehensive analysis of task dependencies and project structure.
-
-### Example 1: Software Development Project Analysis
-
-Analyzing a development project with complex dependencies:
-
-**Request:**
-```json
-{
-  "name": "analyze_task_dependencies",
-  "arguments": {
-    "listId": "web-app-development-123"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "web-app-development-123",
-  "summary": {
-    "totalTasks": 18,
-    "readyTasks": 4,
-    "blockedTasks": 8,
-    "tasksWithDependencies": 12
-  },
-  "criticalPath": [
-    "setup-database-456",
-    "create-user-model-789", 
-    "implement-auth-abc",
-    "build-user-interface-def",
-    "integration-testing-ghi",
-    "deploy-production-jkl"
-  ],
-  "issues": {
-    "circularDependencies": [],
-    "bottlenecks": ["setup-database-456", "implement-auth-abc"]
-  },
-  "recommendations": [
-    "Focus on the critical path: Start with \"Setup database schema\" as it affects 5 other tasks.",
-    "4 tasks are ready. Prioritize high-priority tasks like \"Setup database schema\".",
-    "Bottleneck alert: \"Setup database schema\" is blocking multiple tasks. Consider breaking it down or prioritizing it.",
-    "Project is in early stages. Focus on completing foundational tasks to unlock more work."
-  ]
-}
-```
-
-### Example 2: Marketing Campaign Analysis
-
-Analyzing a marketing campaign with parallel workflows:
-
-**Request:**
-```json
-{
-  "name": "analyze_task_dependencies",
-  "arguments": {
-    "listId": "product-launch-campaign-456"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "product-launch-campaign-456",
-  "summary": {
-    "totalTasks": 22,
-    "readyTasks": 6,
-    "blockedTasks": 10,
-    "tasksWithDependencies": 16
-  },
-  "criticalPath": [
-    "finalize-product-features-123",
-    "create-marketing-materials-456",
-    "setup-landing-page-789",
-    "launch-ad-campaigns-abc",
-    "monitor-metrics-def"
-  ],
-  "issues": {
-    "circularDependencies": [],
-    "bottlenecks": ["create-marketing-materials-456"]
-  },
-  "recommendations": [
-    "Focus on the critical path: Start with \"Finalize product features\" as it affects 4 other tasks.",
-    "6 tasks are ready. Consider starting with the oldest or highest priority task.",
-    "Bottleneck alert: \"Create marketing materials\" is blocking multiple tasks. Consider breaking it down or prioritizing it.",
-    "High dependency complexity detected. Consider simplifying task relationships or breaking down complex tasks."
-  ]
-}
-```
-
-### Example 3: Simple Project with Few Dependencies
-
-Analyzing a straightforward project:
-
-**Request:**
-```json
-{
-  "name": "analyze_task_dependencies",
-  "arguments": {
-    "listId": "simple-website-789"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "simple-website-789",
-  "summary": {
-    "totalTasks": 8,
-    "readyTasks": 3,
     "blockedTasks": 2,
     "tasksWithDependencies": 3
   },
   "criticalPath": [
-    "design-wireframes-123",
-    "build-html-structure-456",
-    "add-styling-789",
-    "deploy-website-abc"
+    "f47cd78e-962a-4860-a17e-49c67ab12da0",
+    "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+    "bc54482d-0f70-416b-987c-a6f15a98f16a",
+    "616496ad-87ad-4718-8ff1-68293c14077d"
   ],
   "issues": {
     "circularDependencies": [],
     "bottlenecks": []
   },
   "recommendations": [
-    "Focus on the critical path: Start with \"Design wireframes\" as it affects 3 other tasks.",
-    "3 tasks are ready. Consider starting with the oldest or highest priority task.",
-    "Project is in early stages. Focus on completing foundational tasks to unlock more work."
+    "Focus on the critical path: Start with \"Design database schema\" as it affects 3 other tasks.",
+    "2 tasks are ready. Prioritize high-priority tasks like \"Design database schema\"."
   ]
 }
+
+==================================================
+DAG VISUALIZATION:
+==================================================
+
+Task Dependency Graph (DAG):
+
+🟢 READY TO START:
+  • Design database schema → [Implement backend API]
+  • Build frontend application
+
+🔴 BLOCKED TASKS:
+  • Implement backend API ← blocked by [Design database schema]
+  • Write comprehensive tests ← blocked by [Implement backend API]
+
+✅ COMPLETED:
+  • Set up development environment and tools
+
+DEPENDENCY RELATIONSHIPS:
+  Design database schema ← depends on: [Set up development environment and tools]
+  Implement backend API ← depends on: [Design database schema]
+  Write comprehensive tests ← depends on: [Implement backend API]
 ```
 
-### Example 4: Project with Circular Dependencies
-
-Analyzing a project with dependency issues:
-
-**Request:**
+### Analysis Only (No Visualization)
 ```json
 {
-  "name": "analyze_task_dependencies",
-  "arguments": {
-    "listId": "problematic-project-abc"
+  "tool": "analyze_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "format": "analysis"
   }
 }
 ```
@@ -604,299 +221,319 @@ Analyzing a project with dependency issues:
 **Response:**
 ```json
 {
-  "listId": "problematic-project-abc",
+  "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
   "summary": {
-    "totalTasks": 15,
-    "readyTasks": 0,
-    "blockedTasks": 12,
-    "tasksWithDependencies": 10
-  },
-  "criticalPath": [],
-  "issues": {
-    "circularDependencies": [
-      ["task-a-123", "task-b-456", "task-c-789", "task-a-123"],
-      ["task-x-abc", "task-y-def", "task-x-abc"]
-    ],
-    "bottlenecks": []
-  },
-  "recommendations": [
-    "No tasks are ready. Check for circular dependencies or review task statuses.",
-    "2 circular dependencies detected. Review and break these cycles to unblock progress."
-  ]
-}
-```
-
-### Example 5: Nearly Complete Project
-
-Analyzing a project nearing completion:
-
-**Request:**
-```json
-{
-  "name": "analyze_task_dependencies",
-  "arguments": {
-    "listId": "finishing-touches-def"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "listId": "finishing-touches-def",
-  "summary": {
-    "totalTasks": 20,
+    "totalTasks": 5,
     "readyTasks": 2,
-    "blockedTasks": 1,
-    "tasksWithDependencies": 8
+    "blockedTasks": 2,
+    "tasksWithDependencies": 3
   },
   "criticalPath": [
-    "final-review-123",
-    "deploy-to-production-456"
+    "f47cd78e-962a-4860-a17e-49c67ab12da0",
+    "e7e5a962-f706-4607-b7e1-95f44b9867ee",
+    "bc54482d-0f70-416b-987c-a6f15a98f16a",
+    "616496ad-87ad-4718-8ff1-68293c14077d"
   ],
   "issues": {
     "circularDependencies": [],
     "bottlenecks": []
   },
   "recommendations": [
-    "Focus on the critical path: Start with \"Final code review\" as it affects 1 other task.",
-    "2 tasks are ready. Consider starting with the oldest or highest priority task.",
-    "Project is nearing completion! Focus on finishing remaining tasks and final reviews."
+    "Focus on the critical path: Start with \"Design database schema\" as it affects 3 other tasks.",
+    "2 tasks are ready. Prioritize high-priority tasks like \"Design database schema\"."
   ]
 }
 ```
 
----
+## Visualization Formats
 
-## Enhanced Tool Examples
-
-### Enhanced add_task with Dependencies
-
-Creating a task with initial dependencies:
-
-**Request:**
+### Mermaid Diagram
 ```json
 {
-  "name": "add_task",
-  "arguments": {
-    "listId": "new-feature-123",
-    "title": "Deploy new feature",
-    "description": "Deploy the user dashboard feature to production",
-    "priority": 5,
-    "tags": ["deployment", "feature"],
-    "estimatedDuration": 30,
+  "tool": "analyze_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "format": "dag",
+    "dagStyle": "mermaid"
+  }
+}
+```
+
+**Response:**
+```
+graph TD
+  T1["Set up development environment and tools"]:::completed
+  T2["Design database schema"]:::pending
+  T3["Implement backend API"]:::pending
+  T4["Build frontend application"]:::pending
+  T5["Write comprehensive tests"]:::pending
+
+  T1 --> T2
+  T2 --> T3
+  T3 --> T5
+
+  classDef completed fill:#90EE90,stroke:#333,stroke-width:2px
+  classDef inProgress fill:#87CEEB,stroke:#333,stroke-width:2px
+  classDef blocked fill:#F08080,stroke:#333,stroke-width:2px
+  classDef pending fill:#FFFFE0,stroke:#333,stroke-width:2px
+  classDef cancelled fill:#D3D3D3,stroke:#333,stroke-width:2px
+```
+
+### Graphviz DOT Format
+```json
+{
+  "tool": "analyze_task_dependencies",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "format": "dag",
+    "dagStyle": "dot"
+  }
+}
+```
+
+**Response:**
+```
+digraph TaskDAG {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+
+  "Set up development environment and tools" [fillcolor=lightgreen, style="rounded,filled", penwidth=3];
+  "Design database schema" [fillcolor=lightyellow, style="rounded,filled", penwidth=3];
+  "Implement backend API" [fillcolor=lightyellow, style="rounded,filled"];
+  "Build frontend application" [fillcolor=lightyellow, style="rounded,filled"];
+  "Write comprehensive tests" [fillcolor=lightyellow, style="rounded,filled"];
+
+  "Set up development environment and tools" -> "Design database schema";
+  "Design database schema" -> "Implement backend API";
+  "Implement backend API" -> "Write comprehensive tests";
+}
+```
+
+## Complex Dependency Scenarios
+
+### Parallel Development Tracks
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Set up CI/CD pipeline",
+    "description": "Configure GitHub Actions for automated testing and deployment",
+    "priority": 3,
+    "tags": ["devops", "automation", "ci-cd"],
+    "dependencies": ["f47cd78e-962a-4860-a17e-49c67ab12da0"]
+  }
+}
+```
+
+### Integration Tasks with Multiple Dependencies
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Integration testing",
+    "description": "Test frontend and backend integration with end-to-end scenarios",
+    "priority": 2,
+    "tags": ["testing", "integration", "e2e"],
     "dependencies": [
-      "code-review-456",
-      "qa-testing-789",
-      "update-docs-abc"
+      "bc54482d-0f70-416b-987c-a6f15a98f16a",
+      "62ab5565-5246-40be-953f-b2636c9753ba"
     ]
   }
 }
 ```
 
-**Response:**
+### Deployment Dependencies
 ```json
 {
-  "id": "deploy-feature-def",
-  "title": "Deploy new feature",
-  "description": "Deploy the user dashboard feature to production",
-  "status": "pending",
-  "priority": 5,
-  "tags": ["deployment", "feature"],
-  "createdAt": "2025-01-15T16:00:00.000Z",
-  "updatedAt": "2025-01-15T16:00:00.000Z",
-  "estimatedDuration": 30,
-  "dependencies": [
-    "code-review-456",
-    "qa-testing-789", 
-    "update-docs-abc"
-  ],
-  "message": "Task created successfully with dependencies"
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Deploy to production",
+    "description": "Deploy application to production environment with monitoring",
+    "priority": 1,
+    "tags": ["deployment", "production", "monitoring"],
+    "dependencies": [
+      "616496ad-87ad-4718-8ff1-68293c14077d",
+      "integration-task-id",
+      "ci-cd-task-id"
+    ]
+  }
 }
 ```
 
-### Enhanced filter_tasks with Dependency Filters
+## Filtering by Dependency Status
 
-Filtering tasks by dependency status:
-
-**Request:**
+### Find Tasks with Dependencies
 ```json
 {
-  "name": "filter_tasks",
-  "arguments": {
-    "listId": "project-overview-456",
+  "tool": "filter_tasks",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "hasDependencies": true
+  }
+}
+```
+
+### Find Blocked Tasks
+```json
+{
+  "tool": "filter_tasks",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "isBlocked": true
+  }
+}
+```
+
+### Find Ready Tasks (Alternative Method)
+```json
+{
+  "tool": "filter_tasks",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
     "isReady": true,
-    "priority": 4
+    "status": "pending"
   }
 }
 ```
 
-**Response:**
-```json
-{
-  "listId": "project-overview-456",
-  "tasks": [
-    {
-      "id": "high-priority-ready-123",
-      "title": "Implement user authentication",
-      "status": "pending",
-      "priority": 4,
-      "isReady": true,
-      "dependencies": [],
-      "estimatedDuration": 120
-    }
-  ],
-  "totalMatching": 1,
-  "filters": {
-    "isReady": true,
-    "priority": 4
-  }
-}
+## Dependency Management Patterns
+
+### Sequential Development Pattern
+```
+Setup → Design → Implementation → Testing → Deployment
 ```
 
-### Enhanced get_list with Dependency Information
+Example dependency chain:
+1. "Set up development environment" (no dependencies)
+2. "Design database schema" (depends on #1)
+3. "Implement backend API" (depends on #2)
+4. "Write comprehensive tests" (depends on #3)
+5. "Deploy to production" (depends on #4)
 
-Getting a list with dependency details:
-
-**Request:**
-```json
-{
-  "name": "get_list",
-  "arguments": {
-    "listId": "dependency-example-789",
-    "includeCompleted": false
-  }
-}
+### Parallel Development Pattern
+```
+Setup → Design → Implementation (Frontend + Backend) → Integration → Deployment
 ```
 
-**Response:**
-```json
-{
-  "id": "dependency-example-789",
-  "title": "Web Development Project",
-  "items": [
-    {
-      "id": "task-001",
-      "title": "Setup development environment",
-      "status": "pending",
-      "priority": 5,
-      "dependencies": [],
-      "isReady": true
-    },
-    {
-      "id": "task-002", 
-      "title": "Build user interface",
-      "status": "pending",
-      "priority": 4,
-      "dependencies": ["task-001"],
-      "isReady": false,
-      "blockedBy": ["task-001"]
-    }
-  ],
-  "totalItems": 2,
-  "completedItems": 0,
-  "progress": 0
-}
+Example parallel tracks:
+1. "Set up development environment" (no dependencies)
+2. "Design database schema" (depends on #1)
+3. "Implement backend API" (depends on #2)
+4. "Build frontend application" (depends on #1, parallel to #3)
+5. "Integration testing" (depends on #3 and #4)
+6. "Deploy to production" (depends on #5)
+
+### Feature Branch Pattern
+```
+Setup → Feature Design → Feature Implementation → Feature Testing → Integration
 ```
 
----
-
-## Common Workflows
-
-### 1. Project Setup Workflow
-
-```bash
-# 1. Create project tasks
-add_task: "Setup environment" (no dependencies)
-add_task: "Install dependencies" (depends on setup)
-add_task: "Configure database" (depends on install)
-add_task: "Write tests" (depends on configure)
-
-# 2. Set up dependency chain
-set_task_dependencies: install -> [setup]
-set_task_dependencies: configure -> [install] 
-set_task_dependencies: tests -> [configure]
-
-# 3. Check what's ready to work on
-get_ready_tasks: Should show "Setup environment"
-
-# 4. Analyze project structure
-analyze_task_dependencies: Shows critical path and recommendations
-```
-
-### 2. Daily Planning Workflow
-
-```bash
-# 1. Check ready tasks for today
-get_ready_tasks: limit=5
-
-# 2. If no ready tasks, analyze why
-analyze_task_dependencies: Check bottlenecks and issues
-
-# 3. Filter by priority if many ready tasks
-filter_tasks: isReady=true, priority>=4
-
-# 4. Start work on highest priority ready task
-```
-
-### 3. Project Health Check
-
-```bash
-# 1. Get overall project analysis
-analyze_task_dependencies: Full project overview
-
-# 2. Check for blocked tasks
-filter_tasks: isBlocked=true
-
-# 3. Identify bottlenecks from analysis
-# Focus on tasks in bottlenecks array
-
-# 4. Check critical path progress
-# Prioritize tasks on critical path
-```
-
-### 4. Dependency Troubleshooting
-
-```bash
-# 1. If circular dependency error occurs:
-analyze_task_dependencies: Check issues.circularDependencies
-
-# 2. Review the circular chain
-# Remove one dependency to break the loop
-
-# 3. If no tasks are ready:
-get_ready_tasks: Check nextActions for guidance
-filter_tasks: status="in_progress" (complete these first)
-
-# 4. Verify dependency setup
-analyze_task_dependencies: Review recommendations
-```
-
----
+Example feature development:
+1. "Set up feature branch" (depends on main setup)
+2. "Design user authentication" (depends on #1)
+3. "Implement auth backend" (depends on #2)
+4. "Implement auth frontend" (depends on #2)
+5. "Test authentication flow" (depends on #3 and #4)
+6. "Merge to main branch" (depends on #5)
 
 ## Best Practices
 
 ### Dependency Design
-- **Keep it simple**: Avoid complex dependency chains when possible
-- **Break down large tasks**: Tasks with many dependencies should be split
-- **Use meaningful relationships**: Only create dependencies that represent real prerequisites
-- **Regular review**: Use analysis tools to identify and resolve bottlenecks
+1. **Keep chains reasonable** - Avoid overly long dependency chains
+2. **Enable parallelism** - Design tasks that can run in parallel
+3. **Use logical grouping** - Group related dependencies together
+4. **Consider team capacity** - Don't create too many parallel tracks
+5. **Plan for integration** - Include integration tasks for parallel work
 
-### Work Planning
-- **Start with ready tasks**: Always check `get_ready_tasks` before planning work
-- **Focus on critical path**: Prioritize tasks that affect the most other tasks
-- **Address bottlenecks**: Complete tasks that block multiple others first
-- **Monitor progress**: Regular analysis helps maintain project health
+### Dependency Management
+1. **Review dependencies regularly** - Ensure they still make sense
+2. **Update as requirements change** - Dependencies may need adjustment
+3. **Clear unnecessary dependencies** - Remove dependencies that are no longer needed
+4. **Use ready tasks** - Focus on what can be done now
+5. **Monitor critical path** - Understand what affects project timeline
 
-### Error Prevention
-- **Validate before setting**: Ensure all dependency IDs exist
-- **Avoid circular dependencies**: Design carefully to prevent loops
-- **Limit dependency count**: Keep under 5 dependencies per task when possible
-- **Document complex relationships**: Use descriptions to explain complex dependencies
+### Workflow Optimization
+1. **Start with ready tasks** - Always work on tasks that can be started
+2. **Prioritize critical path** - Focus on tasks that unblock others
+3. **Identify bottlenecks** - Look for tasks that block many others
+4. **Plan parallel work** - Assign independent tasks to different team members
+5. **Complete dependencies first** - Finish blocking tasks to unblock others
 
----
+## Common Dependency Scenarios
 
-**Next Steps:**
-- Review [Dependency Management API Documentation](../docs/api/dependency-management.md)
-- Learn about [Enhanced Tool Features](../docs/api/enhanced-tools.md)
-- Check [Performance Optimization](../docs/api/tool-performance.md) for large projects
+### Software Development Project
+```
+Environment Setup → Architecture Design → Database Design
+                                      ↓
+Frontend Development ← API Development ← Database Implementation
+                ↓                    ↓
+            UI Testing ← Integration Testing → System Testing
+                                      ↓
+                              Deployment → Monitoring
+```
+
+### Content Creation Project
+```
+Research → Content Strategy → Content Outline
+                           ↓
+Writing ← Design Assets ← Content Creation
+    ↓         ↓              ↓
+Review → Editing → Final Review → Publishing
+```
+
+### Marketing Campaign
+```
+Market Research → Campaign Strategy → Creative Brief
+                                   ↓
+Asset Creation ← Copy Writing ← Campaign Materials
+            ↓         ↓              ↓
+    Review → Testing → Launch → Monitoring → Analysis
+```
+
+## Troubleshooting Dependencies
+
+### Circular Dependencies
+If you try to create a circular dependency, the system will prevent it:
+```json
+{
+  "error": "Circular dependency detected",
+  "details": "Task A depends on Task B, which depends on Task A"
+}
+```
+
+### Missing Dependencies
+If you reference a non-existent task:
+```json
+{
+  "error": "Dependency not found",
+  "details": "Task with ID 'invalid-id' does not exist"
+}
+```
+
+### Dependency Warnings
+The system may provide warnings for complex dependency structures:
+```json
+{
+  "warnings": [
+    "Task has 5+ dependencies, consider breaking it down",
+    "Long dependency chain detected (6 levels deep)"
+  ]
+}
+```
+
+## Performance Considerations
+
+### Large Dependency Graphs
+- Use `limit` parameter when getting ready tasks
+- Consider breaking down complex tasks with many dependencies
+- Use visualization to understand complex relationships
+- Monitor performance with large numbers of tasks
+
+### Frequent Dependency Updates
+- Batch dependency updates when possible
+- Use analysis tools to understand impact of changes
+- Consider caching for frequently accessed dependency information
+- Monitor system performance with frequent updates

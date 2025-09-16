@@ -1,125 +1,268 @@
 # MCP Task Manager Examples
 
-This directory contains comprehensive examples for using the MCP Task Manager server. Each file demonstrates different aspects of the server's functionality with practical, real-world scenarios.
+This directory contains comprehensive examples demonstrating all features of the MCP Task Manager. Each example is based on real usage and testing of the system.
 
-## 📁 Example Files
+## Example Files
 
-### [01-list-management-examples.md](./01-list-management-examples.md)
-Learn how to manage todo lists with 4 essential tools:
-- **create_list** - Create new todo lists for projects, teams, or personal use
-- **get_list** - Retrieve lists with or without completed tasks
-- **list_all_lists** - View all your lists with filtering options
-- **delete_list** - Archive or permanently delete lists
+### [01-list-management-examples.md](01-list-management-examples.md)
+Demonstrates list creation, retrieval, filtering, and deletion operations.
 
-**20 examples total** - 5 scenarios per tool covering project management, personal tasks, team collaboration, and more.
+**Key Topics:**
+- Creating lists with descriptions and project tags
+- Retrieving lists with various filters
+- Archiving vs. permanent deletion
+- Best practices for list organization
 
-### [02-task-management-examples.md](./02-task-management-examples.md)
-Master task operations with 6 powerful tools:
-- **add_task** - Create tasks with priorities, tags, and time estimates
-- **update_task** - Modify task properties and descriptions
-- **remove_task** - Delete tasks from lists
-- **complete_task** - Mark tasks as finished
-- **set_task_priority** - Adjust task importance levels
-- **add_task_tags** - Organize tasks with custom tags
+**Tools Covered:**
+- `create_list`
+- `get_list`
+- `list_all_lists`
+- `delete_list`
 
-**30 examples total** - 5 scenarios per tool showing development workflows, bug tracking, learning paths, and team coordination.
+### [02-task-management-examples.md](02-task-management-examples.md)
+Comprehensive task management operations from creation to completion.
 
-### [03-search-display-examples.md](./03-search-display-examples.md)
-Find and view your tasks efficiently with 3 search tools:
-- **search_tasks** - Find tasks by keywords across all lists
-- **filter_tasks** - Filter by priority, status, tags, and more
-- **show_tasks** - Display formatted task lists with grouping options
+**Key Topics:**
+- Adding tasks with full parameter sets
+- Updating task details and properties
+- Managing task status and priorities
+- Adding and managing tags
+- Task removal operations
 
-**15 examples total** - 5 scenarios per tool demonstrating various search patterns and display formats.
+**Tools Covered:**
+- `add_task`
+- `update_task`
+- `complete_task`
+- `set_task_priority`
+- `add_task_tags`
+- `remove_task`
 
-### [04-advanced-features-examples.md](./04-advanced-features-examples.md)
-Leverage AI-powered features with 2 intelligent tools:
-- **analyze_task** - Get complexity analysis and breakdown suggestions
-- **get_task_suggestions** - Receive AI-generated task recommendations
+### [03-search-display-examples.md](03-search-display-examples.md)
+Search, filtering, and display capabilities with various formatting options.
 
-**10 examples total** - 5 scenarios per tool showing how AI can help with project planning, task breakdown, and workflow optimization.
+**Key Topics:**
+- Text-based task searching
+- Advanced filtering by multiple criteria
+- Different display formats (detailed, compact, summary)
+- Grouping options (priority, status, none)
+- Display format legends and best practices
 
-### [05-configuration-examples.md](./05-configuration-examples.md)
-Set up the MCP server for different environments and clients:
-- **Claude Desktop** configurations for various use cases
-- **Kiro IDE** setups with auto-approval options
-- **Environment variables** and storage configurations
-- **Troubleshooting** common setup issues
+**Tools Covered:**
+- `search_tasks`
+- `filter_tasks`
+- `show_tasks`
 
-**Multiple configuration examples** covering development, production, team collaboration, and testing scenarios.
+### [04-advanced-features-examples.md](04-advanced-features-examples.md)
+AI-powered analysis, suggestions, and dependency management features.
 
-### [06-dependency-management-examples.md](./06-dependency-management-examples.md)
-Master task relationships and workflow optimization with 3 dependency tools:
-- **set_task_dependencies** - Establish task prerequisites and relationships
-- **get_ready_tasks** - Find tasks ready to work on with no blocking dependencies
-- **analyze_task_dependencies** - Get project analysis with critical path and bottlenecks
+**Key Topics:**
+- AI task complexity analysis
+- Task breakdown suggestions
+- Dependency relationship management
+- Critical path analysis
+- Multiple visualization formats (ASCII, Mermaid, DOT)
 
-**15 examples total** - 5 scenarios per tool showing software development, content creation, event planning, and project management workflows.
+**Tools Covered:**
+- `analyze_task`
+- `get_task_suggestions`
+- `set_task_dependencies`
+- `get_ready_tasks`
+- `analyze_task_dependencies`
 
-## 🚀 Quick Start
+### [05-configuration-examples.md](05-configuration-examples.md)
+Configuration examples for different environments and use cases.
 
-1. **Choose your MCP client** - See configuration examples for Claude Desktop or Kiro IDE
-2. **Set up the server** - Use the configuration examples to get started quickly
-3. **Try basic operations** - Start with list management examples
-4. **Explore advanced features** - Use AI-powered tools for intelligent task management
+**Key Topics:**
+- MCP server configuration for various AI agents
+- Environment variable configuration
+- Auto-approval settings
+- Multi-agent setups
+- Production deployment configurations
 
-## 💡 Usage Patterns
+### [06-dependency-management-examples.md](06-dependency-management-examples.md)
+Comprehensive dependency management with real-world workflow patterns.
 
-### For Personal Productivity
-- Create daily task lists with priorities and time estimates
-- Use search and filtering to focus on specific work areas
-- Leverage AI analysis for complex project planning
+**Key Topics:**
+- Setting and managing task dependencies
+- Finding ready-to-work tasks
+- Dependency analysis and visualization
+- Complex dependency scenarios
+- Workflow optimization patterns
 
-### For Development Teams
-- Organize tasks by sprint, feature, or bug priority
-- Use tags to categorize work by team member or component
-- Get AI suggestions for breaking down complex development tasks
+## Quick Start Examples
 
-### For Project Management
-- Create project-specific lists with clear descriptions
-- Track progress with completion status and formatted displays
-- Use intelligent analysis to identify task complexity and dependencies
+### Basic Workflow
+```json
+// 1. Create a project list
+{
+  "tool": "create_list",
+  "parameters": {
+    "title": "My Project",
+    "description": "A sample project for demonstration",
+    "projectTag": "demo"
+  }
+}
 
-### For Learning and Growth
-- Build learning paths with structured task progression
-- Get AI suggestions for skill development activities
-- Track learning progress with completion metrics
+// 2. Add a task
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "your-list-id",
+    "title": "Complete project setup",
+    "description": "Set up development environment and tools",
+    "priority": 5,
+    "tags": ["setup", "urgent"]
+  }
+}
 
-## 🔧 Tool Categories
+// 3. View tasks
+{
+  "tool": "show_tasks",
+  "parameters": {
+    "listId": "your-list-id",
+    "format": "detailed"
+  }
+}
 
-| Category | Tools | Purpose |
-|----------|-------|---------|
-| **List Management** | 4 tools | Create, retrieve, list, and delete todo lists |
-| **Task Operations** | 6 tools | Full CRUD operations for individual tasks |
-| **Search & Display** | 3 tools | Find, filter, and format task information |
-| **AI Features** | 2 tools | Intelligent analysis and suggestions |
-| **Dependency Management** | 3 tools | Task relationships and workflow optimization |
+// 4. Complete the task
+{
+  "tool": "complete_task",
+  "parameters": {
+    "listId": "your-list-id",
+    "taskId": "your-task-id"
+  }
+}
+```
 
-## 📖 How to Use These Examples
+### Dependency Workflow
+```json
+// 1. Add tasks with dependencies
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "your-list-id",
+    "title": "Design phase",
+    "dependencies": ["setup-task-id"]
+  }
+}
 
-1. **Copy the JSON** - Each example shows the exact MCP tool call format
-2. **Modify parameters** - Replace IDs, titles, and descriptions with your data
-3. **Understand responses** - See what each tool returns for better integration
-4. **Combine operations** - Use multiple tools together for complex workflows
+// 2. Find ready tasks
+{
+  "tool": "get_ready_tasks",
+  "parameters": {
+    "listId": "your-list-id"
+  }
+}
 
-## 🎯 Best Practices
+// 3. Analyze dependencies
+{
+  "tool": "analyze_task_dependencies",
+  "parameters": {
+    "listId": "your-list-id",
+    "format": "both",
+    "dagStyle": "ascii"
+  }
+}
+```
 
-- **Start simple** - Begin with basic list and task operations
-- **Use meaningful names** - Choose descriptive titles and tags for better organization
-- **Leverage priorities** - Use the 1-5 priority system effectively
-- **Tag consistently** - Develop a tagging strategy for your workflow
-- **Regular cleanup** - Archive completed projects and remove outdated tasks
+## Example Data
 
-## 🔗 Related Documentation
+All examples use realistic project data:
 
-- [Main README](../README.md) - Installation and setup instructions
-- [MCP Tools Documentation](../docs/mcp-tools.md) - Complete API reference
-- [Configuration Guide](../README.md#configuration) - Detailed setup instructions
+### Development Project Alpha
+- **Type**: Web application development
+- **Tasks**: Environment setup, database design, API implementation, frontend development, testing
+- **Dependencies**: Sequential and parallel development patterns
+- **Tags**: setup, database, backend, frontend, testing, etc.
 
----
+### Mobile App Development
+- **Type**: Cross-platform mobile application
+- **Framework**: React Native
+- **Focus**: Mobile-specific development workflow
 
-**Last Updated**: September 15, 2025  
-**Version**: 2.0.0 (Production Ready)  
-**Total Examples**: 90+ comprehensive scenarios across all 18 MCP tools  
-**Coverage**: Complete functionality demonstration with real-world use cases  
-**Format**: Ready-to-use JSON examples with expected responses
+## Usage Patterns
+
+### Daily Development Workflow
+1. **Morning standup**: Use `get_ready_tasks` to see what's available
+2. **Work planning**: Use `filter_tasks` to focus on priority items
+3. **Progress tracking**: Use `show_tasks` with summary format
+4. **Task completion**: Use `complete_task` to mark work done
+
+### Project Management
+1. **Project setup**: Create lists with project tags
+2. **Task planning**: Add tasks with dependencies and estimates
+3. **Progress monitoring**: Use dependency analysis for bottlenecks
+4. **Team coordination**: Use ready tasks for work assignment
+
+### Sprint Planning
+1. **Sprint preparation**: Filter tasks by priority and readiness
+2. **Capacity planning**: Use time estimates for sprint sizing
+3. **Dependency management**: Ensure tasks can be completed in order
+4. **Progress tracking**: Monitor completion rates and blockers
+
+## Integration Examples
+
+### AI Agent Integration
+The examples show how different AI agents can use the task manager:
+- **Project managers**: Focus on planning and dependency analysis
+- **Developers**: Focus on ready tasks and completion tracking
+- **Team leads**: Focus on progress monitoring and bottleneck identification
+
+### Multi-Agent Coordination
+Examples demonstrate how multiple agents can work together:
+- Shared task lists for team coordination
+- Role-based auto-approval configurations
+- Collaborative dependency management
+
+## Best Practices Summary
+
+### Task Management
+- Use descriptive titles and detailed descriptions
+- Set realistic time estimates
+- Use consistent tagging for organization
+- Define dependencies early in planning
+
+### List Organization
+- Use project tags for categorization
+- Create focused lists for specific projects
+- Archive completed projects for history
+- Use descriptive names and descriptions
+
+### Workflow Optimization
+- Start with ready tasks
+- Focus on critical path items
+- Use parallel development when possible
+- Monitor and resolve bottlenecks quickly
+
+### Configuration
+- Use appropriate auto-approval settings
+- Configure logging for your environment
+- Set up monitoring for production use
+- Use environment-specific configurations
+
+## Testing the Examples
+
+All examples in this directory are based on actual testing of the MCP Task Manager. You can reproduce these examples by:
+
+1. Setting up the MCP server as shown in the configuration examples
+2. Running the tool calls exactly as shown
+3. Observing the responses and adapting to your use case
+
+The examples include both successful operations and error scenarios to help you understand the full range of system behavior.
+
+## Contributing Examples
+
+When adding new examples:
+1. Test all tool calls to ensure they work
+2. Include both request and response data
+3. Provide context and explanation
+4. Follow the established format and style
+5. Update this README with new content
+
+## Support
+
+For questions about these examples or the MCP Task Manager:
+1. Review the relevant example file
+2. Check the main documentation
+3. Test the examples in your environment
+4. Refer to the troubleshooting guides

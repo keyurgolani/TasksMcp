@@ -5,7 +5,7 @@
  * what's happening with the list creation and parameter passing.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { McpTaskManagerServer } from '../../src/app/server.js';
 
 describe('Debug Integration Test', () => {
@@ -19,6 +19,17 @@ describe('Debug Integration Test', () => {
 
     server = new McpTaskManagerServer();
     await server.start();
+  });
+
+  afterEach(async () => {
+    // Clean up server resources
+    if (server) {
+      await server.close();
+    }
+    // Clean up environment variables
+    delete process.env.STORAGE_TYPE;
+    delete process.env.METRICS_ENABLED;
+    delete process.env.NODE_ENV;
   });
 
   it('should debug list creation and parameter passing', async () => {
@@ -69,9 +80,28 @@ describe('Debug Integration Test', () => {
 
     if (isSuccess) {
       try {
-        const taskData = JSON.parse(addTaskResult.content[0].text);
+        // Check if the response is double-wrapped or single-wrapped
+        const responseText = addTaskResult.content[0].text;
+        let taskData;
+        
+        try {
+          // Try parsing as single-wrapped first
+          taskData = JSON.parse(responseText);
+          // If it has a 'content' property, it's double-wrapped
+          if (taskData.content && Array.isArray(taskData.content)) {
+            taskData = JSON.parse(taskData.content[0].text);
+          }
+        } catch {
+          // If single parse fails, it might be already parsed
+          taskData = responseText;
+        }
+        
         console.log('Parsed task data:', taskData);
-        console.log('Task priority (should be number 5):', taskData.priority, typeof taskData.priority);
+        if (taskData && typeof taskData === 'object') {
+          console.log('Task priority (should be number 5):', taskData.priority, typeof taskData.priority);
+        } else {
+          console.log('Task data is not an object:', typeof taskData);
+        }
       } catch (error) {
         console.log('Failed to parse task data:', error);
       }
@@ -121,9 +151,15 @@ describe('Debug Integration Test', () => {
         try {
           const taskData = JSON.parse(result.content[0].text);
           console.log('Converted values:');
-          if (testCase.params.priority) console.log('  priority:', taskData.priority, typeof taskData.priority);
-          if (testCase.params.tags) console.log('  tags:', taskData.tags);
-          if (testCase.params.estimatedDuration) console.log('  estimatedDuration:', taskData.estimatedDuration, typeof taskData.estimatedDuration);
+          if (testCase.params.priority && taskData.priority !== undefined) {
+            console.log('  priority:', taskData.priority, typeof taskData.priority);
+          }
+          if (testCase.params.tags && taskData.tags !== undefined) {
+            console.log('  tags:', taskData.tags);
+          }
+          if (testCase.params.estimatedDuration && taskData.estimatedDuration !== undefined) {
+            console.log('  estimatedDuration:', taskData.estimatedDuration, typeof taskData.estimatedDuration);
+          }
         } catch (error) {
           console.log('Parse error:', error);
         }

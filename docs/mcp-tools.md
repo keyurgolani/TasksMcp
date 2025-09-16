@@ -960,13 +960,13 @@ Get tasks that are ready to work on (have no incomplete dependencies).
 
 ### 18. analyze_task_dependencies
 
-Get comprehensive analysis of task dependencies and project structure.
+Get comprehensive analysis of task dependencies and project structure with **DAG visualization**.
 
 **Schema:**
 ```json
 {
   "name": "analyze_task_dependencies",
-  "description": "Get a simple analysis of task dependencies and project structure",
+  "description": "Get analysis of task dependencies and project structure with optional DAG visualization",
   "inputSchema": {
     "type": "object",
     "properties": {
@@ -974,6 +974,18 @@ Get comprehensive analysis of task dependencies and project structure.
         "type": "string",
         "format": "uuid",
         "description": "UUID of the list to analyze"
+      },
+      "format": {
+        "type": "string",
+        "enum": ["analysis", "dag", "both"],
+        "description": "Output format: 'analysis' for dependency analysis, 'dag' for visualization only, 'both' for combined output",
+        "default": "analysis"
+      },
+      "dagStyle": {
+        "type": "string",
+        "enum": ["ascii", "dot", "mermaid"],
+        "description": "DAG visualization style: 'ascii' for text-based graph, 'dot' for Graphviz format, 'mermaid' for Mermaid diagram",
+        "default": "ascii"
       }
     },
     "required": ["listId"]
@@ -982,19 +994,102 @@ Get comprehensive analysis of task dependencies and project structure.
 ```
 
 **Example Usage:**
+
+*Basic Analysis (default):*
 ```json
 {
   "listId": "123e4567-e89b-12d3-a456-426614174000"
 }
 ```
 
-**Response:** Returns dependency analysis with critical path, bottlenecks, issues, and plain-language recommendations.
+*ASCII DAG Visualization:*
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "format": "dag",
+  "dagStyle": "ascii"
+}
+```
+
+*Graphviz DOT Format:*
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "format": "dag",
+  "dagStyle": "dot"
+}
+```
+
+*Mermaid Diagram Format:*
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "format": "dag",
+  "dagStyle": "mermaid"
+}
+```
+
+*Combined Analysis + DAG:*
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "format": "both",
+  "dagStyle": "ascii"
+}
+```
+
+**Response:** Returns dependency analysis with critical path, bottlenecks, issues, and plain-language recommendations. When DAG visualization is requested, includes visual representation of task dependencies.
 
 **Key Features:**
 - **Critical Path Analysis**: Identifies the longest chain of dependent tasks
 - **Bottleneck Detection**: Finds tasks that block multiple others
 - **Issue Identification**: Detects circular dependencies and other problems
 - **Actionable Recommendations**: Plain-language suggestions for improving workflow
+- **DAG Visualization**: Visual representation in ASCII, DOT (Graphviz), or Mermaid formats
+
+**DAG Visualization Formats:**
+
+*ASCII Format:* Human-readable text-based graph showing task relationships grouped by status
+```
+🟢 READY TO START:
+  • Setup Database → [Create User Model, Design API]
+  • Design UI → [Build Components]
+
+🔴 BLOCKED TASKS:
+  • Create User Model ← blocked by [Setup Database, Design API]
+  • Implement Login ← blocked by [Create User Model]
+
+DEPENDENCY RELATIONSHIPS:
+  Create User Model ← depends on: [Setup Database, Design API]
+  Implement Login ← depends on: [Create User Model]
+```
+
+*DOT Format:* Graphviz-compatible format for external rendering
+```dot
+digraph TaskDAG {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+  
+  "Setup Database" [fillcolor=lightyellow, style="rounded,filled"];
+  "Create User Model" [fillcolor=lightcoral, style="rounded,filled"];
+  
+  "Setup Database" -> "Create User Model";
+  "Design API" -> "Create User Model";
+}
+```
+
+*Mermaid Format:* Diagram-as-code format for documentation and visualization tools
+```mermaid
+graph TD
+  T1["Setup Database"]:::pending
+  T2["Create User Model"]:::blocked
+  
+  T1 --> T2
+  T3 --> T2
+  
+  classDef completed fill:#90EE90,stroke:#333,stroke-width:2px
+  classDef blocked fill:#F08080,stroke:#333,stroke-width:2px
+```
 
 ---
 

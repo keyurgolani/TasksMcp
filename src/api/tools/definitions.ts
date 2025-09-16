@@ -641,7 +641,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'analyze_task_dependencies',
-    description: 'Get a simple analysis of task dependencies and project structure',
+    description: 'Get analysis of task dependencies and project structure with optional DAG visualization',
     inputSchema: {
       type: 'object',
       properties: {
@@ -649,6 +649,18 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'UUID of the list to analyze (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
+        },
+        format: {
+          type: 'string',
+          enum: ['analysis', 'dag', 'both'],
+          description: 'Output format: "analysis" for dependency analysis, "dag" for visualization only, "both" for combined output',
+          default: 'analysis',
+        },
+        dagStyle: {
+          type: 'string',
+          enum: ['ascii', 'dot', 'mermaid'],
+          description: 'DAG visualization style: "ascii" for text-based graph, "dot" for Graphviz format, "mermaid" for Mermaid diagram',
+          default: 'ascii',
         },
       },
       required: ['listId'],

@@ -558,6 +558,30 @@ class McpTaskManagerServer {
       }
     );
   }
+
+  /**
+   * Closes the server and cleans up resources
+   * Shuts down monitoring systems and closes the todo list manager
+   */
+  async close(): Promise<void> {
+    try {
+      if (this.config.monitoring.enabled) {
+        performanceMonitor.stopMonitoring();
+        memoryMonitor.stopMonitoring();
+        logger.info("Monitoring systems stopped");
+      }
+
+      if (this.todoListManager) {
+        await this.todoListManager.shutdown();
+        this.todoListManager = null;
+      }
+
+      logger.info("MCP Task Manager server closed successfully");
+    } catch (error) {
+      logger.error("Error during server shutdown", { error });
+      throw error;
+    }
+  }
 }
 
 export { McpTaskManagerServer };

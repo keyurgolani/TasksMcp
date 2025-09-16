@@ -91,11 +91,11 @@ Find tasks ready for execution (no incomplete dependencies).
 
 ### 3. analyze_task_dependencies
 
-Analyze project structure, critical paths, and bottlenecks.
+Analyze project structure, critical paths, and bottlenecks with **DAG visualization**.
 
-**Purpose**: Provide insights for optimizing multi-agent workflows and identifying coordination opportunities.
+**Purpose**: Provide insights for optimizing multi-agent workflows, identifying coordination opportunities, and visualizing task relationships.
 
-**Example**:
+**Basic Analysis**:
 ```json
 {
   "name": "analyze_task_dependencies",
@@ -104,6 +104,24 @@ Analyze project structure, critical paths, and bottlenecks.
   }
 }
 ```
+
+**With DAG Visualization**:
+```json
+{
+  "name": "analyze_task_dependencies",
+  "arguments": {
+    "listId": "web-app-project",
+    "format": "both",
+    "dagStyle": "ascii"
+  }
+}
+```
+
+**DAG Visualization Benefits for Multi-Agent Orchestration**:
+- **Visual Work Assignment**: See which tasks are ready for immediate assignment
+- **Parallel Execution Planning**: Identify tasks that can run simultaneously
+- **Bottleneck Identification**: Spot tasks that block multiple agents
+- **Progress Visualization**: Track completion across distributed workflows
 
 **Response**:
 ```json
@@ -219,6 +237,51 @@ Analyze project structure, critical paths, and bottlenecks.
 // - Performance Agent → "performance-test"
 // All must complete before deployment agent can proceed
 ```
+
+### Pattern 4: DAG Visualization for Orchestration
+
+**Scenario**: Orchestration agent uses DAG visualization to optimize work assignment and track progress.
+
+```json
+// 1. Analyze project structure with DAG visualization
+{
+  "name": "analyze_task_dependencies",
+  "arguments": {
+    "listId": "web-app-project",
+    "format": "both",
+    "dagStyle": "ascii"
+  }
+}
+```
+
+**Example DAG Output for Multi-Agent Coordination**:
+```
+Task Dependency Graph (DAG):
+
+🟢 READY TO START:
+  • Setup Database → [Create User Model, Setup Authentication]
+  • Design Wireframes → [Build UI Components]
+  • Write API Documentation → [API Integration Tests]
+
+🔴 BLOCKED TASKS:
+  • Create User Model ← blocked by [Setup Database, Design API Schema]
+  • Build UI Components ← blocked by [Design Wireframes, Setup Authentication]
+  • Deploy Application ← blocked by [Build UI Components, API Integration Tests]
+
+DEPENDENCY RELATIONSHIPS:
+  Create User Model ← depends on: [Setup Database, Design API Schema]
+  Setup Authentication ← depends on: [Create User Model]
+  Build UI Components ← depends on: [Design Wireframes, Setup Authentication]
+  API Integration Tests ← depends on: [Write API Documentation, Setup Authentication]
+  Deploy Application ← depends on: [Build UI Components, API Integration Tests]
+```
+
+**Orchestration Benefits**:
+- **Immediate Assignment**: 3 tasks ready for parallel execution
+- **Agent Specialization**: Database Agent, Design Agent, Documentation Agent can work simultaneously
+- **Progress Tracking**: Visual representation of project completion status
+- **Bottleneck Prevention**: Identify that "Setup Authentication" will become a bottleneck
+- **Resource Planning**: Plan for UI and Testing agents to be ready when their dependencies complete
 
 ## Implementation Guide
 

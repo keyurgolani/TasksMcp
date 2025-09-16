@@ -1,231 +1,189 @@
 # List Management Examples
 
-This document shows how to use the 4 list management MCP tools with practical examples. Each tool includes 5 different usage scenarios to help you understand the various ways to manage your todo lists.
+This document demonstrates the list management capabilities of the MCP Task Manager through real-world examples.
 
-## 1. create_list
+## Creating Lists
 
-### Example 1: Basic Project List
+### Basic List Creation
 ```json
 {
-  "name": "create_list",
-  "arguments": {
-    "title": "Website Redesign",
-    "description": "Complete redesign of company website",
-    "projectTag": "web-dev"
+  "tool": "create_list",
+  "parameters": {
+    "title": "Development Project Alpha"
   }
 }
 ```
 
-### Example 2: Personal Task List
+**Response:**
 ```json
 {
-  "name": "create_list",
-  "arguments": {
-    "title": "Daily Tasks",
-    "description": "My daily personal and work tasks"
+  "id": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+  "title": "Development Project Alpha",
+  "taskCount": 0,
+  "completedCount": 0,
+  "progress": 0,
+  "lastUpdated": "2025-09-16T21:16:13.376Z",
+  "projectTag": "default"
+}
+```
+
+### List with Description and Project Tag
+```json
+{
+  "tool": "create_list",
+  "parameters": {
+    "title": "Mobile App Development",
+    "description": "Cross-platform mobile application using React Native",
+    "projectTag": "mobile-project"
   }
 }
 ```
 
-### Example 3: Team Sprint Planning
+**Response:**
 ```json
 {
-  "name": "create_list",
-  "arguments": {
-    "title": "Sprint 23 - Q4 Features",
-    "description": "Development tasks for Q4 feature release",
-    "projectTag": "sprint-23"
+  "id": "1ebb1448-790b-438a-9ef8-aa16e9dbc4ba",
+  "title": "Mobile App Development",
+  "description": "Cross-platform mobile application using React Native",
+  "taskCount": 0,
+  "completedCount": 0,
+  "progress": 0,
+  "lastUpdated": "2025-09-16T21:16:17.144Z",
+  "projectTag": "mobile-project"
+}
+```
+
+## Retrieving Lists
+
+### Get All Lists
+```json
+{
+  "tool": "list_all_lists"
+}
+```
+
+**Response:** Returns array of all lists with basic information.
+
+### Get Lists with Filters
+```json
+{
+  "tool": "list_all_lists",
+  "parameters": {
+    "limit": 5,
+    "projectTag": "web-app"
   }
 }
 ```
 
-### Example 4: Learning Goals
+**Response:**
+```json
+[
+  {
+    "id": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Development Project Alpha",
+    "taskCount": 5,
+    "completedCount": 1,
+    "progress": 20,
+    "lastUpdated": "2025-09-16T21:16:13.376Z",
+    "projectTag": "web-app"
+  }
+]
+```
+
+### Get Specific List with Tasks
 ```json
 {
-  "name": "create_list",
-  "arguments": {
-    "title": "Learn TypeScript",
-    "description": "Comprehensive TypeScript learning path with practical projects",
-    "projectTag": "learning"
+  "tool": "get_list",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d"
   }
 }
 ```
 
-### Example 5: Event Planning
+**Response:**
 ```json
 {
-  "name": "create_list",
-  "arguments": {
-    "title": "Company Annual Meeting",
-    "description": "Tasks for organizing the 2025 annual company meeting",
-    "projectTag": "events"
-  }
+  "id": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+  "title": "Development Project Alpha",
+  "description": "A comprehensive web application development project with frontend, backend, and deployment components",
+  "taskCount": 5,
+  "completedCount": 1,
+  "progress": 20,
+  "lastUpdated": "2025-09-16T21:16:13.376Z",
+  "projectTag": "web-app",
+  "tasks": [
+    // Array of task objects
+  ]
 }
 ```
 
-## 2. get_list
-
-### Example 1: Get List with Completed Tasks
+### Get List Without Completed Tasks
 ```json
 {
-  "name": "get_list",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012",
-    "includeCompleted": true
-  }
-}
-```
-
-### Example 2: Get List Without Completed Tasks
-```json
-{
-  "name": "get_list",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
+  "tool": "get_list",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
     "includeCompleted": false
   }
 }
 ```
 
-### Example 3: Get Active Sprint List
+## Deleting Lists
+
+### Archive a List (Default)
 ```json
 {
-  "name": "get_list",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "includeCompleted": false
+  "tool": "delete_list",
+  "parameters": {
+    "listId": "83aeb714-ae8a-43c9-a2bd-9ef687ed8575"
   }
 }
 ```
 
-### Example 4: Get Complete Project History
+**Response:**
 ```json
 {
-  "name": "get_list",
-  "arguments": {
-    "listId": "fedcba98-7654-3210-fedc-ba9876543210",
-    "includeCompleted": true
-  }
+  "success": true,
+  "operation": "archived",
+  "message": "Todo list \"Quick Tasks\" has been archived",
+  "listId": "83aeb714-ae8a-43c9-a2bd-9ef687ed8575"
 }
 ```
 
-### Example 5: Get Learning Progress
+### Permanently Delete a List
 ```json
 {
-  "name": "get_list",
-  "arguments": {
-    "listId": "11111111-2222-3333-4444-555555555555",
-    "includeCompleted": true
-  }
-}
-```
-
-## 3. list_all_lists
-
-### Example 1: Get All Lists (Default)
-```json
-{
-  "name": "list_all_lists",
-  "arguments": {}
-}
-```
-
-### Example 2: Get Limited Number of Lists
-```json
-{
-  "name": "list_all_lists",
-  "arguments": {
-    "limit": 5
-  }
-}
-```
-
-### Example 3: Get Lists by Project Tag
-```json
-{
-  "name": "list_all_lists",
-  "arguments": {
-    "projectTag": "web-dev",
-    "limit": 10
-  }
-}
-```
-
-### Example 4: Get All Lists Including Archived
-```json
-{
-  "name": "list_all_lists",
-  "arguments": {
-    "includeArchived": true,
-    "limit": 20
-  }
-}
-```
-
-### Example 5: Get Sprint Lists Only
-```json
-{
-  "name": "list_all_lists",
-  "arguments": {
-    "projectTag": "sprint",
-    "includeArchived": false,
-    "limit": 15
-  }
-}
-```
-
-## 4. delete_list
-
-### Example 1: Archive a List (Default)
-```json
-{
-  "name": "delete_list",
-  "arguments": {
-    "listId": "12345678-1234-1234-1234-123456789012"
-  }
-}
-```
-
-### Example 2: Permanently Delete a List
-```json
-{
-  "name": "delete_list",
-  "arguments": {
-    "listId": "87654321-4321-4321-4321-210987654321",
+  "tool": "delete_list",
+  "parameters": {
+    "listId": "1ebb1448-790b-438a-9ef8-aa16e9dbc4ba",
     "permanent": true
   }
 }
 ```
 
-### Example 3: Archive Completed Project
+**Response:**
 ```json
 {
-  "name": "delete_list",
-  "arguments": {
-    "listId": "abcdef12-3456-7890-abcd-ef1234567890",
-    "permanent": false
-  }
+  "success": true,
+  "operation": "deleted",
+  "message": "Todo list \"Mobile App Development\" has been permanently deleted",
+  "listId": "1ebb1448-790b-438a-9ef8-aa16e9dbc4ba"
 }
 ```
 
-### Example 4: Delete Test List Permanently
-```json
-{
-  "name": "delete_list",
-  "arguments": {
-    "listId": "testlist-1234-5678-9012-345678901234",
-    "permanent": true
-  }
-}
-```
+## Best Practices
 
-### Example 5: Archive Old Sprint
-```json
-{
-  "name": "delete_list",
-  "arguments": {
-    "listId": "sprint22-1234-5678-9012-345678901234",
-    "permanent": false
-  }
-}
-```
+1. **Use descriptive titles** that clearly indicate the project or purpose
+2. **Add descriptions** for complex projects to provide context
+3. **Use project tags** to organize related lists (e.g., "web-app", "mobile-project")
+4. **Archive instead of delete** to preserve project history
+5. **Use limits** when retrieving lists to improve performance
+6. **Filter by project tags** to focus on specific types of work
+
+## Common Use Cases
+
+- **Project Management**: Create lists for different projects or phases
+- **Team Organization**: Use project tags to separate team responsibilities
+- **Personal Productivity**: Create lists for different areas of life or work
+- **Sprint Planning**: Create lists for development sprints or iterations
+- **Client Work**: Separate lists for different clients using project tags
