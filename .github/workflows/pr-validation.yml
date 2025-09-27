@@ -75,16 +75,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint and type check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:run
+
       - name: Build and validate
         run: |
           echo "Building PR changes..."
           npm run build
           
           echo "Validating build artifacts..."
-          node dist/cli.js --version
+          node dist/app/cli.js --version
           
-          echo "Checking TypeScript compilation..."
-          npx tsc --noEmit --skipLibCheck
+          echo "Running project structure validation..."
+          npm run validate
 
       - name: Check for version conflicts
         if: needs.pr-info.outputs.affects-core == 'true'
@@ -105,28 +111,7 @@ jobs:
           fi
 
       - name: Validate MCP compliance
-        run: |
-          echo "Validating MCP protocol compliance..."
-          
-          # Check that all required handlers exist
-          REQUIRED_HANDLERS=(
-            "create-todo-list"
-            "get-todo-list" 
-            "update-todo-list"
-            "list-todo-lists"
-            "delete-todo-list"
-            "analyze-task-complexity"
-            "search-todo-lists"
-          )
-          
-          for handler in "${REQUIRED_HANDLERS[@]}"; do
-            if [[ ! -f "dist/handlers/${handler}.js" ]]; then
-              echo "❌ Missing required MCP handler: ${handler}"
-              exit 1
-            else
-              echo "✅ Found handler: ${handler}"
-            fi
-          done
+        run: node .github/scripts/validate-mcp.mjs
 
   security-check:
     needs: pr-info

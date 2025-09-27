@@ -39,6 +39,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint and type check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:run
+
       - name: Build package
         run: npm run build
 
@@ -61,13 +67,11 @@ jobs:
       - name: Validate package.json
         run: node .github/scripts/validate-package.mjs
 
-      - name: Check TypeScript compilation
-        run: |
-          echo "Checking TypeScript compilation..."
-          npx tsc --noEmit --skipLibCheck
-
       - name: Validate MCP protocol compliance
         run: node .github/scripts/validate-mcp.mjs
+
+      - name: Run project structure validation
+        run: npm run validate
 
       - name: Test package installation simulation
         run: |

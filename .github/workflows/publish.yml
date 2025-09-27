@@ -33,8 +33,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint and type check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:run
+
       - name: Build package
         run: npm run build
+
+      - name: Run project validation
+        run: npm run validate
 
       - name: Verify package
         run: |
