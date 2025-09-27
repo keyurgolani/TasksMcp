@@ -108,6 +108,37 @@ For complete documentation, see:
 - [API Reference](./docs/api/README.md) - Complete tool documentation
 - [Getting Started](./docs/guides/getting-started.md) - Installation and setup guide
 
+## MCP Tools
+
+The MCP Task Manager provides a comprehensive set of tools for task and list management through the Model Context Protocol. These tools enable AI agents to create, manage, and orchestrate complex workflows.
+
+### Task Management Tools
+- `add_task` - Add new tasks to lists with complexity analysis
+- `complete_task` - Mark tasks as completed
+- `remove_task` - Remove tasks from lists
+- `update_task` - Update task properties and metadata
+- `show_tasks` - Display tasks with filtering and sorting options
+- `search_tool` - Search across tasks and lists with advanced filtering
+
+### List Management Tools
+- `create_list` - Create new task lists
+- `get_list` - Retrieve list details and tasks
+- `list_all_lists` - Show all available lists
+- `delete_list` - Remove lists and their tasks
+
+### Advanced Orchestration Tools
+- `set_task_dependencies` - Define task relationships and prerequisites
+- `get_ready_tasks` - Find tasks ready for execution
+- `analyze_task_dependencies` - Generate dependency graphs and critical path analysis
+- `get_task_suggestions` - Get AI-powered task recommendations
+- `bulk_task_operations` - Perform batch operations on multiple tasks
+
+### Task Enhancement Tools
+- `add_task_tags` - Add metadata tags to tasks
+- `set_task_priority` - Set task priority levels
+- `set_task_exit_criteria` - Define completion criteria
+- `update_exit_criteria` - Modify task completion requirements
+
 ---
 
 **The MCP Task Manager enables sophisticated multi-agent workflows where orchestration agents coordinate specialized agents working on different tasks in parallel, maximizing efficiency and enabling complex project coordination.**

@@ -33,7 +33,7 @@ const requiredHandlers = [
   'get-list.js', 
   'add-task.js',
   'complete-task.js',
-  'search-tasks.js',
+  'search-tool.js',
   'show-tasks.js'
 ];
 
