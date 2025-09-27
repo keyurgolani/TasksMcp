@@ -188,9 +188,9 @@ ENVIRONMENT VARIABLES:
   DATA_DIRECTORY          Data directory for file storage
   LOG_LEVEL               Log level (debug, info, warn, error)
   
-  # Enhanced Features Configuration (always enabled)
-  MAX_ACTION_PLAN_STEPS          Maximum steps per action plan (default: 50)
-  MAX_IMPLEMENTATION_NOTES_PER_ENTITY  Max notes per task/list (default: 100)
+  # Features Configuration (always enabled)
+  MAX_ACTION_PLAN_STEPS          Maximum steps per action plan (default: 250)
+  MAX_IMPLEMENTATION_NOTES_PER_ENTITY  Max notes per task/list (default: 500)
   CLEANUP_SUGGESTION_DAYS        Days before suggesting cleanup (default: 7)
   PRETTY_PRINT_MAX_WIDTH         Max width for formatted output (default: 120)
 

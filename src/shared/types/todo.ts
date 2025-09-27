@@ -2,7 +2,7 @@
  * Core todo types and interfaces for the MCP Task Manager
  * 
  * Defines the complete data model for todo lists, tasks, and related entities.
- * Includes enhanced features like action plans, implementation notes, and analytics.
+ * Includes features like action plans, implementation notes, and analytics.
  */
 
 /**
@@ -69,6 +69,19 @@ export interface ImplementationNote {
 }
 
 /**
+ * Exit criteria for task completion
+ * Defines specific conditions that must be met for a task to be considered complete
+ */
+export interface ExitCriteria {
+  id: string;
+  description: string;
+  isMet: boolean;
+  metAt?: Date;
+  notes?: string;
+  order: number;
+}
+
+/**
  * Individual todo item/task
  * Core entity representing a single task with all its properties and metadata
  */
@@ -86,9 +99,10 @@ export interface TodoItem {
   tags: string[]; // Categorization tags
   metadata: Record<string, unknown>; // Extensible metadata
 
-  // Enhanced fields (v2) - AI-powered features
+  // v2 fields - AI-powered features
   actionPlan?: ActionPlan; // Structured breakdown for complex tasks
   implementationNotes: ImplementationNote[]; // Contextual notes and decisions
+  exitCriteria: ExitCriteria[]; // Completion criteria that must be met
 }
 
 /**
@@ -111,7 +125,7 @@ export interface TodoList {
   analytics: ListAnalytics; // Comprehensive analytics data
   metadata: Record<string, unknown>; // Extensible metadata
 
-  // Enhanced fields (v2) - Project management features
+  // v2 fields - Project management features
   projectTag: string; // Project/context identifier (replaces context)
   implementationNotes: ImplementationNote[]; // List-level notes
   cleanupSuggested?: Date; // When cleanup was last suggested
@@ -126,7 +140,7 @@ export interface TodoListSummary {
   completedItems: number;
   lastUpdated: Date;
   context: string; // Deprecated, use projectTag
-  projectTag: string; // Enhanced field (v2)
+  projectTag: string; // v2 field
   isArchived?: boolean;
 }
 

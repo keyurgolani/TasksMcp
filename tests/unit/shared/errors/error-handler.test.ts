@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { errorHandler } from '../../../../src/shared/errors/error-handler.js';
 import { operationCache } from '../../../../src/infrastructure/storage/operation-cache.js';
-import { enhancedValidator } from '../../../../src/shared/utils/validation.js';
+import { validator } from '../../../../src/shared/utils/validation.js';
 import {
   ActionPlanParseError,
   ProjectManagementError,
@@ -389,7 +389,7 @@ describe('Operation Cache', () => {
 describe('Enhanced Validation', () => {
   describe('Safe Validation', () => {
     it('should return valid result for successful validation', () => {
-      const result = enhancedValidator.validateSafely(
+      const result = validator.validateSafely(
         () => 'valid result',
         'fallback',
         'test context'
@@ -400,7 +400,7 @@ describe('Enhanced Validation', () => {
     });
 
     it('should return fallback for failed validation', () => {
-      const result = enhancedValidator.validateSafely(
+      const result = validator.validateSafely(
         () => { throw new Error('validation failed'); },
         'fallback value',
         'test context'

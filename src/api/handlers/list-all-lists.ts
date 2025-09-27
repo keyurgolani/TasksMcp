@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { SimpleListResponse } from '../../shared/types/mcp-types.js';
+import type { ListResponse } from '../../shared/types/mcp-types.js';
 import { logger } from '../../shared/utils/logger.js';
 import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
@@ -34,8 +34,8 @@ export async function handleListAllLists(
 
     const result = await todoListManager.listTodoLists(listInput);
 
-    const response: SimpleListResponse[] = result.map(list => {
-      const simpleList: SimpleListResponse = {
+    const response: ListResponse[] = result.map(list => {
+      const listResponse: ListResponse = {
         id: list.id,
         title: list.title,
         taskCount: list.totalItems,
@@ -45,10 +45,10 @@ export async function handleListAllLists(
       };
 
       if (list.projectTag) {
-        simpleList.projectTag = list.projectTag;
+        listResponse.projectTag = list.projectTag;
       }
 
-      return simpleList;
+      return listResponse;
     });
 
     logger.info('Todo lists retrieved successfully', {
@@ -66,7 +66,7 @@ export async function handleListAllLists(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with listManagement configuration
+    // Use error formatting with listManagement configuration
     const formatError = createHandlerErrorFormatter('list_all_lists', ERROR_CONFIGS.listManagement);
     return formatError(error, request.params?.arguments);
   }

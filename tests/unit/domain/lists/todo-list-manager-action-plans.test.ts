@@ -5,6 +5,7 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
+import { TestCleanup } from '../../../setup.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
 
 describe('TodoListManager Action Plan Integration', () => {
@@ -13,8 +14,13 @@ describe('TodoListManager Action Plan Integration', () => {
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
+    await storage.initialize();
     manager = new TodoListManager(storage);
     await manager.initialize();
+    
+    // Register for automatic cleanup
+    TestCleanup.registerStorage(storage);
+    TestCleanup.registerManager(manager);
   });
 
   describe('createTodoList with action plans', () => {

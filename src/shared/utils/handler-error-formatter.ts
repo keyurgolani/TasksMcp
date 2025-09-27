@@ -1,14 +1,14 @@
 /**
  * Handler Error Formatting Utility
  * 
- * Provides standardized enhanced error formatting for MCP tool handlers.
+ * Provides standardized error formatting for MCP tool handlers.
  * Includes agent-friendly messages, examples, and common mistake guidance.
  */
 
 import { z } from 'zod';
 import type { CallToolResult } from '../types/mcp-types.js';
 import { formatZodError, createErrorContext } from './error-formatter.js';
-import { getToolExamples, getCommonMistakes } from '../examples/tool-examples.js';
+
 import { logger } from './logger.js';
 
 /**
@@ -26,7 +26,7 @@ export interface HandlerErrorConfig {
 }
 
 /**
- * Format errors for MCP tool handlers with enhanced agent-friendly messages
+ * Format errors for MCP tool handlers with agent-friendly messages
  * 
  * @param error - The error that occurred
  * @param config - Configuration for error formatting
@@ -40,7 +40,6 @@ export function formatHandlerError(
 ): CallToolResult {
   const {
     toolName,
-    maxCommonMistakes = 2,
     includeExamples = true,
     includeContext = true,
   } = config;
@@ -52,38 +51,14 @@ export function formatHandlerError(
     params: requestParams,
   });
 
-  // Handle Zod validation errors with enhanced formatting
+  // Handle Zod validation errors with formatting
   if (error instanceof z.ZodError) {
     const errorContext = createErrorContext(toolName, includeContext);
+    // Set includeExamples based on the config
+    errorContext.includeExamples = includeExamples;
     let errorMessage = formatZodError(error, errorContext);
     
-    // Add common mistakes section
-    const commonMistakes = getCommonMistakes(toolName);
-    if (commonMistakes.length > 0) {
-      errorMessage += '\n\n🔧 Common fixes:';
-      
-      commonMistakes.slice(0, maxCommonMistakes).forEach((mistake, index) => {
-        errorMessage += `\n${index + 1}. ${mistake.fix}`;
-        if (mistake.example) {
-          errorMessage += `\n   Example: ${JSON.stringify(mistake.example)}`;
-        }
-      });
-    }
-    
-    // Add working example section
-    if (includeExamples) {
-      const toolExamples = getToolExamples(toolName);
-      if (toolExamples && toolExamples.examples.length > 0) {
-        // Prefer simple examples for error responses
-        const simpleExample = toolExamples.examples.find(e => 
-          e.description.toLowerCase().includes('simple') ||
-          e.description.toLowerCase().includes('basic')
-        ) || toolExamples.examples[0];
-        
-        errorMessage += `\n\n📝 Working example:`;
-        errorMessage += `\n${JSON.stringify(simpleExample!.parameters, null, 2)}`;
-      }
-    }
+    // formatZodError already includes common mistakes and examples, so we don't need to add them again
 
     return {
       content: [
@@ -127,14 +102,14 @@ export function createHandlerErrorFormatter(
 }
 
 /**
- * Wrap a handler function with enhanced error formatting
+ * Wrap a handler function with error formatting
  * 
  * @param toolName - Name of the MCP tool
  * @param handlerFn - The original handler function
  * @param config - Optional configuration for error formatting
- * @returns Wrapped handler with enhanced error formatting
+ * @returns Wrapped handler with error formatting
  */
-export function withEnhancedErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends any[], R>(
   toolName: string,
   handlerFn: (...args: T) => Promise<R>,
   config: Partial<Omit<HandlerErrorConfig, 'toolName'>> = {}

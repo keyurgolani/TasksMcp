@@ -18,7 +18,7 @@ import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-ta
 // Import enhanced existing handlers
 import { handleAddTask } from '../../src/api/handlers/add-task.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { handleFilterTasks } from '../../src/api/handlers/filter-tasks.js';
+import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
 
 describe('Dependency Management User Experience Tests', () => {
@@ -315,13 +315,14 @@ describe('Dependency Management User Experience Tests', () => {
       }, todoListManager);
 
       // Filter for ready tasks
-      const readyResult = await handleFilterTasks({
+      const readyResult = await handleSearchTool({
         method: 'tools/call',
         params: {
-          name: 'filter_tasks',
+          name: 'search_tool',
           arguments: {
             listId: testList.id,
             isReady: true,
+            includeDependencyInfo: true,
           },
         },
       }, todoListManager);
@@ -336,13 +337,14 @@ describe('Dependency Management User Experience Tests', () => {
       }
 
       // Filter for blocked tasks
-      const blockedResult = await handleFilterTasks({
+      const blockedResult = await handleSearchTool({
         method: 'tools/call',
         params: {
-          name: 'filter_tasks',
+          name: 'search_tool',
           arguments: {
             listId: testList.id,
             isBlocked: true,
+            includeDependencyInfo: true,
           },
         },
       }, todoListManager);
@@ -630,10 +632,10 @@ describe('Dependency Management User Experience Tests', () => {
 
     it('should handle filtering when no tasks match criteria', async () => {
       // Filter for blocked tasks when none exist
-      const result = await handleFilterTasks({
+      const result = await handleSearchTool({
         method: 'tools/call',
         params: {
-          name: 'filter_tasks',
+          name: 'search_tool',
           arguments: {
             listId: testList.id,
             isBlocked: true,
@@ -760,9 +762,9 @@ describe('Dependency Management User Experience Tests', () => {
           method: 'tools/call',
           params: { name: 'get_list', arguments: { listId: testList.id } },
         }, todoListManager),
-        () => handleFilterTasks({
+        () => handleSearchTool({
           method: 'tools/call',
-          params: { name: 'filter_tasks', arguments: { listId: testList.id } },
+          params: { name: 'search_tool', arguments: { listId: testList.id, includeDependencyInfo: true } },
         }, todoListManager),
         () => handleGetReadyTasks({
           method: 'tools/call',

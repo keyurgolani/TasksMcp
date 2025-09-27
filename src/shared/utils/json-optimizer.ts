@@ -110,6 +110,9 @@ export class JsonOptimizer {
         parsed.items = [];
       }
 
+      // Migrate data for backward compatibility
+      this.migrateDataStructure(parsed);
+
       const duration = performance.now() - startTime;
 
       if (duration > 10) {
@@ -173,6 +176,28 @@ export class JsonOptimizer {
         error,
       });
       throw error;
+    }
+  }
+
+  /**
+   * Migrate data structure for backward compatibility
+   */
+  private static migrateDataStructure(todoList: TodoList): void {
+    // Ensure list-level fields exist
+    if (!todoList.implementationNotes) {
+      todoList.implementationNotes = [];
+    }
+
+    // Ensure item-level fields exist
+    if (todoList.items) {
+      for (const item of todoList.items) {
+        if (!item.implementationNotes) {
+          item.implementationNotes = [];
+        }
+        if (!item.exitCriteria) {
+          item.exitCriteria = [];
+        }
+      }
     }
   }
 

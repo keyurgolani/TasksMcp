@@ -40,6 +40,7 @@ export interface AddTaskParams {
   tags?: string[];
   estimatedDuration?: number;
   dependencies?: string[];
+  exitCriteria?: string[];
 }
 
 export interface UpdateTaskParams {
@@ -48,6 +49,7 @@ export interface UpdateTaskParams {
   title?: string;
   description?: string;
   estimatedDuration?: number;
+  exitCriteria?: string[];
 }
 
 export interface RemoveTaskParams {
@@ -72,20 +74,30 @@ export interface AddTaskTagsParams {
   tags: string[];
 }
 
-export interface SearchTasksParams {
-  query: string;
+export interface SearchToolParams {
+  query?: string;
   listId?: string;
   limit?: number;
-}
-
-export interface FilterTasksParams {
-  listId: string;
-  status?: string;
-  priority?: number;
-  tag?: string;
+  status?: string[];
+  priority?: number[];
+  tags?: string[];
+  tagOperator?: 'AND' | 'OR';
   hasDependencies?: boolean;
   isReady?: boolean;
   isBlocked?: boolean;
+  dateRange?: {
+    start?: string;
+    end?: string;
+    field?: 'createdAt' | 'updatedAt' | 'completedAt';
+  };
+  estimatedDuration?: {
+    min?: number;
+    max?: number;
+  };
+  sortBy?: 'relevance' | 'priority' | 'createdAt' | 'updatedAt' | 'title';
+  sortOrder?: 'asc' | 'desc';
+  includeCompleted?: boolean;
+  includeDependencyInfo?: boolean;
 }
 
 export interface ShowTasksParams {
@@ -122,6 +134,20 @@ export interface AnalyzeTaskDependenciesParams {
   listId: string;
 }
 
+export interface SetTaskExitCriteriaParams {
+  listId: string;
+  taskId: string;
+  exitCriteria: string[];
+}
+
+export interface UpdateExitCriteriaParams {
+  listId: string;
+  taskId: string;
+  criteriaId: string;
+  isMet?: boolean;
+  notes?: string;
+}
+
 // ============================================================================
 // Tool Schema Definitions
 // ============================================================================
@@ -138,17 +164,17 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'Title of the todo list (provide as a string, e.g., "My Project Tasks")',
           minLength: 1,
-          maxLength: 200,
+          maxLength: 1000,
         },
         description: {
           type: 'string',
           description: 'Optional description of the todo list (provide as a string)',
-          maxLength: 1000,
+          maxLength: 5000,
         },
         projectTag: {
           type: 'string',
           description: 'Optional project tag for organization (use lowercase with hyphens, e.g., "web-app" or "mobile-project")',
-          maxLength: 50,
+          maxLength: 250,
         },
       },
       required: ['title'],
@@ -163,8 +189,10 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to retrieve (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description: 'UUID of the todo list to retrieve',
           format: 'uuid',
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          example: '123e4567-e89b-12d3-a456-426614174000',
         },
         includeCompleted: {
           type: 'boolean',
@@ -185,7 +213,7 @@ export const MCP_TOOLS: Tool[] = [
         projectTag: {
           type: 'string',
           description: 'Filter by project tag (provide as string)',
-          maxLength: 50,
+          maxLength: 250,
         },
         includeArchived: {
           type: 'boolean',
@@ -196,7 +224,7 @@ export const MCP_TOOLS: Tool[] = [
           type: 'number',
           description: 'Maximum number of lists to return (provide as number, e.g., 20)',
           minimum: 1,
-          maximum: 100,
+          maximum: 500,
           default: 50,
         },
       },
@@ -211,8 +239,10 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to delete (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description: 'UUID of the todo list to delete',
           format: 'uuid',
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          example: '123e4567-e89b-12d3-a456-426614174000',
         },
         permanent: {
           type: 'boolean',
@@ -240,28 +270,32 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'Task title (provide as string, e.g., "Implement user authentication")',
           minLength: 1,
-          maxLength: 200,
+          maxLength: 1000,
         },
         description: {
           type: 'string',
           description: 'Task description (provide as string)',
-          maxLength: 1000,
+          maxLength: 5000,
         },
         priority: {
           type: 'number',
-          description: 'Task priority as a number: 5 (highest) to 1 (lowest), e.g., 5 for urgent tasks',
+          description: 'Task priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)',
           minimum: 1,
           maximum: 5,
           default: 3,
+          examples: [1, 3, 5],
         },
         tags: {
           type: 'array',
-          description: 'Task tags as an array of strings, e.g., ["urgent", "important", "bug-fix"]',
+          description: 'Task tags (lowercase, alphanumeric, hyphens, underscores recommended)',
           items: {
             type: 'string',
             maxLength: 50,
+            pattern: '^[a-z0-9-_]+$',
           },
+          minItems: 0,
           maxItems: 10,
+          examples: [['urgent', 'frontend'], ['bug-fix', 'critical']],
         },
         estimatedDuration: {
           type: 'number',
@@ -275,7 +309,16 @@ export const MCP_TOOLS: Tool[] = [
             type: 'string',
             format: 'uuid',
           },
-          maxItems: 10,
+          maxItems: 50,
+        },
+        exitCriteria: {
+          type: 'array',
+          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings)',
+          items: {
+            type: 'string',
+            maxLength: 500,
+          },
+          maxItems: 20,
         },
       },
       required: ['listId', 'title'],
@@ -302,17 +345,26 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'New task title (provide as string)',
           minLength: 1,
-          maxLength: 200,
+          maxLength: 1000,
         },
         description: {
           type: 'string',
           description: 'New task description (provide as string)',
-          maxLength: 1000,
+          maxLength: 5000,
         },
         estimatedDuration: {
           type: 'number',
           description: 'New estimated duration in minutes (provide as number, e.g., 90)',
           minimum: 1,
+        },
+        exitCriteria: {
+          type: 'array',
+          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings)',
+          items: {
+            type: 'string',
+            maxLength: 500,
+          },
+          maxItems: 20,
         },
       },
       required: ['listId', 'taskId'],
@@ -379,9 +431,10 @@ export const MCP_TOOLS: Tool[] = [
         },
         priority: {
           type: 'number',
-          description: 'New priority as a number: 5 (highest/urgent) to 1 (lowest), e.g., 5 for critical tasks',
+          description: 'New priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)',
           minimum: 1,
           maximum: 5,
+          examples: [1, 3, 5],
         },
       },
       required: ['listId', 'taskId', 'priority'],
@@ -406,31 +459,33 @@ export const MCP_TOOLS: Tool[] = [
         },
         tags: {
           type: 'array',
-          description: 'Tags to add as an array of strings, e.g., ["urgent", "frontend", "review-needed"]',
+          description: 'Tags to add (lowercase, alphanumeric, hyphens, underscores recommended)',
           items: {
             type: 'string',
             maxLength: 50,
+            pattern: '^[a-z0-9-_]+$',
           },
           minItems: 1,
           maxItems: 10,
+          examples: [['urgent', 'frontend'], ['review-needed', 'critical']],
         },
       },
       required: ['listId', 'taskId', 'tags'],
     },
   },
 
-  // Search & Display Tools (3 tools)
+  // Search & Display Tools (2 tools)
   {
-    name: 'search_tasks',
-    description: 'Search tasks by text query',
+    name: 'search_tool',
+    description: 'Unified search, filter, and query tool for tasks with flexible criteria and sorting options',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Text to search for in task titles and descriptions (provide as string, e.g., "authentication")',
+          description: 'Text to search for in task titles, descriptions, and tags (optional)',
           minLength: 1,
-          maxLength: 200,
+          maxLength: 1000,
         },
         listId: {
           type: 'string',
@@ -439,57 +494,120 @@ export const MCP_TOOLS: Tool[] = [
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of results to return (provide as number, e.g., 10)',
+          description: 'Maximum number of results to return (provide as number, e.g., 20)',
           minimum: 1,
-          maximum: 100,
-          default: 20,
-        },
-      },
-      required: ['query'],
-    },
-  },
-
-  {
-    name: 'filter_tasks',
-    description: 'Filter tasks by specific criteria including dependency status',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        listId: {
-          type: 'string',
-          description: 'UUID of the todo list to filter (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
-          format: 'uuid',
+          maximum: 500,
+          default: 50,
         },
         status: {
-          type: 'string',
-          description: 'Filter by task status - use one of: "pending", "in_progress", "completed", "blocked", "cancelled"',
-          enum: ['pending', 'in_progress', 'completed', 'blocked', 'cancelled'],
+          type: 'array',
+          description: 'Filter by task statuses (provide as array of strings)',
+          items: {
+            type: 'string',
+            enum: ['pending', 'in_progress', 'completed', 'blocked', 'cancelled'],
+          },
+          maxItems: 5,
+          examples: [['pending', 'in_progress'], ['completed']],
         },
         priority: {
-          type: 'number',
-          description: 'Filter by priority level (provide as number: 5 for highest priority tasks, 1 for lowest)',
-          minimum: 1,
-          maximum: 5,
+          type: 'array',
+          description: 'Filter by priority levels (provide as array of numbers: 1=minimal, 2=low, 3=medium, 4=high, 5=critical)',
+          items: {
+            type: 'number',
+            minimum: 1,
+            maximum: 5,
+          },
+          maxItems: 5,
+          examples: [[1, 2], [4, 5]],
         },
-        tag: {
+        tags: {
+          type: 'array',
+          description: 'Filter by tags (provide as array of strings)',
+          items: {
+            type: 'string',
+            maxLength: 50,
+          },
+          maxItems: 20,
+        },
+        tagOperator: {
           type: 'string',
-          description: 'Filter by specific tag (provide as string, e.g., "urgent")',
-          maxLength: 50,
+          description: 'How to combine tag filters: "AND" (task must have ALL tags) or "OR" (task must have ANY tag)',
+          enum: ['AND', 'OR'],
+          default: 'AND',
         },
         hasDependencies: {
           type: 'boolean',
-          description: 'Filter by whether tasks have dependencies - provide as boolean: true or false',
+          description: 'Filter by whether tasks have dependencies (provide as boolean: true or false)',
         },
         isReady: {
           type: 'boolean',
-          description: 'Filter by whether tasks are ready to work on - provide as boolean: true or false',
+          description: 'Filter by whether tasks are ready to work on (provide as boolean: true or false)',
         },
         isBlocked: {
           type: 'boolean',
-          description: 'Filter by whether tasks are blocked by dependencies - provide as boolean: true or false',
+          description: 'Filter by whether tasks are blocked by dependencies (provide as boolean: true or false)',
+        },
+        dateRange: {
+          type: 'object',
+          description: 'Filter by date range',
+          properties: {
+            start: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Start date (ISO 8601 format)',
+            },
+            end: {
+              type: 'string',
+              format: 'date-time',
+              description: 'End date (ISO 8601 format)',
+            },
+            field: {
+              type: 'string',
+              enum: ['createdAt', 'updatedAt', 'completedAt'],
+              default: 'createdAt',
+              description: 'Which date field to filter on',
+            },
+          },
+        },
+        estimatedDuration: {
+          type: 'object',
+          description: 'Filter by estimated duration range (minutes)',
+          properties: {
+            min: {
+              type: 'number',
+              minimum: 1,
+              description: 'Minimum duration in minutes',
+            },
+            max: {
+              type: 'number',
+              minimum: 1,
+              description: 'Maximum duration in minutes',
+            },
+          },
+        },
+        sortBy: {
+          type: 'string',
+          description: 'Field to sort results by',
+          enum: ['relevance', 'priority', 'createdAt', 'updatedAt', 'title'],
+          default: 'relevance',
+        },
+        sortOrder: {
+          type: 'string',
+          description: 'Sort order: "asc" (ascending) or "desc" (descending)',
+          enum: ['asc', 'desc'],
+          default: 'desc',
+        },
+        includeCompleted: {
+          type: 'boolean',
+          description: 'Whether to include completed tasks (provide as boolean: true or false)',
+          default: true,
+        },
+        includeDependencyInfo: {
+          type: 'boolean',
+          description: 'Whether to include dependency information in results (provide as boolean: true or false)',
+          default: false,
         },
       },
-      required: ['listId'],
     },
   },
 
@@ -537,18 +655,18 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'Description of the task to analyze (provide as string, e.g., "Build user authentication system")',
           minLength: 1,
-          maxLength: 2000,
+          maxLength: 10000,
         },
         context: {
           type: 'string',
           description: 'Optional context or project information (provide as string)',
-          maxLength: 200,
+          maxLength: 1000,
         },
         maxSuggestions: {
           type: 'number',
           description: 'Maximum number of suggestions to return (provide as number, e.g., 3)',
           minimum: 1,
-          maximum: 10,
+          maximum: 50,
           default: 5,
         },
       },
@@ -577,7 +695,7 @@ export const MCP_TOOLS: Tool[] = [
           type: 'number',
           description: 'Maximum number of suggestions to return (provide as number, e.g., 5)',
           minimum: 1,
-          maximum: 10,
+          maximum: 50,
           default: 5,
         },
       },
@@ -609,7 +727,7 @@ export const MCP_TOOLS: Tool[] = [
             type: 'string',
             format: 'uuid',
           },
-          maxItems: 10,
+          maxItems: 50,
         },
       },
       required: ['listId', 'taskId', 'dependencyIds'],
@@ -666,6 +784,150 @@ export const MCP_TOOLS: Tool[] = [
       required: ['listId'],
     },
   },
+
+  // Bulk Operations Tool (1 tool)
+  {
+    name: 'bulk_task_operations',
+    description: 'Perform bulk operations on multiple tasks for improved efficiency',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description: 'UUID of the todo list',
+          format: 'uuid',
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          example: '123e4567-e89b-12d3-a456-426614174000',
+        },
+        operation: {
+          type: 'string',
+          description: 'Type of bulk operation to perform',
+          enum: ['create', 'update', 'delete', 'complete', 'set_priority'],
+          enumDescriptions: {
+            create: 'Create multiple new tasks',
+            update: 'Update multiple existing tasks',
+            delete: 'Delete multiple tasks',
+            complete: 'Mark multiple tasks as completed',
+            set_priority: 'Set priority for multiple tasks'
+          },
+        },
+        tasks: {
+          type: 'array',
+          description: 'Array of task data for bulk operation',
+          items: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',
+                format: 'uuid',
+                description: 'Task ID (required for update/delete/complete operations)',
+              },
+              title: {
+                type: 'string',
+                minLength: 1,
+                maxLength: 1000,
+                description: 'Task title (required for create operation)',
+              },
+              description: {
+                type: 'string',
+                maxLength: 5000,
+                description: 'Task description',
+              },
+              priority: {
+                type: 'number',
+                minimum: 1,
+                maximum: 5,
+                description: 'Task priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical)',
+              },
+              tags: {
+                type: 'array',
+                items: {
+                  type: 'string',
+                  maxLength: 50,
+                },
+                maxItems: 10,
+                description: 'Task tags',
+              },
+              estimatedDuration: {
+                type: 'number',
+                minimum: 1,
+                description: 'Estimated duration in minutes',
+              },
+            },
+          },
+          minItems: 1,
+          maxItems: 100,
+        },
+      },
+      required: ['listId', 'operation', 'tasks'],
+    },
+  },
+
+  // Exit Criteria Management Tools (2 tools)
+  {
+    name: 'set_task_exit_criteria',
+    description: 'Set exit criteria for a task (replaces all existing exit criteria)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description: 'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        taskId: {
+          type: 'string',
+          description: 'UUID of the task to set exit criteria for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        exitCriteria: {
+          type: 'array',
+          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings, empty array removes all criteria)',
+          items: {
+            type: 'string',
+            maxLength: 500,
+          },
+          maxItems: 20,
+        },
+      },
+      required: ['listId', 'taskId', 'exitCriteria'],
+    },
+  },
+
+  {
+    name: 'update_exit_criteria',
+    description: 'Update the status of a specific exit criteria',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description: 'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        taskId: {
+          type: 'string',
+          description: 'UUID of the task containing the exit criteria (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        criteriaId: {
+          type: 'string',
+          description: 'UUID of the exit criteria to update (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        isMet: {
+          type: 'boolean',
+          description: 'Whether the exit criteria has been met (provide as boolean: true or false)',
+        },
+        notes: {
+          type: 'string',
+          description: 'Optional notes about the criteria status (provide as string)',
+          maxLength: 1000,
+        },
+      },
+      required: ['listId', 'taskId', 'criteriaId'],
+    },
+  },
 ];
 
 // ============================================================================
@@ -673,132 +935,186 @@ export const MCP_TOOLS: Tool[] = [
 // ============================================================================
 
 /**
- * Validates parameters against a tool's input schema
+ * Validates parameters against a tool's input schema with error messages
  */
 export function validateToolParameters(
   toolName: string,
   parameters: Record<string, unknown>
-): { valid: boolean; errors: string[] } {
+): { valid: boolean; errors: string[]; suggestions?: string[] } {
   const tool = MCP_TOOLS.find(t => t.name === toolName);
   if (!tool) {
-    return { valid: false, errors: [`Unknown tool: ${toolName}`] };
+    return { 
+      valid: false, 
+      errors: [`Unknown tool: ${toolName}`],
+      suggestions: [`Available tools: ${MCP_TOOLS.map(t => t.name).join(', ')}`]
+    };
   }
 
   const errors: string[] = [];
+  const suggestions: string[] = [];
   const schema = tool.inputSchema;
   
   if (schema.type !== 'object' || !schema.properties) {
     return { valid: false, errors: ['Invalid schema structure'] };
   }
 
-  // Check required parameters
+  // Check required parameters with suggestions
   if (schema.required) {
     for (const requiredParam of schema.required) {
       if (!(requiredParam in parameters)) {
         errors.push(`Missing required parameter: ${requiredParam}`);
+        const paramSchema = schema.properties[requiredParam];
+        if (paramSchema && typeof paramSchema === 'object' && 'description' in paramSchema && paramSchema.description) {
+          suggestions.push(`${requiredParam}: ${paramSchema.description}`);
+        }
+        if (paramSchema && typeof paramSchema === 'object' && 'example' in paramSchema && paramSchema.example) {
+          suggestions.push(`Example ${requiredParam}: ${paramSchema.example}`);
+        }
       }
     }
   }
 
-  // Validate parameter types and constraints
+  // Validate parameter types and constraints with feedback
   for (const [paramName, paramValue] of Object.entries(parameters)) {
     const paramSchema = schema.properties[paramName];
     if (!paramSchema) {
       errors.push(`Unknown parameter: ${paramName}`);
+      const validParams = Object.keys(schema.properties);
+      suggestions.push(`Valid parameters: ${validParams.join(', ')}`);
       continue;
     }
 
     const validationResult = validateParameter(paramName, paramValue, paramSchema);
-    errors.push(...validationResult);
+    errors.push(...validationResult.errors);
+    if (validationResult.suggestions) {
+      suggestions.push(...validationResult.suggestions);
+    }
   }
 
-  return { valid: errors.length === 0, errors };
+  return { valid: errors.length === 0, errors, suggestions };
+}
+
+
+
+/**
+ * Simple UUID validation with error messaging
+ */
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 }
 
 /**
- * Validates a single parameter against its schema
+ * Parameter validation with error messages
  */
 function validateParameter(
   name: string,
   value: unknown,
   schema: any
-): string[] {
+): { valid: boolean; errors: string[]; suggestions?: string[] } {
   const errors: string[] = [];
+  const suggestions: string[] = [];
 
-  // Type validation
+  // Type validation with suggestions
   if (schema.type === 'string' && typeof value !== 'string') {
     errors.push(`Parameter ${name} must be a string`);
-    return errors;
+    suggestions.push(`Provide ${name} as a string value`);
+    return { valid: false, errors, suggestions };
   }
   
   if (schema.type === 'number' && typeof value !== 'number') {
     errors.push(`Parameter ${name} must be a number`);
-    return errors;
+    if (schema.minimum !== undefined && schema.maximum !== undefined) {
+      suggestions.push(`Provide ${name} as a number between ${schema.minimum} and ${schema.maximum}`);
+    }
+    return { valid: false, errors, suggestions };
   }
   
   if (schema.type === 'boolean' && typeof value !== 'boolean') {
     errors.push(`Parameter ${name} must be a boolean`);
-    return errors;
+    suggestions.push(`Use true or false for ${name}`);
+    return { valid: false, errors, suggestions };
   }
   
   if (schema.type === 'array' && !Array.isArray(value)) {
     errors.push(`Parameter ${name} must be an array`);
-    return errors;
+    if (schema.examples) {
+      suggestions.push(`Example: ${JSON.stringify(schema.examples[0])}`);
+    }
+    return { valid: false, errors, suggestions };
   }
 
-  // String constraints
+  // String constraints with suggestions
   if (schema.type === 'string' && typeof value === 'string') {
     if (schema.minLength && value.length < schema.minLength) {
       errors.push(`Parameter ${name} must be at least ${schema.minLength} characters`);
+      suggestions.push(`Current length: ${value.length}, required: ${schema.minLength}+`);
     }
     if (schema.maxLength && value.length > schema.maxLength) {
       errors.push(`Parameter ${name} must be at most ${schema.maxLength} characters`);
+      suggestions.push(`Current length: ${value.length}, maximum: ${schema.maxLength}`);
     }
     if (schema.enum && !schema.enum.includes(value)) {
       errors.push(`Parameter ${name} must be one of: ${schema.enum.join(', ')}`);
+      suggestions.push(`Valid options: ${schema.enum.join(', ')}`);
+      if (schema.enumDescriptions) {
+        const descriptions = Object.entries(schema.enumDescriptions)
+          .map(([key, desc]) => `${key}: ${desc}`)
+          .join(', ');
+        suggestions.push(`Descriptions: ${descriptions}`);
+      }
     }
     if (schema.format === 'uuid' && !isValidUUID(value)) {
       errors.push(`Parameter ${name} must be a valid UUID`);
+      suggestions.push(`UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`);
+      if (schema.example) {
+        suggestions.push(`Example: ${schema.example}`);
+      }
     }
   }
 
-  // Number constraints
+  // Number constraints with suggestions
   if (schema.type === 'number' && typeof value === 'number') {
     if (schema.minimum !== undefined && value < schema.minimum) {
       errors.push(`Parameter ${name} must be at least ${schema.minimum}`);
+      suggestions.push(`Current value: ${value}, minimum: ${schema.minimum}`);
+      if (schema.examples) {
+        suggestions.push(`Valid examples: ${schema.examples.join(', ')}`);
+      }
     }
     if (schema.maximum !== undefined && value > schema.maximum) {
       errors.push(`Parameter ${name} must be at most ${schema.maximum}`);
+      suggestions.push(`Current value: ${value}, maximum: ${schema.maximum}`);
+      if (schema.examples) {
+        suggestions.push(`Valid examples: ${schema.examples.join(', ')}`);
+      }
     }
   }
 
-  // Array constraints
+  // Array constraints with suggestions
   if (schema.type === 'array' && Array.isArray(value)) {
     if (schema.minItems && value.length < schema.minItems) {
       errors.push(`Parameter ${name} must have at least ${schema.minItems} items`);
+      suggestions.push(`Current count: ${value.length}, minimum: ${schema.minItems}`);
     }
     if (schema.maxItems && value.length > schema.maxItems) {
       errors.push(`Parameter ${name} must have at most ${schema.maxItems} items`);
+      suggestions.push(`Current count: ${value.length}, maximum: ${schema.maxItems}`);
     }
     
-    // Validate array items
+    // Validate array items with feedback
     if (schema.items) {
       value.forEach((item, index) => {
-        const itemErrors = validateParameter(`${name}[${index}]`, item, schema.items);
-        errors.push(...itemErrors);
+        const itemValidation = validateParameter(`${name}[${index}]`, item, schema.items);
+        errors.push(...itemValidation.errors);
+        if (itemValidation.suggestions) {
+          suggestions.push(...itemValidation.suggestions);
+        }
       });
     }
   }
 
-  return errors;
-}
-
-/**
- * Simple UUID validation
- */
-function isValidUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
+  return { valid: errors.length === 0, errors, suggestions };
 }
 
 /**

@@ -203,11 +203,11 @@ describe('Dependency Validation Utilities', () => {
     });
 
     it('should enforce maximum dependency limit', () => {
-      const tooManyDeps = Array(11).fill('550e8400-e29b-41d4-a716-446655440000');
+      const tooManyDeps = Array(51).fill('550e8400-e29b-41d4-a716-446655440000');
       const result = validateTaskDependencies('550e8400-e29b-41d4-a716-446655440001', tooManyDeps, mockTasks);
       
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.includes('Maximum 10 dependencies'))).toBe(true);
+      expect(result.errors.some(e => e.includes('Maximum 50 dependencies'))).toBe(true);
     });
 
     it('should handle validation exceptions gracefully', () => {
@@ -352,11 +352,11 @@ describe('Dependency Validation Utilities', () => {
       });
 
       it('should reject arrays with more than 10 items', () => {
-        const tooManyIds = Array(11).fill('550e8400-e29b-41d4-a716-446655440000');
+        const tooManyIds = Array(51).fill('550e8400-e29b-41d4-a716-446655440000');
         
         expect(() => {
           DependencyIdsSchema.parse(tooManyIds);
-        }).toThrow('Maximum 10 dependencies allowed per task');
+        }).toThrow('Maximum 50 dependencies allowed per task');
       });
 
       it('should default to empty array', () => {

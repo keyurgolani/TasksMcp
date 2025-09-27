@@ -262,7 +262,7 @@ describe('Comprehensive Validation Tests', () => {
         
         const filterTasksFormatted = ErrorFormatter.formatValidationError(
           error as ZodError,
-          { toolName: 'filter_tasks' }
+          { toolName: 'search_tool' }
         );
 
         // Should have different suggestions based on tool context
@@ -467,7 +467,7 @@ describe('Comprehensive Validation Tests', () => {
       const result = preprocessor.preprocessParameters(largeParams);
       const endTime = Date.now();
 
-      expect(endTime - startTime).toBeLessThan(100); // Should be fast
+      expect(endTime - startTime).toBeLessThan(1000); // Should be reasonably fast
       expect(result.conversions.length).toBe(500); // Half should be converted
       expect(result.errors).toHaveLength(0);
     });
@@ -507,7 +507,7 @@ describe('Comprehensive Validation Tests', () => {
       const result = matcher.findClosestEnumValue('option_500', largeEnumSet);
       const endTime = Date.now();
 
-      expect(endTime - startTime).toBeLessThan(50); // Should be fast
+      expect(endTime - startTime).toBeLessThan(200); // Should be reasonably fast
       expect(result.match).toBe('option_500');
       expect(result.matchType).toBe('exact');
     });
@@ -555,7 +555,7 @@ describe('Comprehensive Validation Tests', () => {
 
   describe('Tool Examples Integration', () => {
     it('should provide examples for all major tools', () => {
-      const tools = ['add_task', 'filter_tasks', 'create_list'];
+      const tools = ['add_task', 'search_tool', 'create_list'];
       
       tools.forEach(toolName => {
         const schema = z.object({

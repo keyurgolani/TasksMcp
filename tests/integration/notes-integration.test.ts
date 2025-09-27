@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import { TestCleanup } from '../setup.js';
 import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
 import type { ImplementationNote } from '../../src/shared/types/todo.js';
 
@@ -14,12 +15,17 @@ describe('Notes Integration Tests', () => {
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
+    await storage.initialize();
     todoListManager = new TodoListManager(storage);
     await todoListManager.initialize();
+    
+    // Register for automatic cleanup
+    TestCleanup.registerStorage(storage);
+    TestCleanup.registerManager(todoListManager);
   });
 
   afterEach(async () => {
-    await todoListManager.shutdown();
+    // Cleanup is handled automatically by test setup
   });
 
   describe('getTodoList with notes', () => {

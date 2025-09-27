@@ -1,93 +1,13 @@
 # MCP Task Manager Examples
 
-This directory contains comprehensive examples demonstrating all features of the MCP Task Manager. Each example is based on real usage and testing of the system.
+> **Note**: The comprehensive examples have been moved to the [docs/examples/](../docs/examples/) directory for better organization. This directory now contains a simplified overview.
 
-## Example Files
+For complete examples and documentation, see:
+- **[docs/examples/basic.md](../docs/examples/basic.md)** - Basic usage examples
+- **[docs/examples/advanced.md](../docs/examples/advanced.md)** - Advanced workflows and multi-agent patterns  
+- **[docs/examples/configuration.md](../docs/examples/configuration.md)** - Configuration examples for different environments
 
-### [01-list-management-examples.md](01-list-management-examples.md)
-Demonstrates list creation, retrieval, filtering, and deletion operations.
-
-**Key Topics:**
-- Creating lists with descriptions and project tags
-- Retrieving lists with various filters
-- Archiving vs. permanent deletion
-- Best practices for list organization
-
-**Tools Covered:**
-- `create_list`
-- `get_list`
-- `list_all_lists`
-- `delete_list`
-
-### [02-task-management-examples.md](02-task-management-examples.md)
-Comprehensive task management operations from creation to completion.
-
-**Key Topics:**
-- Adding tasks with full parameter sets
-- Updating task details and properties
-- Managing task status and priorities
-- Adding and managing tags
-- Task removal operations
-
-**Tools Covered:**
-- `add_task`
-- `update_task`
-- `complete_task`
-- `set_task_priority`
-- `add_task_tags`
-- `remove_task`
-
-### [03-search-display-examples.md](03-search-display-examples.md)
-Search, filtering, and display capabilities with various formatting options.
-
-**Key Topics:**
-- Text-based task searching
-- Advanced filtering by multiple criteria
-- Different display formats (detailed, compact, summary)
-- Grouping options (priority, status, none)
-- Display format legends and best practices
-
-**Tools Covered:**
-- `search_tasks`
-- `filter_tasks`
-- `show_tasks`
-
-### [04-advanced-features-examples.md](04-advanced-features-examples.md)
-AI-powered analysis, suggestions, and dependency management features.
-
-**Key Topics:**
-- AI task complexity analysis
-- Task breakdown suggestions
-- Dependency relationship management
-- Critical path analysis
-- Multiple visualization formats (ASCII, Mermaid, DOT)
-
-**Tools Covered:**
-- `analyze_task`
-- `get_task_suggestions`
-- `set_task_dependencies`
-- `get_ready_tasks`
-- `analyze_task_dependencies`
-
-### [05-configuration-examples.md](05-configuration-examples.md)
-Configuration examples for different environments and use cases.
-
-**Key Topics:**
-- MCP server configuration for various AI agents
-- Environment variable configuration
-- Auto-approval settings
-- Multi-agent setups
-- Production deployment configurations
-
-### [06-dependency-management-examples.md](06-dependency-management-examples.md)
-Comprehensive dependency management with real-world workflow patterns.
-
-**Key Topics:**
-- Setting and managing task dependencies
-- Finding ready-to-work tasks
-- Dependency analysis and visualization
-- Complex dependency scenarios
-- Workflow optimization patterns
+## Quick Reference
 
 ## Quick Start Examples
 

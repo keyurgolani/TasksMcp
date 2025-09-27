@@ -406,7 +406,7 @@ export function isFormattingError(error: Error): error is PrettyPrintError | For
   return isPrettyPrintError(error);
 }
 
-export function isEnhancedTaskManagementError(error: Error): boolean {
+export function isTaskManagementError(error: Error): boolean {
   return isActionPlanError(error) || 
          isProjectManagementError(error) || 
          isNotesError(error) || 
@@ -446,6 +446,6 @@ export const ERROR_CODES = {
   INVALID_DEPENDENCY_ERROR: 'INVALID_DEPENDENCY_ERROR',
   SELF_DEPENDENCY_ERROR: 'SELF_DEPENDENCY_ERROR',
 
-  // Enhanced Validation
-  ENHANCED_VALIDATION_ERROR: 'ENHANCED_VALIDATION_ERROR',
+  // Validation
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;

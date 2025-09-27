@@ -31,12 +31,27 @@ vi.mock('../../../../src/domain/tasks/dependency-manager.js', () => ({
   })),
 }));
 
+// Mock the ExitCriteriaManager
+const mockCalculateCriteriaProgress = vi.fn();
+const mockAreAllCriteriaMet = vi.fn();
+
+vi.mock('../../../../src/domain/tasks/exit-criteria-manager.js', () => ({
+  ExitCriteriaManager: vi.fn().mockImplementation(() => ({
+    calculateCriteriaProgress: mockCalculateCriteriaProgress,
+    areAllCriteriaMet: mockAreAllCriteriaMet,
+  })),
+}));
+
 describe('handleAddTask with dependencies', () => {
   let mockTodoListManager: TodoListManager;
 
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
+
+    // Set up default mock return values
+    mockCalculateCriteriaProgress.mockReturnValue(0);
+    mockAreAllCriteriaMet.mockReturnValue(true);
 
     // Mock TodoListManager
     mockTodoListManager = {
@@ -67,6 +82,7 @@ describe('handleAddTask with dependencies', () => {
       priority: Priority.MEDIUM,
       tags: [],
       dependencies: [],
+      exitCriteria: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -105,6 +121,7 @@ describe('handleAddTask with dependencies', () => {
       title: 'Dependency Task',
       status: TaskStatus.COMPLETED,
       dependencies: [],
+      exitCriteria: [],
     };
 
     const mockNewTask = {
@@ -114,6 +131,7 @@ describe('handleAddTask with dependencies', () => {
       priority: Priority.MEDIUM,
       tags: [],
       dependencies: [dependencyId],
+      exitCriteria: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -232,6 +250,7 @@ describe('handleAddTask with dependencies', () => {
       title: 'Dependency Task',
       status: TaskStatus.PENDING, // Not completed
       dependencies: [],
+      exitCriteria: [],
     };
 
     const mockNewTask = {
@@ -241,6 +260,7 @@ describe('handleAddTask with dependencies', () => {
       priority: Priority.MEDIUM,
       tags: [],
       dependencies: [dependencyId],
+      exitCriteria: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -329,6 +349,7 @@ describe('handleAddTask with dependencies', () => {
       title: 'Completed Task',
       status: TaskStatus.COMPLETED,
       dependencies: [],
+      exitCriteria: [],
     };
 
     const mockExistingList = {
@@ -342,6 +363,7 @@ describe('handleAddTask with dependencies', () => {
       priority: Priority.MEDIUM,
       tags: [],
       dependencies: [dependencyId],
+      exitCriteria: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };

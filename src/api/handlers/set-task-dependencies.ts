@@ -6,7 +6,7 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { SimpleTaskResponse } from '../../shared/types/mcp-types.js';
+import type { TaskResponse } from '../../shared/types/mcp-types.js';
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import { logger } from '../../shared/utils/logger.js';
 import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
@@ -18,7 +18,7 @@ import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/h
 const SetTaskDependenciesSchema = z.object({
   listId: z.string().uuid(),
   taskId: z.string().uuid(),
-  dependencyIds: z.array(z.string().uuid()).max(10),
+  dependencyIds: z.array(z.string().uuid()).min(0).max(50), // Allow empty arrays to remove all dependencies
 });
 
 /**
@@ -120,7 +120,7 @@ export async function handleSetTaskDependencies(
       throw new Error('Failed to update task dependencies - task not found in result');
     }
 
-    const response: SimpleTaskResponse = {
+    const response: TaskResponse = {
       id: updatedTask.id,
       title: updatedTask.title,
       description: updatedTask.description,
@@ -153,7 +153,7 @@ export async function handleSetTaskDependencies(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with taskManagement configuration
+    // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter('set_task_dependencies', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   } finally {

@@ -7,5 +7,9 @@ export default defineConfig({
     testTimeout: 15000,
     hookTimeout: 15000,
     setupFiles: ['./tests/setup.ts'],
+    env: {
+      DISABLE_FILE_LOGGING: 'true',
+      NODE_ENV: 'test',
+    },
   },
 });

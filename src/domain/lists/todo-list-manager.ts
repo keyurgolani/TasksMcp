@@ -14,6 +14,7 @@ import {
   type GetTodoListSorting,
   type GetTodoListPagination,
   type ImplementationNote,
+  type ExitCriteria,
 } from '../../shared/types/todo.js';
 import type { StorageBackend, ListOptions } from '../../shared/types/storage.js';
 import { logger } from '../../shared/utils/logger.js';
@@ -30,6 +31,7 @@ import { memoryLeakPrevention } from '../../shared/utils/memory-leak-prevention.
 import { cacheManager } from '../../infrastructure/storage/cache-manager.js';
 import { ActionPlanManager } from '../tasks/action-plan-manager.js';
 import { NotesManager } from '../tasks/notes-manager.js';
+import { ExitCriteriaManager } from '../tasks/exit-criteria-manager.js';
 import { CleanupSuggestionManager, type CleanupSuggestion } from './cleanup-suggestion-manager.js';
 import { PrettyPrintFormatter } from '../../shared/utils/pretty-print-formatter.js';
 import { ProjectManager } from './project-manager.js';
@@ -48,9 +50,10 @@ export interface CreateTodoListInput {
       content: string;
       type: 'general' | 'technical' | 'decision' | 'learning';
     }>; // Initial implementation notes for the task
+    exitCriteria?: string[]; // Exit criteria descriptions for the task
   }>;
   context?: string; // Deprecated, use projectTag
-  projectTag?: string; // Enhanced field (v2)
+  projectTag?: string; // v2 field
   implementationNotes?: Array<{
     content: string;
     type: 'general' | 'technical' | 'decision' | 'learning';
@@ -87,6 +90,8 @@ export interface UpdateTodoListInput {
     tags?: string[];
     dependencies?: string[];
     actionPlan?: string; // Action plan content
+    exitCriteria?: string[]; // Exit criteria descriptions (for creating new)
+    exitCriteriaObjects?: ExitCriteria[]; // Exit criteria objects (for updating existing)
   };
   itemId?: string;
   newOrder?: string[]; // Array of item IDs for reordering
@@ -100,7 +105,7 @@ export interface UpdateTodoListInput {
 
 export interface ListTodoListsInput {
   context?: string | undefined; // Deprecated, use projectTag
-  projectTag?: string | undefined; // Enhanced field (v2)
+  projectTag?: string | undefined; // v2 field
   status?: 'active' | 'completed' | 'all' | undefined;
   includeArchived?: boolean | undefined;
   limit?: number | undefined;
@@ -123,6 +128,7 @@ export class TodoListManager {
   private readonly analyticsManager: AnalyticsManager;
   private readonly actionPlanManager: ActionPlanManager;
   private readonly notesManager: NotesManager;
+  private readonly exitCriteriaManager: ExitCriteriaManager;
   private readonly cleanupSuggestionManager: CleanupSuggestionManager;
   private readonly prettyPrintFormatter: PrettyPrintFormatter;
   private readonly projectManager: ProjectManager;
@@ -137,6 +143,7 @@ export class TodoListManager {
     this.analyticsManager = new AnalyticsManager();
     this.actionPlanManager = new ActionPlanManager();
     this.notesManager = new NotesManager();
+    this.exitCriteriaManager = new ExitCriteriaManager();
     this.cleanupSuggestionManager = new CleanupSuggestionManager();
     this.prettyPrintFormatter = new PrettyPrintFormatter();
     this.projectManager = new ProjectManager(storage);
@@ -146,7 +153,7 @@ export class TodoListManager {
   async initialize(): Promise<void> {
     await this.storage.initialize();
     
-    // Initialize all enhanced components
+    // Initialize all components
     // Note: ProjectManager and CleanupSuggestionManager don't require async initialization
 
     // Initialize cache manager (it's a singleton but ensure it's set up)
@@ -180,7 +187,7 @@ export class TodoListManager {
     logger.info('TodoListManager initialized successfully');
   }
 
-  // Getter methods for enhanced components
+  // Getter methods for components
   getActionPlanManager(): ActionPlanManager {
     return this.actionPlanManager;
   }
@@ -232,8 +239,9 @@ export class TodoListManager {
             }),
             tags: taskInput.tags ?? [],
             metadata: {},
-            // Enhanced fields (v2)
+            // v2 fields
             implementationNotes: [],
+            exitCriteria: [],
           };
 
           // Create action plan if provided
@@ -298,7 +306,7 @@ export class TodoListManager {
         progress: analytics.progress,
         analytics,
         metadata: {},
-        // Enhanced fields (v2)
+        // v2 fields
         projectTag: input.projectTag ?? input.context ?? 'default',
         implementationNotes: [],
       };
@@ -483,10 +491,10 @@ export class TodoListManager {
         hasMore: processingResult.hasMore,
       });
 
-      // Enhance the result with formatted notes for display
-      const enhancedResult = this.enhanceListWithNotes(resultList);
+      // Add formatted notes for display
+      const result = this.enhanceListWithNotes(resultList);
 
-      return enhancedResult;
+      return result;
     } catch (error) {
       logger.error('Failed to retrieve todo list', {
         listId: input.listId,
@@ -899,8 +907,9 @@ export class TodoListManager {
       }),
       tags: itemData.tags ?? [],
       metadata: {},
-      // Enhanced fields (v2)
+      // v2 fields
       implementationNotes: [],
+      exitCriteria: [],
     };
 
     // Create action plan if provided
@@ -918,6 +927,32 @@ export class TodoListManager {
           error,
         });
         // Continue without action plan rather than failing the entire operation
+      }
+    }
+
+    // Create exit criteria if provided
+    if (itemData.exitCriteria && itemData.exitCriteria.length > 0) {
+      try {
+        const exitCriteria = [];
+        for (let i = 0; i < itemData.exitCriteria.length; i++) {
+          const criteriaDescription = itemData.exitCriteria[i];
+          if (criteriaDescription && criteriaDescription.trim()) {
+            const criteria = await this.exitCriteriaManager.createExitCriteria({
+              taskId: newItemId,
+              description: criteriaDescription.trim(),
+              order: i,
+            });
+            exitCriteria.push(criteria);
+          }
+        }
+        newItem.exitCriteria = exitCriteria;
+      } catch (error) {
+        logger.warn('Failed to create exit criteria for new item', {
+          itemId: newItemId,
+          itemTitle: newItem.title,
+          error,
+        });
+        // Continue without exit criteria rather than failing the entire operation
       }
     }
 
@@ -973,8 +1008,9 @@ export class TodoListManager {
       dependencies: itemData?.dependencies ?? existingItem.dependencies,
       tags: itemData?.tags ?? existingItem.tags,
       metadata: existingItem.metadata,
-      // Enhanced fields (v2)
+      // v2 fields
       implementationNotes: existingItem.implementationNotes || [],
+      exitCriteria: existingItem.exitCriteria || [], // Will be updated later if provided
       ...(existingItem.actionPlan && { actionPlan: existingItem.actionPlan }), // Preserve existing action plan
     };
 
@@ -1014,6 +1050,39 @@ export class TodoListManager {
       updatedItem.estimatedDuration = itemData.estimatedDuration;
     } else if (existingItem.estimatedDuration !== undefined) {
       updatedItem.estimatedDuration = existingItem.estimatedDuration;
+    }
+
+    // Handle exit criteria updates
+    if (itemData?.exitCriteriaObjects !== undefined) {
+      // Direct update with ExitCriteria objects (preserves IDs and state)
+      updatedItem.exitCriteria = [...itemData.exitCriteriaObjects];
+    } else if (itemData?.exitCriteria !== undefined) {
+      // Create new criteria from descriptions (replaces all existing)
+      try {
+        const exitCriteria = [];
+        for (let i = 0; i < itemData.exitCriteria.length; i++) {
+          const criteriaDescription = itemData.exitCriteria[i];
+          if (criteriaDescription && criteriaDescription.trim()) {
+            const criteria = await this.exitCriteriaManager.createExitCriteria({
+              taskId: itemId,
+              description: criteriaDescription.trim(),
+              order: i,
+            });
+            exitCriteria.push(criteria);
+          }
+        }
+        updatedItem.exitCriteria = exitCriteria;
+      } catch (error) {
+        logger.warn('Failed to update exit criteria during item update', {
+          itemId,
+          error,
+        });
+        // Continue with existing exit criteria
+        updatedItem.exitCriteria = existingItem.exitCriteria || [];
+      }
+    } else {
+      // Preserve existing exit criteria
+      updatedItem.exitCriteria = existingItem.exitCriteria || [];
     }
 
     // Handle completedAt field based on status changes
@@ -1827,7 +1896,7 @@ export class TodoListManager {
     );
 
     // Format task-level notes for each item
-    const enhancedItems = todoList.items.map(item => {
+    const items = todoList.items.map(item => {
       const formattedItemNotes = this.formatNotesForDisplay(
         item.implementationNotes || []
       );
@@ -1841,7 +1910,7 @@ export class TodoListManager {
     return {
       ...todoList,
       implementationNotes: formattedListNotes,
-      items: enhancedItems,
+      items: items,
     };
   }
 

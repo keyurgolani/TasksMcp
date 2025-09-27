@@ -296,7 +296,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
       },
       {
         mistake: 'Providing tags as comma-separated string',
-        fix: 'Use array format for tags',
+        fix: 'Use array format for tags - provide as array of strings',
         example: { tags: ['urgent', 'important'] },
       },
       {
@@ -357,24 +357,26 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
   // Search & Display Tools
   // ============================================================================
 
-  filter_tasks: {
-    description: 'Filter tasks by various criteria including status, priority, and dependencies',
+  search_tool: {
+    description: 'Unified search, filter, and query tool for tasks with flexible criteria and sorting options',
     parameters: [
       {
         name: 'status',
-        correct: 'pending',
-        description: 'Task status: "pending", "in_progress", "completed", "blocked", "cancelled"',
+        correct: ['pending'],
+        description: 'Array of task statuses: ["pending"], ["in_progress"], ["completed"], ["blocked"], ["cancelled"]',
         incorrect: [
-          { value: 'active', reason: 'Use "pending" or "in_progress" instead of "active"' },
-          { value: 'done', reason: 'Use "completed" instead of "done"' },
+          { value: ['active'], reason: 'Use ["pending"] or ["in_progress"] instead of ["active"]' },
+          { value: ['done'], reason: 'Use ["completed"] instead of ["done"]' },
+          { value: 'pending', reason: 'Use array format: ["pending"] not string "pending"' },
         ],
       },
       {
         name: 'priority',
-        correct: 5,
-        description: 'Filter by priority level (1-5)',
+        correct: [5],
+        description: 'Array of priority levels (1-5): [5] for high priority',
         incorrect: [
-          { value: 'high', reason: 'Use number 5 for high priority, not "high"' },
+          { value: ['high'], reason: 'Use number [5] for high priority, not ["high"]' },
+          { value: 5, reason: 'Use array format: [5] not number 5' },
         ],
       },
       {
@@ -385,33 +387,56 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
           { value: 'yes', reason: 'Use boolean true, not string "yes"' },
         ],
       },
+      {
+        name: 'query',
+        correct: 'authentication',
+        description: 'Text to search for in task titles, descriptions, and tags',
+        incorrect: [
+          { value: ['authentication'], reason: 'Use string "authentication" not array ["authentication"]' },
+        ],
+      },
     ],
     examples: [
       {
-        tool: 'filter_tasks',
+        tool: 'search_tool',
+        description: 'Search for authentication-related tasks',
+        parameters: {
+          listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
+          query: 'authentication',
+        },
+        outcome: 'Returns tasks containing "authentication" in title, description, or tags',
+      },
+      {
+        tool: 'search_tool',
         description: 'Get all high-priority pending tasks',
         parameters: {
           listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
-          status: 'pending',
-          priority: 5,
+          status: ['pending'],
+          priority: [5],
         },
         outcome: 'Returns all urgent tasks that are not yet started',
       },
       {
-        tool: 'filter_tasks',
-        description: 'Get tasks ready to work on',
+        tool: 'search_tool',
+        description: 'Get tasks ready to work on with dependency info',
         parameters: {
           listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
           isReady: true,
+          includeDependencyInfo: true,
         },
-        outcome: 'Returns tasks with no incomplete dependencies',
+        outcome: 'Returns tasks with no incomplete dependencies and their dependency status',
       },
     ],
     commonMistakes: [
       {
         mistake: 'Using non-standard status values',
-        fix: 'Use exact status values: pending, in_progress, completed, blocked, cancelled',
-        example: { status: 'pending' },
+        fix: 'Use exact status values in arrays: ["pending"], ["in_progress"], ["completed"], ["blocked"], ["cancelled"]',
+        example: { status: ['pending'] },
+      },
+      {
+        mistake: 'Using string instead of array for status/priority',
+        fix: 'Use arrays for status and priority: status: ["pending"], priority: [5]',
+        example: { status: ['pending'], priority: [5] },
       },
     ],
   },

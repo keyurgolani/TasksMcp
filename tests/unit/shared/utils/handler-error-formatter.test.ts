@@ -7,7 +7,7 @@ import { z } from 'zod';
 import {
   formatHandlerError,
   createHandlerErrorFormatter,
-  withEnhancedErrorHandling,
+  withErrorHandling,
   ERROR_CONFIGS,
 } from '../../../../src/shared/utils/handler-error-formatter.js';
 
@@ -85,7 +85,7 @@ describe('Handler Error Formatter', () => {
     });
   });
 
-  describe('withEnhancedErrorHandling', () => {
+  describe('withErrorHandling', () => {
     it('should wrap handler functions with error formatting', async () => {
       const mockHandler = async (request: any) => {
         const schema = z.object({ priority: z.number() });
@@ -93,7 +93,7 @@ describe('Handler Error Formatter', () => {
         return { success: true };
       };
 
-      const wrappedHandler = withEnhancedErrorHandling('add_task', mockHandler);
+      const wrappedHandler = withErrorHandling('add_task', mockHandler);
 
       // Test successful execution
       const successResult = await wrappedHandler({

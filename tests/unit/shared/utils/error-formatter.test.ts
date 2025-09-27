@@ -108,7 +108,7 @@ describe('ErrorFormatter', () => {
         expect(uuidError.message).toContain('Invalid UUID format');
         expect(uuidError.suggestion).toContain('UUID must be in format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
         expect(uuidError.example).toContain('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
-        expect(uuidError.code).toBe('invalid_uuid');
+        expect(uuidError.code).toBe('invalid_string');
       }
     });
   });
@@ -439,7 +439,7 @@ describe('ErrorFormatter', () => {
       }
     });
 
-    it('should provide filter_tasks specific guidance', () => {
+    it('should provide search_tool specific guidance', () => {
       const schema = z.object({
         status: z.enum(['pending', 'completed']),
         priority: z.number(),
@@ -450,7 +450,7 @@ describe('ErrorFormatter', () => {
       } catch (error) {
         const formatted = ErrorFormatter.formatValidationError(
           error as ZodError,
-          { toolName: 'filter_tasks' }
+          { toolName: 'search_tool' }
         );
 
         const statusError = formatted.find(e => e.field === 'status');

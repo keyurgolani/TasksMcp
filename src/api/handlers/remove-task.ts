@@ -53,7 +53,7 @@ export async function handleRemoveTask(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with taskManagement configuration
+    // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter('remove_task', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   }

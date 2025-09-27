@@ -323,7 +323,7 @@ export class ErrorHandler extends EventEmitter {
     const message = error.message.toLowerCase();
     const stack = error.stack?.toLowerCase() ?? '';
 
-    // Check for enhanced error types first
+    // Check for error types first
     if (error.name.includes('ActionPlan')) {
       return 'action_plan';
     }
@@ -343,7 +343,7 @@ export class ErrorHandler extends EventEmitter {
       return 'migration';
     }
 
-    // Check message content for enhanced categories
+    // Check message content for categories
     if (
       message.includes('action plan') ||
       message.includes('action step') ||
@@ -444,7 +444,7 @@ export class ErrorHandler extends EventEmitter {
   }
 
   private isRecoverable(error: Error): boolean {
-    // Check for enhanced task management errors first
+    // Check for task management errors first
     if ('recoverable' in error && typeof error.recoverable === 'boolean') {
       return error.recoverable;
     }
@@ -460,7 +460,7 @@ export class ErrorHandler extends EventEmitter {
       return false;
     }
 
-    // Enhanced error categories are generally recoverable
+    // Error categories are generally recoverable
     if (
       message.includes('action plan') ||
       message.includes('project tag') ||
@@ -484,7 +484,7 @@ export class ErrorHandler extends EventEmitter {
   private isRetryable(error: Error): boolean {
     const message = error.message.toLowerCase();
 
-    // Enhanced task management errors are generally not retryable (they need user action or recovery)
+    // Task management errors are generally not retryable (they need user action or recovery)
     if (
       message.includes('action plan') ||
       message.includes('project tag') ||

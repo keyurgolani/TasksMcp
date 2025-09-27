@@ -136,7 +136,7 @@ export interface ServerConfig {
     fileEnabled: boolean;
     filePath: string;
   };
-  // Enhanced features are now always enabled - configuration for limits only
+  // Features are now always enabled - configuration for limits only
   limits: {
     maxActionPlanSteps: number;
     maxImplementationNotesPerEntity: number;
@@ -235,7 +235,7 @@ export class ConfigManager {
         fileEnabled: env.LOG_FILE_ENABLED,
         filePath: env.LOG_FILE_PATH,
       },
-      // Enhanced features are now always enabled - configuration for limits only
+      // Features are now always enabled - configuration for limits only
       limits: {
         maxActionPlanSteps: env.MAX_ACTION_PLAN_STEPS,
         maxImplementationNotesPerEntity: env.MAX_IMPLEMENTATION_NOTES_PER_ENTITY,

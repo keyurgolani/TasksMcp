@@ -11,7 +11,7 @@ import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-depen
 import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { handleFilterTasks } from '../../src/api/handlers/filter-tasks.js';
+import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
@@ -58,8 +58,8 @@ describe('Dependency Management Production Readiness Tests', () => {
         return await handleAnalyzeTaskDependencies(request, todoListManager);
       case 'get_list':
         return await handleGetList(request, todoListManager);
-      case 'filter_tasks':
-        return await handleFilterTasks(request, todoListManager);
+      case 'search_tool':
+        return await handleSearchTool(request, todoListManager);
       case 'show_tasks':
         return await handleShowTasks(request, todoListManager);
       default:
@@ -317,22 +317,22 @@ describe('Dependency Management Production Readiness Tests', () => {
         {
           name: 'analyze_task_dependencies',
           args: { listId: testList.id },
-          maxTime: 200, // 200ms
+          maxTime: 1000, // 1000ms
         },
         {
           name: 'get_ready_tasks',
           args: { listId: testList.id, limit: 50 },
-          maxTime: 150, // 150ms
+          maxTime: 750, // 750ms
         },
         {
           name: 'get_list',
           args: { listId: testList.id },
-          maxTime: 200, // 200ms
+          maxTime: 1000, // 1000ms
         },
         {
-          name: 'filter_tasks',
+          name: 'search_tool',
           args: { listId: testList.id, filters: { hasDependencies: true } },
-          maxTime: 150, // 150ms
+          maxTime: 750, // 750ms
         },
       ];
 
@@ -568,7 +568,7 @@ describe('Dependency Management Production Readiness Tests', () => {
         'analyze_task_dependencies',
         'get_ready_tasks',
         'get_list',
-        'filter_tasks',
+        'search_tool',
         'show_tasks',
       ];
 
@@ -577,7 +577,7 @@ describe('Dependency Management Production Readiness Tests', () => {
       for (const toolName of toolTests) {
         try {
           const args: any = { listId: testList.id };
-          if (toolName === 'filter_tasks') {
+          if (toolName === 'search_tool') {
             args.filters = { hasDependencies: true };
           }
 

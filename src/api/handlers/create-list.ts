@@ -6,7 +6,7 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { SimpleListResponse } from '../../shared/types/mcp-types.js';
+import type { ListResponse } from '../../shared/types/mcp-types.js';
 import { logger } from '../../shared/utils/logger.js';
 import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
@@ -54,7 +54,7 @@ export async function handleCreateList(
     const result = await todoListManager.createTodoList(createInput);
 
     // Format response
-    const response: SimpleListResponse = {
+    const response: ListResponse = {
       id: result.id,
       title: result.title,
       description: result.description,
@@ -83,7 +83,7 @@ export async function handleCreateList(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with list management configuration
+    // Use error formatting with list management configuration
     const formatError = createHandlerErrorFormatter('create_list', ERROR_CONFIGS.listManagement);
     return formatError(error, request.params?.arguments);
   }

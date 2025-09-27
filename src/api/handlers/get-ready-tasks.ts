@@ -155,7 +155,7 @@ export async function handleGetReadyTasks(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with taskManagement configuration
+    // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter('get_ready_tasks', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   }

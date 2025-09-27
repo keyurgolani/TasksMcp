@@ -272,7 +272,7 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   /**
-   * Get enhanced metrics for a specific operation
+   * Get detailed metrics for a specific operation
    */
   getDetailedOperationMetrics(operationName: string): OperationMetrics | null {
     return this.operationMetrics.get(operationName) || null;

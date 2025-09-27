@@ -37,14 +37,16 @@ import {
   handleCompleteTask,
   handleSetTaskPriority,
   handleAddTaskTags,
-  handleSearchTasks,
-  handleFilterTasks,
+  handleSearchTool,
   handleShowTasks,
   handleAnalyzeTask,
   handleGetTaskSuggestions,
   handleSetTaskDependencies,
   handleGetReadyTasks,
   handleAnalyzeTaskDependencies,
+  handleSetTaskExitCriteria,
+  handleUpdateExitCriteria,
+  handleBulkTaskOperations,
 } from "../api/handlers/index.js";
 import { MCP_TOOLS } from "../api/tools/definitions.js";
 import { logger } from "../shared/utils/logger.js";
@@ -183,7 +185,7 @@ class McpTaskManagerServer {
    * - Search and display tools (search, filter, show)
    * - Intelligence tools (analyze, suggestions)
    * 
-   * Includes parameter preprocessing and enhanced error formatting for agent-friendly responses.
+   * Includes parameter preprocessing and error formatting for agent-friendly responses.
    * 
    * @param toolName - Name of the tool to execute
    * @param request - MCP request object containing parameters
@@ -228,9 +230,14 @@ class McpTaskManagerServer {
         return await this.handleDependencyManagementTool(toolName, processedRequest);
       }
 
+      // Exit criteria management tools
+      if (this.isExitCriteriaManagementTool(toolName)) {
+        return await this.handleExitCriteriaManagementTool(toolName, processedRequest);
+      }
+
       throw new Error(`Unknown tool: ${toolName}`);
     } catch (error) {
-      // Enhanced error handling with agent-friendly messages
+      // Error handling with agent-friendly messages
       return this.handleToolCallError(error, toolName, request);
     }
   }
@@ -294,25 +301,25 @@ class McpTaskManagerServer {
         return await this.executeWithMonitoring("add_task_tags", 
           () => handleAddTaskTags(request, todoListManager), request);
       
+      case "bulk_task_operations":
+        return await this.executeWithMonitoring("bulk_task_operations", 
+          () => handleBulkTaskOperations(request, todoListManager), request);
+      
       default:
         throw new Error(`Unknown task management tool: ${toolName}`);
     }
   }
 
   /**
-   * Handle search and display tools (search_tasks, filter_tasks, show_tasks)
+   * Handle search and display tools (search_tool, show_tasks)
    */
   private async handleSearchDisplayTool(toolName: string, request: any): Promise<unknown> {
     const todoListManager = this.ensureTodoListManager();
 
     switch (toolName) {
-      case "search_tasks":
-        return await this.executeWithMonitoring("search_tasks", 
-          () => handleSearchTasks(request, todoListManager), request);
-      
-      case "filter_tasks":
-        return await this.executeWithMonitoring("filter_tasks", 
-          () => handleFilterTasks(request, todoListManager), request);
+      case "search_tool":
+        return await this.executeWithMonitoring("search_tool", 
+          () => handleSearchTool(request, todoListManager), request);
       
       case "show_tasks":
         return await this.executeWithMonitoring("show_tasks", 
@@ -367,6 +374,26 @@ class McpTaskManagerServer {
   }
 
   /**
+   * Handle exit criteria management tools (set_task_exit_criteria, update_exit_criteria)
+   */
+  private async handleExitCriteriaManagementTool(toolName: string, request: any): Promise<unknown> {
+    const todoListManager = this.ensureTodoListManager();
+
+    switch (toolName) {
+      case "set_task_exit_criteria":
+        return await this.executeWithMonitoring("set_task_exit_criteria", 
+          () => handleSetTaskExitCriteria(request, todoListManager), request);
+      
+      case "update_exit_criteria":
+        return await this.executeWithMonitoring("update_exit_criteria", 
+          () => handleUpdateExitCriteria(request, todoListManager), request);
+      
+      default:
+        throw new Error(`Unknown exit criteria management tool: ${toolName}`);
+    }
+  }
+
+  /**
    * Preprocess request parameters for agent-friendly type coercion
    */
   private preprocessRequestParameters(toolName: string, request: any): PreprocessingResult {
@@ -401,7 +428,7 @@ class McpTaskManagerServer {
   }
 
   /**
-   * Handle tool call errors with enhanced formatting
+   * Handle tool call errors with formatting
    */
   private handleToolCallError(error: unknown, toolName: string, request: any): never {
     const errorContext = createErrorContext(toolName, true);
@@ -410,7 +437,7 @@ class McpTaskManagerServer {
     if (error && typeof error === 'object' && 'issues' in error) {
       const formattedError = formatZodError(error as any, errorContext);
       
-      logger.warn('Tool validation error with enhanced formatting', {
+      logger.warn('Tool validation error with formatting', {
         toolName,
         originalError: (error as any).message,
         formattedError,
@@ -438,11 +465,11 @@ class McpTaskManagerServer {
   }
 
   private isTaskManagementTool(toolName: string): boolean {
-    return ["add_task", "update_task", "remove_task", "complete_task", "set_task_priority", "add_task_tags"].includes(toolName);
+    return ["add_task", "update_task", "remove_task", "complete_task", "set_task_priority", "add_task_tags", "bulk_task_operations"].includes(toolName);
   }
 
   private isSearchDisplayTool(toolName: string): boolean {
-    return ["search_tasks", "filter_tasks", "show_tasks"].includes(toolName);
+    return ["search_tool", "show_tasks"].includes(toolName);
   }
 
   private isIntelligenceTool(toolName: string): boolean {
@@ -451,6 +478,10 @@ class McpTaskManagerServer {
 
   private isDependencyManagementTool(toolName: string): boolean {
     return ["set_task_dependencies", "get_ready_tasks", "analyze_task_dependencies"].includes(toolName);
+  }
+
+  private isExitCriteriaManagementTool(toolName: string): boolean {
+    return ["set_task_exit_criteria", "update_exit_criteria"].includes(toolName);
   }
 
   /**

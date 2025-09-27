@@ -43,7 +43,7 @@ export class ComplexityCalculator {
    * @param input - Analysis input containing text, NLP results, and optional context
    * @param input.text - Original task description text
    * @param input.nlpResult - Processed NLP analysis results
-   * @param input.context - Optional contextual information for enhanced analysis
+   * @param input.context - Optional contextual information for analysis
    * @returns ComplexityScore - Comprehensive score with factor breakdown, reasoning, and confidence
    */
   calculate(input: {
@@ -122,49 +122,74 @@ export class ComplexityCalculator {
 
     let complexity = 1; // Base complexity
 
-    // Add complexity from technical patterns
+    // More balanced technical pattern scoring
     technicalPatterns.forEach(pattern => {
-      complexity += pattern.confidence * pattern.weight * 1.5; // Increased multiplier
+      complexity += pattern.confidence * pattern.weight * 0.8; // Reduced from 1.5
     });
 
-    // Add complexity from technical entities
-    complexity += technicalEntities.length * 1.2; // Increased from 0.5
+    // More realistic entity scoring
+    complexity += Math.min(3, technicalEntities.length * 0.6); // Cap and reduce impact
 
-    // Add complexity from technical keywords density
+    // Improved technical density calculation
     const technicalDensity =
       technicalEntities.length / Math.max(1, nlpResult.tokens.length);
-    complexity += technicalDensity * 5; // Increased from 3
+    complexity += Math.min(2, technicalDensity * 8); // Cap the density impact
 
-    // Boost for multiple technical indicators
-    if (technicalEntities.length > 3) {
-      complexity += 3;
-    } else if (technicalEntities.length > 2) {
-      complexity += 2;
+    // More nuanced technical indicator scoring
+    if (technicalEntities.length > 5) {
+      complexity += 2.5;
+    } else if (technicalEntities.length > 3) {
+      complexity += 1.5;
     } else if (technicalEntities.length > 1) {
-      complexity += 1;
+      complexity += 0.8;
     }
 
-    if (technicalPatterns.length > 0) {
-      complexity += 2; // Increased from 1.5
+    if (technicalPatterns.length > 2) {
+      complexity += 1.5;
+    } else if (technicalPatterns.length > 0) {
+      complexity += 0.8;
     }
 
-    // Additional boost for complex technical terms
-    const advancedTechnicalTerms = [
-      'microservices',
-      'kubernetes',
-      'architecture',
-      'distributed',
-      'authentication',
-      'jwt',
-      'api gateway',
-      'ci/cd',
-      'pipeline',
-      'monitoring',
+    // Technical terms with categorization
+    const complexTechnicalTerms = [
+      'microservices', 'kubernetes', 'docker', 'distributed', 'scalability',
+      'architecture', 'design patterns', 'algorithms', 'data structures',
+      'authentication', 'authorization', 'security', 'encryption', 'jwt',
+      'api gateway', 'load balancer', 'database', 'sql', 'nosql',
+      'ci/cd', 'pipeline', 'deployment', 'monitoring', 'logging',
+      'testing', 'unit tests', 'integration', 'performance'
     ];
-    const advancedTermCount = advancedTechnicalTerms.filter(term =>
-      nlpResult.tokens.join(' ').toLowerCase().includes(term)
+    
+    const simpleTechnicalTerms = [
+      'html', 'css', 'javascript', 'python', 'java', 'react', 'vue',
+      'node', 'express', 'flask', 'django', 'git', 'github',
+      'frontend', 'backend', 'api', 'rest', 'json', 'xml'
+    ];
+
+    const textLower = nlpResult.tokens.join(' ').toLowerCase();
+    
+    const complexTermCount = complexTechnicalTerms.filter(term =>
+      textLower.includes(term)
     ).length;
-    complexity += advancedTermCount * 0.8;
+    
+    const simpleTermCount = simpleTechnicalTerms.filter(term =>
+      textLower.includes(term)
+    ).length;
+
+    complexity += complexTermCount * 0.8; // Higher weight for complex terms
+    complexity += simpleTermCount * 0.3;  // Lower weight for simple terms
+
+    // Bonus for multiple technology stacks mentioned
+    const techStackIndicators = ['frontend', 'backend', 'database', 'api', 'deployment'];
+    const stackCount = techStackIndicators.filter(indicator =>
+      textLower.includes(indicator)
+    ).length;
+    
+    if (stackCount >= 3) {
+      complexity += 1.5; // Full stack complexity
+    } else if (stackCount >= 2) {
+      complexity += 0.8;
+    }
 
     return Math.max(1, Math.min(10, Math.round(complexity)));
   }

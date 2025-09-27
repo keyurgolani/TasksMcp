@@ -13,7 +13,7 @@ import { logger } from './logger.js';
  */
 export const DependencyIdsSchema = z
   .array(z.string().uuid())
-  .max(10, 'Maximum 10 dependencies allowed per task')
+  .max(50, 'Maximum 50 dependencies allowed per task')
   .default([]);
 
 /**

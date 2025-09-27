@@ -471,6 +471,6 @@ If you're currently tracking dependencies manually:
 ---
 
 **Next Steps:**
-- Try the [Dependency Management Examples](../examples/06-dependency-management-examples.md)
+- Try the [Advanced Workflow Examples](../examples/advanced.md) for dependency management patterns
 - Learn about [Enhanced Tool Features](./enhanced-tools.md)
 - Review [Performance Optimization](./tool-performance.md) for large projects

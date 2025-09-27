@@ -67,7 +67,7 @@ export async function handleAnalyzeTask(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with advanced configuration
+    // Use error formatting with advanced configuration
     const formatError = createHandlerErrorFormatter('analyze_task', ERROR_CONFIGS.advanced);
     return formatError(error, request.params?.arguments);
   }

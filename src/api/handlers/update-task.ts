@@ -9,7 +9,7 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { SimpleTaskResponse } from '../../shared/types/mcp-types.js';
+import type { TaskResponse, ExitCriteriaResponse } from '../../shared/types/mcp-types.js';
 import { logger } from '../../shared/utils/logger.js';
 import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
@@ -23,6 +23,7 @@ const UpdateTaskSchema = z.object({
   title: z.string().min(1, 'Title cannot be empty').max(200, 'Title too long').optional(),
   description: z.string().max(1000, 'Description too long').optional(),
   estimatedDuration: z.number().min(1, 'Duration must be positive').optional(),
+  exitCriteria: z.array(z.string().min(1).max(500)).max(20).optional(),
 });
 
 /**
@@ -47,8 +48,8 @@ export async function handleUpdateTask(
     const args = UpdateTaskSchema.parse(request.params?.arguments);
     
     // Ensure at least one field is provided for update
-    if (!args.title && !args.description && !args.estimatedDuration) {
-      throw new Error('At least one field to update must be provided (title, description, or estimatedDuration)');
+    if (!args.title && !args.description && !args.estimatedDuration && !args.exitCriteria) {
+      throw new Error('At least one field to update must be provided (title, description, estimatedDuration, or exitCriteria)');
     }
 
     // Update the task with provided fields
@@ -60,6 +61,7 @@ export async function handleUpdateTask(
         ...(args.title && { title: args.title }),
         ...(args.description && { description: args.description }),
         ...(args.estimatedDuration && { estimatedDuration: args.estimatedDuration }),
+        ...(args.exitCriteria && { exitCriteria: args.exitCriteria }),
       },
     });
 
@@ -68,7 +70,21 @@ export async function handleUpdateTask(
       throw new Error('Task not found after update');
     }
 
-    const response: SimpleTaskResponse = {
+    // Format exit criteria for response
+    const exitCriteriaResponse: ExitCriteriaResponse[] = updatedTask.exitCriteria.map(criteria => ({
+      id: criteria.id,
+      description: criteria.description,
+      isMet: criteria.isMet,
+      ...(criteria.metAt && { 
+        metAt: criteria.metAt instanceof Date 
+          ? criteria.metAt.toISOString() 
+          : new Date(criteria.metAt).toISOString() 
+      }),
+      ...(criteria.notes && { notes: criteria.notes }),
+      order: criteria.order,
+    }));
+
+    const response: TaskResponse = {
       id: updatedTask.id,
       title: updatedTask.title,
       description: updatedTask.description,
@@ -78,6 +94,7 @@ export async function handleUpdateTask(
       createdAt: updatedTask.createdAt.toISOString(),
       updatedAt: updatedTask.updatedAt.toISOString(),
       estimatedDuration: updatedTask.estimatedDuration,
+      ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
     };
 
     logger.info('Task updated successfully', {
@@ -95,7 +112,7 @@ export async function handleUpdateTask(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with taskManagement configuration
+    // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter('update_task', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   }

@@ -6,12 +6,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import { TestCleanup } from '../setup.js';
 import { handleAddTask } from '../../src/api/handlers/add-task.js';
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
 import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { handleFilterTasks } from '../../src/api/handlers/filter-tasks.js';
+import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
 import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
@@ -29,6 +30,10 @@ describe('Dependency Management End-to-End Integration Tests', () => {
     todoListManager = new TodoListManager(storage);
     await todoListManager.initialize();
 
+    // Register for automatic cleanup
+    TestCleanup.registerStorage(storage);
+    TestCleanup.registerManager(todoListManager);
+
     // Create a test list for integration tests
     testList = await todoListManager.createTodoList({
       title: 'Integration Test Project',
@@ -39,8 +44,7 @@ describe('Dependency Management End-to-End Integration Tests', () => {
   });
 
   afterEach(async () => {
-    await todoListManager.shutdown();
-    await storage.cleanup?.();
+    // Cleanup is handled automatically by test setup
   });
 
   /**
@@ -66,8 +70,8 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         return await handleAnalyzeTaskDependencies(request, todoListManager);
       case 'get_list':
         return await handleGetList(request, todoListManager);
-      case 'filter_tasks':
-        return await handleFilterTasks(request, todoListManager);
+      case 'search_tool':
+        return await handleSearchTool(request, todoListManager);
       case 'show_tasks':
         return await handleShowTasks(request, todoListManager);
       case 'complete_task':
@@ -433,9 +437,9 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       });
       expect(readyTasksResult.isError).toBeFalsy();
 
-      const filterResult = await callTool('filter_tasks', {
+      const filterResult = await callTool('search_tool', {
         listId: testList.id,
-        filters: { hasDependencies: true },
+        hasDependencies: true,
       });
       expect(filterResult.isError).toBeFalsy();
 

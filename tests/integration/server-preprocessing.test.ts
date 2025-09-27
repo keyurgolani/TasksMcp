@@ -5,24 +5,23 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { McpTaskManagerServer } from '../../src/app/server.js';
 import { StorageFactory } from '../../src/infrastructure/storage/storage-factory.js';
+import { TestCleanup } from '../setup.js';
 
 describe('Server Parameter Preprocessing Integration', () => {
   let server: McpTaskManagerServer;
 
   beforeEach(async () => {
     // Use memory storage for testing
-    process.env.STORAGE_TYPE = 'memory';
+    TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
     server = new McpTaskManagerServer();
     await server.start();
+    
+    // Register server for cleanup
+    TestCleanup.registerServer(server);
   });
 
   afterEach(async () => {
-    // Clean up server resources
-    if (server) {
-      await server.close();
-    }
-    // Clean up environment variables
-    delete process.env.STORAGE_TYPE;
+    // Cleanup is handled automatically by test setup
   });
 
   describe('Parameter Type Coercion', () => {

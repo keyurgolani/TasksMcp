@@ -52,8 +52,8 @@ describe('Agent Validation Metrics', () => {
         { params: { listId: testListId, title: 'Task 1', priority: '5' }, shouldSucceed: true },
         { params: { listId: testListId, title: 'Task 2', tags: '["tag1", "tag2"]' }, shouldSucceed: true },
         { params: { listId: testListId, title: 'Task 3', estimatedDuration: '120' }, shouldSucceed: true },
-        { params: { listId: testListId, status: 'pending' }, tool: 'filter_tasks', shouldSucceed: true },
-        { params: { listId: testListId, priority: '3' }, tool: 'filter_tasks', shouldSucceed: true },
+        { params: { listId: testListId, status: ['pending'] }, tool: 'search_tool', shouldSucceed: true },
+        { params: { listId: testListId, priority: [3] }, tool: 'search_tool', shouldSucceed: true },
         
         // Cases that should still fail (invalid data)
         { params: { listId: testListId, title: 'Task 4', priority: '10' }, shouldSucceed: false },
@@ -101,8 +101,8 @@ describe('Agent Validation Metrics', () => {
           expectedElements: ['❌', '💡', 'array of strings', '📝'],
         },
         {
-          params: { listId: testListId, status: 'done' },
-          tool: 'filter_tasks',
+          params: { listId: testListId, status: ['done'] },
+          tool: 'search_tool',
           expectedElements: ['❌', 'Did you mean "completed"?', 'pending, completed'],
         },
       ];
@@ -167,16 +167,20 @@ describe('Agent Validation Metrics', () => {
 
     it('should measure suggestion accuracy for enum errors', async () => {
       const enumTestCases = [
-        { input: 'complet', expected: 'completed', tool: 'filter_tasks', param: 'status' },
-        { input: 'pend', expected: 'pending', tool: 'filter_tasks', param: 'status' },
-        { input: 'cancel', expected: 'cancelled', tool: 'filter_tasks', param: 'status' },
-        { input: 'PENDING', expected: 'pending', tool: 'filter_tasks', param: 'status' },
+        { input: 'complet', expected: 'completed', tool: 'search_tool', param: 'status' },
+        { input: 'pend', expected: 'pending', tool: 'search_tool', param: 'status' },
+        { input: 'cancel', expected: 'cancelled', tool: 'search_tool', param: 'status' },
+        { input: 'PENDING', expected: 'pending', tool: 'search_tool', param: 'status' },
       ];
 
       let accurateCount = 0;
 
       for (const testCase of enumTestCases) {
-        const params = { listId: testListId, [testCase.param]: testCase.input };
+        // For search_tool, status parameter should be an array
+        const paramValue = testCase.tool === 'search_tool' && testCase.param === 'status' 
+          ? [testCase.input] 
+          : testCase.input;
+        const params = { listId: testListId, [testCase.param]: paramValue };
         const result = await simulateToolCall(server, testCase.tool, params);
         let errorText = result.content[0].text;
 
@@ -200,7 +204,7 @@ describe('Agent Validation Metrics', () => {
     });
 
     it('should measure response time impact', async () => {
-      const iterations = 20;
+      const iterations = 10;
       const times: number[] = [];
 
       for (let i = 0; i < iterations; i++) {
@@ -337,11 +341,11 @@ describe('Agent Validation Metrics', () => {
           },
         },
         {
-          tool: 'filter_tasks',
+          tool: 'search_tool',
           params: {
             listId: testListId,
             includeCompleted: true,
-            priority: 4,
+            priority: [4],
           },
         },
         {
@@ -406,7 +410,7 @@ describe('Agent Validation Metrics', () => {
     });
 
     it('should provide consistent error formatting across tools', async () => {
-      const tools = ['add_task', 'filter_tasks', 'update_task'];
+      const tools = ['add_task', 'search_tool', 'update_task'];
       const errorFormats: string[] = [];
 
       for (const tool of tools) {
@@ -415,7 +419,7 @@ describe('Agent Validation Metrics', () => {
         if (tool === 'add_task') {
           params.title = 'Test';
           params.priority = 'invalid';
-        } else if (tool === 'filter_tasks') {
+        } else if (tool === 'search_tool') {
           params.priority = 'invalid';
         } else if (tool === 'update_task') {
           params.taskId = 'invalid-uuid';

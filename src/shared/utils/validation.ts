@@ -1,5 +1,5 @@
 /**
- * Validation utilities with enhanced error handling
+ * Validation utilities with error handling
  * 
  * Provides comprehensive validation functions using Zod schemas with:
  * - Type-safe validation results
@@ -32,7 +32,7 @@ export interface SafeValidationResult<T> {
 }
 
 /**
- * Enhanced validator class providing comprehensive validation utilities
+ * Validator class providing validation utilities
  * Combines Zod schema validation with custom validation patterns
  */
 export class Validator {
@@ -125,13 +125,13 @@ export class Validator {
   }
 
   /**
-   * Create a Zod schema with enhanced error messages and null/undefined checks
+   * Create a Zod schema with error messages and null/undefined checks
    * 
    * Wraps an existing Zod schema with additional validation to ensure values
    * are not null or undefined, providing clearer error messages for debugging.
    * 
-   * @param schemaDefinition - Base Zod schema to enhance
-   * @returns ZodSchema<T> - Enhanced schema with additional validation
+   * @param schemaDefinition - Base Zod schema to wrap
+   * @returns ZodSchema<T> - Schema with additional validation
    */
   createSchema<T>(schemaDefinition: ZodSchema<T>): ZodSchema<T> {
     return schemaDefinition.refine(
@@ -356,7 +356,7 @@ export class Validator {
    * Validate file path
    */
   validateFilePath(path: string): ValidationResult<string> {
-    // Basic path validation - can be enhanced based on requirements
+    // Basic path validation - can be extended based on requirements
     const pathSchema = z.string().min(1, 'Path cannot be empty');
     
     const result = this.validate(pathSchema, path);
@@ -438,4 +438,4 @@ export class Validator {
 }
 
 // Global validator instance
-export const enhancedValidator = new Validator();
+export const validator = new Validator();

@@ -1,25 +1,36 @@
-# MCP Task Manager API Reference
+# API Reference
 
-## Overview
+This section provides complete technical documentation for the MCP Task Manager API.
 
-The MCP Task Manager provides a comprehensive set of MCP (Model Context Protocol) tools for intelligent task management. This API reference covers all available tools, their parameters, response formats, and usage examples.
+## 📚 API Documentation
 
-## Base Configuration
+### Core References
+- **[MCP Tools](tools.md)** - Complete documentation of all 20 tools
+- **[Tool Schemas](schemas.md)** - Parameter specifications and validation rules
+- **[Error Handling](errors.md)** - Error codes, messages, and recovery strategies
+- **[Response Formats](responses.md)** - Standard response structures and formats
 
-### MCP Server Setup
+### Specialized Topics
+- **[Dependency Management](dependency-management.md)** - Task relationships and workflow optimization
+- **[Tool Performance](tool-performance.md)** - Performance characteristics and optimization
+- **[Enhanced Tools](enhanced-tools.md)** - Advanced features and capabilities
 
-The MCP Task Manager runs as an MCP server that communicates via the Model Context Protocol. Configure your MCP client to connect to the server:
+## 🚀 Quick Start
+
+### MCP Server Configuration
+
+Configure your MCP client to connect to the task manager:
 
 ```json
 {
   "mcpServers": {
     "task-manager": {
-      "command": "node",
-      "args": ["/path/to/task-list-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["task-list-mcp@latest"],
       "env": {
         "NODE_ENV": "production",
-        "STORAGE_TYPE": "file",
-        "DATA_DIRECTORY": "./data"
+        "MCP_LOG_LEVEL": "info",
+        "DATA_DIRECTORY": "~/.task-manager-data"
       }
     }
   }
@@ -30,24 +41,38 @@ The MCP Task Manager runs as an MCP server that communicates via the Model Conte
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `NODE_ENV` | `development` | Environment mode: `development`, `production`, `test` |
+| `MCP_LOG_LEVEL` | `info` | Logging level: `error`, `warn`, `info`, `debug` |
+| `DATA_DIRECTORY` | `./data` | Directory for persistent data storage |
 | `STORAGE_TYPE` | `file` | Storage backend: `file`, `memory` |
-| `DATA_DIRECTORY` | `./data` | Directory for file storage |
-| `NODE_ENV` | `development` | Environment mode |
-| `MAX_ITEMS_PER_LIST` | `1000` | Maximum items per todo list |
-| `MAX_LISTS_PER_CONTEXT` | `100` | Maximum lists per context |
 
-## Available Tools
+## 🛠️ Available Tools
 
-### MCP Tools (Recommended)
+### Tool Categories
 
-The **MCP Tools** provide 15 focused, agent-friendly tools designed for easy integration:
+The MCP Task Manager provides **20 focused tools** organized in 6 categories:
 
-- **[Tools Documentation](../mcp-tools.md)** - Complete guide to all 15 tools
-- **[Tool Schemas Reference](./tool-schemas.md)** - Quick schema reference
-- **[Practical Examples](../examples/mcp-examples.md)** - Real-world usage scenarios
+- **[List Management](tools.md#list-management-tools)** (4 tools): Create, retrieve, list, delete todo lists
+- **[Task Management](tools.md#task-management-tools)** (6 tools): Add, update, remove, complete tasks and manage priorities/tags
+- **[Search & Display](tools.md#search--display-tools)** (3 tools): Search, filter, and display tasks with formatting
+- **[Advanced Features](tools.md#advanced-features-tools)** (2 tools): Task analysis and AI-generated suggestions
+- **[Exit Criteria Management](tools.md#exit-criteria-management-tools)** (2 tools): Define and track detailed completion requirements
+- **[Dependency Management](tools.md#dependency-management-tools)** (3 tools): Manage task relationships and workflow optimization
 
-**Tool Categories:**
-- **List Management (4 tools)**: `create_list`, `get_list`, `list_all_lists`, `delete_list`
+### Recommended Tools
+
+**Tier 1: Essential Tools**
+- `search_tool` - Unified search and filtering
+- `add_task` - Comprehensive task creation
+- `show_tasks` - Rich formatted display
+- `complete_task` - Quality-enforced completion
+- `create_list` - Clean list creation
+
+**Tier 2: Workflow Optimization**
+- `get_ready_tasks` - Daily workflow planning
+- `analyze_task_dependencies` - Project management insights
+- `bulk_task_operations` - Batch efficiency
+- `set_task_exit_criteria` - Quality control
 - **Task Management (6 tools)**: `add_task`, `update_task`, `remove_task`, `complete_task`, `set_task_priority`, `add_task_tags`
 - **Search & Display (3 tools)**: `search_tasks`, `filter_tasks`, `show_tasks`
 - **Advanced Features (2 tools)**: `analyze_task`, `get_task_suggestions`
@@ -253,7 +278,7 @@ node dist/health-check.js
 ### For New Integrations (Recommended)
 - Start with [Tools Documentation](../mcp-tools.md) for agent-friendly tools
 - Review [Tool Schemas Reference](./tool-schemas.md) for quick parameter reference
-- Check [Practical Examples](../examples/mcp-examples.md) for real-world usage scenarios
+- Check [Practical Examples](../examples/) for real-world usage scenarios
 
 ### For Legacy Integrations
 - Review [MCP Tools Documentation](./mcp-tools.md) for detailed tool specifications

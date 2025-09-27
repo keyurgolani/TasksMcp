@@ -67,7 +67,7 @@ export interface AnalyzeTaskComplexityParams {
 }
 
 // Response Types
-export interface SimpleListResponse {
+export interface ListResponse {
   id: string;
   title: string;
   description?: string | undefined;
@@ -78,7 +78,16 @@ export interface SimpleListResponse {
   projectTag?: string | undefined;
 }
 
-export interface SimpleTaskResponse {
+export interface ExitCriteriaResponse {
+  id: string;
+  description: string;
+  isMet: boolean;
+  metAt?: string;
+  notes?: string;
+  order: number;
+}
+
+export interface TaskResponse {
   id: string;
   title: string;
   description?: string | undefined;
@@ -87,31 +96,35 @@ export interface SimpleTaskResponse {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  completedAt?: string | undefined;
   estimatedDuration?: number | undefined;
+  exitCriteria?: ExitCriteriaResponse[];
 }
 
-export interface SimpleSearchResponse {
-  results: SimpleTaskResponse[];
+export interface SearchResponse {
+  results: TaskResponse[];
   totalCount: number;
   hasMore: boolean;
 }
 
-export interface SimpleError {
+export interface ErrorResponse {
   error: string;
   message: string;
   code?: string | undefined;
 }
 
 // Dependency Management Response Types
-export interface TaskWithDependencies extends SimpleTaskResponse {
+export interface TaskWithDependencies extends TaskResponse {
   dependencies: string[];
   isReady: boolean;
   blockedBy?: string[];
+  canComplete?: boolean;
+  exitCriteriaProgress?: number;
 }
 
 export interface ReadyTasksResponse {
   listId: string;
-  readyTasks: SimpleTaskResponse[];
+  readyTasks: TaskResponse[];
   totalReady: number;
   nextActions: string[];
 }
@@ -130,4 +143,15 @@ export interface DependencyAnalysisResponse {
     bottlenecks: string[];
   };
   recommendations: string[];
+}
+
+export interface ExitCriteriaUpdateResponse {
+  taskId: string;
+  criteriaId: string;
+  description: string;
+  isMet: boolean;
+  metAt?: string;
+  notes?: string;
+  taskCanComplete: boolean;
+  exitCriteriaProgress: number;
 }

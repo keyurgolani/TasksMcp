@@ -471,16 +471,16 @@ Retrieves a specific todo list by ID.
 }
 ```
 
-### 📖 Comprehensive Tool Documentation
+### 📖 Documentation
 
-For complete documentation of all 15 MCP tools including:
-- **Full parameter specifications** with types, constraints, and defaults
-- **Usage examples** for each tool category
-- **Natural language patterns** for AI agent integration
-- **Error handling examples** and troubleshooting guidance
-- **Performance characteristics** and limitations
+For complete documentation:
+- **[Installation Guide](./docs/guides/installation.md)** - Setup and configuration
+- **[Getting Started](./docs/guides/getting-started.md)** - Basic usage tutorial  
+- **[API Reference](./docs/api/tools.md)** - Complete tool documentation
+- **[Examples](./docs/examples/)** - Usage examples and patterns
+- **[Troubleshooting](./docs/guides/troubleshooting.md)** - Common issues and solutions
 
-**See:** [docs/mcp-tools.md](./docs/mcp-tools.md) - Complete MCP Tools Reference
+**See:** [docs/README.md](./docs/README.md) - Complete Documentation Index
 
 ## 🤖 Multi-Agent Orchestration
 
@@ -558,7 +558,7 @@ This makes the MCP Task Manager ideal for:
 - **Research Projects** with data collection, analysis, and reporting agents
 - **Business Process Automation** with multiple workflow participants
 
-**For complete multi-agent orchestration documentation, see:** [docs/multi-agent-orchestration.md](./docs/multi-agent-orchestration.md)
+**For complete multi-agent orchestration documentation, see:** [docs/guides/multi-agent.md](./docs/guides/multi-agent.md)
 
 ## 🧪 Testing Your Installation
 

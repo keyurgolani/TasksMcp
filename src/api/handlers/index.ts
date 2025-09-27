@@ -33,8 +33,7 @@ export { handleSetTaskPriority } from './set-task-priority.js';
 export { handleAddTaskTags } from './add-task-tags.js';
 
 // Search and display handlers
-export { handleSearchTasks } from './search-tasks.js';
-export { handleFilterTasks } from './filter-tasks.js';
+export { handleSearchTool } from './search-tool.js';
 export { handleShowTasks } from './show-tasks.js';
 
 // AI-powered intelligence handlers
@@ -45,3 +44,10 @@ export { handleGetTaskSuggestions } from './get-task-suggestions.js';
 export { handleSetTaskDependencies } from './set-task-dependencies.js';
 export { handleGetReadyTasks } from './get-ready-tasks.js';
 export { handleAnalyzeTaskDependencies } from './analyze-task-dependencies.js';
+
+// Bulk operations handler
+export { handleBulkTaskOperations } from './bulk-task-operations.js';
+
+// Exit criteria management handlers
+export { handleSetTaskExitCriteria } from './set-task-exit-criteria.js';
+export { handleUpdateExitCriteria } from './update-exit-criteria.js';

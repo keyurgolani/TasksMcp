@@ -284,7 +284,7 @@ describe('SetTaskDependenciesHandler', () => {
     test('enforces maximum dependency limit', async () => {
       // Create more tasks to exceed the limit
       const extraTasks = [];
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 52; i++) {
         const extraList = await manager.createTodoList({
           title: `Extra List ${i}`,
           tasks: [{ title: `Extra Task ${i}` }],
@@ -299,7 +299,7 @@ describe('SetTaskDependenciesHandler', () => {
           arguments: {
             listId: testList.id,
             taskId: task1.id,
-            dependencyIds: extraTasks.slice(0, 11), // 11 dependencies (exceeds limit of 10)
+            dependencyIds: extraTasks.slice(0, 51), // 51 dependencies (exceeds limit of 50)
           },
         },
       };
@@ -501,7 +501,7 @@ describe('SetTaskDependenciesHandler', () => {
 
       const responseData = JSON.parse(result.content[0]?.text as string);
       
-      // Check required SimpleTaskResponse fields
+      // Check required TaskResponse fields
       expect(responseData.id).toBe(task2.id);
       expect(responseData.title).toBe(task2.title);
       expect(responseData.status).toBe(task2.status);

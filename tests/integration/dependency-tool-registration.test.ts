@@ -23,11 +23,11 @@ describe('Dependency Tool Registration', () => {
   });
 
   describe('Tool Discovery', () => {
-    it('should include all 18 MCP tools in the registry', () => {
-      expect(MCP_TOOLS).toHaveLength(18);
+    it('should include all 20 MCP tools in the registry', () => {
+      expect(MCP_TOOLS).toHaveLength(20);
       
       const toolNames = getToolNames();
-      expect(toolNames).toHaveLength(18);
+      expect(toolNames).toHaveLength(20);
     });
 
     it('should include the 3 new dependency management tools', () => {
@@ -39,7 +39,7 @@ describe('Dependency Tool Registration', () => {
       expect(toolNames).toContain('analyze_task_dependencies');
     });
 
-    it('should maintain backward compatibility with existing 15 tools', () => {
+    it('should maintain backward compatibility with existing tools', () => {
       const toolNames = getToolNames();
       
       // List management tools (4 tools)
@@ -56,9 +56,8 @@ describe('Dependency Tool Registration', () => {
       expect(toolNames).toContain('set_task_priority');
       expect(toolNames).toContain('add_task_tags');
 
-      // Search & display tools (3 tools)
-      expect(toolNames).toContain('search_tasks');
-      expect(toolNames).toContain('filter_tasks');
+      // Search & display tools (2 tools)
+      expect(toolNames).toContain('search_tool');
       expect(toolNames).toContain('show_tasks');
 
       // Intelligence tools (2 tools)
@@ -87,7 +86,7 @@ describe('Dependency Tool Registration', () => {
       expect(properties.taskId.type).toBe('string');
       expect(properties.taskId.format).toBe('uuid');
       expect(properties.dependencyIds.type).toBe('array');
-      expect(properties.dependencyIds.maxItems).toBe(10);
+      expect(properties.dependencyIds.maxItems).toBe(50);
       expect(properties.dependencyIds.items.type).toBe('string');
       expect(properties.dependencyIds.items.format).toBe('uuid');
     });
@@ -145,8 +144,8 @@ describe('Dependency Tool Registration', () => {
       const taskTools = ['add_task', 'update_task', 'remove_task', 'complete_task', 'set_task_priority', 'add_task_tags'];
       taskTools.forEach(tool => expect(toolNames).toContain(tool));
       
-      // Search & Display Tools (3 tools)
-      const searchTools = ['search_tasks', 'filter_tasks', 'show_tasks'];
+      // Search & Display Tools (2 tools)
+      const searchTools = ['search_tool', 'show_tasks'];
       searchTools.forEach(tool => expect(toolNames).toContain(tool));
       
       // Intelligence Tools (2 tools)
@@ -167,14 +166,14 @@ describe('Dependency Tool Registration', () => {
       const properties = schema?.inputSchema.properties;
       expect(properties.dependencies).toBeDefined();
       expect(properties.dependencies.type).toBe('array');
-      expect(properties.dependencies.maxItems).toBe(10);
+      expect(properties.dependencies.maxItems).toBe(50);
       expect(properties.dependencies.items.type).toBe('string');
       expect(properties.dependencies.items.format).toBe('uuid');
       expect(properties.dependencies.description).toContain('Array of task');
     });
 
-    it('should enhance filter_tasks tool with dependency filters', () => {
-      const schema = getToolSchema('filter_tasks');
+    it('should enhance search_tool with dependency filters', () => {
+      const schema = getToolSchema('search_tool');
       
       expect(schema).toBeDefined();
       const properties = schema?.inputSchema.properties;
@@ -216,10 +215,10 @@ describe('Dependency Tool Registration', () => {
 
     it('should enforce array size limits for dependencies', () => {
       const setDepsSchema = getToolSchema('set_task_dependencies');
-      expect(setDepsSchema?.inputSchema.properties.dependencyIds.maxItems).toBe(10);
+      expect(setDepsSchema?.inputSchema.properties.dependencyIds.maxItems).toBe(50);
       
       const addTaskSchema = getToolSchema('add_task');
-      expect(addTaskSchema?.inputSchema.properties.dependencies.maxItems).toBe(10);
+      expect(addTaskSchema?.inputSchema.properties.dependencies.maxItems).toBe(50);
     });
 
     it('should enforce numeric limits for get_ready_tasks', () => {

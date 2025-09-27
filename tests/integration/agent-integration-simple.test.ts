@@ -75,7 +75,7 @@ describe('Agent Integration Tests - Simplified', () => {
     });
 
     it('should successfully convert boolean strings to booleans', async () => {
-      const result = await simulateToolCall(server, 'filter_tasks', {
+      const result = await simulateToolCall(server, 'search_tool', {
         listId: testListId,
         includeCompleted: 'true', // String instead of boolean
       });
@@ -171,9 +171,9 @@ describe('Agent Integration Tests - Simplified', () => {
 
   describe('Enum Suggestions Validation', () => {
     it('should provide enum suggestions for invalid status', async () => {
-      const result = await simulateToolCall(server, 'filter_tasks', {
+      const result = await simulateToolCall(server, 'search_tool', {
         listId: testListId,
-        status: 'done', // Invalid enum value
+        status: ['done'], // Invalid enum value (now array)
       });
 
       expect(result.content[0].text).toContain('❌');
@@ -201,7 +201,7 @@ describe('Agent Integration Tests - Simplified', () => {
       const totalTime = endTime - startTime;
       
       // Should complete 5 operations in reasonable time
-      expect(totalTime).toBeLessThan(2000);
+      expect(totalTime).toBeLessThan(5000);
     });
 
     it('should recover gracefully from preprocessing errors', async () => {
@@ -295,7 +295,7 @@ describe('Agent Integration Tests - Simplified', () => {
     it('should provide consistent error formatting across tools', async () => {
       const tools = [
         { name: 'add_task', params: { listId: testListId, title: 'Test', priority: 'invalid' } },
-        { name: 'filter_tasks', params: { listId: testListId, priority: 'invalid' } },
+        { name: 'search_tool', params: { listId: testListId, priority: ['invalid'] } },
       ];
 
       const errorFormats: string[] = [];

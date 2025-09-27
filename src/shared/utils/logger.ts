@@ -1,5 +1,5 @@
 /**
- * Enhanced structured logging utility using Winston
+ * Structured logging utility using Winston
  * Provides consistent logging across the application with debugging capabilities
  */
 
@@ -88,7 +88,7 @@ const debugFormat = winston.format.combine(
 );
 
 /**
- * Create Winston logger instance with enhanced formatting
+ * Create Winston logger instance with formatting
  */
 const transports: winston.transport[] = [];
 
@@ -100,6 +100,15 @@ if (!isMcpMode()) {
         winston.format.colorize(),
         winston.format.simple()
       ),
+    })
+  );
+}
+
+// In test environment, add a silent console transport to prevent Winston warnings
+if (nodeEnv === 'test' && transports.length === 0) {
+  transports.push(
+    new winston.transports.Console({
+      silent: true, // Silent transport to prevent Winston warnings
     })
   );
 }
@@ -250,7 +259,7 @@ if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') 
 }
 
 /**
- * Enhanced logging utilities for debugging production issues
+ * Logging utilities for debugging production issues
  * 
  * Provides advanced logging capabilities including:
  * - Correlation ID tracking for related operations

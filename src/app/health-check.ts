@@ -127,7 +127,7 @@ export class HealthChecker {
           dependencyGraph: [],
         },
         metadata: {},
-        // Enhanced fields (v2)
+        // v2 fields
         projectTag: 'health-check',
         implementationNotes: [],
       };

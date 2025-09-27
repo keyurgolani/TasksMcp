@@ -209,26 +209,41 @@ export class IntelligenceManager {
     complexity: ComplexityScore,
     taskCount: number
   ): number {
-    // Start with base duration (1 hour minimum for any meaningful task)
-    let duration = 60;
+    // Improved duration estimation with more realistic calculations
+    
+    // Base duration varies by complexity level
+    let duration = 30; // Start with 30 minutes minimum
+    
+    // Scale base duration by overall complexity (more realistic than fixed 60 min)
+    duration += complexity.overall * 15; // 15 minutes per complexity point
+    
+    // Add duration based on complexity factors with more balanced weights
+    duration += complexity.factors.technical * 20;    // Technical: 20 min per point
+    duration += complexity.factors.temporal * 25;     // Time constraints: 25 min per point  
+    duration += complexity.factors.dependency * 15;   // Dependencies: 15 min per point
+    duration += complexity.factors.uncertainty * 30;  // Uncertainty: 30 min per point
+    duration += complexity.factors.risk * 20;         // Risk: 20 min per point
+    duration += complexity.factors.scope * 25;        // Scope: 25 min per point
 
-    // Add duration based on complexity factors (each factor weighted differently)
-    duration += complexity.factors.technical * 30;    // Technical complexity: 30 min per point
-    duration += complexity.factors.temporal * 45;     // Time constraints: 45 min per point
-    duration += complexity.factors.dependency * 20;   // Dependencies: 20 min per point
-    duration += complexity.factors.uncertainty * 60;  // Uncertainty: 60 min per point (highest impact)
-    duration += complexity.factors.risk * 40;         // Risk factors: 40 min per point
-    duration += complexity.factors.scope * 35;        // Scope complexity: 35 min per point
+    // More realistic task breakdown overhead
+    if (taskCount > 0) {
+      duration += taskCount * 15; // 15 min coordination per subtask
+      duration += Math.min(60, taskCount * 5); // Additional planning overhead, capped
+    }
 
-    // Add coordination overhead for task breakdown (30 min per subtask)
-    duration += taskCount * 30;
-
-    // Add duration based on description length (proxy for scope)
+    // More nuanced description length analysis
     const wordCount = description.split(/\s+/).length;
-    const scopeAdjustment = Math.min(240, wordCount * 2); // Cap at 4 hours for scope
-    duration += scopeAdjustment;
+    if (wordCount > 20) {
+      const scopeMultiplier = Math.min(2.5, 1 + (wordCount - 20) / 100); // Gradual increase
+      duration *= scopeMultiplier;
+    }
 
-    return Math.round(duration);
+    // Apply complexity confidence factor
+    const confidenceAdjustment = 0.7 + (complexity.confidence * 0.6); // 0.7 to 1.3 multiplier
+    duration *= confidenceAdjustment;
+
+    // Ensure reasonable bounds (15 minutes to 8 hours)
+    return Math.max(15, Math.min(480, Math.round(duration)));
   }
 
   /**

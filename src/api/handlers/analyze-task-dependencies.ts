@@ -426,7 +426,7 @@ export async function handleAnalyzeTaskDependencies(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with taskManagement configuration
+    // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter('analyze_task_dependencies', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   } finally {

@@ -25,7 +25,7 @@ describe('Tool Examples Library', () => {
         'get_list',
         'add_task',
         'set_task_priority',
-        'filter_tasks',
+        'search_tool',
         'show_tasks',
         'analyze_task',
         'set_task_dependencies',
@@ -347,9 +347,18 @@ describe('Tool Examples Library', () => {
       Object.values(TOOL_EXAMPLES).forEach(toolExamples => {
         toolExamples.examples.forEach(example => {
           if ('priority' in example.parameters) {
-            const priority = example.parameters.priority as number;
-            expect(priority).toBeGreaterThanOrEqual(1);
-            expect(priority).toBeLessThanOrEqual(5);
+            const priority = example.parameters.priority;
+            if (Array.isArray(priority)) {
+              // Handle array format (for search_tool)
+              priority.forEach((p: number) => {
+                expect(p).toBeGreaterThanOrEqual(1);
+                expect(p).toBeLessThanOrEqual(5);
+              });
+            } else {
+              // Handle number format (for other tools)
+              expect(priority as number).toBeGreaterThanOrEqual(1);
+              expect(priority as number).toBeLessThanOrEqual(5);
+            }
           }
         });
         
@@ -409,7 +418,7 @@ describe('Tool Examples Library', () => {
       expect(toolNames).toContain('set_task_priority');
       
       // Search and display
-      expect(toolNames).toContain('filter_tasks');
+      expect(toolNames).toContain('search_tool');
       expect(toolNames).toContain('show_tasks');
       
       // Advanced features

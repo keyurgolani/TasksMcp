@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { SimpleTaskResponse } from '../../shared/types/mcp-types.js';
+import type { TaskResponse } from '../../shared/types/mcp-types.js';
 import { Priority } from '../../shared/types/todo.js';
 import { logger } from '../../shared/utils/logger.js';
 import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
@@ -53,7 +53,7 @@ export async function handleSetTaskPriority(
     }
 
     // Format response
-    const response: SimpleTaskResponse = {
+    const response: TaskResponse = {
       id: updatedTask.id,
       title: updatedTask.title,
       description: updatedTask.description,
@@ -81,7 +81,7 @@ export async function handleSetTaskPriority(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with taskManagement configuration
+    // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter('set_task_priority', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   }

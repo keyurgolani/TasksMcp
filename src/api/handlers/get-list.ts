@@ -105,7 +105,7 @@ export async function handleGetList(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with listManagement configuration
+    // Use error formatting with listManagement configuration
     const formatError = createHandlerErrorFormatter('get_list', ERROR_CONFIGS.listManagement);
     return formatError(error, request.params?.arguments);
   }

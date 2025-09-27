@@ -8,7 +8,7 @@ import {
   isNotesManagementError,
   isFormattingError,
   isCleanupError,
-  isEnhancedTaskManagementError,
+  isTaskManagementError,
   ERROR_CODES,
 } from '../types/errors.js';
 import { logger } from './logger.js';
@@ -119,9 +119,9 @@ export class UserFriendlyErrorMessages {
 
 
 
-    // Enhanced Validation
-    [ERROR_CODES.ENHANCED_VALIDATION_ERROR]: {
-      technical: 'Enhanced validation checks detected data integrity issues.',
+    // Validation
+    [ERROR_CODES.VALIDATION_ERROR]: {
+      technical: 'Validation checks detected data integrity issues.',
       user: 'There\'s an issue with the information you provided.',
       suggestion: 'Please check your input and try again.',
     },
@@ -141,9 +141,9 @@ export class UserFriendlyErrorMessages {
     };
 
     try {
-      // Handle enhanced task management errors
-      if (isEnhancedTaskManagementError(error)) {
-        return this.generateEnhancedErrorMessage(error, defaultContext);
+      // Handle task management errors
+      if (isTaskManagementError(error)) {
+        return this.generateErrorMessage(error, defaultContext);
       }
 
       // Handle standard errors
@@ -159,13 +159,13 @@ export class UserFriendlyErrorMessages {
   }
 
   /**
-   * Generate message for enhanced task management errors
+   * Generate message for task management errors
    */
-  private static generateEnhancedErrorMessage(error: any, context: ErrorContext): string {
+  private static generateErrorMessage(error: any, context: ErrorContext): string {
     const template = this.ERROR_TEMPLATES[error.code];
     
     if (!template) {
-      return this.generateGenericEnhancedMessage(error, context);
+      return this.generateGenericMessage(error, context);
     }
 
     const parts: string[] = [];
@@ -241,9 +241,9 @@ export class UserFriendlyErrorMessages {
   }
 
   /**
-   * Generate generic message for enhanced errors without specific templates
+   * Generate generic message for errors without specific templates
    */
-  private static generateGenericEnhancedMessage(error: any, context: ErrorContext): string {
+  private static generateGenericMessage(error: any, context: ErrorContext): string {
     const parts: string[] = [];
 
     // Use the error's user message if available
@@ -362,8 +362,8 @@ export class UserFriendlyErrorMessages {
    * Get error severity for UI display
    */
   static getErrorSeverity(error: Error): 'info' | 'warning' | 'error' | 'critical' {
-    if (isEnhancedTaskManagementError(error)) {
-      // Most enhanced errors are recoverable and not critical
+    if (isTaskManagementError(error)) {
+      // Most errors are recoverable and not critical
       if (isCleanupError(error)) {
         return 'warning';
       }
@@ -394,7 +394,7 @@ export class UserFriendlyErrorMessages {
   static generateRecoveryInstructions(error: Error): string[] {
     const instructions: string[] = [];
 
-    if (isEnhancedTaskManagementError(error)) {
+    if (isTaskManagementError(error)) {
       if (isActionPlanError(error)) {
         instructions.push('Try simplifying your action plan format');
         instructions.push('Use numbered or bulleted lists');
@@ -453,7 +453,7 @@ export const ErrorMessageUtils = {
       stack: error.stack,
     };
 
-    if (isEnhancedTaskManagementError(error)) {
+    if (isTaskManagementError(error)) {
       logData['code'] = (error as any).code;
       logData['category'] = (error as any).category;
       logData['recoverable'] = (error as any).recoverable;
@@ -483,7 +483,7 @@ export const ErrorMessageUtils = {
                     message.includes('connection') || 
                     message.includes('temporary');
     
-    const canRecover = isEnhancedTaskManagementError(error) ? 
+    const canRecover = isTaskManagementError(error) ? 
                       (error as any).recoverable : 
                       !message.includes('fatal');
     

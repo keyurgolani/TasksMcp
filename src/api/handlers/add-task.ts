@@ -6,9 +6,10 @@
 import { z } from 'zod';
 import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskWithDependencies } from '../../shared/types/mcp-types.js';
+import type { TaskWithDependencies, ExitCriteriaResponse } from '../../shared/types/mcp-types.js';
 import { Priority } from '../../shared/types/todo.js';
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
+import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
 import { logger } from '../../shared/utils/logger.js';
 import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
 
@@ -24,6 +25,7 @@ const AddTaskSchema = z.object({
   tags: z.array(z.string().max(50)).max(10).optional().default([]),
   estimatedDuration: z.number().min(1).optional(),
   dependencies: z.array(z.string().uuid()).max(10).optional().default([]),
+  exitCriteria: z.array(z.string().min(1).max(500)).max(20).optional().default([]),
 });
 
 /**
@@ -107,6 +109,7 @@ export async function handleAddTask(
         ...(args.tags && { tags: args.tags }),
         ...(args.estimatedDuration && { estimatedDuration: args.estimatedDuration }),
         ...(args.dependencies.length > 0 && { dependencies: args.dependencies }),
+        ...(args.exitCriteria.length > 0 && { exitCriteria: args.exitCriteria }),
       },
     });
 
@@ -130,6 +133,25 @@ export async function handleAddTask(
       }
     }
 
+    // Calculate exit criteria information
+    const exitCriteriaManager = new ExitCriteriaManager();
+    const exitCriteriaProgress = exitCriteriaManager.calculateCriteriaProgress(newTask.exitCriteria);
+    const canComplete = exitCriteriaManager.areAllCriteriaMet(newTask.exitCriteria);
+
+    // Format exit criteria for response
+    const exitCriteriaResponse: ExitCriteriaResponse[] = newTask.exitCriteria.map(criteria => ({
+      id: criteria.id,
+      description: criteria.description,
+      isMet: criteria.isMet,
+      ...(criteria.metAt && { 
+        metAt: criteria.metAt instanceof Date 
+          ? criteria.metAt.toISOString() 
+          : new Date(criteria.metAt).toISOString() 
+      }),
+      ...(criteria.notes && { notes: criteria.notes }),
+      order: criteria.order,
+    }));
+
     const response: TaskWithDependencies = {
       id: newTask.id,
       title: newTask.title,
@@ -143,6 +165,9 @@ export async function handleAddTask(
       dependencies: newTask.dependencies,
       isReady,
       ...(blockedBy.length > 0 && { blockedBy }),
+      canComplete,
+      exitCriteriaProgress,
+      ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
     };
 
     dependencyResolver.cleanup();
@@ -164,7 +189,7 @@ export async function handleAddTask(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with task management configuration
+    // Use error formatting with task management configuration
     const formatError = createHandlerErrorFormatter('add_task', ERROR_CONFIGS.taskManagement);
     return formatError(error, request.params?.arguments);
   }

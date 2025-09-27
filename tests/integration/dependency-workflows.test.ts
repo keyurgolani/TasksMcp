@@ -18,7 +18,7 @@ import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-ta
 // Import enhanced existing handlers
 import { handleAddTask } from '../../src/api/handlers/add-task.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { handleFilterTasks } from '../../src/api/handlers/filter-tasks.js';
+import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
 import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
 
@@ -424,13 +424,14 @@ describe('Dependency Management Workflows Integration Tests', () => {
       expect(apiTaskInList.isReady).toBe(true);
 
       // Step 9: Test filtering by dependency status
-      const readyTasksFilter = await handleFilterTasks({
+      const readyTasksFilter = await handleSearchTool({
         method: 'tools/call',
         params: {
-          name: 'filter_tasks',
+          name: 'search_tool',
           arguments: {
             listId: projectList.id,
             isReady: true,
+            includeDependencyInfo: true,
           },
         },
       }, todoListManager);

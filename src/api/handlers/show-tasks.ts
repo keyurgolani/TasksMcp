@@ -89,7 +89,7 @@ export async function handleShowTasks(
       ],
     };
   } catch (error) {
-    // Use enhanced error formatting with searchDisplay configuration
+    // Use error formatting with searchDisplay configuration
     const formatError = createHandlerErrorFormatter('show_tasks', ERROR_CONFIGS.searchDisplay);
     return formatError(error, request.params?.arguments);
   }

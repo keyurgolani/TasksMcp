@@ -33,16 +33,15 @@ describe('Debug Integration Test', () => {
   });
 
   it('should debug list creation and parameter passing', async () => {
-    console.log('=== Testing list creation ===');
-    
     // Create a test list
     const createListResult = await simulateToolCall(server, 'create_list', {
       title: 'Debug Test List',
       description: 'Test list for debugging',
     });
 
-    console.log('Create list result:', createListResult);
-    console.log('Create list text:', createListResult.content[0].text);
+    expect(createListResult).toBeDefined();
+    expect(createListResult.content).toBeDefined();
+    expect(createListResult.content[0]).toBeDefined();
 
     // Try to parse the result
     let listData;
@@ -50,20 +49,14 @@ describe('Debug Integration Test', () => {
       // The result is double-wrapped, so we need to parse twice
       const outerResult = JSON.parse(createListResult.content[0].text);
       listData = JSON.parse(outerResult.content[0].text);
-      console.log('Parsed list data:', listData);
-      console.log('List ID:', listData.id);
     } catch (error) {
-      console.log('Failed to parse list data:', error);
-      return;
+      throw new Error(`Failed to parse list data: ${error}`);
     }
 
-    if (!listData.id) {
-      console.log('No ID found in list data');
-      return;
-    }
+    expect(listData).toBeDefined();
+    expect(listData.id).toBeDefined();
+    expect(listData.title).toBe('Debug Test List');
 
-    console.log('=== Testing task creation with valid listId ===');
-    
     // Now try to create a task with the list ID
     const addTaskResult = await simulateToolCall(server, 'add_task', {
       listId: listData.id,
@@ -71,12 +64,12 @@ describe('Debug Integration Test', () => {
       priority: '5', // String number to test preprocessing
     });
 
-    console.log('Add task result:', addTaskResult);
-    console.log('Add task text:', addTaskResult.content[0].text);
+    expect(addTaskResult).toBeDefined();
+    expect(addTaskResult.content).toBeDefined();
 
     // Check if it succeeded
     const isSuccess = !addTaskResult.content[0].text.includes('❌');
-    console.log('Task creation success:', isSuccess);
+    expect(isSuccess).toBe(true);
 
     if (isSuccess) {
       try {
@@ -96,21 +89,18 @@ describe('Debug Integration Test', () => {
           taskData = responseText;
         }
         
-        console.log('Parsed task data:', taskData);
+        expect(taskData).toBeDefined();
         if (taskData && typeof taskData === 'object') {
-          console.log('Task priority (should be number 5):', taskData.priority, typeof taskData.priority);
-        } else {
-          console.log('Task data is not an object:', typeof taskData);
+          expect(taskData.priority).toBe(5);
+          expect(typeof taskData.priority).toBe('number');
         }
       } catch (error) {
-        console.log('Failed to parse task data:', error);
+        throw new Error(`Failed to parse task data: ${error}`);
       }
     }
   });
 
   it('should test parameter preprocessing directly', async () => {
-    console.log('=== Testing parameter preprocessing ===');
-    
     // First create a list
     const createListResult = await simulateToolCall(server, 'create_list', {
       title: 'Preprocessing Test List',
@@ -119,49 +109,72 @@ describe('Debug Integration Test', () => {
     // The result is double-wrapped, so we need to parse twice
     const outerResult = JSON.parse(createListResult.content[0].text);
     const listData = JSON.parse(outerResult.content[0].text);
-    console.log('Created list with ID:', listData.id);
+    
+    expect(listData).toBeDefined();
+    expect(listData.id).toBeDefined();
 
     // Test various preprocessing scenarios
     const testCases = [
       {
         name: 'String number priority',
         params: { listId: listData.id, title: 'Test 1', priority: '4' },
+        expectedPriority: 4,
       },
       {
         name: 'JSON string tags',
         params: { listId: listData.id, title: 'Test 2', tags: '["tag1", "tag2"]' },
+        expectedTags: ['tag1', 'tag2'],
       },
       {
         name: 'String duration',
         params: { listId: listData.id, title: 'Test 3', estimatedDuration: '90' },
+        expectedDuration: 90,
       },
     ];
 
     for (const testCase of testCases) {
-      console.log(`\n--- Testing: ${testCase.name} ---`);
-      console.log('Input params:', testCase.params);
-      
       const result = await simulateToolCall(server, 'add_task', testCase.params);
       const isSuccess = !result.content[0].text.includes('❌');
       
-      console.log('Success:', isSuccess);
-      console.log('Response:', result.content[0].text.substring(0, 200) + '...');
+      expect(isSuccess).toBe(true);
       
       if (isSuccess) {
         try {
-          const taskData = JSON.parse(result.content[0].text);
-          console.log('Converted values:');
-          if (testCase.params.priority && taskData.priority !== undefined) {
-            console.log('  priority:', taskData.priority, typeof taskData.priority);
+          // Handle double-wrapped response format
+          const responseText = result.content[0].text;
+          let taskData;
+          
+          try {
+            // Try parsing as single-wrapped first
+            taskData = JSON.parse(responseText);
+            // If it has a 'content' property, it's double-wrapped
+            if (taskData.content && Array.isArray(taskData.content)) {
+              taskData = JSON.parse(taskData.content[0].text);
+            }
+          } catch {
+            // If parsing fails, the response might be a plain string
+            taskData = responseText;
           }
-          if (testCase.params.tags && taskData.tags !== undefined) {
-            console.log('  tags:', taskData.tags);
+          
+          expect(taskData).toBeDefined();
+          expect(typeof taskData).toBe('object');
+          
+          if (testCase.expectedPriority !== undefined) {
+            expect(taskData.priority).toBe(testCase.expectedPriority);
+            expect(typeof taskData.priority).toBe('number');
           }
-          if (testCase.params.estimatedDuration && taskData.estimatedDuration !== undefined) {
-            console.log('  estimatedDuration:', taskData.estimatedDuration, typeof taskData.estimatedDuration);
+          
+          if (testCase.expectedTags !== undefined) {
+            expect(taskData.tags).toEqual(testCase.expectedTags);
+            expect(Array.isArray(taskData.tags)).toBe(true);
+          }
+          
+          if (testCase.expectedDuration !== undefined) {
+            expect(taskData.estimatedDuration).toBe(testCase.expectedDuration);
+            expect(typeof taskData.estimatedDuration).toBe('number');
           }
         } catch (error) {
-          console.log('Parse error:', error);
+          throw new Error(`Parse error for ${testCase.name}: ${error}`);
         }
       }
     }
