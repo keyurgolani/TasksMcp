@@ -44,7 +44,7 @@ describe('ActionPlanManager', () => {
     test('throws error for content that is too long', async () => {
       const input = {
         taskId: 'task-123',
-        content: 'x'.repeat(50001),
+        content: 'x'.repeat(250001),
       };
 
       await expect(manager.createActionPlan(input)).rejects.toThrow(

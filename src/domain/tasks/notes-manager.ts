@@ -195,8 +195,8 @@ export class NotesManager {
     }
 
     // Check content length (reasonable limits)
-    if (content.length > 10000) {
-      errors.push('Note content is too long (maximum 10,000 characters)');
+    if (content.length > 50000) {
+      errors.push('Note content is too long (maximum 50,000 characters)');
     }
 
     // Check for minimum meaningful content

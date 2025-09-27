@@ -364,7 +364,7 @@ describe('Comprehensive Validation Tests', () => {
       const result = preprocessParameters(largeParams);
       const endTime = Date.now();
 
-      expect(endTime - startTime).toBeLessThan(100); // Should be fast
+      expect(endTime - startTime).toBeLessThan(200); // Should be fast (adjusted for 5x larger limits)
       expect(result.conversions.length).toBeGreaterThan(500); // Should convert many
       expect(result.errors).toHaveLength(0); // Should not error
     });

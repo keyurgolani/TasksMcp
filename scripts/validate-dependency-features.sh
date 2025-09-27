@@ -32,18 +32,18 @@ run_test_suite() {
     if [ -n "$test_filter" ]; then
         if npm test -- "$test_path" --run -t "$test_filter" --reporter=verbose; then
             echo -e "${GREEN}✅ $test_name: PASSED${NC}"
-            ((PASSED_TESTS++))
+            PASSED_TESTS=$((PASSED_TESTS + 1))
         else
             echo -e "${RED}❌ $test_name: FAILED${NC}"
-            ((FAILED_TESTS++))
+            FAILED_TESTS=$((FAILED_TESTS + 1))
         fi
     else
         if npm test -- "$test_path" --run --reporter=verbose; then
             echo -e "${GREEN}✅ $test_name: PASSED${NC}"
-            ((PASSED_TESTS++))
+            PASSED_TESTS=$((PASSED_TESTS + 1))
         else
             echo -e "${RED}❌ $test_name: FAILED${NC}"
-            ((FAILED_TESTS++))
+            FAILED_TESTS=$((FAILED_TESTS + 1))
         fi
     fi
     
@@ -74,13 +74,13 @@ check_dependency_handlers() {
     
     if [ "$all_exist" = true ]; then
         echo -e "${GREEN}✅ All dependency handlers present${NC}"
-        ((PASSED_TESTS++))
+        PASSED_TESTS=$((PASSED_TESTS + 1))
     else
         echo -e "${RED}❌ Missing dependency handlers${NC}"
-        ((FAILED_TESTS++))
+        FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
     
-    ((TOTAL_TESTS++))
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
 }
 
 # Function to validate TypeScript compilation
@@ -90,13 +90,13 @@ validate_typescript() {
     
     if npm run lint; then
         echo -e "${GREEN}✅ TypeScript compilation: PASSED${NC}"
-        ((PASSED_TESTS++))
+        PASSED_TESTS=$((PASSED_TESTS + 1))
     else
         echo -e "${RED}❌ TypeScript compilation: FAILED${NC}"
-        ((FAILED_TESTS++))
+        FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
     
-    ((TOTAL_TESTS++))
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
 }
 
 # Function to run performance benchmarks
@@ -163,13 +163,13 @@ validate_tool_registration() {
        grep -q "get_ready_tasks" src/api/tools/definitions.ts && \
        grep -q "analyze_task_dependencies" src/api/tools/definitions.ts; then
         echo -e "${GREEN}✅ All dependency tools registered${NC}"
-        ((PASSED_TESTS++))
+        PASSED_TESTS=$((PASSED_TESTS + 1))
     else
         echo -e "${RED}❌ Dependency tools not properly registered${NC}"
-        ((FAILED_TESTS++))
+        FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
     
-    ((TOTAL_TESTS++))
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
 }
 
 # Function to check documentation

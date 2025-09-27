@@ -87,7 +87,7 @@ describe('Dependency Tool Registration', () => {
       expect(properties.taskId.type).toBe('string');
       expect(properties.taskId.format).toBe('uuid');
       expect(properties.dependencyIds.type).toBe('array');
-      expect(properties.dependencyIds.maxItems).toBe(10);
+      expect(properties.dependencyIds.maxItems).toBe(50);
       expect(properties.dependencyIds.items.type).toBe('string');
       expect(properties.dependencyIds.items.format).toBe('uuid');
     });
@@ -110,7 +110,7 @@ describe('Dependency Tool Registration', () => {
       expect(properties.listId.format).toBe('uuid');
       expect(properties.limit.type).toBe('number');
       expect(properties.limit.minimum).toBe(1);
-      expect(properties.limit.maximum).toBe(50);
+      expect(properties.limit.maximum).toBe(250);
       expect(properties.limit.default).toBe(20);
     });
 
@@ -167,7 +167,7 @@ describe('Dependency Tool Registration', () => {
       const properties = schema?.inputSchema.properties;
       expect(properties.dependencies).toBeDefined();
       expect(properties.dependencies.type).toBe('array');
-      expect(properties.dependencies.maxItems).toBe(10);
+      expect(properties.dependencies.maxItems).toBe(50);
       expect(properties.dependencies.items.type).toBe('string');
       expect(properties.dependencies.items.format).toBe('uuid');
       expect(properties.dependencies.description).toContain('Array of task');
@@ -216,10 +216,10 @@ describe('Dependency Tool Registration', () => {
 
     it('should enforce array size limits for dependencies', () => {
       const setDepsSchema = getToolSchema('set_task_dependencies');
-      expect(setDepsSchema?.inputSchema.properties.dependencyIds.maxItems).toBe(10);
+      expect(setDepsSchema?.inputSchema.properties.dependencyIds.maxItems).toBe(50);
       
       const addTaskSchema = getToolSchema('add_task');
-      expect(addTaskSchema?.inputSchema.properties.dependencies.maxItems).toBe(10);
+      expect(addTaskSchema?.inputSchema.properties.dependencies.maxItems).toBe(50);
     });
 
     it('should enforce numeric limits for get_ready_tasks', () => {
@@ -227,7 +227,7 @@ describe('Dependency Tool Registration', () => {
       const limitProperty = schema?.inputSchema.properties.limit;
       
       expect(limitProperty.minimum).toBe(1);
-      expect(limitProperty.maximum).toBe(50);
+      expect(limitProperty.maximum).toBe(250);
       expect(limitProperty.default).toBe(20);
     });
   });

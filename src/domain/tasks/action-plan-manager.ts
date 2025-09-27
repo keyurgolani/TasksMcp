@@ -358,8 +358,8 @@ export class ActionPlanManager {
     }
 
     // Check content length (reasonable limits)
-    if (content.length > 50000) {
-      errors.push('Action plan content is too long (maximum 50,000 characters)');
+    if (content.length > 250000) {
+      errors.push('Action plan content is too long (maximum 250,000 characters)');
     }
 
     // Check for minimum meaningful content

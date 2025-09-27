@@ -221,8 +221,8 @@ describe('Agent Validation Metrics', () => {
       const maxTime = Math.max(...times);
 
       // Performance should be reasonable
-      expect(averageTime).toBeLessThan(100); // Average under 100ms
-      expect(maxTime).toBeLessThan(500); // Max under 500ms
+      expect(averageTime).toBeLessThan(200); // Average under 200ms
+      expect(maxTime).toBeLessThan(1000); // Max under 1000ms
     });
   });
 

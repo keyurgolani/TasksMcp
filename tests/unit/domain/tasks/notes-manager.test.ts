@@ -75,7 +75,7 @@ describe('NotesManager', () => {
       const input = {
         entityId: 'task-123',
         entityType: 'task' as const,
-        content: 'a'.repeat(10001),
+        content: 'a'.repeat(50001),
         type: 'general' as const,
       };
 

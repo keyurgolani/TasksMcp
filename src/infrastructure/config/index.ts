@@ -78,13 +78,13 @@ const EnvironmentSchema = z.object({
 
   
   // Feature-specific configuration
-  MAX_ACTION_PLAN_STEPS: z.coerce.number().int().positive().default(50),
-  MAX_IMPLEMENTATION_NOTES_PER_ENTITY: z.coerce.number().int().positive().default(100),
-  MAX_NOTE_LENGTH: z.coerce.number().int().positive().default(10000),
+  MAX_ACTION_PLAN_STEPS: z.coerce.number().int().positive().default(250),
+  MAX_IMPLEMENTATION_NOTES_PER_ENTITY: z.coerce.number().int().positive().default(500),
+  MAX_NOTE_LENGTH: z.coerce.number().int().positive().default(50000),
   CLEANUP_SUGGESTION_DAYS: z.coerce.number().int().positive().default(7),
   CLEANUP_SUGGESTION_COOLDOWN_DAYS: z.coerce.number().int().positive().default(30),
   PRETTY_PRINT_MAX_WIDTH: z.coerce.number().int().positive().default(120),
-  PROJECT_TAG_MAX_LENGTH: z.coerce.number().int().positive().default(50),
+  PROJECT_TAG_MAX_LENGTH: z.coerce.number().int().positive().default(250),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;
