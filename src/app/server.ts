@@ -154,10 +154,29 @@ class McpTaskManagerServer {
    * 2. CallToolRequestSchema - Routes tool calls to appropriate handlers with monitoring
    */
   private setupHandlers(): void {
-    // Handler for listing available tools
+    // Handler for listing available tools with methodology guidance
     this.server.setRequestHandler(ListToolsRequestSchema, () => {
       return {
         tools: MCP_TOOLS,
+        // Embed methodology guidance directly in the tools response
+        _metadata: {
+          bestPractices: {
+            methodology: "Follow the three core principles for effective task management:",
+            principles: [
+              "🎯 PLAN AND REFLECT: Thoroughly investigate before action (use analyze_task, search_tool), reflect after completion",
+              "🔍 USE TOOLS, DON'T GUESS: Always research using available tools rather than making assumptions",
+              "✅ PERSIST UNTIL COMPLETE: Ensure all exit criteria are met before marking tasks complete"
+            ],
+            workflow: [
+              "1. INVESTIGATE: Use analyze_task and search_tool to understand context",
+              "2. PLAN: Create detailed action plans with specific exit criteria",
+              "3. EXECUTE: Use update_task regularly to track progress",
+              "4. VERIFY: Check all exit criteria before using complete_task",
+              "5. REFLECT: Document learnings and outcomes"
+            ],
+            documentation: "Complete methodology guide: https://github.com/keyurgolani/task-list-mcp/blob/main/docs/guides/agent-best-practices.md"
+          }
+        }
       };
     });
 

@@ -104,18 +104,33 @@ export async function handleCompleteTask(
       order: criteria.order,
     }));
 
-    const response: TaskResponse = {
-      id: completedTask.id,
-      title: completedTask.title,
-      description: completedTask.description,
-      status: completedTask.status,
-      priority: completedTask.priority,
-      tags: completedTask.tags,
-      createdAt: completedTask.createdAt.toISOString(),
-      updatedAt: completedTask.updatedAt.toISOString(),
-      ...(completedTask.completedAt && { completedAt: completedTask.completedAt.toISOString() }),
-      estimatedDuration: completedTask.estimatedDuration,
-      ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
+    const response = {
+      ...{
+        id: completedTask.id,
+        title: completedTask.title,
+        description: completedTask.description,
+        status: completedTask.status,
+        priority: completedTask.priority,
+        tags: completedTask.tags,
+        createdAt: completedTask.createdAt.toISOString(),
+        updatedAt: completedTask.updatedAt.toISOString(),
+        ...(completedTask.completedAt && { completedAt: completedTask.completedAt.toISOString() }),
+        estimatedDuration: completedTask.estimatedDuration,
+        ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
+      } as TaskResponse,
+      _methodologyGuidance: {
+        success: "✅ Task completed successfully! All exit criteria were verified (Persist Until Complete methodology)",
+        reflection: [
+          "📝 Consider using update_task to document key learnings and outcomes",
+          "🔍 Use get_ready_tasks to find what's now available to work on",
+          "🎯 Reflect on what worked well and what could be improved for future tasks"
+        ],
+        nextSteps: [
+          "Document any insights gained during execution",
+          "Check if completing this task unblocked other work",
+          "Plan next actions based on newly available ready tasks"
+        ]
+      }
     };
 
     logger.info('Task completed successfully', {

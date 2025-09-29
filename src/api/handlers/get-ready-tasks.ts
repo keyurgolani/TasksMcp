@@ -135,6 +135,18 @@ export async function handleGetReadyTasks(
           !readyTasks.some(ready => ready.id === task.id)
         ).length,
       },
+      _methodologyGuidance: {
+        dailyWorkflow: [
+          "🔍 RESEARCH FIRST: Use get_list to understand task context before starting",
+          "📋 PLAN: Review task description and action plan thoroughly",
+          "🔄 TRACK PROGRESS: Use update_task regularly to document progress and discoveries",
+          "✅ VERIFY COMPLETION: Check all exit criteria before using complete_task"
+        ],
+        bestPractice: "Start each work session with get_ready_tasks to plan your day (Plan and Reflect methodology)",
+        tip: sortedReadyTasks.length > 0 
+          ? "Focus on one task at a time for best results. Use search_tool to research similar completed work for context."
+          : "No ready tasks available. Use analyze_task_dependencies to understand what's blocking progress."
+      }
     };
 
     // Clean up dependency resolver

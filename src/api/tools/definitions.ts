@@ -156,7 +156,7 @@ export const MCP_TOOLS: Tool[] = [
   // List Management Tools (4 tools)
   {
     name: 'create_list',
-    description: 'Create a new todo list with simple parameters',
+    description: 'Create a new todo list with simple parameters. 🎯 BEST PRACTICE: Before creating, use list_all_lists to check for similar existing projects and learn from their structure.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -183,7 +183,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'get_list',
-    description: 'Retrieve a specific todo list by ID',
+    description: 'Retrieve a specific todo list by ID. 🔍 METHODOLOGY: Use this to research task context and understand project structure before starting work (Use Tools, Don\'t Guess principle).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -257,7 +257,7 @@ export const MCP_TOOLS: Tool[] = [
   // Task Management Tools (6 tools)
   {
     name: 'add_task',
-    description: 'Add a new task to a todo list with optional dependencies',
+    description: 'Add a new task to a todo list with optional dependencies. 📋 BEST PRACTICE: First use analyze_task to understand complexity, then create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -274,7 +274,7 @@ export const MCP_TOOLS: Tool[] = [
         },
         description: {
           type: 'string',
-          description: 'Task description (provide as string)',
+          description: 'Task description (provide as string). 🎯 BEST PRACTICE: Include detailed ACTION PLAN with specific steps, CONTEXT explaining why this task matters, and CONSIDERATIONS for technical constraints. This follows the Plan and Reflect methodology.',
           maxLength: 5000,
         },
         priority: {
@@ -313,7 +313,7 @@ export const MCP_TOOLS: Tool[] = [
         },
         exitCriteria: {
           type: 'array',
-          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings)',
+          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings). 🎯 CRITICAL: Define specific, measurable completion requirements. This ensures Persist Until Complete methodology - only mark tasks done when ALL criteria are verified.',
           items: {
             type: 'string',
             maxLength: 500,
@@ -327,7 +327,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'update_task',
-    description: 'Update basic task properties',
+    description: 'Update basic task properties. 🔄 METHODOLOGY: Use this regularly during execution to track progress, update action plans based on discoveries, and document learnings. Essential for Plan and Reflect approach.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -394,7 +394,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'complete_task',
-    description: 'Mark a task as completed',
+    description: 'Mark a task as completed. ⚠️ CRITICAL: Only use after verifying ALL exit criteria are met. This enforces Persist Until Complete methodology - never mark tasks done prematurely.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -477,7 +477,7 @@ export const MCP_TOOLS: Tool[] = [
   // Search & Display Tools (2 tools)
   {
     name: 'search_tool',
-    description: 'Unified search, filter, and query tool for tasks with flexible criteria and sorting options',
+    description: 'Unified search, filter, and query tool for tasks with flexible criteria and sorting options. 🔍 ESSENTIAL: Use this to research existing work before starting tasks (Use Tools, Don\'t Guess). Search completed tasks for context and learnings.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -647,7 +647,7 @@ export const MCP_TOOLS: Tool[] = [
   // Advanced Features Tools (2 tools)
   {
     name: 'analyze_task',
-    description: 'Analyze task complexity and get suggestions',
+    description: 'Analyze task complexity and get suggestions. 🎯 METHODOLOGY: ALWAYS use this before creating tasks to understand complexity and plan properly. Core part of Plan and Reflect approach - investigate before acting.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -706,7 +706,7 @@ export const MCP_TOOLS: Tool[] = [
   // Dependency Management Tools (3 tools)
   {
     name: 'set_task_dependencies',
-    description: 'Set which tasks this task depends on (replaces all existing dependencies)',
+    description: 'Set which tasks this task depends on (replaces all existing dependencies). 🔗 WORKFLOW: Use with get_ready_tasks to enable proper task sequencing and parallel execution in multi-agent environments.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -736,7 +736,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'get_ready_tasks',
-    description: 'Get tasks that are ready to work on (no incomplete dependencies)',
+    description: 'Get tasks that are ready to work on (no incomplete dependencies). 🚀 DAILY WORKFLOW: Start each work session with this to find actionable tasks. Essential for Plan and Reflect methodology - plan your day based on what\'s actually ready.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -759,7 +759,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'analyze_task_dependencies',
-    description: 'Get analysis of task dependencies and project structure with optional DAG visualization',
+    description: 'Get analysis of task dependencies and project structure with optional DAG visualization. 📊 PLANNING: Use this to understand project context and identify bottlenecks before starting work. Critical for Use Tools, Don\'t Guess methodology.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -866,7 +866,7 @@ export const MCP_TOOLS: Tool[] = [
   // Exit Criteria Management Tools (2 tools)
   {
     name: 'set_task_exit_criteria',
-    description: 'Set exit criteria for a task (replaces all existing exit criteria)',
+    description: 'Set exit criteria for a task (replaces all existing exit criteria). 🎯 QUALITY: Define specific, measurable completion requirements. Essential for Persist Until Complete - ensures tasks are truly finished.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -896,7 +896,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'update_exit_criteria',
-    description: 'Update the status of a specific exit criteria',
+    description: 'Update the status of a specific exit criteria. 📝 PROGRESS TRACKING: Use this throughout task execution to track completion progress. Core part of Persist Until Complete methodology.',
     inputSchema: {
       type: 'object',
       properties: {

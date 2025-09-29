@@ -4,7 +4,15 @@ An intelligent Model Context Protocol (MCP) server that provides sophisticated t
 
 ## 🤖 Agent-Friendly Features
 
-The MCP Task Manager is specifically designed to work seamlessly with AI agents like Claude Desktop and Kiro IDE, including **multi-agent orchestration environments** where multiple AI agents work together on complex projects. Key agent-friendly improvements include:
+The MCP Task Manager is specifically designed to work seamlessly with AI agents like Claude Desktop and Kiro IDE, including **multi-agent orchestration environments** where multiple AI agents work together on complex projects. 
+
+### 📚 Essential for AI Agents
+**All agents should review the [Agent Best Practices Guide](./docs/guides/agent-best-practices.md)** for proven methodologies that maximize effectiveness:
+- **Plan and Reflect**: Thorough planning before action, reflection after completion
+- **Use Tools, Don't Guess**: Always investigate using available tools rather than making assumptions
+- **Persist Until Complete**: Ensure all exit criteria are met before marking tasks complete
+
+Key agent-friendly improvements include:
 
 ### ✨ Smart Parameter Preprocessing
 - **Automatic Type Conversion**: Converts common agent input patterns before validation
