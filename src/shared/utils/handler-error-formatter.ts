@@ -71,14 +71,18 @@ export function formatHandlerError(
     };
   }
 
-  // Handle other types of errors
+  // Handle other types of errors with methodology guidance
   const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+  
+  // Add methodology guidance to error messages
+  const methodologyHint = getMethodologyHintForTool(toolName);
+  const fullErrorMessage = `Error: ${errorMessage}\n\n${methodologyHint}`;
   
   return {
     content: [
       {
         type: 'text',
-        text: `Error: ${errorMessage}`,
+        text: fullErrorMessage,
       },
     ],
     isError: true,
@@ -126,6 +130,33 @@ export function withErrorHandling<T extends any[], R>(
       return formatHandlerError(error, { toolName, ...config }, requestParams);
     }
   };
+}
+
+/**
+ * Get methodology hint for a specific tool
+ */
+function getMethodologyHintForTool(toolName: string): string {
+  const hints: Record<string, string> = {
+    // Investigation tools
+    'analyze_task': '🎯 METHODOLOGY TIP: Use this tool BEFORE creating tasks to plan properly (Plan and Reflect principle)',
+    'search_tool': '🔍 METHODOLOGY TIP: Use this to research existing work before starting (Use Tools, Don\'t Guess principle)',
+    'get_list': '🔍 METHODOLOGY TIP: Always check task context before starting work (Use Tools, Don\'t Guess principle)',
+    
+    // Task creation and management
+    'add_task': '📋 METHODOLOGY TIP: Include detailed action plans and specific exit criteria (Plan and Reflect principle)',
+    'update_task': '🔄 METHODOLOGY TIP: Use this regularly to track progress and document discoveries during execution',
+    'complete_task': '✅ METHODOLOGY TIP: Only use after verifying ALL exit criteria are met (Persist Until Complete principle)',
+    
+    // Workflow tools
+    'get_ready_tasks': '🚀 METHODOLOGY TIP: Start each work session with this to plan your day (Plan and Reflect principle)',
+    'analyze_task_dependencies': '📊 METHODOLOGY TIP: Use this to understand project context before starting work',
+    
+    // Quality tools
+    'set_task_exit_criteria': '🎯 METHODOLOGY TIP: Define specific, measurable completion requirements (Persist Until Complete)',
+    'update_exit_criteria': '📝 METHODOLOGY TIP: Track completion progress throughout execution',
+  };
+  
+  return hints[toolName] || '💡 METHODOLOGY REMINDER: Follow the three principles - Plan and Reflect, Use Tools Don\'t Guess, Persist Until Complete';
 }
 
 /**

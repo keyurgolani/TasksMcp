@@ -1,6 +1,14 @@
 # Basic Usage Examples
 
-This guide provides practical examples for common task management scenarios using the MCP Task Manager.
+This guide provides practical examples for common task management scenarios using the MCP Task Manager, demonstrating the [Agent Best Practices](../guides/agent-best-practices.md) methodology in action.
+
+## 🎯 Best Practices Integration
+
+These examples follow the three core principles:
+
+- **Plan and Reflect**: Thorough investigation before action, reflection after completion
+- **Use Tools, Don't Guess**: Always investigate using available tools rather than assumptions
+- **Persist Until Complete**: Ensure all exit criteria are met before marking tasks complete
 
 ## 🚀 Getting Started Examples
 
@@ -8,18 +16,35 @@ This guide provides practical examples for common task management scenarios usin
 
 **Scenario**: You want to organize tasks for a new project.
 
+**Step 1: Plan and Investigate** (following best practices)
+
+```json
+{
+  "tool": "list_all_lists",
+  "parameters": {
+    "projectTag": "web-development",
+    "limit": 10
+  }
+}
+```
+
+_Check if similar projects exist to learn from their structure_
+
+**Step 2: Create the List with Context**
+
 ```json
 {
   "tool": "create_list",
   "parameters": {
     "title": "Website Redesign Project",
-    "description": "Complete redesign of company website with modern UI/UX",
+    "description": "Complete redesign of company website with modern UI/UX. Goals: Improve user experience, increase conversion rates, modernize brand presentation. Timeline: 8 weeks. Stakeholders: Marketing team, Design team, Development team.",
     "projectTag": "web-development"
   }
 }
 ```
 
 **Response:**
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -33,24 +58,45 @@ This guide provides practical examples for common task management scenarios usin
 }
 ```
 
-### Adding Tasks with Different Priorities
+### Adding Tasks with Investigation and Planning
 
-**High Priority Task:**
+**Step 1: Analyze Task Complexity** (Use Tools, Don't Guess)
+
+```json
+{
+  "tool": "analyze_task",
+  "parameters": {
+    "taskDescription": "Create wireframes for main pages including home, about, services, and contact pages",
+    "context": "Website redesign project with focus on user experience and conversion optimization"
+  }
+}
+```
+
+**Step 2: Create Task with Detailed Action Plan**
+
 ```json
 {
   "tool": "add_task",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
     "title": "Create wireframes for main pages",
-    "description": "Design wireframes for home, about, services, and contact pages",
+    "description": "ACTION PLAN:\n1. Research current user analytics and pain points\n2. Review competitor websites for best practices\n3. Create low-fidelity wireframes for home page\n4. Design wireframes for about, services, and contact pages\n5. Include mobile responsive layouts\n6. Get stakeholder feedback and iterate\n\nCONTEXT:\nCritical foundation task that blocks UI design and development. Must align with brand guidelines and conversion goals.\n\nCONSIDERATIONS:\n- Mobile-first approach\n- Accessibility requirements\n- SEO-friendly structure\n- Conversion optimization",
     "priority": 5,
-    "tags": ["design", "wireframes", "urgent"],
-    "estimatedDuration": 240
+    "tags": ["design", "wireframes", "urgent", "foundation"],
+    "estimatedDuration": 240,
+    "exitCriteria": [
+      "Wireframes completed for all 4 main pages",
+      "Mobile responsive layouts included",
+      "Stakeholder review completed and approved",
+      "Accessibility considerations documented",
+      "Handoff documentation prepared for design team"
+    ]
   }
 }
 ```
 
 **Medium Priority Task:**
+
 ```json
 {
   "tool": "add_task",
@@ -66,6 +112,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 **Low Priority Task:**
+
 ```json
 {
   "tool": "add_task",
@@ -85,6 +132,7 @@ This guide provides practical examples for common task management scenarios usin
 ### Viewing Your Tasks
 
 **Show all tasks organized by priority:**
+
 ```json
 {
   "tool": "show_tasks",
@@ -98,6 +146,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 **Response:**
+
 ```
 📋 Website Redesign Project (3 tasks, 0% complete)
 
@@ -117,9 +166,10 @@ This guide provides practical examples for common task management scenarios usin
      ⏱️  60 min | 🏷️  design, branding
 ```
 
-### Finding Tasks to Work On
+### Daily Workflow: Finding and Executing Tasks
 
-**Get ready tasks (no dependencies blocking):**
+**Step 1: Plan Your Day** (Plan and Reflect methodology)
+
 ```json
 {
   "tool": "get_ready_tasks",
@@ -130,7 +180,21 @@ This guide provides practical examples for common task management scenarios usin
 }
 ```
 
+**Step 2: Research Task Context Before Starting**
+
+```json
+{
+  "tool": "get_list",
+  "parameters": {
+    "listId": "123e4567-e89b-12d3-a456-426614174000"
+  }
+}
+```
+
+_Review task details, action plan, and exit criteria before beginning work_
+
 **Response:**
+
 ```json
 {
   "readyTasks": [
@@ -168,6 +232,7 @@ This guide provides practical examples for common task management scenarios usin
 ### Search by Text
 
 **Find all tasks related to "design":**
+
 ```json
 {
   "tool": "search_tool",
@@ -181,6 +246,7 @@ This guide provides practical examples for common task management scenarios usin
 ### Filter by Priority
 
 **Find high-priority tasks:**
+
 ```json
 {
   "tool": "search_tool",
@@ -196,6 +262,7 @@ This guide provides practical examples for common task management scenarios usin
 ### Filter by Tags
 
 **Find all research-related tasks:**
+
 ```json
 {
   "tool": "search_tool",
@@ -210,6 +277,7 @@ This guide provides practical examples for common task management scenarios usin
 ### Complex Filtering
 
 **Find pending high-priority tasks with specific tags:**
+
 ```json
 {
   "tool": "search_tool",
@@ -226,21 +294,80 @@ This guide provides practical examples for common task management scenarios usin
 }
 ```
 
-## ✅ Completing Tasks
+## ✅ Task Execution with Best Practices
 
-### Simple Task Completion
+### Methodology-Driven Task Execution
+
+**Step 1: Start with Research and Planning**
+
+```json
+{
+  "tool": "search_tool",
+  "parameters": {
+    "query": "wireframes design",
+    "includeCompleted": true,
+    "sortBy": "updatedAt"
+  }
+}
+```
+
+_Research similar completed tasks for context and learnings_
+
+**Step 2: Update Task with Research Findings**
+
+```json
+{
+  "tool": "update_task",
+  "parameters": {
+    "listId": "123e4567-e89b-12d3-a456-426614174000",
+    "taskId": "456e7890-e89b-12d3-a456-426614174001",
+    "description": "UPDATED ACTION PLAN (based on research):\n✅ 1. Research completed - found user analytics showing 60% mobile traffic\n🔄 2. Currently working on: Competitor analysis (5 sites reviewed)\n⏳ 3. Next: Create mobile-first wireframes\n⏳ 4. Then: Desktop layouts and stakeholder review\n\nKEY FINDINGS:\n- Mobile traffic dominates (prioritize mobile-first)\n- Users drop off at contact form (needs simplification)\n- Competitor sites use card-based layouts effectively\n\nUPDATED APPROACH:\n- Start with mobile wireframes\n- Simplify contact form design\n- Use card-based content organization"
+  }
+}
+```
+
+**Step 3: Track Progress with Exit Criteria Updates**
+
+```json
+{
+  "tool": "update_exit_criteria",
+  "parameters": {
+    "listId": "123e4567-e89b-12d3-a456-426614174000",
+    "taskId": "456e7890-e89b-12d3-a456-426614174001",
+    "criteriaId": "wireframes-criteria-id",
+    "isMet": true,
+    "notes": "Mobile wireframes completed for all 4 pages. Used card-based layout based on competitor research. Simplified contact form design."
+  }
+}
+```
+
+**Step 4: Complete Only When All Criteria Met**
 
 ```json
 {
   "tool": "complete_task",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "taskId": "789abcde-e89b-12d3-a456-426614174002"
+    "taskId": "456e7890-e89b-12d3-a456-426614174001"
+  }
+}
+```
+
+**Step 5: Reflect and Document Learnings**
+
+```json
+{
+  "tool": "update_task",
+  "parameters": {
+    "listId": "123e4567-e89b-12d3-a456-426614174000",
+    "taskId": "456e7890-e89b-12d3-a456-426614174001",
+    "description": "COMPLETED - Wireframes for Main Pages\n\n✅ ALL EXIT CRITERIA MET:\n- Wireframes completed for all 4 main pages ✅\n- Mobile responsive layouts included ✅\n- Stakeholder review completed and approved ✅\n- Accessibility considerations documented ✅\n- Handoff documentation prepared ✅\n\n🎯 KEY LEARNINGS:\n- Mobile-first approach saved 2 hours of rework\n- Competitor research revealed card-based layouts work well\n- Simplified contact form reduced complexity by 40%\n- Stakeholder feedback was positive on mobile designs\n\n📊 QUALITY METRICS:\n- Completed on time (240 minutes estimated, 235 actual)\n- Zero rework required after stakeholder review\n- All accessibility requirements addressed upfront\n\n🚀 NEXT ACTIONS ENABLED:\n- UI design team can start visual designs\n- Development team has clear structure to follow\n- Content team knows required copy sections"
   }
 }
 ```
 
 **Response:**
+
 ```json
 {
   "id": "789abcde-e89b-12d3-a456-426614174002",
@@ -254,6 +381,7 @@ This guide provides practical examples for common task management scenarios usin
 ### Updating Task Properties
 
 **Change task priority:**
+
 ```json
 {
   "tool": "set_task_priority",
@@ -266,6 +394,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 **Add tags to a task:**
+
 ```json
 {
   "tool": "add_task_tags",
@@ -278,6 +407,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 **Update task details:**
+
 ```json
 {
   "tool": "update_task",
@@ -305,6 +435,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -368,6 +499,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 **Response:**
+
 ```json
 {
   "complexity": {
@@ -513,6 +645,7 @@ This guide provides practical examples for common task management scenarios usin
 ```
 
 The response includes progress information:
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -527,6 +660,7 @@ The response includes progress information:
 ### Track Time Estimates
 
 **View total estimated time:**
+
 ```json
 {
   "tool": "search_tool",
@@ -539,40 +673,157 @@ The response includes progress information:
 
 The response includes time estimates for remaining work.
 
-## 🎨 Common Patterns
+## 🎨 Best Practices Workflow Patterns
 
-### Weekly Planning Workflow
+### Daily Methodology-Driven Workflow
 
-1. **Review all projects:**
+**Morning Planning (Plan and Reflect)**
+
+1. **Analyze current project state:**
+
    ```json
-   {"tool": "list_all_lists", "parameters": {"limit": 20}}
+   {
+     "tool": "analyze_task_dependencies",
+     "parameters": { "listId": "project-id" }
+   }
    ```
 
-2. **Find high-priority tasks:**
+2. **Find ready tasks with context:**
+
    ```json
-   {"tool": "search_tool", "parameters": {"priority": [4, 5], "status": ["pending"]}}
+   {
+     "tool": "get_ready_tasks",
+     "parameters": { "listId": "project-id", "limit": 5 }
+   }
    ```
 
-3. **Get ready tasks for each project:**
+3. **Research task before starting (Use Tools, Don't Guess):**
+
    ```json
-   {"tool": "get_ready_tasks", "parameters": {"listId": "project-id"}}
+   { "tool": "get_list", "parameters": { "listId": "project-id" } }
    ```
 
-4. **Plan daily work:**
+4. **Check for related completed work:**
    ```json
-   {"tool": "search_tool", "parameters": {"isReady": true, "sortBy": "priority"}}
+   {
+     "tool": "search_tool",
+     "parameters": { "query": "related-keywords", "includeCompleted": true }
+   }
+   ```
+
+**During Execution** 5. **Update progress regularly:**
+
+```json
+{
+  "tool": "update_task",
+  "parameters": {
+    "taskId": "current-task",
+    "description": "PROGRESS UPDATE: ..."
+  }
+}
+```
+
+6. **Track exit criteria completion:**
+   ```json
+   {
+     "tool": "update_exit_criteria",
+     "parameters": { "criteriaId": "criteria-id", "isMet": true }
+   }
+   ```
+
+**End of Day (Persist Until Complete)** 7. **Verify all criteria before completion:**
+
+```json
+{ "tool": "get_list", "parameters": { "listId": "project-id" } }
+```
+
+8. **Complete only when ready:**
+
+   ```json
+   { "tool": "complete_task", "parameters": { "taskId": "task-id" } }
+   ```
+
+9. **Reflect and document learnings:**
+   ```json
+   {
+     "tool": "update_task",
+     "parameters": { "description": "COMPLETED - Key learnings: ..." }
+   }
+   ```
+
+### Weekly Planning with Investigation
+
+**Monday: Project Analysis**
+
+1. **Review all projects with context:**
+
+   ```json
+   { "tool": "list_all_lists", "parameters": { "limit": 20 } }
+   ```
+
+2. **Analyze dependencies and bottlenecks:**
+
+   ```json
+   {
+     "tool": "analyze_task_dependencies",
+     "parameters": { "listId": "each-project-id" }
+   }
+   ```
+
+3. **Identify critical path items:**
+   ```json
+   {
+     "tool": "search_tool",
+     "parameters": { "priority": [4, 5], "isReady": true }
+   }
+   ```
+
+**Tuesday-Friday: Execution with Methodology** 4. **Daily ready task analysis:**
+
+```json
+{ "tool": "get_ready_tasks", "parameters": { "listId": "project-id" } }
+```
+
+5. **Research before starting each task:**
+
+   ```json
+   {
+     "tool": "search_tool",
+     "parameters": { "query": "task-context", "includeCompleted": true }
+   }
+   ```
+
+6. **Execute with continuous updates and exit criteria tracking**
+
+**Friday: Reflection and Planning** 7. **Review completed work:**
+
+```json
+{
+  "tool": "search_tool",
+  "parameters": { "status": ["completed"], "dateRange": "this-week" }
+}
+```
+
+8. **Analyze what's ready for next week:**
+   ```json
+   { "tool": "get_ready_tasks", "parameters": { "limit": 20 } }
    ```
 
 ### Task Cleanup Workflow
 
 1. **Find completed tasks:**
+
    ```json
-   {"tool": "search_tool", "parameters": {"status": ["completed"]}}
+   { "tool": "search_tool", "parameters": { "status": ["completed"] } }
    ```
 
 2. **Archive old completed tasks:**
+
    ```json
-   {"tool": "remove_task", "parameters": {"listId": "project-id", "taskId": "old-task-id"}}
+   {
+     "tool": "remove_task",
+     "parameters": { "listId": "project-id", "taskId": "old-task-id" }
+   }
    ```
 
 3. **Update task priorities:**
@@ -583,49 +834,145 @@ The response includes time estimates for remaining work.
 ### Project Setup Workflow
 
 1. **Create project list:**
+
    ```json
-   {"tool": "create_list", "parameters": {"title": "New Project", "projectTag": "category"}}
+   {
+     "tool": "create_list",
+     "parameters": { "title": "New Project", "projectTag": "category" }
+   }
    ```
 
 2. **Add initial tasks:**
+
    ```json
    {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
    ```
 
 3. **Set up task priorities:**
+
    ```json
    {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
    ```
 
 4. **Review project structure:**
    ```json
-   {"tool": "show_tasks", "parameters": {"listId": "project-id", "groupBy": "priority"}}
+   {
+     "tool": "show_tasks",
+     "parameters": { "listId": "project-id", "groupBy": "priority" }
+   }
    ```
 
-## 💡 Tips and Best Practices
+## 💡 Methodology-Driven Best Practices
 
-### Effective Task Titles
-- **Good**: "Create responsive navigation menu with dropdown functionality"
-- **Poor**: "Navigation stuff"
+### Plan and Reflect Principles
 
-### Priority Guidelines
-- **5 (Critical)**: Blocking other work, urgent deadlines
-- **4 (High)**: Important features, client deliverables
-- **3 (Medium)**: Regular development tasks
-- **2 (Low)**: Nice-to-have features, optimizations
-- **1 (Minimal)**: Future considerations, ideas
+**Before Starting Any Task:**
 
-### Tag Organization
-- **Type**: `feature`, `bug`, `documentation`, `testing`
-- **Area**: `frontend`, `backend`, `database`, `api`
-- **Status**: `urgent`, `blocked`, `review-needed`, `client-feedback`
-- **Phase**: `planning`, `development`, `testing`, `deployment`
+- Use `analyze_task` to understand complexity
+- Use `search_tool` to find related completed work
+- Use `get_list` to understand full project context
+- Create detailed action plans with specific steps
 
-### Time Estimation
-- Break large tasks (>4 hours) into smaller pieces
-- Include buffer time for testing and review
-- Use past experience to calibrate estimates
-- Track actual time vs. estimates to improve accuracy
+**After Completing Tasks:**
+
+- Document key learnings and discoveries
+- Update task descriptions with outcomes
+- Reflect on what worked well and what didn't
+- Use insights to improve future task planning
+
+### Use Tools, Don't Guess Guidelines
+
+**Always Investigate First:**
+
+```json
+// Instead of assuming, always check:
+{"tool": "search_tool", "parameters": {"query": "authentication", "includeCompleted": true}}
+{"tool": "analyze_task_dependencies", "parameters": {"listId": "project-id"}}
+{"tool": "get_ready_tasks", "parameters": {"listId": "project-id"}}
+```
+
+**Research Patterns:**
+
+- Check completed tasks for similar work
+- Analyze project dependencies before starting
+- Verify task context and requirements
+- Look for existing solutions or approaches
+
+### Persist Until Complete Standards
+
+**Exit Criteria Best Practices:**
+
+- Define specific, measurable completion requirements
+- Include quality checks (testing, review, documentation)
+- Set acceptance criteria (stakeholder approval, performance targets)
+- Track criteria completion throughout execution
+
+**Quality Completion Checklist:**
+
+- [ ] All exit criteria verified and met
+- [ ] Task description updated with final outcomes
+- [ ] Key learnings documented for future reference
+- [ ] Next actions or dependencies clearly identified
+- [ ] Quality metrics recorded (time, rework, satisfaction)
+
+### Effective Task Creation with Investigation
+
+**Task Title Patterns:**
+
+- **Good**: "Implement user authentication with JWT tokens and password hashing"
+- **Better**: "Implement secure user authentication system (JWT + bcrypt) with rate limiting"
+- **Poor**: "Auth stuff"
+
+**Action Plan Structure:**
+
+```
+ACTION PLAN:
+1. [Research phase] - Investigate existing solutions
+2. [Design phase] - Plan implementation approach
+3. [Implementation] - Build core functionality
+4. [Testing] - Verify all requirements met
+5. [Documentation] - Update guides and handoffs
+
+CONTEXT:
+- Why this task matters
+- How it fits into larger goals
+- Technical constraints or requirements
+
+CONSIDERATIONS:
+- Security requirements
+- Performance targets
+- Integration points
+- Future extensibility
+```
+
+**Exit Criteria Examples:**
+
+- "Feature works correctly in all supported browsers"
+- "Unit test coverage ≥90% for new code"
+- "Performance benchmarks meet requirements (<2s load time)"
+- "Security review completed and approved"
+- "Documentation updated and reviewed"
+
+### Progress Tracking Patterns
+
+**Regular Update Structure:**
+
+```
+PROGRESS UPDATE:
+✅ COMPLETED: [What's been finished]
+🔄 IN PROGRESS: [Current work with details]
+⏳ NEXT: [Upcoming steps]
+🚧 BLOCKERS: [Any issues or dependencies]
+📊 STATUS: [Overall progress percentage]
+⏱️ TIME: [Actual vs estimated time]
+```
+
+**Exit Criteria Tracking:**
+
+- Update criteria status as work progresses
+- Include notes explaining how criteria were met
+- Document any changes to original requirements
+- Track quality metrics and outcomes
 
 ---
 

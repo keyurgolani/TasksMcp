@@ -234,13 +234,13 @@ describe('Dependency Tool Registration', () => {
   describe('Tool Descriptions', () => {
     it('should have clear, simple descriptions for dependency tools', () => {
       const setDepsSchema = getToolSchema('set_task_dependencies');
-      expect(setDepsSchema?.description).toBe('Set which tasks this task depends on (replaces all existing dependencies)');
+      expect(setDepsSchema?.description).toContain('Set which tasks this task depends on (replaces all existing dependencies)');
       
       const readyTasksSchema = getToolSchema('get_ready_tasks');
-      expect(readyTasksSchema?.description).toBe('Get tasks that are ready to work on (no incomplete dependencies)');
+      expect(readyTasksSchema?.description).toContain('Get tasks that are ready to work on (no incomplete dependencies)');
       
       const analyzeSchema = getToolSchema('analyze_task_dependencies');
-      expect(analyzeSchema?.description).toBe('Get analysis of task dependencies and project structure with optional DAG visualization');
+      expect(analyzeSchema?.description).toContain('Get analysis of task dependencies and project structure with optional DAG visualization');
     });
 
     it('should have clear parameter descriptions', () => {

@@ -18,19 +18,32 @@ Simple task and list management operations for getting started.
 - `add_task`, `update_task`, `complete_task`, `remove_task`
 - `search_tasks`, `filter_tasks`, `show_tasks`
 
-### [Advanced Workflows](advanced.md)
-Complex project management and multi-agent orchestration patterns.
+### [Advanced Workflows](advanced.md) ⭐ **Enhanced with Methodology**
+Complex project management and multi-agent orchestration patterns following best practices.
 
 **Key Topics:**
-- AI-powered task analysis and suggestions
-- Dependency management and workflow orchestration
-- Multi-agent coordination patterns
-- Performance optimization techniques
+- Investigation-first approach for complex projects
+- Methodology-driven task breakdown and analysis
+- Advanced dependency management with quality tracking
+- Multi-agent coordination with comprehensive progress monitoring
+- Enterprise-level project execution examples
 
-**Tools Covered:**
-- `analyze_task`, `get_task_suggestions`
-- `set_task_dependencies`, `get_ready_tasks`, `analyze_task_dependencies`
-- `set_task_priority`, `add_task_tags`
+**Methodology Demonstrations:**
+- Complete e-commerce platform planning example
+- Investigation and research phases for complex tasks
+- Quality completion with detailed exit criteria
+- Comprehensive reflection and learning documentation
+
+### [Basic Usage](basic.md) ⭐ **Now with Best Practices Integration**
+Simple task and list management operations demonstrating the [Agent Best Practices](../guides/agent-best-practices.md) methodology.
+
+**Key Topics:**
+- Plan and Reflect methodology in daily workflows
+- Investigation-driven task creation with detailed action plans
+- Research-based execution with continuous progress updates
+- Quality completion through comprehensive exit criteria tracking
+
+**Methodology Examples:** Complete workflows showing investigation, planning, execution, and reflection phases.
 
 ### [Configuration Examples](configuration.md)
 Setup and configuration examples for different environments and MCP clients.

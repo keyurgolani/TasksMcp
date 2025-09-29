@@ -183,8 +183,8 @@ describe('Dependency Management User Experience Tests', () => {
       expect(errorMessage).toContain('Todo list not found');
       expect(errorMessage).toMatch(/not found|does not exist/i);
       
-      // Should be concise and clear
-      expect(errorMessage.length).toBeLessThan(80);
+      // Should be concise and clear (allowing for methodology tips)
+      expect(errorMessage.length).toBeLessThan(200);
     });
   });
 

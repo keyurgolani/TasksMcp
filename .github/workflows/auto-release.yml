@@ -139,7 +139,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -307,12 +307,12 @@ jobs:
           # Push changes and tags
           git push origin main --tags
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger release workflow
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             try {
               console.log('Triggering publish workflow...');
@@ -338,10 +338,11 @@ jobs:
               if (error.status === 403) {
                 console.error('This appears to be a permissions issue.');
                 console.error('Make sure the workflow has actions: write permission');
-                console.error('and that PAT_TOKEN (if used) has workflow permissions.');
+                console.error('and that GITHUB_TOKEN has workflow permissions.');
               }
               
-              throw error;
+              // Don't fail the workflow if publish trigger fails
+              console.log('Continuing without triggering publish workflow...');
             }
 
   notify-auto-release:

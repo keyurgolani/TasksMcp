@@ -49,6 +49,19 @@ export async function handleAnalyzeTask(
       reasoning: analysis.reasoning,
       suggestions: analysis.suggestedTasks.slice(0, args.maxSuggestions),
       breakdown: analysis.complexity.breakdown,
+      _methodologyGuidance: {
+        purpose: "🎯 PLAN AND REFLECT: This analysis helps you plan thoroughly before creating tasks",
+        nextSteps: [
+          "📋 Use these insights to create detailed action plans in task descriptions",
+          "🎯 Define specific exit criteria based on the complexity analysis",
+          "🔍 Use search_tool to research similar completed tasks for additional context",
+          "📝 Break down complex tasks into smaller, manageable pieces if suggested"
+        ],
+        bestPractice: analysis.isComplex 
+          ? "High complexity detected. Consider breaking this into multiple smaller tasks with clear dependencies."
+          : "Moderate complexity. Create a detailed action plan with specific steps and measurable exit criteria.",
+        reminder: "Always investigate first (Use Tools, Don't Guess) - this analysis is part of proper planning methodology"
+      }
     };
 
     logger.info('Task analysis completed', {

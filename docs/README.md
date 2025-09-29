@@ -23,6 +23,7 @@ Complete reference for all MCP tools and interfaces:
 Step-by-step guides for common tasks:
 - **[Installation](guides/installation.md)** - Setup and configuration
 - **[Getting Started](guides/getting-started.md)** - Basic usage tutorial
+- **[Agent Best Practices](guides/agent-best-practices.md)** - ⭐ **Essential for AI agents** - Proven methodologies for effective task management
 - **[Configuration](guides/configuration.md)** - Environment and client setup
 - **[Multi-Agent Orchestration](guides/multi-agent.md)** - Advanced workflow coordination
 - **[Troubleshooting](guides/troubleshooting.md)** - Common issues and solutions

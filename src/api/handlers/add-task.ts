@@ -180,11 +180,25 @@ export async function handleAddTask(
       isReady,
     });
 
+    // Add methodology guidance to response
+    const responseWithGuidance = {
+      ...response,
+      _methodologyGuidance: {
+        nextSteps: [
+          "📝 Use update_task regularly during execution to track progress and document discoveries",
+          "🎯 Use update_exit_criteria to track completion of individual requirements",
+          "⚠️ Only use complete_task when ALL exit criteria are verified (Persist Until Complete)",
+          "🔍 Use search_tool to research similar completed tasks for context and learnings"
+        ],
+        bestPractice: "Follow Plan and Reflect methodology: plan thoroughly, execute with updates, reflect on outcomes"
+      }
+    };
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(response, null, 2),
+          text: JSON.stringify(responseWithGuidance, null, 2),
         },
       ],
     };

@@ -2,6 +2,16 @@
 
 The MCP Task Manager provides advanced support for **multi-agent orchestration environments** where multiple AI agents collaborate on complex projects with interdependent tasks.
 
+## 🎯 Essential Reading for Agents
+
+**Before using the MCP Task Manager, all agents should review the [Agent Best Practices Guide](./docs/guides/agent-best-practices.md)** which provides proven methodologies for:
+
+- **Effective Task Creation**: Investigation, action planning, and exit criteria definition
+- **Quality Execution**: Research-driven approach with continuous progress updates  
+- **Core Methodology**: Plan and reflect, use tools (don't guess), persist until complete
+
+These practices ensure maximum effectiveness and quality outcomes when using the task management tools.
+
 ## Key Features
 
 ### 🤖 Agent-Friendly Design

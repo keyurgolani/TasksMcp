@@ -342,6 +342,16 @@ Adds a new task to a todo list.
 
 For the complete documentation of all 20 tools, including Task Management, Search & Display, Advanced Features, Exit Criteria Management, and Dependency Management tools, see the full documentation in the source files.
 
+## Agent Best Practices Integration
+
+### 📚 Essential Reading
+**Before using these tools, review the [Agent Best Practices Guide](../guides/agent-best-practices.md)** for proven methodologies that ensure effective task management:
+
+- **Investigation-Driven Task Creation**: Use `analyze_task` before `add_task` to create comprehensive action plans
+- **Research-Based Execution**: Use `search_tool` and `get_list` to understand context before starting work
+- **Progress Tracking**: Regular `update_task` calls with status updates and learnings
+- **Quality Completion**: Verify all exit criteria with `update_exit_criteria` before `complete_task`
+
 ## Tool Selection Recommendations
 
 ### Tier 1: Essential Tools (Always Recommend)
