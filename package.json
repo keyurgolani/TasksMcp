@@ -31,6 +31,8 @@
     "build:dev": "tsc --noEmit && tsc && chmod +x dist/app/cli.js",
     "minify": "find dist -name '*.js' -exec terser {} --compress --mangle --module --output {} \\;",
     "start": "node dist/index.js",
+    "start:api": "node dist/app/api-server.js",
+    "dev:api": "npm run build:dev && npm run start:api",
     "prepublishOnly": "npm run build:prod",
     "test": "vitest",
     "test:run": "vitest run",
@@ -79,14 +81,20 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/node": "^20.9.0",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^9.0.7",
     "@vitest/ui": "^3.2.4",
+    "supertest": "^7.1.4",
     "terser": "^5.24.0",
     "typescript": "^5.3.3",
     "vitest": "^3.2.4"

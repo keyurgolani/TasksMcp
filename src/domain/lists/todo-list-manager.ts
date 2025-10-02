@@ -15,6 +15,7 @@ import {
   type GetTodoListPagination,
   type ImplementationNote,
   type ExitCriteria,
+  type ActionPlan,
 } from '../../shared/types/todo.js';
 import type { StorageBackend, ListOptions } from '../../shared/types/storage.js';
 import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
@@ -90,9 +91,10 @@ export interface UpdateTodoListInput {
     estimatedDuration?: number;
     tags?: string[];
     dependencies?: string[];
-    actionPlan?: string; // Action plan content
+    actionPlan?: string | ActionPlan; // Action plan content (string) or ActionPlan object
     exitCriteria?: string[]; // Exit criteria descriptions (for creating new)
     exitCriteriaObjects?: ExitCriteria[]; // Exit criteria objects (for updating existing)
+    implementationNotes?: ImplementationNote[]; // Implementation notes array
   };
   itemId?: string;
   newOrder?: string[]; // Array of item IDs for reordering
@@ -594,6 +596,9 @@ export class TodoListManager {
           if (input.itemData?.actionPlan === undefined) {
             throw new Error('actionPlan is required for update_action_plan action');
           }
+          if (typeof input.itemData.actionPlan !== 'string') {
+            throw new Error('actionPlan must be a string for update_action_plan action');
+          }
           updatedItems = await this.updateItemActionPlan(
             updatedItems,
             input.itemId,
@@ -926,11 +931,17 @@ export class TodoListManager {
     // Create action plan if provided
     if (itemData.actionPlan) {
       try {
-        const actionPlan = await this.actionPlanManager.createActionPlan({
-          taskId: newItemId,
-          content: itemData.actionPlan,
-        });
-        newItem.actionPlan = actionPlan;
+        if (typeof itemData.actionPlan === 'string') {
+          // Create new action plan from content string
+          const actionPlan = await this.actionPlanManager.createActionPlan({
+            taskId: newItemId,
+            content: itemData.actionPlan,
+          });
+          newItem.actionPlan = actionPlan;
+        } else {
+          // Use provided ActionPlan object directly
+          newItem.actionPlan = itemData.actionPlan;
+        }
       } catch (error) {
         logger.warn('Failed to create action plan for new item', {
           itemId: newItemId,
@@ -1020,7 +1031,7 @@ export class TodoListManager {
       tags: itemData?.tags ?? existingItem.tags,
       metadata: existingItem.metadata,
       // v2 fields
-      implementationNotes: existingItem.implementationNotes || [],
+      implementationNotes: itemData?.implementationNotes ?? existingItem.implementationNotes ?? [],
       exitCriteria: existingItem.exitCriteria || [], // Will be updated later if provided
       ...(existingItem.actionPlan && { actionPlan: existingItem.actionPlan }), // Preserve existing action plan
     };
@@ -1028,18 +1039,25 @@ export class TodoListManager {
     // Update action plan if provided
     if (itemData?.actionPlan !== undefined) {
       try {
-        if (existingItem.actionPlan) {
-          // Update existing action plan
-          updatedItem.actionPlan = await this.actionPlanManager.updateActionPlan(
-            existingItem.actionPlan,
-            { content: itemData.actionPlan }
-          );
+        // Check if actionPlan is an object (ActionPlan) or a string (content)
+        if (typeof itemData.actionPlan === 'string') {
+          // String content provided
+          if (existingItem.actionPlan) {
+            // Update existing action plan
+            updatedItem.actionPlan = await this.actionPlanManager.updateActionPlan(
+              existingItem.actionPlan,
+              { content: itemData.actionPlan }
+            );
+          } else {
+            // Create new action plan
+            updatedItem.actionPlan = await this.actionPlanManager.createActionPlan({
+              taskId: itemId,
+              content: itemData.actionPlan,
+            });
+          }
         } else {
-          // Create new action plan
-          updatedItem.actionPlan = await this.actionPlanManager.createActionPlan({
-            taskId: itemId,
-            content: itemData.actionPlan,
-          });
+          // ActionPlan object provided - use it directly
+          updatedItem.actionPlan = itemData.actionPlan;
         }
       } catch (error) {
         logger.warn('Failed to update action plan during item update', {
@@ -2105,6 +2123,66 @@ export class TodoListManager {
       return cleanupResult;
     } catch (error) {
       logger.error('Batch cleanup operation failed', { error, listIds, permanent });
+      throw error;
+    }
+  }
+
+  /**
+   * Update list metadata (title, description, projectTag)
+   * This is a convenience method for updating list-level properties
+   */
+  async updateListMetadata(
+    listId: string,
+    updates: {
+      title?: string;
+      description?: string;
+      projectTag?: string;
+    }
+  ): Promise<TodoList> {
+    try {
+      logger.info('Updating list metadata', { listId, updates });
+
+      // Load the existing list
+      const existingList = await this.repository.findById(listId, {
+        includeArchived: true,
+      });
+
+      if (!existingList) {
+        throw new Error(`Todo list not found: ${listId}`);
+      }
+
+      if (existingList.isArchived) {
+        throw new Error('Cannot update archived todo list');
+      }
+
+      // Create updated list with new metadata
+      const updatedList: TodoList = {
+        ...existingList,
+        ...(updates.title && { title: updates.title }),
+        ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.projectTag && {
+          projectTag: updates.projectTag,
+          context: updates.projectTag, // Keep context in sync for backward compatibility
+        }),
+        updatedAt: new Date(),
+      };
+
+      // Save to repository
+      await this.repository.save(updatedList);
+
+      // Update both caches
+      cacheManager.setTodoList(listId, updatedList);
+      this.addToCache(listId, updatedList);
+
+      // Invalidate summary cache
+      cacheManager.invalidateTodoList(listId);
+      cacheManager.setTodoList(listId, updatedList);
+
+      logger.info('List metadata updated successfully', { listId });
+
+      return updatedList;
+    } catch (error) {
+      logger.error('Failed to update list metadata', { listId, error });
       throw error;
     }
   }
