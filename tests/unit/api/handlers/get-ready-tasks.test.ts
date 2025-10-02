@@ -3,6 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { createTodoListManager } from '../../../utils/test-helpers.js';
 import { handleGetReadyTasks } from '../../../../src/api/handlers/get-ready-tasks.js';
 import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
@@ -20,7 +21,8 @@ describe('GetReadyTasksHandler', () => {
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
-    manager = new TodoListManager(storage);
+    await storage.initialize(); // Initialize storage before creating manager
+    manager = createTodoListManager(storage);
     await manager.initialize();
 
     // Create a test list with multiple tasks

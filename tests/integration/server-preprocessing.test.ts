@@ -12,7 +12,7 @@ describe('Server Parameter Preprocessing Integration', () => {
 
   beforeEach(async () => {
     // Use memory storage for testing
-    TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
+    await TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
     server = new McpTaskManagerServer();
     await server.start();
     

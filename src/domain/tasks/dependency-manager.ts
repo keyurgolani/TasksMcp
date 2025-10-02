@@ -3,6 +3,7 @@
  */
 
 import { TaskStatus, type TodoItem } from '../../shared/types/todo.js';
+import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
 import { logger } from '../../shared/utils/logger.js';
 
 export interface DependencyNode {
@@ -35,12 +36,29 @@ export interface DependencyValidationResult {
 export class DependencyResolver {
   private readonly graphCache = new Map<string, DependencyGraph>();
   private cacheTimeout: NodeJS.Timeout | undefined;
+  // Repository for future multi-source dependency resolution
+  // Currently unused but prepared for future enhancements
+  private readonly repository: ITodoListRepository | undefined;
 
-  constructor() {
+  constructor(repository?: ITodoListRepository) {
+    this.repository = repository;
+    
     // Setup periodic cache cleanup - more frequent to prevent memory buildup
     this.cacheTimeout = setInterval(() => {
       this.cleanupCache();
     }, 60000); // Clean up every minute (was 5 minutes)
+    
+    logger.debug('DependencyResolver initialized', {
+      hasRepository: !!repository,
+    });
+  }
+  
+  /**
+   * Gets the repository instance if available
+   * @returns The repository instance or undefined
+   */
+  getRepository(): ITodoListRepository | undefined {
+    return this.repository;
   }
   /**
    * Validates dependencies for a todo item

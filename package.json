@@ -44,7 +44,7 @@
     "version:sync": "node scripts/sync-version.js",
     "version:update": "./scripts/update-version.sh",
     "preversion": "npm run version:sync",
-    "postversion": "npm run version:sync"
+    "postversion": "node scripts/sync-version.js --from-package"
   },
   "keywords": [
     "mcp",

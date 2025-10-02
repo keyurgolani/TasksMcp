@@ -3,6 +3,10 @@
  */
 
 import { z } from 'zod';
+
+// Export data source configuration modules
+export * from './data-source-config.js';
+export * from './data-source-loader.js';
 import {
   StorageFactory,
   type StorageConfiguration,

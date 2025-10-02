@@ -7,6 +7,7 @@ import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../../../setup.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { createTodoListManager } from '../../../utils/test-helpers.js';
 
 describe('TodoListManager Action Plan Integration', () => {
   let manager: TodoListManager;
@@ -15,7 +16,7 @@ describe('TodoListManager Action Plan Integration', () => {
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    manager = new TodoListManager(storage);
+    manager = createTodoListManager(storage);
     await manager.initialize();
     
     // Register for automatic cleanup

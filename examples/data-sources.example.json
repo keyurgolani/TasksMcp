@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Data Source Configuration Example",
+  "description": "Example configuration for multi-source data delegation in MCP Task Manager",
+  
+  "sources": [
+    {
+      "id": "local-file",
+      "name": "Local File Storage",
+      "type": "filesystem",
+      "priority": 100,
+      "readonly": false,
+      "enabled": true,
+      "tags": ["local", "development"],
+      "config": {
+        "dataDirectory": "./data",
+        "backupRetentionDays": 7,
+        "enableCompression": false
+      }
+    },
+    {
+      "id": "shared-postgres",
+      "name": "Shared PostgreSQL Database",
+      "type": "postgresql",
+      "priority": 200,
+      "readonly": false,
+      "enabled": false,
+      "tags": ["shared", "production"],
+      "config": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "task_manager",
+        "user": "postgres",
+        "password": "${POSTGRES_PASSWORD}",
+        "ssl": true,
+        "maxConnections": 10,
+        "connectionTimeout": 5000,
+        "idleTimeout": 30000
+      }
+    },
+    {
+      "id": "archive-mongo",
+      "name": "MongoDB Archive",
+      "type": "mongodb",
+      "priority": 50,
+      "readonly": true,
+      "enabled": false,
+      "tags": ["archive", "readonly"],
+      "config": {
+        "uri": "${MONGODB_URI}",
+        "database": "task_archive",
+        "collection": "tasks",
+        "maxPoolSize": 5,
+        "minPoolSize": 1,
+        "connectTimeout": 10000,
+        "socketTimeout": 30000
+      }
+    },
+    {
+      "id": "cache-memory",
+      "name": "In-Memory Cache",
+      "type": "memory",
+      "priority": 300,
+      "readonly": false,
+      "enabled": false,
+      "tags": ["cache", "temporary"],
+      "config": {
+        "maxSize": 1000,
+        "persistToDisk": false
+      }
+    }
+  ],
+  
+  "conflictResolution": "latest",
+  "aggregationEnabled": false,
+  "operationTimeout": 30000,
+  "maxRetries": 3,
+  "allowPartialFailure": true
+}

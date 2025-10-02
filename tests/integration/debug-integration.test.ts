@@ -7,29 +7,26 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { McpTaskManagerServer } from '../../src/app/server.js';
+import { TestCleanup } from '../setup.js';
 
 describe('Debug Integration Test', () => {
   let server: McpTaskManagerServer;
 
   beforeEach(async () => {
     // Configure for testing with memory storage via environment variables
-    process.env.STORAGE_TYPE = 'memory';
-    process.env.METRICS_ENABLED = 'false';
-    process.env.NODE_ENV = 'test';
+    await TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
+    await TestCleanup.registerEnvVar('METRICS_ENABLED', 'false');
+    await TestCleanup.registerEnvVar('NODE_ENV', 'test');
 
     server = new McpTaskManagerServer();
     await server.start();
+    
+    // Register server for cleanup
+    TestCleanup.registerServer(server);
   });
 
   afterEach(async () => {
-    // Clean up server resources
-    if (server) {
-      await server.close();
-    }
-    // Clean up environment variables
-    delete process.env.STORAGE_TYPE;
-    delete process.env.METRICS_ENABLED;
-    delete process.env.NODE_ENV;
+    // Cleanup is handled automatically by test setup
   });
 
   it('should debug list creation and parameter passing', async () => {

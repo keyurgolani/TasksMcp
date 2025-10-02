@@ -11,7 +11,6 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 import { TodoListManager } from "../domain/lists/todo-list-manager.js";
-import { StorageFactory } from "../infrastructure/storage/storage-factory.js";
 import { ConfigManager, type ServerConfig } from "../infrastructure/config/index.js";
 import { IntelligenceManager } from "../domain/intelligence/intelligence-manager.js";
 import { errorHandler, type ErrorReport } from "../shared/errors/error-manager.js";
@@ -507,19 +506,60 @@ class McpTaskManagerServer {
    * Starts the MCP Task Manager server
    * 
    * Orchestrates the complete server startup process including:
-   * - Storage backend initialization with proper configuration validation
+   * - Data delegation layer initialization (router, aggregator, repository)
    * - Todo list manager setup with dependency injection
    * - Monitoring systems activation (performance and memory tracking)
    * - Stdio transport configuration for MCP communication
+   * - Health checks for all configured data sources
    * 
-   * @throws Error - If storage initialization, monitoring setup, or transport configuration fails
+   * @throws Error - If initialization, monitoring setup, or transport configuration fails
    */
   async start(): Promise<void> {
     try {
-      // Use the new createStorage method instead of deprecated create method
-      const storageBackend = await StorageFactory.createStorage(this.config.storage);
-      this.todoListManager = new TodoListManager(storageBackend);
+      // Initialize data delegation layer with multi-source support
+      const { initializeApplication } = await import('./initialization.js');
+      
+      const initResult = await initializeApplication({
+        fallbackStorage: this.config.storage,
+        useEnvironment: true,
+        enableAggregation: true,
+      });
+
+      logger.info('Data delegation layer initialized', {
+        healthySources: initResult.healthStatus.healthy,
+        totalSources: initResult.healthStatus.total,
+        aggregationEnabled: initResult.config.aggregationEnabled,
+      });
+
+      // Create repository adapter for backward compatibility
+      // This wraps the multi-source repository to work with existing code
+      const { TodoListRepositoryAdapter } = await import('../domain/repositories/todo-list-repository.adapter.js');
+      
+      // Get the first healthy backend for backward compatibility with ProjectManager
+      const storageBackend = initResult.router.getAllSources()[0];
+      if (!storageBackend) {
+        throw new Error('No healthy storage backend available');
+      }
+      
+      // Create adapter that uses the multi-source repository
+      const repository = new TodoListRepositoryAdapter(storageBackend);
+      
+      // Create TodoListManager with repository (pass storage for backward compatibility with ProjectManager)
+      this.todoListManager = new TodoListManager(repository, storageBackend);
       await this.todoListManager.initialize();
+
+      // Log health status of all sources
+      const routerStatus = initResult.router.getStatus();
+      logger.info('Data source health status', {
+        sources: routerStatus.sources.map(s => ({
+          id: s.id,
+          name: s.name,
+          type: s.type,
+          healthy: s.healthy,
+          readonly: s.readonly,
+          priority: s.priority,
+        })),
+      });
 
       if (this.config.monitoring.enabled) {
         performanceMonitor.startMonitoring(
@@ -541,6 +581,8 @@ class McpTaskManagerServer {
         {
           monitoring: this.config.monitoring.enabled,
           storage: this.config.storage.type,
+          dataSources: routerStatus.total,
+          healthySources: routerStatus.healthy,
           version: this.config.server.version,
           transport: "stdio",
         }

@@ -3,9 +3,13 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TestCleanup } from '../setup.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('MCP Tool Performance Regression', () => {
   let manager: TodoListManager;
@@ -14,7 +18,7 @@ describe('MCP Tool Performance Regression', () => {
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    manager = new TodoListManager(storage);
+    manager = createTodoListManager(storage);
     await manager.initialize();
     
     // Register for automatic cleanup

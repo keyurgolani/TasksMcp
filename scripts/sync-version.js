@@ -32,6 +32,9 @@ function logWarning(message) {
 }
 
 try {
+  // Check if we should use package.json as source (for npm version command)
+  const usePackageAsSource = process.argv.includes('--from-package');
+
   // Read version.json
   const versionPath = join(process.cwd(), 'version.json');
   const versionContent = readFileSync(versionPath, 'utf-8');
@@ -48,17 +51,28 @@ try {
     process.exit(0);
   }
 
-  // Determine which version to use (version.json takes precedence)
-  const targetVersion = versionInfo.version;
+  // Determine which version to use
+  const targetVersion = usePackageAsSource ? packageInfo.version : versionInfo.version;
+  const sourceFile = usePackageAsSource ? 'package.json' : 'version.json';
+  
   logWarning(`Version mismatch detected:`);
   log(`  version.json: ${versionInfo.version}`);
   log(`  package.json: ${packageInfo.version}`);
-  log(`  Using version.json as source of truth: ${targetVersion}`);
+  log(`  Using ${sourceFile} as source of truth: ${targetVersion}`);
 
-  // Update package.json
-  packageInfo.version = targetVersion;
-  writeFileSync(packagePath, JSON.stringify(packageInfo, null, 2) + '\n');
-  logSuccess(`Updated package.json to version ${targetVersion}`);
+  // Update version.json if package.json is source
+  if (usePackageAsSource && versionInfo.version !== targetVersion) {
+    versionInfo.version = targetVersion;
+    writeFileSync(versionPath, JSON.stringify(versionInfo, null, 2) + '\n');
+    logSuccess(`Updated version.json to version ${targetVersion}`);
+  }
+
+  // Update package.json if version.json is source
+  if (!usePackageAsSource && packageInfo.version !== targetVersion) {
+    packageInfo.version = targetVersion;
+    writeFileSync(packagePath, JSON.stringify(packageInfo, null, 2) + '\n');
+    logSuccess(`Updated package.json to version ${targetVersion}`);
+  }
 
   // Update package-lock.json if it exists
   try {
@@ -66,13 +80,15 @@ try {
     const packageLockContent = readFileSync(packageLockPath, 'utf-8');
     const packageLockInfo = JSON.parse(packageLockContent);
     
-    packageLockInfo.version = targetVersion;
-    if (packageLockInfo.packages && packageLockInfo.packages[""]) {
-      packageLockInfo.packages[""].version = targetVersion;
+    if (packageLockInfo.version !== targetVersion) {
+      packageLockInfo.version = targetVersion;
+      if (packageLockInfo.packages && packageLockInfo.packages[""]) {
+        packageLockInfo.packages[""].version = targetVersion;
+      }
+      
+      writeFileSync(packageLockPath, JSON.stringify(packageLockInfo, null, 2) + '\n');
+      logSuccess(`Updated package-lock.json to version ${targetVersion}`);
     }
-    
-    writeFileSync(packageLockPath, JSON.stringify(packageLockInfo, null, 2) + '\n');
-    logSuccess(`Updated package-lock.json to version ${targetVersion}`);
   } catch (error) {
     logWarning('package-lock.json not found or could not be updated');
   }

@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../setup.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('Core Dependency Tools Performance', () => {
   let manager: TodoListManager;
@@ -15,7 +16,7 @@ describe('Core Dependency Tools Performance', () => {
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    manager = new TodoListManager(storage);
+    manager = createTodoListManager(storage);
     await manager.initialize();
     
     // Register for automatic cleanup

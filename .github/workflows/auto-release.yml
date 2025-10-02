@@ -170,7 +170,7 @@ jobs:
           else
             # Auto-bump version
             echo "Auto-bumping version: ${RELEASE_TYPE}"
-            NEW_VERSION=$(npm version ${RELEASE_TYPE} --no-git-tag-version)
+            NEW_VERSION=$(npm version ${RELEASE_TYPE} --no-git-tag-version 2>&1 | tail -1)
             echo "version=${NEW_VERSION#v}" >> $GITHUB_OUTPUT
             echo "tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
             echo "New version: ${NEW_VERSION}"

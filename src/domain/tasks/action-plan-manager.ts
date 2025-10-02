@@ -4,6 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import type { ActionPlan, ActionStep } from '../../shared/types/todo.js';
+import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
 import { logger } from '../../shared/utils/logger.js';
 
 export interface CreateActionPlanInput {
@@ -31,8 +32,24 @@ export interface ActionPlanValidationResult {
 }
 
 export class ActionPlanManager {
-  constructor() {
-    logger.debug('ActionPlanManager initialized');
+  // Repository for future direct action plan persistence
+  // Currently unused but prepared for future enhancements
+  private readonly repository: ITodoListRepository | undefined;
+
+  constructor(repository?: ITodoListRepository) {
+    this.repository = repository;
+    
+    logger.debug('ActionPlanManager initialized', {
+      hasRepository: !!repository,
+    });
+  }
+  
+  /**
+   * Gets the repository instance if available
+   * @returns The repository instance or undefined
+   */
+  getRepository(): ITodoListRepository | undefined {
+    return this.repository;
   }
 
   /**

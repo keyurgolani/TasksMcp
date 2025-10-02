@@ -17,6 +17,7 @@ import {
   type ExitCriteria,
 } from '../../shared/types/todo.js';
 import type { StorageBackend, ListOptions } from '../../shared/types/storage.js';
+import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
 import { logger } from '../../shared/utils/logger.js';
 import {
   DependencyResolver,
@@ -137,21 +138,33 @@ export class TodoListManager {
   private memoryCleanupInterval: NodeJS.Timeout | undefined;
   private isShuttingDown = false;
   private readonly MAX_CACHE_SIZE = 10; // Very aggressive memory management
+  
+  // Keep storage reference for backward compatibility with ProjectManager
+  private readonly storage: StorageBackend | undefined;
 
-  constructor(private readonly storage: StorageBackend) {
-    this.dependencyResolver = new DependencyResolver();
+  constructor(
+    private readonly repository: ITodoListRepository,
+    storage?: StorageBackend
+  ) {
+    this.dependencyResolver = new DependencyResolver(repository);
     this.analyticsManager = new AnalyticsManager();
-    this.actionPlanManager = new ActionPlanManager();
-    this.notesManager = new NotesManager();
-    this.exitCriteriaManager = new ExitCriteriaManager();
+    this.actionPlanManager = new ActionPlanManager(repository);
+    this.notesManager = new NotesManager(repository);
+    this.exitCriteriaManager = new ExitCriteriaManager(repository);
     this.cleanupSuggestionManager = new CleanupSuggestionManager();
     this.prettyPrintFormatter = new PrettyPrintFormatter();
-    this.projectManager = new ProjectManager(storage);
+    this.storage = storage;
+    // ProjectManager still needs storage for now - will be refactored in task 4
+    this.projectManager = new ProjectManager(storage!);
     this.setupMemoryManagement();
   }
 
   async initialize(): Promise<void> {
-    await this.storage.initialize();
+    // Repository health check instead of storage initialization
+    const isHealthy = await this.repository.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Repository health check failed');
+    }
     
     // Initialize all components
     // Note: ProjectManager and CleanupSuggestionManager don't require async initialization
@@ -332,8 +345,8 @@ export class TodoListManager {
         }
       }
 
-      // Save to storage
-      await this.storage.save(listId, todoList, { validate: true });
+      // Save to repository
+      await this.repository.save(todoList);
 
       // Cache the list in both caches
       cacheManager.setTodoList(listId, todoList);
@@ -378,7 +391,7 @@ export class TodoListManager {
         todoList = cachedRef?.deref() ?? null;
 
         if (!todoList) {
-          const loadedList = await this.storage.load(input.listId, {
+          const loadedList = await this.repository.findById(input.listId, {
             includeArchived: true, // Include archived lists for retrieval, filter later if needed
           });
 
@@ -513,7 +526,7 @@ export class TodoListManager {
       });
 
       // Load the existing todo list
-      const todoList = await this.storage.load(input.listId, {
+      const todoList = await this.repository.findById(input.listId, {
         includeArchived: true,
       });
 
@@ -663,10 +676,8 @@ export class TodoListManager {
         analytics,
       };
 
-      // Save to storage
-      await this.storage.save(input.listId, updatedTodoList, {
-        validate: true,
-      });
+      // Save to repository
+      await this.repository.save(updatedTodoList);
 
       // Update both caches with the new version
       cacheManager.setTodoList(input.listId, updatedTodoList);
@@ -1236,7 +1247,7 @@ export class TodoListManager {
     try {
       logger.debug('Getting dependency graph', { listId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1276,7 +1287,7 @@ export class TodoListManager {
         dependencies,
       });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1315,7 +1326,7 @@ export class TodoListManager {
     try {
       logger.debug('Getting ready items', { listId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1347,7 +1358,7 @@ export class TodoListManager {
     try {
       logger.debug('Getting blocked items', { listId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1379,7 +1390,7 @@ export class TodoListManager {
     try {
       logger.debug('Suggesting task order', { listId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1411,7 +1422,7 @@ export class TodoListManager {
     try {
       logger.debug('Calculating critical path', { listId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1448,7 +1459,7 @@ export class TodoListManager {
     try {
       logger.debug('Getting action plan progress', { listId, itemId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1490,7 +1501,7 @@ export class TodoListManager {
     try {
       logger.debug('Getting tasks with action plans', { listId });
 
-      const todoList = await this.storage.load(listId, {
+      const todoList = await this.repository.findById(listId, {
         includeArchived: false,
       });
 
@@ -1559,7 +1570,32 @@ export class TodoListManager {
           listOptions.offset = input.offset;
         }
 
-        summaries = await this.storage.list(listOptions);
+        // Use repository to search for summaries
+        const searchQuery: any = {
+          includeArchived: input.includeArchived ?? false,
+        };
+        
+        if (contextParam !== undefined) {
+          searchQuery.projectTag = contextParam;
+        }
+        
+        if (input.status !== 'all' && input.status !== undefined) {
+          searchQuery.status = input.status;
+        }
+        
+        if (input.limit !== undefined || input.offset !== undefined) {
+          searchQuery.pagination = {};
+          if (input.limit !== undefined) {
+            searchQuery.pagination.limit = input.limit;
+          }
+          if (input.offset !== undefined) {
+            searchQuery.pagination.offset = input.offset;
+          }
+        }
+        
+        const searchResult = await this.repository.searchSummaries(searchQuery);
+        
+        summaries = searchResult.items;
 
         // Cache the results
         cacheManager.setSummaryList(cacheKey, summaries);
@@ -1606,7 +1642,7 @@ export class TodoListManager {
       });
 
       // Check if the list exists
-      const todoList = await this.storage.load(input.listId, {
+      const todoList = await this.repository.findById(input.listId, {
         includeArchived: true,
       });
 
@@ -1616,7 +1652,7 @@ export class TodoListManager {
 
       if (input.permanent === true) {
         // Permanently delete the list
-        await this.storage.delete(input.listId, true);
+        await this.repository.delete(input.listId, true);
 
         // Remove from both caches
         cacheManager.invalidateTodoList(input.listId);
@@ -1646,7 +1682,7 @@ export class TodoListManager {
           archivedList.completedAt = todoList.completedAt ?? now;
         }
 
-        await this.storage.save(input.listId, archivedList, { validate: true });
+        await this.repository.save(archivedList);
 
         // Invalidate summary and search caches since list status has changed
         cacheManager.invalidateTodoList(input.listId);
@@ -1678,7 +1714,7 @@ export class TodoListManager {
 
   async healthCheck(): Promise<boolean> {
     try {
-      return await this.storage.healthCheck();
+      return await this.repository.healthCheck();
     } catch (error) {
       logger.error('TodoListManager health check failed', { error });
       return false;
@@ -1946,8 +1982,10 @@ export class TodoListManager {
     this.dependencyResolver.cleanup();
     this.analyticsManager.cleanup();
 
-    // Shutdown storage backend
-    await this.storage.shutdown();
+    // Shutdown storage backend if available (for backward compatibility)
+    if (this.storage) {
+      await this.storage.shutdown();
+    }
 
     // Stop memory leak detection
     memoryLeakDetector.stopDetection();
@@ -2010,7 +2048,7 @@ export class TodoListManager {
       }
 
       const updatedList = this.cleanupSuggestionManager.markCleanupDeclined(list);
-      await this.storage.save(listId, updatedList);
+      await this.repository.save(updatedList);
 
       logger.info('Cleanup decline recorded', { listId });
     } catch (error) {

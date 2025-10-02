@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
@@ -28,7 +29,8 @@ describe('Dependency Management User Experience Tests', () => {
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
-    todoListManager = new TodoListManager(storage);
+    await storage.initialize(); // Initialize storage before creating manager
+    todoListManager = createTodoListManager(storage);
     await todoListManager.initialize();
 
     // Create a simple test list for UX testing

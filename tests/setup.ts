@@ -85,9 +85,17 @@ export const TestCleanup = {
   /**
    * Register an environment variable for cleanup
    */
-  registerEnvVar(key: string, value: string) {
+  async registerEnvVar(key: string, value: string) {
     testArtifacts.environmentVariables.add(key);
     process.env[key] = value;
+    
+    // Reload ConfigManager to pick up the new environment variable
+    try {
+      const { ConfigManager } = await import('../src/infrastructure/config/index.js');
+      ConfigManager.getInstance().reload();
+    } catch (error) {
+      // Ignore errors if ConfigManager hasn't been loaded yet
+    }
   },
 
   /**
@@ -189,7 +197,7 @@ export const TestCleanup = {
 };
 
 // Ensure clean environment for each test
-beforeEach(() => {
+beforeEach(async () => {
   // Reset any test-specific environment variables
   delete process.env.STORAGE_TYPE;
   delete process.env.METRICS_ENABLED;
@@ -201,6 +209,14 @@ beforeEach(() => {
   
   // Disable file logging during tests to prevent log file creation
   process.env.DISABLE_FILE_LOGGING = 'true';
+  
+  // Reset ConfigManager singleton to pick up new environment variables
+  try {
+    const { ConfigManager } = await import('../src/infrastructure/config/index.js');
+    ConfigManager.getInstance().reload();
+  } catch (error) {
+    // Ignore errors if ConfigManager hasn't been loaded yet
+  }
 });
 
 // Comprehensive cleanup after each test

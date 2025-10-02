@@ -4,20 +4,35 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleAddTask } from '../../src/api/handlers/add-task.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import type { TodoList } from '../../src/shared/types/todo.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TaskStatus } from '../../src/shared/types/todo.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { logger } from '../../src/shared/utils/logger.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('Dependency Management Production Readiness Tests', () => {
   let todoListManager: TodoListManager;
@@ -26,7 +41,7 @@ describe('Dependency Management Production Readiness Tests', () => {
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = new TodoListManager(storage);
+    todoListManager = createTodoListManager(storage);
     await todoListManager.initialize();
   });
 

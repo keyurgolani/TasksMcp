@@ -8,6 +8,7 @@ import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-st
 import { TestCleanup } from '../setup.js';
 import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
 import type { ImplementationNote } from '../../src/shared/types/todo.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('Notes Integration Tests', () => {
   let todoListManager: TodoListManager;
@@ -16,7 +17,7 @@ describe('Notes Integration Tests', () => {
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = new TodoListManager(storage);
+    todoListManager = createTodoListManager(storage);
     await todoListManager.initialize();
     
     // Register for automatic cleanup

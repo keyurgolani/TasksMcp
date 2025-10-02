@@ -9,6 +9,7 @@ import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-st
 import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
 import type { TodoList, TodoItem } from '../../src/shared/types/todo.js';
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 
 // Import all dependency handlers
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
@@ -33,7 +34,8 @@ describe('Dependency Management Workflows Integration Tests', () => {
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
-    todoListManager = new TodoListManager(storage);
+    await storage.initialize();
+    todoListManager = createTodoListManager(storage);
     await todoListManager.initialize();
 
     // Create a realistic project scenario with 10-15 tasks

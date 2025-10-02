@@ -21,9 +21,9 @@ describe("Agent Integration Tests", () => {
 
   beforeEach(async () => {
     // Configure for testing with memory storage via environment variables
-    TestCleanup.registerEnvVar("STORAGE_TYPE", "memory");
-    TestCleanup.registerEnvVar("METRICS_ENABLED", "false");
-    TestCleanup.registerEnvVar("NODE_ENV", "test");
+    await TestCleanup.registerEnvVar("STORAGE_TYPE", "memory");
+    await TestCleanup.registerEnvVar("METRICS_ENABLED", "false");
+    await TestCleanup.registerEnvVar("NODE_ENV", "test");
 
     server = new McpTaskManagerServer();
     await server.start();

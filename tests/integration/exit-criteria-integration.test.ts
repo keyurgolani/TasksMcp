@@ -4,17 +4,29 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { TestCleanup } from '../setup.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleAddTask } from '../../src/api/handlers/add-task.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleSetTaskExitCriteria } from '../../src/api/handlers/set-task-exit-criteria.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleUpdateExitCriteria } from '../../src/api/handlers/update-exit-criteria.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 import type { TodoList } from '../../src/shared/types/todo.js';
+import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('Exit Criteria Integration Tests', () => {
   let todoListManager: TodoListManager;
@@ -26,7 +38,7 @@ describe('Exit Criteria Integration Tests', () => {
     // Setup clean test environment
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = new TodoListManager(storage);
+    todoListManager = createTodoListManager(storage);
     await todoListManager.initialize();
     exitCriteriaManager = new ExitCriteriaManager();
 

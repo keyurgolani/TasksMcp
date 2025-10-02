@@ -6,20 +6,25 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { McpTaskManagerServer } from '../../src/app/server.js';
 import { MCP_TOOLS, getToolNames, getToolSchema } from '../../src/api/tools/definitions.js';
+import { TestCleanup } from '../setup.js';
 
 describe('Dependency Tool Registration', () => {
   let server: McpTaskManagerServer;
 
   beforeEach(async () => {
+    await TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
+    await TestCleanup.registerEnvVar('METRICS_ENABLED', 'false');
+    await TestCleanup.registerEnvVar('NODE_ENV', 'test');
+    
     server = new McpTaskManagerServer();
     await server.start();
+    
+    // Register server for cleanup
+    TestCleanup.registerServer(server);
   });
 
   afterEach(async () => {
-    // Clean up server resources
-    if (server) {
-      await server.close();
-    }
+    // Cleanup is handled automatically by test setup
   });
 
   describe('Tool Discovery', () => {
