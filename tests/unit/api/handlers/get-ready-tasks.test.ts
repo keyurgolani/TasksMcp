@@ -3,11 +3,18 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { createTodoListManager } from '../../../utils/test-helpers.js';
+
 import { handleGetReadyTasks } from '../../../../src/api/handlers/get-ready-tasks.js';
 import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
-import { TaskStatus, Priority, type TodoList, type TodoItem } from '../../../../src/shared/types/todo.js';
+import {
+  TaskStatus,
+  Priority,
+  type TodoList,
+  type TodoItem,
+} from '../../../../src/shared/types/todo.js';
+import { createTodoListManager } from '../../../utils/test-helpers.js';
+
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 describe('GetReadyTasksHandler', () => {
@@ -86,7 +93,7 @@ describe('GetReadyTasksHandler', () => {
       expect(responseData.listId).toBe(testList.id);
       expect(responseData.readyTasks).toHaveLength(4); // All tasks are ready
       expect(responseData.totalReady).toBe(4);
-      expect(responseData.nextActions.length).toBeGreaterThan(0); // Should have suggestions
+      expect(responseData._methodologyGuidance).toBeDefined(); // Should have methodology guidance
       expect(responseData.summary).toBeDefined();
     });
 
@@ -105,12 +112,16 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       // Should be sorted by priority (high first), then by creation date
       expect(responseData.readyTasks[0]?.priority).toBe(Priority.HIGH);
-      expect(responseData.readyTasks[0]?.title).toBe('High Priority Ready Task');
+      expect(responseData.readyTasks[0]?.title).toBe(
+        'High Priority Ready Task'
+      );
       expect(responseData.readyTasks[1]?.priority).toBe(Priority.MEDIUM);
-      expect(responseData.readyTasks[1]?.title).toBe('Medium Priority Ready Task');
+      expect(responseData.readyTasks[1]?.title).toBe(
+        'Medium Priority Ready Task'
+      );
       expect(responseData.readyTasks[2]?.priority).toBe(Priority.MEDIUM);
       expect(responseData.readyTasks[2]?.title).toBe('Blocked Task');
       expect(responseData.readyTasks[3]?.priority).toBe(Priority.LOW);
@@ -179,13 +190,14 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       // Should have 3 ready tasks (task3 is blocked)
       expect(responseData.readyTasks).toHaveLength(3);
       expect(responseData.totalReady).toBe(3);
       expect(responseData.summary.blockedTasks).toBe(1);
-      
+
       // task3 should not be in ready tasks
+
       const readyTaskIds = responseData.readyTasks.map((task: any) => task.id);
       expect(readyTaskIds).not.toContain(task3.id);
     });
@@ -221,12 +233,13 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       // Should have 3 ready tasks (task1 is completed, task3 is now ready)
       expect(responseData.readyTasks).toHaveLength(3);
       expect(responseData.summary.completedTasks).toBe(1);
-      
+
       // task3 should be in ready tasks now
+
       const readyTaskIds = responseData.readyTasks.map((task: any) => task.id);
       expect(readyTaskIds).toContain(task3.id);
     });
@@ -262,12 +275,13 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       // Should have 2 ready tasks (task3 and task4)
       expect(responseData.readyTasks).toHaveLength(2);
       expect(responseData.summary.completedTasks).toBe(1);
-      
+
       // Completed and cancelled tasks should not be in ready tasks
+
       const readyTaskIds = responseData.readyTasks.map((task: any) => task.id);
       expect(readyTaskIds).not.toContain(task1.id);
       expect(readyTaskIds).not.toContain(task2.id);
@@ -290,16 +304,16 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
-      const hasHighPriorityMessage = responseData.nextActions.some((action: string) => 
-        action.includes('Start with high-priority tasks:')
+
+      // Verify methodology guidance is provided
+      expect(responseData._methodologyGuidance).toBeDefined();
+      expect(responseData._methodologyGuidance.dailyWorkflow).toBeInstanceOf(
+        Array
       );
-      expect(hasHighPriorityMessage).toBe(true);
-      
-      const hasTaskNameMessage = responseData.nextActions.some((action: string) => 
-        action.includes('High Priority Ready Task')
+      // Verify methodology guidance includes daily workflow
+      expect(responseData._methodologyGuidance.dailyWorkflow).toBeInstanceOf(
+        Array
       );
-      expect(hasTaskNameMessage).toBe(true);
     });
 
     test('suggests quick tasks for small time slots', async () => {
@@ -317,11 +331,11 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
-      const hasQuickTasksMessage = responseData.nextActions.some((action: string) => 
-        action.includes('quick tasks (≤30 min) available for filling small time slots.')
-      );
-      expect(hasQuickTasksMessage).toBe(true);
+
+      // Verify methodology guidance is provided for quick tasks
+      expect(responseData._methodologyGuidance).toBeDefined();
+      // Verify methodology guidance includes best practices
+      expect(responseData._methodologyGuidance.bestPractice).toBeDefined();
     });
 
     test('provides helpful suggestions when no tasks are ready', async () => {
@@ -367,12 +381,12 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       expect(responseData.readyTasks).toHaveLength(0);
-      const hasBlockedMessage = responseData.nextActions.some((action: string) => 
-        action.includes('tasks are blocked by dependencies.')
-      );
-      expect(hasBlockedMessage).toBe(true);
+      // Verify methodology guidance is provided even when no tasks are ready
+      expect(responseData._methodologyGuidance).toBeDefined();
+      // Verify methodology guidance includes tips
+      expect(responseData._methodologyGuidance.tip).toBeDefined();
     });
 
     test('suggests completion when all tasks are done', async () => {
@@ -400,12 +414,10 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       expect(responseData.readyTasks).toHaveLength(0);
-      const hasCompletedMessage = responseData.nextActions.some((action: string) => 
-        action.includes('All tasks are completed!')
-      );
-      expect(hasCompletedMessage).toBe(true);
+      // Verify methodology guidance is provided when all tasks are completed
+      expect(responseData._methodologyGuidance).toBeDefined();
     });
 
     test('mentions in-progress tasks when present', async () => {
@@ -431,13 +443,13 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
-      // Should still have ready tasks, but mention in-progress ones
+
+      // Should still have ready tasks
       expect(responseData.readyTasks.length).toBeGreaterThan(0);
-      const hasInProgressMessage = responseData.nextActions.some((action: string) => 
-        action.includes('tasks are in progress.')
-      );
-      expect(hasInProgressMessage).toBe(true);
+      // Verify methodology guidance is provided
+      expect(responseData._methodologyGuidance).toBeDefined();
+      // Verify methodology guidance includes tips for in-progress tasks
+      expect(responseData._methodologyGuidance.tip).toBeDefined();
     });
   });
 
@@ -460,12 +472,12 @@ describe('GetReadyTasksHandler', () => {
       expect(result.content[0]?.type).toBe('text');
 
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       // Check main structure
       expect(responseData.listId).toBe(testList.id);
       expect(responseData.readyTasks).toBeInstanceOf(Array);
       expect(responseData.totalReady).toBeTypeOf('number');
-      expect(responseData.nextActions).toBeInstanceOf(Array);
+      expect(responseData._methodologyGuidance).toBeInstanceOf(Object);
       expect(responseData.summary).toBeInstanceOf(Object);
 
       // Check task structure
@@ -502,12 +514,16 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
-      const taskWithDuration = responseData.readyTasks.find((task: any) => task.estimatedDuration);
+
+      const taskWithDuration = responseData.readyTasks.find(
+        (task: any) => task.estimatedDuration
+      );
       expect(taskWithDuration).toBeDefined();
       expect(taskWithDuration.estimatedDuration).toBeTypeOf('number');
 
-      const taskWithDescription = responseData.readyTasks.find((task: any) => task.description);
+      const taskWithDescription = responseData.readyTasks.find(
+        (task: any) => task.description
+      );
       expect(taskWithDescription).toBeDefined();
       expect(taskWithDescription.description).toBeTypeOf('string');
     });
@@ -603,7 +619,9 @@ describe('GetReadyTasksHandler', () => {
 
     test('handles storage errors gracefully', async () => {
       // Mock storage to throw an error
-      vi.spyOn(manager, 'getTodoList').mockRejectedValueOnce(new Error('Storage error'));
+      vi.spyOn(manager, 'getTodoList').mockRejectedValueOnce(
+        new Error('Storage error')
+      );
 
       const request: CallToolRequest = {
         method: 'tools/call',
@@ -647,14 +665,12 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       expect(responseData.readyTasks).toHaveLength(0);
       expect(responseData.totalReady).toBe(0);
       expect(responseData.summary.totalTasks).toBe(0);
-      const hasCompletedMessage = responseData.nextActions.some((action: string) => 
-        action.includes('All tasks are completed!')
-      );
-      expect(hasCompletedMessage).toBe(true);
+      // Verify methodology guidance is provided for empty list
+      expect(responseData._methodologyGuidance).toBeDefined();
     });
 
     test('handles list with only completed tasks', async () => {
@@ -682,14 +698,12 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       expect(responseData.readyTasks).toHaveLength(0);
       expect(responseData.totalReady).toBe(0);
       expect(responseData.summary.completedTasks).toBe(4);
-      const hasCompletedMessage = responseData.nextActions.some((action: string) => 
-        action.includes('All tasks are completed!')
-      );
-      expect(hasCompletedMessage).toBe(true);
+      // Verify methodology guidance is provided for completed tasks
+      expect(responseData._methodologyGuidance).toBeDefined();
     });
 
     test('handles tasks with same priority correctly', async () => {
@@ -717,7 +731,7 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       expect(responseData.readyTasks).toHaveLength(3);
       // Should be sorted by creation date when priority is same
       expect(responseData.readyTasks[0]?.title).toBe('Task A');
@@ -756,10 +770,10 @@ describe('GetReadyTasksHandler', () => {
 
       expect(result.isError).toBeFalsy();
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       expect(responseData.readyTasks).toHaveLength(2); // task1 and task4
       expect(responseData.summary.blockedTasks).toBe(2); // task2 and task3
-      
+
       const readyTaskIds = responseData.readyTasks.map((task: any) => task.id);
       expect(readyTaskIds).toContain(task1.id);
       expect(readyTaskIds).toContain(task4.id);

@@ -4,11 +4,22 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { ListResponse } from '../../shared/types/mcp-types.js';
+
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type {
+  TodoListManager,
+  CreateTodoListInput,
+} from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type { ListResponse } from '../../shared/types/mcp-types.js';
 
 /**
  * Validation schema for create list request parameters
@@ -23,7 +34,7 @@ const CreateListSchema = z.object({
 /**
  * Handles MCP create_list tool requests
  * Creates a new todo list with the provided title, description, and project tag
- * 
+ *
  * @param request - The MCP call tool request containing list creation parameters
  * @param todoListManager - The todo list manager instance for list operations
  * @returns Promise<CallToolResult> - MCP response with created list details or error
@@ -38,14 +49,14 @@ export async function handleCreateList(
     });
 
     const args = CreateListSchema.parse(request.params?.arguments);
-    const createInput: any = {
+    const createInput: CreateTodoListInput = {
       title: args.title,
     };
-    
+
     if (args.description) {
       createInput.description = args.description;
     }
-    
+
     if (args.projectTag) {
       createInput.projectTag = args.projectTag;
       createInput.context = args.projectTag;
@@ -84,7 +95,10 @@ export async function handleCreateList(
     };
   } catch (error) {
     // Use error formatting with list management configuration
-    const formatError = createHandlerErrorFormatter('create_list', ERROR_CONFIGS.listManagement);
+    const formatError = createHandlerErrorFormatter(
+      'create_list',
+      ERROR_CONFIGS.listManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

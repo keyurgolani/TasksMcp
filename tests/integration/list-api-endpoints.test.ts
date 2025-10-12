@@ -2,18 +2,19 @@
  * Integration tests for list management API endpoints
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import type { Express } from 'express';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+
 import { RestApiServer } from '../../src/app/rest-api-server.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TodoListRepositoryAdapter } from '../../src/domain/repositories/todo-list-repository.adapter.js';
+import { ActionPlanManager } from '../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
-import { ActionPlanManager } from '../../src/domain/tasks/action-plan-manager.js';
 import { NotesManager } from '../../src/domain/tasks/notes-manager.js';
-import { IntelligenceManager } from '../../src/domain/intelligence/intelligence-manager.js';
-import { TodoListRepositoryAdapter } from '../../src/domain/repositories/todo-list-repository.adapter.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+
+import type { Express } from 'express';
 
 describe('List Management API Endpoints', () => {
   let app: Express;
@@ -34,7 +35,6 @@ describe('List Management API Endpoints', () => {
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
     const notesManager = new NotesManager(repository);
-    const intelligenceManager = new IntelligenceManager();
 
     // Initialize managers
     await todoListManager.initialize();
@@ -46,8 +46,7 @@ describe('List Management API Endpoints', () => {
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,
-      notesManager,
-      intelligenceManager
+      notesManager
     );
 
     // Initialize the server (sets up routes)
@@ -62,16 +61,19 @@ describe('List Management API Endpoints', () => {
 
   beforeEach(async () => {
     // Clear all lists before each test by getting all lists and deleting them
-    const lists = await todoListManager.listTodoLists({ 
+    const lists = await todoListManager.listTodoLists({
       includeArchived: true,
       status: 'all',
     });
-    
+
     // Delete all lists permanently
     for (const list of lists) {
       try {
-        await todoListManager.deleteTodoList({ listId: list.id, permanent: true });
-      } catch (error) {
+        await todoListManager.deleteTodoList({
+          listId: list.id,
+          permanent: true,
+        });
+      } catch (_error) {
         // Ignore errors - list might already be deleted
       }
     }
@@ -79,10 +81,8 @@ describe('List Management API Endpoints', () => {
 
   describe('POST /api/v1/lists', () => {
     it('should have routes registered', async () => {
-      const response = await request(app)
-        .get('/api/v1')
-        .expect(200);
-      
+      const response = await request(app).get('/api/v1').expect(200);
+
       console.log('API root response:', response.body);
     });
 
@@ -143,22 +143,27 @@ describe('List Management API Endpoints', () => {
       const list1 = await todoListManager.createTodoList({ title: 'List 1' });
       const list2 = await todoListManager.createTodoList({ title: 'List 2' });
 
-      const response = await request(app)
-        .get('/api/v1/lists')
-        .expect(200);
-      
+      const response = await request(app).get('/api/v1/lists').expect(200);
+
       expect(response.body.success).toBe(true);
       expect(response.body.data.length).toBeGreaterThanOrEqual(2);
-      
+
       // Verify our lists are in the response
+
       const listIds = response.body.data.map((l: any) => l.id);
       expect(listIds).toContain(list1.id);
       expect(listIds).toContain(list2.id);
     });
 
     it('should filter lists by projectTag', async () => {
-      const listA = await todoListManager.createTodoList({ title: 'Project A List', projectTag: 'unique-project-a' });
-      await todoListManager.createTodoList({ title: 'Project B List', projectTag: 'unique-project-b' });
+      const listA = await todoListManager.createTodoList({
+        title: 'Project A List',
+        projectTag: 'unique-project-a',
+      });
+      await todoListManager.createTodoList({
+        title: 'Project B List',
+        projectTag: 'unique-project-b',
+      });
 
       const response = await request(app)
         .get('/api/v1/lists')
@@ -167,7 +172,9 @@ describe('List Management API Endpoints', () => {
 
       expect(response.body.success).toBe(true);
       // Should only return lists with the specified project tag
-      const projectALists = response.body.data.filter((l: any) => l.projectTag === 'unique-project-a');
+      const projectALists = response.body.data.filter(
+        (l: any) => l.projectTag === 'unique-project-a'
+      );
       expect(projectALists.length).toBeGreaterThanOrEqual(1);
       expect(projectALists[0].id).toBe(listA.id);
     });
@@ -213,10 +220,7 @@ describe('List Management API Endpoints', () => {
     it('should support includeCompleted query parameter', async () => {
       const list = await todoListManager.createTodoList({
         title: 'Test List',
-        tasks: [
-          { title: 'Task 1' },
-          { title: 'Task 2' },
-        ],
+        tasks: [{ title: 'Task 1' }, { title: 'Task 2' }],
       });
 
       // Complete one task
@@ -240,7 +244,9 @@ describe('List Management API Endpoints', () => {
 
   describe('PUT /api/v1/lists/:id', () => {
     it('should update list metadata', async () => {
-      const list = await todoListManager.createTodoList({ title: 'Original Title' });
+      const list = await todoListManager.createTodoList({
+        title: 'Original Title',
+      });
 
       const response = await request(app)
         .put(`/api/v1/lists/${list.id}`)
@@ -267,7 +273,10 @@ describe('List Management API Endpoints', () => {
 
     it('should return 409 for archived list', async () => {
       const list = await todoListManager.createTodoList({ title: 'Test List' });
-      await todoListManager.deleteTodoList({ listId: list.id, permanent: false });
+      await todoListManager.deleteTodoList({
+        listId: list.id,
+        permanent: false,
+      });
 
       const response = await request(app)
         .put(`/api/v1/lists/${list.id}`)
@@ -291,7 +300,7 @@ describe('List Management API Endpoints', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.operation).toBe('archived');
       expect(response.body.data.message).toContain('archived');
-      
+
       // Note: There's a known issue where archived lists can't be retrieved
       // This will be fixed in a future task when we improve archive handling
     });

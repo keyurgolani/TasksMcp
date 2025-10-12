@@ -3,7 +3,9 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { NotesManager } from '../../../../src/domain/tasks/notes-manager.js';
+
 import type { ImplementationNote } from '../../../../src/shared/types/todo.js';
 
 describe('NotesManager', () => {
@@ -68,7 +70,9 @@ describe('NotesManager', () => {
         type: 'general' as const,
       };
 
-      await expect(notesManager.createNote(input)).rejects.toThrow('Note content cannot be empty');
+      await expect(notesManager.createNote(input)).rejects.toThrow(
+        'Note content cannot be empty'
+      );
     });
 
     it('should throw error for content that is too long', async () => {
@@ -79,7 +83,9 @@ describe('NotesManager', () => {
         type: 'general' as const,
       };
 
-      await expect(notesManager.createNote(input)).rejects.toThrow('Note content is too long');
+      await expect(notesManager.createNote(input)).rejects.toThrow(
+        'Note content is too long'
+      );
     });
 
     it('should throw error for invalid note type', async () => {
@@ -87,14 +93,22 @@ describe('NotesManager', () => {
         entityId: 'task-123',
         entityType: 'task' as const,
         content: 'This is a test note',
+
         type: 'invalid' as any,
       };
 
-      await expect(notesManager.createNote(input)).rejects.toThrow('Invalid note type');
+      await expect(notesManager.createNote(input)).rejects.toThrow(
+        'Invalid note type'
+      );
     });
 
     it('should create notes with all valid types', async () => {
-      const types: ImplementationNote['type'][] = ['general', 'technical', 'decision', 'learning'];
+      const types: ImplementationNote['type'][] = [
+        'general',
+        'technical',
+        'decision',
+        'learning',
+      ];
 
       for (const type of types) {
         const input = {
@@ -125,7 +139,7 @@ describe('NotesManager', () => {
     it('should update note content', async () => {
       // Add a small delay to ensure different timestamps
       await new Promise(resolve => setTimeout(resolve, 10));
-      
+
       const updatedNote = await notesManager.updateNote(existingNote, {
         content: 'Updated content',
       });
@@ -133,7 +147,9 @@ describe('NotesManager', () => {
       expect(updatedNote.content).toBe('Updated content');
       expect(updatedNote.id).toBe(existingNote.id);
       expect(updatedNote.createdAt).toEqual(existingNote.createdAt);
-      expect(updatedNote.updatedAt.getTime()).toBeGreaterThan(existingNote.updatedAt.getTime());
+      expect(updatedNote.updatedAt.getTime()).toBeGreaterThan(
+        existingNote.updatedAt.getTime()
+      );
     });
 
     it('should update note type', async () => {
@@ -166,15 +182,19 @@ describe('NotesManager', () => {
     });
 
     it('should throw error for invalid updated content', async () => {
-      await expect(notesManager.updateNote(existingNote, {
-        content: '',
-      })).rejects.toThrow('Note content cannot be empty');
+      await expect(
+        notesManager.updateNote(existingNote, {
+          content: '',
+        })
+      ).rejects.toThrow('Note content cannot be empty');
     });
 
     it('should throw error for invalid updated type', async () => {
-      await expect(notesManager.updateNote(existingNote, {
-        type: 'invalid' as any,
-      })).rejects.toThrow('Invalid note type');
+      await expect(
+        notesManager.updateNote(existingNote, {
+          type: 'invalid' as any,
+        })
+      ).rejects.toThrow('Invalid note type');
     });
   });
 
@@ -191,8 +211,18 @@ describe('NotesManager', () => {
       });
 
       // Simulate different creation times
-      const note2 = { ...note1, id: 'note-2', content: 'Second note', createdAt: new Date(Date.now() + 1000) };
-      const note3 = { ...note1, id: 'note-3', content: 'Third note', createdAt: new Date(Date.now() + 2000) };
+      const note2 = {
+        ...note1,
+        id: 'note-2',
+        content: 'Second note',
+        createdAt: new Date(Date.now() + 1000),
+      };
+      const note3 = {
+        ...note1,
+        id: 'note-3',
+        content: 'Third note',
+        createdAt: new Date(Date.now() + 2000),
+      };
 
       notes = [note1, note2, note3];
     });
@@ -223,7 +253,9 @@ describe('NotesManager', () => {
   });
 
   describe('searchNotes', () => {
-    let allNotes: Array<ImplementationNote & { entityId: string; entityType: 'task' | 'list' }>;
+    let allNotes: Array<
+      ImplementationNote & { entityId: string; entityType: 'task' | 'list' }
+    >;
 
     beforeEach(async () => {
       const baseNote1 = await notesManager.createNote({
@@ -347,7 +379,9 @@ describe('NotesManager', () => {
       const technicalNotes = notesManager.filterNotesByType(notes, 'technical');
 
       expect(technicalNotes).toHaveLength(2);
-      expect(technicalNotes.every(note => note.type === 'technical')).toBe(true);
+      expect(technicalNotes.every(note => note.type === 'technical')).toBe(
+        true
+      );
     });
 
     it('should return empty array for non-matching type', () => {
@@ -366,24 +400,33 @@ describe('NotesManager', () => {
       const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
       notes = [
-        { ...await notesManager.createNote({
-          entityId: 'task-1',
-          entityType: 'task',
-          content: 'Yesterday note',
-          type: 'general',
-        }), createdAt: yesterday },
-        { ...await notesManager.createNote({
-          entityId: 'task-2',
-          entityType: 'task',
-          content: 'Today note',
-          type: 'general',
-        }), createdAt: now },
-        { ...await notesManager.createNote({
-          entityId: 'task-3',
-          entityType: 'task',
-          content: 'Tomorrow note',
-          type: 'general',
-        }), createdAt: tomorrow },
+        {
+          ...(await notesManager.createNote({
+            entityId: 'task-1',
+            entityType: 'task',
+            content: 'Yesterday note',
+            type: 'general',
+          })),
+          createdAt: yesterday,
+        },
+        {
+          ...(await notesManager.createNote({
+            entityId: 'task-2',
+            entityType: 'task',
+            content: 'Today note',
+            type: 'general',
+          })),
+          createdAt: now,
+        },
+        {
+          ...(await notesManager.createNote({
+            entityId: 'task-3',
+            entityType: 'task',
+            content: 'Tomorrow note',
+            type: 'general',
+          })),
+          createdAt: tomorrow,
+        },
       ];
     });
 
@@ -392,7 +435,11 @@ describe('NotesManager', () => {
       const startDate = new Date(now.getTime() - 12 * 60 * 60 * 1000); // 12 hours ago
       const endDate = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours from now
 
-      const notesInRange = notesManager.getNotesInDateRange(notes, startDate, endDate);
+      const notesInRange = notesManager.getNotesInDateRange(
+        notes,
+        startDate,
+        endDate
+      );
 
       expect(notesInRange).toHaveLength(1);
       expect(notesInRange[0]?.content).toBe('Today note');
@@ -408,7 +455,8 @@ describe('NotesManager', () => {
     });
 
     it('should truncate long content', () => {
-      const longContent = 'This is a very long note that should be truncated because it exceeds the maximum length';
+      const longContent =
+        'This is a very long note that should be truncated because it exceeds the maximum length';
       const result = notesManager.truncateNoteContent(longContent, 50);
 
       expect(result.content.length).toBeLessThanOrEqual(53); // 50 + '...'
@@ -588,17 +636,22 @@ describe('NotesManager', () => {
     });
 
     it('should warn about large number of notes', () => {
-      const manyNotes: ImplementationNote[] = Array.from({ length: 150 }, (_, i) => ({
-        id: `note-${i}`,
-        content: `Note ${i}`,
-        type: 'general' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
+      const manyNotes: ImplementationNote[] = Array.from(
+        { length: 150 },
+        (_, i) => ({
+          id: `note-${i}`,
+          content: `Note ${i}`,
+          type: 'general' as const,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
 
       const result = notesManager.validateNotes(manyNotes);
 
-      expect(result.warnings).toContain('Large number of notes may impact performance');
+      expect(result.warnings).toContain(
+        'Large number of notes may impact performance'
+      );
     });
   });
 });

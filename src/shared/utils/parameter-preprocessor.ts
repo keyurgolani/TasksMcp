@@ -1,6 +1,6 @@
 /**
  * Parameter Preprocessing Utility
- * 
+ *
  * Automatically converts common agent input patterns to expected types before validation.
  * This makes the MCP server more agent-friendly by handling common type conversion scenarios.
  */
@@ -44,7 +44,11 @@ export interface PreprocessingConversion {
   /** Converted value */
   convertedValue: unknown;
   /** Type of conversion applied */
-  conversionType: 'string->number' | 'json->array' | 'json->object' | 'string->boolean';
+  conversionType:
+    | 'string->number'
+    | 'json->array'
+    | 'json->object'
+    | 'string->boolean';
 }
 
 /**
@@ -69,11 +73,13 @@ export class ParameterPreprocessor {
 
   /**
    * Preprocess parameters to convert common agent input patterns
-   * 
+   *
    * @param parameters - Raw parameters from agent
    * @returns PreprocessingResult with converted parameters and conversion info
    */
-  preprocessParameters(parameters: Record<string, unknown>): PreprocessingResult {
+  preprocessParameters(
+    parameters: Record<string, unknown>
+  ): PreprocessingResult {
     const result: PreprocessingResult = {
       parameters: { ...parameters },
       conversions: [],
@@ -87,23 +93,32 @@ export class ParameterPreprocessor {
 
   /**
    * Recursively preprocess parameters in nested objects
-   * 
+   *
    * @param obj - Object to preprocess
    * @param result - Result object to accumulate conversions and errors
    * @param keyPrefix - Prefix for nested keys (for logging)
    */
   private preprocessObjectRecursively(
-    obj: Record<string, unknown>, 
-    result: PreprocessingResult, 
+    obj: Record<string, unknown>,
+    result: PreprocessingResult,
     keyPrefix: string
   ): void {
     for (const [key, value] of Object.entries(obj)) {
       const fullKey = keyPrefix ? `${keyPrefix}.${key}` : key;
-      
+
       try {
         // Handle nested objects
-        if (value && typeof value === 'object' && !Array.isArray(value) && value.constructor === Object) {
-          this.preprocessObjectRecursively(value as Record<string, unknown>, result, fullKey);
+        if (
+          value &&
+          typeof value === 'object' &&
+          !Array.isArray(value) &&
+          value.constructor === Object
+        ) {
+          this.preprocessObjectRecursively(
+            value as Record<string, unknown>,
+            result,
+            fullKey
+          );
           continue;
         }
 
@@ -112,7 +127,7 @@ export class ParameterPreprocessor {
         if (conversion) {
           obj[key] = conversion.convertedValue;
           result.conversions.push(conversion);
-          
+
           if (this.config.logConversions) {
             logger.debug('Parameter preprocessing conversion', {
               parameter: fullKey,
@@ -127,7 +142,7 @@ export class ParameterPreprocessor {
           error instanceof Error ? error.message : 'Unknown error'
         }`;
         result.errors.push(errorMessage);
-        
+
         logger.warn('Parameter preprocessing error', {
           parameter: fullKey,
           value,
@@ -139,18 +154,24 @@ export class ParameterPreprocessor {
 
   /**
    * Preprocess a single parameter value
-   * 
+   *
    * @param key - Parameter name
    * @param value - Parameter value
    * @returns PreprocessingConversion if conversion was applied, null otherwise
    */
-  private preprocessValue(key: string, value: unknown): PreprocessingConversion | null {
+  private preprocessValue(
+    key: string,
+    value: unknown
+  ): PreprocessingConversion | null {
     if (value === null || value === undefined) {
       return null;
     }
 
     // String to boolean conversion (check first to handle "1"/"0" as booleans)
-    if (this.config.enableBooleanCoercion && this.shouldConvertToBoolean(value)) {
+    if (
+      this.config.enableBooleanCoercion &&
+      this.shouldConvertToBoolean(value)
+    ) {
       const converted = this.convertStringToBoolean(value as string);
       if (converted !== null) {
         return {
@@ -170,7 +191,9 @@ export class ParameterPreprocessor {
           parameter: key,
           originalValue: value,
           convertedValue: converted.value,
-          conversionType: Array.isArray(converted.value) ? 'json->array' : 'json->object',
+          conversionType: Array.isArray(converted.value)
+            ? 'json->array'
+            : 'json->object',
         };
       }
     }
@@ -203,16 +226,16 @@ export class ParameterPreprocessor {
    */
   private isNumericString(str: string): boolean {
     if (str.trim() === '') return false;
-    
+
     // Check for integer
     if (/^-?\d+$/.test(str)) return true;
-    
+
     // Check for decimal
     if (/^-?\d+\.\d+$/.test(str)) return true;
-    
+
     // Check for scientific notation
     if (/^-?\d+(\.\d+)?[eE][+-]?\d+$/.test(str)) return true;
-    
+
     return false;
   }
 
@@ -236,12 +259,14 @@ export class ParameterPreprocessor {
    */
   private shouldConvertFromJson(value: unknown): boolean {
     if (typeof value !== 'string') return false;
-    
+
     const str = (value as string).trim();
-    
+
     // Check if it looks like JSON array or object
-    return (str.startsWith('[') && str.endsWith(']')) || 
-           (str.startsWith('{') && str.endsWith('}'));
+    return (
+      (str.startsWith('[') && str.endsWith(']')) ||
+      (str.startsWith('{') && str.endsWith('}'))
+    );
   }
 
   /**
@@ -250,12 +275,15 @@ export class ParameterPreprocessor {
   private convertJsonString(str: string): { value: unknown } | null {
     try {
       const parsed = JSON.parse(str);
-      
+
       // Only convert arrays and plain objects
-      if (Array.isArray(parsed) || (typeof parsed === 'object' && parsed !== null)) {
+      if (
+        Array.isArray(parsed) ||
+        (typeof parsed === 'object' && parsed !== null)
+      ) {
         return { value: parsed };
       }
-      
+
       return null;
     } catch {
       return null;
@@ -267,11 +295,11 @@ export class ParameterPreprocessor {
    */
   private shouldConvertToBoolean(value: unknown): boolean {
     if (typeof value !== 'string') return false;
-    
+
     const str = (value as string).toLowerCase().trim();
     // Only convert explicit boolean words, not numeric strings like "1" and "0"
     const booleanStrings = ['true', 'false', 'yes', 'no'];
-    
+
     return booleanStrings.includes(str);
   }
 
@@ -280,7 +308,7 @@ export class ParameterPreprocessor {
    */
   private convertStringToBoolean(str: string): boolean | null {
     const normalized = str.toLowerCase().trim();
-    
+
     switch (normalized) {
       case 'true':
       case 'yes':
@@ -303,9 +331,9 @@ export class ParameterPreprocessor {
     errorCount: number;
   } {
     const conversionsByType: Record<string, number> = {};
-    
+
     result.conversions.forEach(conversion => {
-      conversionsByType[conversion.conversionType] = 
+      conversionsByType[conversion.conversionType] =
         (conversionsByType[conversion.conversionType] || 0) + 1;
     });
 
@@ -325,20 +353,24 @@ export const parameterPreprocessor = new ParameterPreprocessor();
 
 /**
  * Convenience function to preprocess parameters with default configuration
- * 
+ *
  * @param parameters - Raw parameters to preprocess
  * @returns PreprocessingResult with converted parameters
  */
-export function preprocessParameters(parameters: Record<string, unknown>): PreprocessingResult {
+export function preprocessParameters(
+  parameters: Record<string, unknown>
+): PreprocessingResult {
   return parameterPreprocessor.preprocessParameters(parameters);
 }
 
 /**
  * Create a custom parameter preprocessor with specific configuration
- * 
+ *
  * @param config - Custom preprocessing configuration
  * @returns New ParameterPreprocessor instance
  */
-export function createPreprocessor(config: Partial<PreprocessingConfig>): ParameterPreprocessor {
+export function createPreprocessor(
+  config: Partial<PreprocessingConfig>
+): ParameterPreprocessor {
   return new ParameterPreprocessor(config);
 }

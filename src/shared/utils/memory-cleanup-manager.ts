@@ -311,7 +311,6 @@ export class MemoryUtils {
    */
   static getHeapLimit(): number {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const v8 = require('v8') as {
         getHeapStatistics(): { heap_size_limit: number };
       };

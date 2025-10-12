@@ -21,6 +21,7 @@ npx task-list-mcp@latest --version
 ### Expected Outputs
 
 **Version Check:**
+
 ```
 MCP Task Manager v2.3.0
 Node.js v18.17.0
@@ -28,6 +29,7 @@ Platform: darwin arm64
 ```
 
 **Health Check:**
+
 ```
 ✅ MCP Task Manager Health Check
 ✅ Server: Running
@@ -42,11 +44,13 @@ Platform: darwin arm64
 ### Server Won't Start
 
 #### Symptoms
+
 - Command not found errors
 - Server fails to initialize
 - No response from MCP client
 
 #### Diagnosis
+
 ```bash
 # Check Node.js version (must be 18.0.0+)
 node --version
@@ -64,6 +68,7 @@ npm cache clean --force
 #### Solutions
 
 **Node.js Version Issues:**
+
 ```bash
 # Install Node.js 18+ using nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
@@ -72,6 +77,7 @@ nvm use 18
 ```
 
 **npm Permission Issues:**
+
 ```bash
 # Fix npm permissions (macOS/Linux)
 npm config set prefix ~/.npm-global
@@ -82,6 +88,7 @@ sudo npm install -g task-list-mcp
 ```
 
 **Cache Issues:**
+
 ```bash
 # Clear all caches
 npm cache clean --force
@@ -92,11 +99,13 @@ npm install -g npm@latest
 ### MCP Client Connection Issues
 
 #### Symptoms
+
 - Server not found in MCP client
 - Connection refused errors
 - Tools not appearing
 
 #### Diagnosis
+
 ```bash
 # Test server manually
 npx task-list-mcp@latest --version
@@ -111,6 +120,7 @@ cat ~/.config/claude/mcp.json | jq .
 #### Solutions
 
 **Configuration File Issues:**
+
 ```bash
 # Validate JSON syntax
 jq . ~/.config/claude/mcp.json
@@ -123,6 +133,7 @@ jq . ~/.config/claude/mcp.json
 ```
 
 **Path Issues:**
+
 ```bash
 # Verify npx is in PATH
 echo $PATH | grep npm
@@ -132,6 +143,7 @@ echo $PATH | grep npm
 ```
 
 **Client Restart Required:**
+
 - Restart Claude Desktop after configuration changes
 - Reload Kiro IDE workspace
 - Check client logs for connection errors
@@ -141,11 +153,13 @@ echo $PATH | grep npm
 ### Permission Errors
 
 #### Symptoms
+
 - "Permission denied" errors
 - Cannot create/write files
 - Storage initialization fails
 
 #### Diagnosis
+
 ```bash
 # Check directory permissions
 ls -la $DATA_DIRECTORY
@@ -160,6 +174,7 @@ df -h $DATA_DIRECTORY
 #### Solutions
 
 **Create Directory:**
+
 ```bash
 # Create with proper permissions
 mkdir -p ~/.local/share/task-manager
@@ -167,6 +182,7 @@ chmod 755 ~/.local/share/task-manager
 ```
 
 **Fix Permissions:**
+
 ```bash
 # Fix ownership
 chown -R $USER:$USER $DATA_DIRECTORY
@@ -176,6 +192,7 @@ chmod -R 755 $DATA_DIRECTORY
 ```
 
 **Disk Space Issues:**
+
 ```bash
 # Check available space
 df -h $DATA_DIRECTORY
@@ -193,11 +210,13 @@ export DATA_DIRECTORY=/path/to/larger/disk/data
 #### File Storage Problems
 
 **Symptoms:**
+
 - Data not persisting
 - Corruption errors
 - Slow performance
 
 **Solutions:**
+
 ```bash
 # Test file operations
 echo '{"test": true}' > $DATA_DIRECTORY/test.json
@@ -214,11 +233,13 @@ rm -rf $DATA_DIRECTORY/*
 #### Memory Storage Issues
 
 **Symptoms:**
+
 - Data lost on restart
 - Memory leaks
 - Performance degradation
 
 **Solutions:**
+
 ```bash
 # Switch to file storage
 export STORAGE_TYPE=file
@@ -235,43 +256,49 @@ top -p $(pgrep -f task-list-mcp)
 #### Priority Field Issues
 
 **❌ Problem:**
+
 ```json
 {
-  "priority": "high"  // String instead of number
+  "priority": "high" // String instead of number
 }
 ```
 
 **✅ Solution:**
+
 ```json
 {
-  "priority": 5  // Use numbers 1-5
+  "priority": 5 // Use numbers 1-5
 }
 ```
 
 **🔄 Auto-Conversion:**
+
 ```json
 {
-  "priority": "5"  // Automatically converted to 5
+  "priority": "5" // Automatically converted to 5
 }
 ```
 
 #### UUID Format Issues
 
 **❌ Problem:**
+
 ```json
 {
-  "listId": "abc-123"  // Invalid UUID format
+  "listId": "abc-123" // Invalid UUID format
 }
 ```
 
 **✅ Solution:**
+
 ```json
 {
-  "listId": "123e4567-e89b-12d3-a456-426614174000"  // Valid UUID
+  "listId": "123e4567-e89b-12d3-a456-426614174000" // Valid UUID
 }
 ```
 
 **Finding Valid UUIDs:**
+
 ```json
 {
   "tool": "list_all_lists",
@@ -282,23 +309,26 @@ top -p $(pgrep -f task-list-mcp)
 #### Array Format Issues
 
 **❌ Problem:**
+
 ```json
 {
-  "tags": "urgent,important"  // String instead of array
+  "tags": "urgent,important" // String instead of array
 }
 ```
 
 **✅ Solution:**
+
 ```json
 {
-  "tags": ["urgent", "important"]  // Proper array
+  "tags": ["urgent", "important"] // Proper array
 }
 ```
 
 **🔄 Auto-Conversion:**
+
 ```json
 {
-  "tags": "[\"urgent\", \"important\"]"  // JSON string converted to array
+  "tags": "[\"urgent\", \"important\"]" // JSON string converted to array
 }
 ```
 
@@ -307,12 +337,14 @@ top -p $(pgrep -f task-list-mcp)
 #### Circular Dependencies
 
 **❌ Problem:**
+
 ```
 Task A depends on Task B
 Task B depends on Task A
 ```
 
 **✅ Solution:**
+
 ```json
 {
   "tool": "analyze_task_dependencies",
@@ -328,11 +360,13 @@ Use the dependency analysis to identify and remove circular references.
 #### Exit Criteria Not Met
 
 **❌ Problem:**
+
 ```
 Cannot complete task: 2 exit criteria not yet met
 ```
 
 **✅ Solution:**
+
 ```json
 {
   "tool": "update_exit_criteria",
@@ -348,11 +382,13 @@ Cannot complete task: 2 exit criteria not yet met
 #### Resource Not Found
 
 **❌ Problem:**
+
 ```
 List not found: 123e4567-e89b-12d3-a456-426614174000
 ```
 
 **✅ Solution:**
+
 ```json
 {
   "tool": "list_all_lists",
@@ -369,11 +405,13 @@ Find the correct list ID from the available lists.
 ### Slow Response Times
 
 #### Symptoms
+
 - Operations taking >1 second
 - Timeouts on large datasets
 - Memory usage growing
 
 #### Diagnosis
+
 ```bash
 # Enable performance monitoring
 export PERFORMANCE_MONITORING=true
@@ -388,16 +426,18 @@ time npx task-list-mcp@latest --health
 #### Solutions
 
 **Reduce Data Volume:**
+
 ```json
 {
   "tool": "search_tool",
   "parameters": {
-    "limit": 10  // Reduce result size
+    "limit": 10 // Reduce result size
   }
 }
 ```
 
 **Use Pagination:**
+
 ```json
 {
   "tool": "list_all_lists",
@@ -409,12 +449,13 @@ time npx task-list-mcp@latest --health
 ```
 
 **Optimize Queries:**
+
 ```json
 {
   "tool": "search_tool",
   "parameters": {
-    "listId": "specific-list",  // Limit scope
-    "status": ["pending"],      // Filter early
+    "listId": "specific-list", // Limit scope
+    "status": ["pending"], // Filter early
     "limit": 50
   }
 }
@@ -425,6 +466,7 @@ time npx task-list-mcp@latest --health
 #### High Memory Usage
 
 **Diagnosis:**
+
 ```bash
 # Monitor memory
 top -p $(pgrep -f task-list-mcp)
@@ -434,6 +476,7 @@ export NODE_OPTIONS="--max-old-space-size=512"
 ```
 
 **Solutions:**
+
 ```bash
 # Restart server periodically
 pkill -f task-list-mcp
@@ -451,6 +494,7 @@ export CACHE_MAX_SIZE=100
 ### Access Control Problems
 
 #### Symptoms
+
 - Unauthorized access to data
 - Rate limiting not working
 - Security warnings in logs
@@ -458,6 +502,7 @@ export CACHE_MAX_SIZE=100
 #### Solutions
 
 **Enable Security Features:**
+
 ```bash
 export SECURITY_ENABLED=true
 export RATE_LIMIT_ENABLED=true
@@ -465,6 +510,7 @@ export STRICT_VALIDATION=true
 ```
 
 **Secure Data Directory:**
+
 ```bash
 # Restrict permissions
 chmod 700 $DATA_DIRECTORY

@@ -2,10 +2,14 @@
  * Health check endpoint handler
  */
 
-import type { Request, Response } from 'express';
-import type { HealthCheckResponse, HealthCheckStatus } from '../../shared/types/api.js';
-import { getVersion } from '../../shared/version.js';
 import { logger } from '../../shared/utils/logger.js';
+import { getVersion } from '../../shared/version.js';
+
+import type {
+  HealthCheckResponse,
+  HealthCheckStatus,
+} from '../../shared/types/api.js';
+import type { Request, Response } from 'express';
 
 // Track server start time
 const startTime = Date.now();
@@ -20,17 +24,21 @@ export async function healthCheckHandler(
   try {
     // Check storage health
     const storageCheck = await checkStorage();
-    
+
     // Check memory health
     const memoryCheck = checkMemory();
-    
+
     // Determine overall status
     const allChecks = [storageCheck, memoryCheck];
     const hasFailure = allChecks.some(check => check.status === 'fail');
     const hasWarning = allChecks.some(check => check.status === 'warn');
-    
-    const overallStatus = hasFailure ? 'unhealthy' : hasWarning ? 'degraded' : 'healthy';
-    
+
+    const overallStatus = hasFailure
+      ? 'unhealthy'
+      : hasWarning
+        ? 'degraded'
+        : 'healthy';
+
     const response: HealthCheckResponse = {
       status: overallStatus,
       version: getVersion(),
@@ -41,12 +49,17 @@ export async function healthCheckHandler(
         memory: memoryCheck,
       },
     };
-    
-    const statusCode = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
+
+    const statusCode =
+      overallStatus === 'healthy'
+        ? 200
+        : overallStatus === 'degraded'
+          ? 200
+          : 503;
     res.status(statusCode).json(response);
   } catch (error) {
     logger.error('Health check failed', { error });
-    
+
     const response: HealthCheckResponse = {
       status: 'unhealthy',
       version: getVersion(),
@@ -63,7 +76,7 @@ export async function healthCheckHandler(
         },
       },
     };
-    
+
     res.status(503).json(response);
   }
 }
@@ -72,20 +85,12 @@ export async function healthCheckHandler(
  * Check storage health
  */
 async function checkStorage(): Promise<HealthCheckStatus> {
-  try {
-    // For now, just return pass
-    // This will be enhanced when storage backends are implemented
-    return {
-      status: 'pass',
-      message: 'Storage is operational',
-    };
-  } catch (error) {
-    return {
-      status: 'fail',
-      message: 'Storage check failed',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
+  // For now, just return pass
+  // This will be enhanced when storage backends are implemented
+  return {
+    status: 'pass',
+    message: 'Storage is operational',
+  };
 }
 
 /**
@@ -96,8 +101,10 @@ function checkMemory(): HealthCheckStatus {
     const memUsage = process.memoryUsage();
     const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
     const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
-    const heapUsedPercent = Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100);
-    
+    const heapUsedPercent = Math.round(
+      (memUsage.heapUsed / memUsage.heapTotal) * 100
+    );
+
     // Warn if heap usage is above 80%
     if (heapUsedPercent > 80) {
       return {
@@ -110,7 +117,7 @@ function checkMemory(): HealthCheckStatus {
         },
       };
     }
-    
+
     return {
       status: 'pass',
       message: 'Memory usage is normal',

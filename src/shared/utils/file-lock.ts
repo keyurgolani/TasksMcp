@@ -4,6 +4,7 @@
 
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
+
 import { logger } from './logger.js';
 
 export interface LockOptions {
@@ -86,7 +87,7 @@ export class FileLock {
               });
               continue; // Try again
             }
-          } catch (readError) {
+          } catch (_readError) {
             // If we can't read the lock file, assume it's corrupted and remove it
             try {
               await fs.unlink(lockPath);
@@ -95,7 +96,7 @@ export class FileLock {
                 lockPath,
               });
               continue; // Try again
-            } catch (unlinkError) {
+            } catch (_unlinkError) {
               // Ignore unlink errors
             }
           }
@@ -194,7 +195,7 @@ export class FileLock {
   }
 
   /**
-   * Get current lock count (useful for monitoring)
+   * Get current lock count
    */
   static getLockCount(): number {
     return FileLock.locks.size;

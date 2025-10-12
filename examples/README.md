@@ -3,8 +3,9 @@
 > **Note**: The comprehensive examples have been moved to the [docs/examples/](../docs/examples/) directory for better organization. This directory now contains a simplified overview.
 
 For complete examples and documentation, see:
+
 - **[docs/examples/basic.md](../docs/examples/basic.md)** - Basic usage examples
-- **[docs/examples/advanced.md](../docs/examples/advanced.md)** - Advanced workflows and multi-agent patterns  
+- **[docs/examples/advanced.md](../docs/examples/advanced.md)** - Advanced workflows and multi-agent patterns
 - **[docs/examples/configuration.md](../docs/examples/configuration.md)** - Configuration examples for different environments
 
 ## Quick Reference
@@ -12,6 +13,7 @@ For complete examples and documentation, see:
 ## Quick Start Examples
 
 ### Basic Workflow
+
 ```json
 // 1. Create a project list
 {
@@ -55,6 +57,7 @@ For complete examples and documentation, see:
 ```
 
 ### Dependency Workflow
+
 ```json
 // 1. Add tasks with dependencies
 {
@@ -90,12 +93,14 @@ For complete examples and documentation, see:
 All examples use realistic project data:
 
 ### Development Project Alpha
+
 - **Type**: Web application development
 - **Tasks**: Environment setup, database design, API implementation, frontend development, testing
 - **Dependencies**: Sequential and parallel development patterns
 - **Tags**: setup, database, backend, frontend, testing, etc.
 
 ### Mobile App Development
+
 - **Type**: Cross-platform mobile application
 - **Framework**: React Native
 - **Focus**: Mobile-specific development workflow
@@ -103,18 +108,21 @@ All examples use realistic project data:
 ## Usage Patterns
 
 ### Daily Development Workflow
+
 1. **Morning standup**: Use `get_ready_tasks` to see what's available
 2. **Work planning**: Use `filter_tasks` to focus on priority items
 3. **Progress tracking**: Use `show_tasks` with summary format
 4. **Task completion**: Use `complete_task` to mark work done
 
 ### Project Management
+
 1. **Project setup**: Create lists with project tags
 2. **Task planning**: Add tasks with dependencies and estimates
 3. **Progress monitoring**: Use dependency analysis for bottlenecks
 4. **Team coordination**: Use ready tasks for work assignment
 
 ### Sprint Planning
+
 1. **Sprint preparation**: Filter tasks by priority and readiness
 2. **Capacity planning**: Use time estimates for sprint sizing
 3. **Dependency management**: Ensure tasks can be completed in order
@@ -123,13 +131,17 @@ All examples use realistic project data:
 ## Integration Examples
 
 ### AI Agent Integration
+
 The examples show how different AI agents can use the task manager:
+
 - **Project managers**: Focus on planning and dependency analysis
 - **Developers**: Focus on ready tasks and completion tracking
 - **Team leads**: Focus on progress monitoring and bottleneck identification
 
 ### Multi-Agent Coordination
+
 Examples demonstrate how multiple agents can work together:
+
 - Shared task lists for team coordination
 - Role-based auto-approval configurations
 - Collaborative dependency management
@@ -137,24 +149,28 @@ Examples demonstrate how multiple agents can work together:
 ## Best Practices Summary
 
 ### Task Management
+
 - Use descriptive titles and detailed descriptions
 - Set realistic time estimates
 - Use consistent tagging for organization
 - Define dependencies early in planning
 
 ### List Organization
+
 - Use project tags for categorization
 - Create focused lists for specific projects
 - Archive completed projects for history
 - Use descriptive names and descriptions
 
 ### Workflow Optimization
+
 - Start with ready tasks
 - Focus on critical path items
 - Use parallel development when possible
 - Monitor and resolve bottlenecks quickly
 
 ### Configuration
+
 - Use appropriate auto-approval settings
 - Configure logging for your environment
 - Set up monitoring for production use
@@ -173,6 +189,7 @@ The examples include both successful operations and error scenarios to help you 
 ## Contributing Examples
 
 When adding new examples:
+
 1. Test all tool calls to ensure they work
 2. Include both request and response data
 3. Provide context and explanation
@@ -182,6 +199,7 @@ When adding new examples:
 ## Support
 
 For questions about these examples or the MCP Task Manager:
+
 1. Review the relevant example file
 2. Check the main documentation
 3. Test the examples in your environment

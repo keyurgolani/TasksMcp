@@ -3,11 +3,18 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { createTodoListManager } from '../../../utils/test-helpers.js';
+
 import { handleSetTaskDependencies } from '../../../../src/api/handlers/set-task-dependencies.js';
 import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
-import { TaskStatus, Priority, type TodoList, type TodoItem } from '../../../../src/shared/types/todo.js';
+import {
+  TaskStatus,
+  Priority,
+  type TodoList,
+  type TodoItem,
+} from '../../../../src/shared/types/todo.js';
+import { createTodoListManager } from '../../../utils/test-helpers.js';
+
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 describe('SetTaskDependenciesHandler', () => {
@@ -35,7 +42,7 @@ describe('SetTaskDependenciesHandler', () => {
           priority: Priority.HIGH,
         },
         {
-          title: 'Task 2', 
+          title: 'Task 2',
           description: 'Second task',
           priority: Priority.MEDIUM,
         },
@@ -76,7 +83,9 @@ describe('SetTaskDependenciesHandler', () => {
       const responseData = JSON.parse(result.content[0]?.text as string);
       expect(responseData.id).toBe(task2.id);
       expect(responseData.dependencies).toEqual([task1.id]);
-      expect(responseData.message).toContain('Dependencies updated successfully');
+      expect(responseData.message).toContain(
+        'Dependencies updated successfully'
+      );
     });
 
     test('sets multiple dependencies for a task', async () => {
@@ -101,17 +110,20 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('removes all dependencies by passing empty array', async () => {
       // First set some dependencies
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: testList.id,
-            taskId: task2.id,
-            dependencyIds: [task1.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, manager);
+        manager
+      );
 
       // Then remove them
       const request: CallToolRequest = {
@@ -135,17 +147,20 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('replaces existing dependencies', async () => {
       // First set initial dependencies
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: testList.id,
-            taskId: task3.id,
-            dependencyIds: [task1.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task3.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, manager);
+        manager
+      );
 
       // Then replace with different dependencies
       const request: CallToolRequest = {
@@ -251,17 +266,20 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('prevents circular dependencies', async () => {
       // Set task2 to depend on task1
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: testList.id,
-            taskId: task2.id,
-            dependencyIds: [task1.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, manager);
+        manager
+      );
 
       // Try to set task1 to depend on task2 (creates circular dependency)
       const request: CallToolRequest = {
@@ -280,7 +298,9 @@ describe('SetTaskDependenciesHandler', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0]?.text).toContain('❌');
-      expect(result.content[0]?.text).toContain('Circular dependencies detected');
+      expect(result.content[0]?.text).toContain(
+        'Circular dependencies detected'
+      );
     });
 
     test('enforces maximum dependency limit', async () => {
@@ -423,17 +443,20 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('handles complex dependency chains', async () => {
       // Create a chain: task3 -> task2 -> task1
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: testList.id,
-            taskId: task2.id,
-            dependencyIds: [task1.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, manager);
+        manager
+      );
 
       const request: CallToolRequest = {
         method: 'tools/call',
@@ -456,8 +479,10 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('handles storage errors gracefully', async () => {
       // Mock storage to throw an error
-      const originalGetTodoList = manager.getTodoList;
-      vi.spyOn(manager, 'getTodoList').mockRejectedValueOnce(new Error('Storage error'));
+      const _originalGetTodoList = manager.getTodoList;
+      vi.spyOn(manager, 'getTodoList').mockRejectedValueOnce(
+        new Error('Storage error')
+      );
 
       const request: CallToolRequest = {
         method: 'tools/call',
@@ -502,7 +527,7 @@ describe('SetTaskDependenciesHandler', () => {
       expect(result.content[0]?.type).toBe('text');
 
       const responseData = JSON.parse(result.content[0]?.text as string);
-      
+
       // Check required TaskResponse fields
       expect(responseData.id).toBe(task2.id);
       expect(responseData.title).toBe(task2.title);

@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+
 import {
   type DataSourceConfig,
   type MultiSourceConfig,
@@ -166,8 +167,12 @@ describe('DataSourceConfig', () => {
       expect(result).toEqual(config);
 
       // Test that invalid port is rejected
-      expect(() => schemas.PostgreSQLConfig.parse({ ...config, port: 0 })).toThrow();
-      expect(() => schemas.PostgreSQLConfig.parse({ ...config, port: 99999 })).toThrow();
+      expect(() =>
+        schemas.PostgreSQLConfig.parse({ ...config, port: 0 })
+      ).toThrow();
+      expect(() =>
+        schemas.PostgreSQLConfig.parse({ ...config, port: 99999 })
+      ).toThrow();
     });
   });
 

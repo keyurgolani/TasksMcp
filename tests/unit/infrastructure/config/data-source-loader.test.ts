@@ -2,10 +2,13 @@
  * Tests for data source configuration loader
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { writeFile, mkdir, rm } from 'fs/promises';
 import { join } from 'path';
+
+import { describe, it, expect, beforeEach, afterEach, vi as _vi } from 'vitest';
+
 import { DataSourceConfigLoader } from '../../../../src/infrastructure/config/data-source-loader.js';
+
 import type { MultiSourceConfig } from '../../../../src/infrastructure/config/data-source-config.js';
 
 describe('DataSourceConfigLoader', () => {
@@ -26,7 +29,7 @@ describe('DataSourceConfigLoader', () => {
     // Clean up test directory
     try {
       await rm(testConfigDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors
     }
   });
@@ -144,7 +147,7 @@ describe('DataSourceConfigLoader', () => {
 
     it('should load multiple sources from environment', async () => {
       process.env.DATASOURCE_COUNT = '2';
-      
+
       // First source (filesystem)
       process.env.DATASOURCE_0_ID = 'fs-source';
       process.env.DATASOURCE_0_TYPE = 'filesystem';
@@ -339,6 +342,7 @@ describe('DataSourceConfigLoader', () => {
       });
 
       expect(result.sources[0].priority).toBe(250);
+
       const pgConfig = result.sources[0].config as any;
       expect(pgConfig.port).toBe(5433);
       expect(pgConfig.maxConnections).toBe(20);

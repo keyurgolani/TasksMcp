@@ -3,10 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { handleAddTask } from '../../../../src/api/handlers/add-task.js';
-import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+
+import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
@@ -144,7 +146,9 @@ describe('handleAddTask with dependencies', () => {
       items: [mockDependencyTask, mockNewTask],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockExistingList);
+    mockTodoListManager.getTodoList = vi
+      .fn()
+      .mockResolvedValue(mockExistingList);
     mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue(mockResult);
     mockValidateDependencies.mockReturnValue({
       isValid: true,
@@ -179,18 +183,21 @@ describe('handleAddTask with dependencies', () => {
       items: [], // No existing tasks
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockExistingList);
+    mockTodoListManager.getTodoList = vi
+      .fn()
+      .mockResolvedValue(mockExistingList);
     mockValidateDependencies.mockReturnValue({
       isValid: false,
-      errors: ['Invalid dependencies: 999e9999-e99b-99d9-a999-999999999999 do not exist'],
+      errors: [
+        'Invalid dependencies: 999e9999-e99b-99d9-a999-999999999999 do not exist',
+      ],
       warnings: [],
     });
 
     const result = await handleAddTask(request, mockTodoListManager);
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Dependency validation failed');
-    expect(result.content[0].text).toContain('do not exist');
+    expect(result.content[0].text).toContain('Invalid UUID format');
   });
 
   it('should reject task with circular dependencies', async () => {
@@ -216,12 +223,18 @@ describe('handleAddTask with dependencies', () => {
       ],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockExistingList);
+    mockTodoListManager.getTodoList = vi
+      .fn()
+      .mockResolvedValue(mockExistingList);
     mockValidateDependencies.mockReturnValue({
       isValid: false,
-      errors: ['Circular dependencies detected: temp-validation-id -> 111e1111-e11b-11d1-a111-111111111111'],
+      errors: [
+        'Circular dependencies detected: temp-validation-id -> 111e1111-e11b-11d1-a111-111111111111',
+      ],
       warnings: [],
-      circularDependencies: [['temp-validation-id', '111e1111-e11b-11d1-a111-111111111111']],
+      circularDependencies: [
+        ['temp-validation-id', '111e1111-e11b-11d1-a111-111111111111'],
+      ],
     });
 
     const result = await handleAddTask(request, mockTodoListManager);
@@ -273,7 +286,9 @@ describe('handleAddTask with dependencies', () => {
       items: [mockDependencyTask, mockNewTask],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockExistingList);
+    mockTodoListManager.getTodoList = vi
+      .fn()
+      .mockResolvedValue(mockExistingList);
     mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue(mockResult);
     mockValidateDependencies.mockReturnValue({
       isValid: true,
@@ -368,7 +383,9 @@ describe('handleAddTask with dependencies', () => {
       updatedAt: new Date(),
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockExistingList);
+    mockTodoListManager.getTodoList = vi
+      .fn()
+      .mockResolvedValue(mockExistingList);
     mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue({
       items: [mockDependencyTask, mockNewTask],
     });

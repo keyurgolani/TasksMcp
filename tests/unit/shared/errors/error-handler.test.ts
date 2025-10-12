@@ -3,9 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import { errorHandler } from '../../../../src/shared/errors/error-handler.js';
-import { operationCache } from '../../../../src/infrastructure/storage/operation-cache.js';
-import { validator } from '../../../../src/shared/utils/validation.js';
 import {
   ActionPlanParseError,
   ProjectManagementError,
@@ -14,6 +13,7 @@ import {
   CleanupError,
   MigrationError,
 } from '../../../../src/shared/types/errors.js';
+import { validator } from '../../../../src/shared/utils/validation.js';
 
 describe('Error Handler', () => {
   beforeEach(() => {
@@ -48,7 +48,10 @@ describe('Error Handler', () => {
     });
 
     it('should categorize action plan errors', () => {
-      const error = new ActionPlanParseError('Invalid action plan format', 'parse failed');
+      const error = new ActionPlanParseError(
+        'Invalid action plan format',
+        'parse failed'
+      );
       const context = {
         operation: 'parse_action_plan',
         timestamp: Date.now(),
@@ -61,7 +64,10 @@ describe('Error Handler', () => {
     });
 
     it('should categorize project management errors', () => {
-      const error = new ProjectManagementError('Invalid project tag', 'PROJECT_TAG_INVALID');
+      const error = new ProjectManagementError(
+        'Invalid project tag',
+        'PROJECT_TAG_INVALID'
+      );
       const context = {
         operation: 'validate_project_tag',
         timestamp: Date.now(),
@@ -87,7 +93,10 @@ describe('Error Handler', () => {
     });
 
     it('should categorize pretty print errors', () => {
-      const error = new PrettyPrintError('Invalid format options', 'INVALID_FORMAT');
+      const error = new PrettyPrintError(
+        'Invalid format options',
+        'INVALID_FORMAT'
+      );
       const context = {
         operation: 'format_output',
         timestamp: Date.now(),
@@ -100,7 +109,10 @@ describe('Error Handler', () => {
     });
 
     it('should categorize cleanup errors', () => {
-      const error = new CleanupError('Cleanup operation failed', 'CLEANUP_FAILED');
+      const error = new CleanupError(
+        'Cleanup operation failed',
+        'CLEANUP_FAILED'
+      );
       const context = {
         operation: 'cleanup_lists',
         timestamp: Date.now(),
@@ -142,11 +154,10 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const result = await errorHandler.executeWithRetry(
-        operation,
-        context,
-        { maxAttempts: 3, baseDelay: 10 }
-      );
+      const result = await errorHandler.executeWithRetry(operation, context, {
+        maxAttempts: 3,
+        baseDelay: 10,
+      });
 
       expect(result).toBe('success');
       expect(attempts).toBe(3);
@@ -154,14 +165,19 @@ describe('Error Handler', () => {
     });
 
     it('should fail after max attempts', async () => {
-      const operation = vi.fn().mockRejectedValue(new Error('Persistent failure'));
+      const operation = vi
+        .fn()
+        .mockRejectedValue(new Error('Persistent failure'));
       const context = {
         operation: 'retry_test_fail',
         timestamp: Date.now(),
       };
 
       await expect(
-        errorHandler.executeWithRetry(operation, context, { maxAttempts: 2, baseDelay: 10 })
+        errorHandler.executeWithRetry(operation, context, {
+          maxAttempts: 2,
+          baseDelay: 10,
+        })
       ).rejects.toThrow('Persistent failure');
 
       expect(operation).toHaveBeenCalledTimes(2);
@@ -170,7 +186,9 @@ describe('Error Handler', () => {
 
   describe('Circuit Breaker', () => {
     it('should open circuit after failure threshold', async () => {
-      const operation = vi.fn().mockRejectedValue(new Error('Service unavailable'));
+      const operation = vi
+        .fn()
+        .mockRejectedValue(new Error('Service unavailable'));
       const context = {
         operation: 'circuit_test',
         timestamp: Date.now(),
@@ -179,7 +197,9 @@ describe('Error Handler', () => {
       // Trigger failures to open circuit
       for (let i = 0; i < 5; i++) {
         try {
-          await errorHandler.executeWithRetry(operation, context, { maxAttempts: 1 });
+          await errorHandler.executeWithRetry(operation, context, {
+            maxAttempts: 1,
+          });
         } catch {
           // Expected to fail
         }
@@ -188,13 +208,13 @@ describe('Error Handler', () => {
       // Circuit should be open now
       const states = errorHandler.getCircuitBreakerStates();
       const circuitState = states.find(s => s.name === 'circuit_test');
-      
+
       expect(circuitState?.state).toBe('open');
     });
 
     it('should reset circuit breaker', () => {
       // First, create a circuit breaker by triggering failures
-      const context = {
+      const _context = {
         operation: 'reset_test',
         timestamp: Date.now(),
       };
@@ -213,7 +233,7 @@ describe('Error Handler', () => {
 
       const states = errorHandler.getCircuitBreakerStates();
       const circuitState = states.find(s => s.name === 'reset_test');
-      
+
       expect(circuitState?.state).toBe('closed');
       expect(circuitState?.failureCount).toBe(0);
     });
@@ -221,7 +241,8 @@ describe('Error Handler', () => {
 
   describe('Timeout Handling', () => {
     it('should handle operation timeout', async () => {
-      const slowOperation = () => new Promise(resolve => setTimeout(resolve, 200));
+      const slowOperation = () =>
+        new Promise(resolve => setTimeout(resolve, 200));
       const context = {
         operation: 'timeout_test',
         timestamp: Date.now(),
@@ -273,119 +294,6 @@ describe('Error Handler', () => {
   });
 });
 
-describe('Operation Cache', () => {
-  beforeEach(() => {
-    operationCache.clearAllCaches();
-  });
-
-  describe('Initialization', () => {
-    it('should initialize without errors', () => {
-      expect(() => operationCache.initialize()).not.toThrow();
-    });
-  });
-
-  describe('Caching Operations', () => {
-    it('should cache action plan operations', async () => {
-      const primaryOperation = vi.fn().mockResolvedValue({ success: true });
-      
-      const result = await operationCache.executeActionPlan(
-        'test_operation',
-        primaryOperation
-      );
-
-      expect(result).toEqual({ success: true });
-      expect(primaryOperation).toHaveBeenCalledTimes(1);
-    });
-
-    it('should cache project operations', async () => {
-      const primaryOperation = vi.fn().mockResolvedValue({ projectTag: 'test' });
-      
-      const result = await operationCache.executeProject(
-        'validate_tag',
-        primaryOperation
-      );
-
-      expect(result).toEqual({ projectTag: 'test' });
-      expect(primaryOperation).toHaveBeenCalledTimes(1);
-    });
-
-    it('should cache notes operations', async () => {
-      const primaryOperation = vi.fn().mockResolvedValue({ notes: [] });
-      
-      const result = await operationCache.executeNotes(
-        'get_notes',
-        primaryOperation
-      );
-
-      expect(result).toEqual({ notes: [] });
-      expect(primaryOperation).toHaveBeenCalledTimes(1);
-    });
-
-    it('should cache pretty print operations', async () => {
-      const primaryOperation = vi.fn().mockResolvedValue({ content: 'formatted' });
-      
-      const result = await operationCache.executePrettyPrint(
-        'format_list',
-        primaryOperation
-      );
-
-      expect(result).toEqual({ content: 'formatted' });
-      expect(primaryOperation).toHaveBeenCalledTimes(1);
-    });
-
-    it('should cache cleanup operations', async () => {
-      const primaryOperation = vi.fn().mockResolvedValue({ cleaned: 5 });
-      
-      const result = await operationCache.executeCleanup(
-        'cleanup_lists',
-        primaryOperation
-      );
-
-      expect(result).toEqual({ cleaned: 5 });
-      expect(primaryOperation).toHaveBeenCalledTimes(1);
-    });
-
-    it('should use cached results for repeated operations', async () => {
-      const primaryOperation = vi.fn().mockResolvedValue({ success: true });
-      
-      // First call should execute the operation
-      const result1 = await operationCache.executeActionPlan(
-        'test_operation',
-        primaryOperation,
-        'test-cache-key'
-      );
-      
-      // Second call with same cache key should use cached result
-      const result2 = await operationCache.executeActionPlan(
-        'test_operation',
-        primaryOperation,
-        'test-cache-key'
-      );
-
-      expect(result1).toEqual({ success: true });
-      expect(result2).toEqual({ success: true });
-      expect(primaryOperation).toHaveBeenCalledTimes(1); // Only called once due to caching
-    });
-  });
-
-  describe('Cache Management', () => {
-    it('should clear domain cache', () => {
-      expect(() => operationCache.clearDomainCache('action_plan')).not.toThrow();
-    });
-
-    it('should clear all caches', () => {
-      expect(() => operationCache.clearAllCaches()).not.toThrow();
-    });
-
-    it('should get cache statistics', () => {
-      const stats = operationCache.getCacheStats();
-      expect(stats).toHaveProperty('size');
-      expect(stats).toHaveProperty('maxSize');
-      expect(stats).toHaveProperty('hitRate');
-    });
-  });
-});
-
 describe('Enhanced Validation', () => {
   describe('Safe Validation', () => {
     it('should return valid result for successful validation', () => {
@@ -401,11 +309,13 @@ describe('Enhanced Validation', () => {
 
     it('should return fallback for failed validation', () => {
       const result = validator.validateSafely(
-        () => { throw new Error('validation failed'); },
+        () => {
+          throw new Error('validation failed');
+        },
         'fallback value',
         'test context'
       );
-      
+
       expect(result.isValid).toBe(false);
       expect(result.result).toBe('fallback value');
       expect(result.error).toBeInstanceOf(Error);
@@ -415,12 +325,18 @@ describe('Enhanced Validation', () => {
   describe('Complex Scenarios', () => {
     it('should handle complex error scenarios', async () => {
       // Simulate a complex scenario where multiple features fail
-      const actionPlanError = new ActionPlanParseError('invalid content', 'parse failed');
-      const projectError = new ProjectManagementError('invalid tag', 'INVALID_TAG');
+      const actionPlanError = new ActionPlanParseError(
+        'invalid content',
+        'parse failed'
+      );
+      const projectError = new ProjectManagementError(
+        'invalid tag',
+        'INVALID_TAG'
+      );
       const notesError = new NotesError('note too long', 'TOO_LONG');
 
       const errors = [actionPlanError, projectError, notesError];
-      const reports = errors.map((error, index) => 
+      const reports = errors.map((error, index) =>
         errorHandler.handleError(error, {
           operation: `complex_scenario_${index}`,
           timestamp: Date.now(),

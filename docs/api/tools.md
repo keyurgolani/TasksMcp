@@ -2,15 +2,16 @@
 
 ## Overview
 
-The MCP Task Manager provides 20 focused, easy-to-use tools for managing todo lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
+The MCP Task Manager provides 17 focused, easy-to-use tools for managing todo lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
 
-**Last Updated**: September 27, 2025  
-**Version**: 2.3.0  
-**Total Tools**: 20 organized in 6 categories
+**Last Updated**: October 11, 2025  
+**Version**: 2.5.0  
+**Total Tools**: 17 organized in 5 categories
 
 ## 🤖 Agent-Friendly Features
 
 ### Smart Parameter Preprocessing
+
 All MCP tools support automatic parameter conversion for common AI agent patterns:
 
 - **String Numbers**: `"5"` → `5` (for priority, estimatedDuration, etc.)
@@ -18,6 +19,7 @@ All MCP tools support automatic parameter conversion for common AI agent pattern
 - **Boolean Strings**: `"true"` → `true`, `"yes"` → `true` (for includeCompleted, etc.)
 
 ### Enhanced Error Messages
+
 When validation fails, you'll receive helpful, actionable error messages:
 
 ```json
@@ -27,20 +29,21 @@ When validation fails, you'll receive helpful, actionable error messages:
 ```
 
 ### Backward Compatibility
+
 All existing integrations continue to work without changes. The preprocessing only enhances the experience for new agent patterns.
 
 ## Tool Categories
 
 - **List Management (4 tools)**: Create, retrieve, list, and delete todo lists
 - **Task Management (6 tools)**: Add, update, remove, complete tasks and manage priorities/tags
-- **Search & Display (3 tools)**: Search, filter, and display tasks with formatting
-- **Advanced Features (2 tools)**: Task analysis and AI-generated suggestions
+- **Search & Display (2 tools)**: Search, filter, and display tasks with formatting
 - **Exit Criteria Management (2 tools)**: Define and track detailed completion requirements
 - **Dependency Management (3 tools)**: Manage task relationships and workflow optimization
 
 ## Common Response Formats
 
 ### ListResponse
+
 ```json
 {
   "id": "uuid-string",
@@ -55,6 +58,7 @@ All existing integrations continue to work without changes. The preprocessing on
 ```
 
 ### TaskResponse
+
 ```json
 {
   "id": "uuid-string",
@@ -78,6 +82,7 @@ All existing integrations continue to work without changes. The preprocessing on
 Creates a new todo list with basic information.
 
 **Schema:**
+
 ```json
 {
   "name": "create_list",
@@ -108,6 +113,7 @@ Creates a new todo list with basic information.
 ```
 
 **Example Usage:**
+
 ```json
 {
   "title": "Weekly Planning",
@@ -125,6 +131,7 @@ Creates a new todo list with basic information.
 Retrieves a specific todo list with its tasks.
 
 **Schema:**
+
 ```json
 {
   "name": "get_list",
@@ -149,6 +156,7 @@ Retrieves a specific todo list with its tasks.
 ```
 
 **Example Usage:**
+
 ```json
 {
   "listId": "123e4567-e89b-12d3-a456-426614174000",
@@ -165,6 +173,7 @@ Retrieves a specific todo list with its tasks.
 Gets all todo lists with basic information.
 
 **Schema:**
+
 ```json
 {
   "name": "list_all_lists",
@@ -196,6 +205,7 @@ Gets all todo lists with basic information.
 ```
 
 **Example Usage:**
+
 ```json
 {
   "projectTag": "work",
@@ -212,6 +222,7 @@ Gets all todo lists with basic information.
 Deletes or archives a todo list.
 
 **Schema:**
+
 ```json
 {
   "name": "delete_list",
@@ -236,6 +247,7 @@ Deletes or archives a todo list.
 ```
 
 **Example Usage:**
+
 ```json
 {
   "listId": "123e4567-e89b-12d3-a456-426614174000",
@@ -254,6 +266,7 @@ Deletes or archives a todo list.
 Adds a new task to a todo list.
 
 **Schema:**
+
 ```json
 {
   "name": "add_task",
@@ -323,6 +336,7 @@ Adds a new task to a todo list.
 ```
 
 **Example Usage:**
+
 ```json
 {
   "listId": "123e4567-e89b-12d3-a456-426614174000",
@@ -345,6 +359,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ## Agent Best Practices Integration
 
 ### 📚 Essential Reading
+
 **Before using these tools, review the [Agent Best Practices Guide](../guides/agent-best-practices.md)** for proven methodologies that ensure effective task management:
 
 - **Investigation-Driven Task Creation**: Use `analyze_task` before `add_task` to create comprehensive action plans
@@ -355,6 +370,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ## Tool Selection Recommendations
 
 ### Tier 1: Essential Tools (Always Recommend)
+
 - **`search_tool`** - Unified search and filtering (replaces search_tasks/filter_tasks)
 - **`add_task`** - Comprehensive task creation with exit criteria and dependencies
 - **`show_tasks`** - Rich formatted display with emojis and grouping
@@ -362,6 +378,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 - **`create_list`** - Clean, focused list creation
 
 ### Tier 2: Workflow Optimization Tools
+
 - **`get_ready_tasks`** - Daily workflow planning with actionable next steps
 - **`analyze_task_dependencies`** - Project management with critical path analysis
 - **`bulk_task_operations`** - Batch efficiency for multiple operations
@@ -369,6 +386,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 - **`update_exit_criteria`** - Granular progress tracking
 
 ### Legacy Tools (Use Alternatives)
+
 - ⚠️ `search_tasks` → Use `search_tool` instead
 - ⚠️ `filter_tasks` → Use `search_tool` instead
 
@@ -377,6 +395,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ### Workflow 1: Creating a New Project with Tasks
 
 **Step 1: Create a new list**
+
 ```json
 {
   "tool": "create_list",
@@ -389,6 +408,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ```
 
 **Step 2: Add initial tasks**
+
 ```json
 {
   "tool": "add_task",
@@ -405,6 +425,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ### Workflow 2: Daily Task Management
 
 **Step 1: Find ready tasks**
+
 ```json
 {
   "tool": "get_ready_tasks",
@@ -416,6 +437,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ```
 
 **Step 2: Work on tasks and update progress**
+
 ```json
 {
   "tool": "update_exit_criteria",
@@ -430,6 +452,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ```
 
 **Step 3: Complete tasks when all criteria are met**
+
 ```json
 {
   "tool": "complete_task",
@@ -443,12 +466,14 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ## Performance Considerations
 
 ### Response Time Targets
+
 - **Basic CRUD operations**: < 10ms (current: ~5ms create, ~2ms read)
 - **Complex queries with filtering**: < 50ms
 - **Search operations**: < 100ms
 - **Dependency analysis**: < 100ms
 
 ### Data Limitations
+
 - **Maximum items per list**: 1000
 - **Maximum lists per installation**: Unlimited (limited by storage)
 - **Maximum concurrent operations**: 100+
@@ -457,6 +482,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 ## Error Handling
 
 All tools provide comprehensive error handling with:
+
 - **Clear validation messages** with specific field feedback
 - **Actionable suggestions** for fixing common issues
 - **Working examples** included in error responses

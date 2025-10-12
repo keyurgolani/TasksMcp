@@ -4,8 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import {
+  MCP_TOOLS,
+  getToolNames,
+  getToolSchema,
+} from '../../src/api/tools/definitions.js';
 import { McpTaskManagerServer } from '../../src/app/server.js';
-import { MCP_TOOLS, getToolNames, getToolSchema } from '../../src/api/tools/definitions.js';
 import { TestCleanup } from '../setup.js';
 
 describe('Dependency Tool Registration', () => {
@@ -15,10 +20,10 @@ describe('Dependency Tool Registration', () => {
     await TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
     await TestCleanup.registerEnvVar('METRICS_ENABLED', 'false');
     await TestCleanup.registerEnvVar('NODE_ENV', 'test');
-    
+
     server = new McpTaskManagerServer();
     await server.start();
-    
+
     // Register server for cleanup
     TestCleanup.registerServer(server);
   });
@@ -28,16 +33,16 @@ describe('Dependency Tool Registration', () => {
   });
 
   describe('Tool Discovery', () => {
-    it('should include all 20 MCP tools in the registry', () => {
-      expect(MCP_TOOLS).toHaveLength(20);
-      
+    it('should include all 17 MCP tools in the registry', () => {
+      expect(MCP_TOOLS).toHaveLength(17);
+
       const toolNames = getToolNames();
-      expect(toolNames).toHaveLength(20);
+      expect(toolNames).toHaveLength(17);
     });
 
     it('should include the 3 new dependency management tools', () => {
       const toolNames = getToolNames();
-      
+
       // Verify the 3 new dependency tools are registered
       expect(toolNames).toContain('set_task_dependencies');
       expect(toolNames).toContain('get_ready_tasks');
@@ -46,7 +51,7 @@ describe('Dependency Tool Registration', () => {
 
     it('should maintain backward compatibility with existing tools', () => {
       const toolNames = getToolNames();
-      
+
       // List management tools (4 tools)
       expect(toolNames).toContain('create_list');
       expect(toolNames).toContain('get_list');
@@ -65,25 +70,29 @@ describe('Dependency Tool Registration', () => {
       expect(toolNames).toContain('search_tool');
       expect(toolNames).toContain('show_tasks');
 
-      // Intelligence tools (2 tools)
-      expect(toolNames).toContain('analyze_task');
-      expect(toolNames).toContain('get_task_suggestions');
+      // Intelligence tools removed - no longer supported
     });
   });
 
   describe('Tool Schema Validation', () => {
     it('should have valid schema for set_task_dependencies tool', () => {
       const schema = getToolSchema('set_task_dependencies');
-      
+
       expect(schema).toBeDefined();
       expect(schema?.name).toBe('set_task_dependencies');
-      expect(schema?.description).toContain('Set which tasks this task depends on');
-      
+      expect(schema?.description).toContain(
+        'Set which tasks this task depends on'
+      );
+
       const inputSchema = schema?.inputSchema;
       expect(inputSchema).toBeDefined();
       expect(inputSchema.type).toBe('object');
-      expect(inputSchema.required).toEqual(['listId', 'taskId', 'dependencyIds']);
-      
+      expect(inputSchema.required).toEqual([
+        'listId',
+        'taskId',
+        'dependencyIds',
+      ]);
+
       // Validate parameter schemas
       const properties = inputSchema.properties;
       expect(properties.listId.type).toBe('string');
@@ -98,16 +107,18 @@ describe('Dependency Tool Registration', () => {
 
     it('should have valid schema for get_ready_tasks tool', () => {
       const schema = getToolSchema('get_ready_tasks');
-      
+
       expect(schema).toBeDefined();
       expect(schema?.name).toBe('get_ready_tasks');
-      expect(schema?.description).toContain('Get tasks that are ready to work on');
-      
+      expect(schema?.description).toContain(
+        'Get tasks that are ready to work on'
+      );
+
       const inputSchema = schema?.inputSchema;
       expect(inputSchema).toBeDefined();
       expect(inputSchema.type).toBe('object');
       expect(inputSchema.required).toEqual(['listId']);
-      
+
       // Validate parameter schemas
       const properties = inputSchema.properties;
       expect(properties.listId.type).toBe('string');
@@ -120,16 +131,18 @@ describe('Dependency Tool Registration', () => {
 
     it('should have valid schema for analyze_task_dependencies tool', () => {
       const schema = getToolSchema('analyze_task_dependencies');
-      
+
       expect(schema).toBeDefined();
       expect(schema?.name).toBe('analyze_task_dependencies');
-      expect(schema?.description).toContain('Get analysis of task dependencies and project structure');
-      
+      expect(schema?.description).toContain(
+        'Get analysis of task dependencies and project structure'
+      );
+
       const inputSchema = schema?.inputSchema;
       expect(inputSchema).toBeDefined();
       expect(inputSchema.type).toBe('object');
       expect(inputSchema.required).toEqual(['listId']);
-      
+
       // Validate parameter schemas
       const properties = inputSchema.properties;
       expect(properties.listId.type).toBe('string');
@@ -140,25 +153,39 @@ describe('Dependency Tool Registration', () => {
   describe('Tool Categories', () => {
     it('should organize tools into correct categories', () => {
       const toolNames = getToolNames();
-      
+
       // List Management Tools (4 tools)
-      const listTools = ['create_list', 'get_list', 'list_all_lists', 'delete_list'];
+      const listTools = [
+        'create_list',
+        'get_list',
+        'list_all_lists',
+        'delete_list',
+      ];
       listTools.forEach(tool => expect(toolNames).toContain(tool));
-      
+
       // Task Management Tools (6 tools)
-      const taskTools = ['add_task', 'update_task', 'remove_task', 'complete_task', 'set_task_priority', 'add_task_tags'];
+      const taskTools = [
+        'add_task',
+        'update_task',
+        'remove_task',
+        'complete_task',
+        'set_task_priority',
+        'add_task_tags',
+      ];
       taskTools.forEach(tool => expect(toolNames).toContain(tool));
-      
+
       // Search & Display Tools (2 tools)
       const searchTools = ['search_tool', 'show_tasks'];
       searchTools.forEach(tool => expect(toolNames).toContain(tool));
-      
-      // Intelligence Tools (2 tools)
-      const intelligenceTools = ['analyze_task', 'get_task_suggestions'];
-      intelligenceTools.forEach(tool => expect(toolNames).toContain(tool));
-      
+
+      // Intelligence Tools removed - no longer supported
+
       // Dependency Management Tools (3 tools)
-      const dependencyTools = ['set_task_dependencies', 'get_ready_tasks', 'analyze_task_dependencies'];
+      const dependencyTools = [
+        'set_task_dependencies',
+        'get_ready_tasks',
+        'analyze_task_dependencies',
+      ];
       dependencyTools.forEach(tool => expect(toolNames).toContain(tool));
     });
   });
@@ -166,7 +193,7 @@ describe('Dependency Tool Registration', () => {
   describe('Enhanced Existing Tools', () => {
     it('should enhance add_task tool with dependencies parameter', () => {
       const schema = getToolSchema('add_task');
-      
+
       expect(schema).toBeDefined();
       const properties = schema?.inputSchema.properties;
       expect(properties.dependencies).toBeDefined();
@@ -179,40 +206,50 @@ describe('Dependency Tool Registration', () => {
 
     it('should enhance search_tool with dependency filters', () => {
       const schema = getToolSchema('search_tool');
-      
+
       expect(schema).toBeDefined();
       const properties = schema?.inputSchema.properties;
-      
+
       // Check for new dependency-related filters
       expect(properties.hasDependencies).toBeDefined();
       expect(properties.hasDependencies.type).toBe('boolean');
-      expect(properties.hasDependencies.description).toContain('Filter by whether tasks have dependencies');
-      
+      expect(properties.hasDependencies.description).toContain(
+        'Filter by whether tasks have dependencies'
+      );
+
       expect(properties.isReady).toBeDefined();
       expect(properties.isReady.type).toBe('boolean');
-      expect(properties.isReady.description).toContain('Filter by whether tasks are ready to work on');
-      
+      expect(properties.isReady.description).toContain(
+        'Filter by whether tasks are ready to work on'
+      );
+
       expect(properties.isBlocked).toBeDefined();
       expect(properties.isBlocked.type).toBe('boolean');
-      expect(properties.isBlocked.description).toContain('Filter by whether tasks are blocked by dependencies');
+      expect(properties.isBlocked.description).toContain(
+        'Filter by whether tasks are blocked by dependencies'
+      );
     });
   });
 
   describe('Parameter Validation', () => {
     it('should validate UUID format for dependency tool parameters', () => {
-      const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      const invalidUuid = 'not-a-uuid';
-      
+      const _validUuid = '123e4567-e89b-12d3-a456-426614174000';
+      const _invalidUuid = 'not-a-uuid';
+
       // Test set_task_dependencies validation
       const setDepsSchema = getToolSchema('set_task_dependencies');
       expect(setDepsSchema?.inputSchema.properties.listId.format).toBe('uuid');
       expect(setDepsSchema?.inputSchema.properties.taskId.format).toBe('uuid');
-      expect(setDepsSchema?.inputSchema.properties.dependencyIds.items.format).toBe('uuid');
-      
+      expect(
+        setDepsSchema?.inputSchema.properties.dependencyIds.items.format
+      ).toBe('uuid');
+
       // Test get_ready_tasks validation
       const readyTasksSchema = getToolSchema('get_ready_tasks');
-      expect(readyTasksSchema?.inputSchema.properties.listId.format).toBe('uuid');
-      
+      expect(readyTasksSchema?.inputSchema.properties.listId.format).toBe(
+        'uuid'
+      );
+
       // Test analyze_task_dependencies validation
       const analyzeSchema = getToolSchema('analyze_task_dependencies');
       expect(analyzeSchema?.inputSchema.properties.listId.format).toBe('uuid');
@@ -220,16 +257,20 @@ describe('Dependency Tool Registration', () => {
 
     it('should enforce array size limits for dependencies', () => {
       const setDepsSchema = getToolSchema('set_task_dependencies');
-      expect(setDepsSchema?.inputSchema.properties.dependencyIds.maxItems).toBe(50);
-      
+      expect(setDepsSchema?.inputSchema.properties.dependencyIds.maxItems).toBe(
+        50
+      );
+
       const addTaskSchema = getToolSchema('add_task');
-      expect(addTaskSchema?.inputSchema.properties.dependencies.maxItems).toBe(50);
+      expect(addTaskSchema?.inputSchema.properties.dependencies.maxItems).toBe(
+        50
+      );
     });
 
     it('should enforce numeric limits for get_ready_tasks', () => {
       const schema = getToolSchema('get_ready_tasks');
       const limitProperty = schema?.inputSchema.properties.limit;
-      
+
       expect(limitProperty.minimum).toBe(1);
       expect(limitProperty.maximum).toBe(50);
       expect(limitProperty.default).toBe(20);
@@ -239,21 +280,31 @@ describe('Dependency Tool Registration', () => {
   describe('Tool Descriptions', () => {
     it('should have clear, simple descriptions for dependency tools', () => {
       const setDepsSchema = getToolSchema('set_task_dependencies');
-      expect(setDepsSchema?.description).toContain('Set which tasks this task depends on (replaces all existing dependencies)');
-      
+      expect(setDepsSchema?.description).toContain(
+        'Set which tasks this task depends on (replaces all existing dependencies)'
+      );
+
       const readyTasksSchema = getToolSchema('get_ready_tasks');
-      expect(readyTasksSchema?.description).toContain('Get tasks that are ready to work on (no incomplete dependencies)');
-      
+      expect(readyTasksSchema?.description).toContain(
+        'Get tasks that are ready to work on (no incomplete dependencies)'
+      );
+
       const analyzeSchema = getToolSchema('analyze_task_dependencies');
-      expect(analyzeSchema?.description).toContain('Get analysis of task dependencies and project structure with optional DAG visualization');
+      expect(analyzeSchema?.description).toContain(
+        'Get analysis of task dependencies and project structure with optional DAG visualization'
+      );
     });
 
     it('should have clear parameter descriptions', () => {
       const setDepsSchema = getToolSchema('set_task_dependencies');
       const properties = setDepsSchema?.inputSchema.properties;
-      
-      expect(properties.listId.description).toContain('UUID of the list containing the task');
-      expect(properties.taskId.description).toContain('UUID of the task to set dependencies for');
+
+      expect(properties.listId.description).toContain(
+        'UUID of the list containing the task'
+      );
+      expect(properties.taskId.description).toContain(
+        'UUID of the task to set dependencies for'
+      );
       expect(properties.dependencyIds.description).toContain('Array of task');
     });
   });

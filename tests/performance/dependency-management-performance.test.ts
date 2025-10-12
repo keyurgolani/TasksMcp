@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../setup.js';
@@ -11,30 +12,30 @@ import { createTodoListManager } from '../utils/test-helpers.js';
 describe('Core Dependency Tools Performance', () => {
   let manager: TodoListManager;
   let storage: MemoryStorageBackend;
-  let listId: string;
+  let _listId: string;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
     manager = createTodoListManager(storage);
     await manager.initialize();
-    
+
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
     TestCleanup.registerManager(manager);
-    
+
     const list = await manager.createTodoList({
       title: 'Performance Test List',
       description: 'Testing performance',
       projectTag: 'performance-test',
       tasks: [],
     });
-    listId = list.id;
+    _listId = list.id;
   });
 
   it('should handle dependency operations efficiently', async () => {
     const startTime = Date.now();
-    
+
     // Create a list with multiple tasks
     const list = await manager.createTodoList({
       title: 'Performance Test List with Tasks',
@@ -66,7 +67,7 @@ describe('Core Dependency Tools Performance', () => {
 
   it('should maintain performance with large datasets', async () => {
     const startTime = Date.now();
-    
+
     // Create a larger dataset
     const list = await manager.createTodoList({
       title: 'Large Performance Test List',
@@ -83,7 +84,6 @@ describe('Core Dependency Tools Performance', () => {
     // Performance test operations
     const dependencyGraph = await manager.getDependencyGraph(list.id);
     const readyItems = await manager.getReadyItems(list.id);
-    const suggestedOrder = await manager.suggestTaskOrder(list.id);
 
     const endTime = Date.now();
     const duration = endTime - startTime;
@@ -92,7 +92,7 @@ describe('Core Dependency Tools Performance', () => {
     expect(duration).toBeLessThan(10000); // Should complete within 10 seconds
     expect(dependencyGraph).toBeDefined();
     expect(readyItems).toBeDefined();
-    expect(suggestedOrder).toBeDefined();
+
     expect(readyItems.length).toBe(100); // All tasks should be ready since no dependencies
   });
 });

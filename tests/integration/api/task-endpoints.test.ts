@@ -2,19 +2,20 @@
  * Integration tests for task management API endpoints
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import type { Express } from 'express';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+
 import { RestApiServer } from '../../../src/app/rest-api-server.js';
 import { TodoListManager } from '../../../src/domain/lists/todo-list-manager.js';
+import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
+import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../../src/domain/tasks/exit-criteria-manager.js';
-import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { NotesManager } from '../../../src/domain/tasks/notes-manager.js';
-import { IntelligenceManager } from '../../../src/domain/intelligence/intelligence-manager.js';
-import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
 import { MemoryStorageBackend } from '../../../src/infrastructure/storage/memory-storage.js';
 import { TaskStatus } from '../../../src/shared/types/todo.js';
+
+import type { Express } from 'express';
 
 describe('Task Management API Endpoints', () => {
   let server: RestApiServer;
@@ -35,8 +36,6 @@ describe('Task Management API Endpoints', () => {
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
     const notesManager = new NotesManager(repository);
-    const intelligenceManager = new IntelligenceManager();
-
     // Create and initialize server
     server = new RestApiServer(
       { port: 3099 }, // Use a different port for testing
@@ -44,8 +43,7 @@ describe('Task Management API Endpoints', () => {
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,
-      notesManager,
-      intelligenceManager
+      notesManager
     );
 
     await server.initialize();
@@ -60,12 +58,10 @@ describe('Task Management API Endpoints', () => {
 
   beforeEach(async () => {
     // Create a test list before each test
-    const response = await request(app)
-      .post('/api/v1/lists')
-      .send({
-        title: 'Test List for Tasks',
-        description: 'A list for testing task endpoints',
-      });
+    const response = await request(app).post('/api/v1/lists').send({
+      title: 'Test List for Tasks',
+      description: 'A list for testing task endpoints',
+    });
 
     expect(response.status).toBe(201);
     testListId = response.body.data.id;
@@ -100,12 +96,10 @@ describe('Task Management API Endpoints', () => {
 
     it('should create a task with dependencies', async () => {
       // Create first task
-      const task1Response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Task 1',
-        });
+      const task1Response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Task 1',
+      });
 
       const task1Id = task1Response.body.data.id;
 
@@ -123,12 +117,10 @@ describe('Task Management API Endpoints', () => {
     });
 
     it('should reject task with invalid list ID', async () => {
-      const response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: '00000000-0000-0000-0000-000000000000',
-          title: 'Test Task',
-        });
+      const response = await request(app).post('/api/v1/tasks').send({
+        listId: '00000000-0000-0000-0000-000000000000',
+        title: 'Test Task',
+      });
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -236,12 +228,10 @@ describe('Task Management API Endpoints', () => {
     let taskId: string;
 
     beforeEach(async () => {
-      const response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Test Task',
-        });
+      const response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Test Task',
+      });
 
       taskId = response.body.data.id;
     });
@@ -267,8 +257,7 @@ describe('Task Management API Endpoints', () => {
     });
 
     it('should require listId query parameter', async () => {
-      const response = await request(app)
-        .get(`/api/v1/tasks/${taskId}`);
+      const response = await request(app).get(`/api/v1/tasks/${taskId}`);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -279,13 +268,11 @@ describe('Task Management API Endpoints', () => {
     let taskId: string;
 
     beforeEach(async () => {
-      const response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Original Title',
-          priority: 3,
-        });
+      const response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Original Title',
+        priority: 3,
+      });
 
       taskId = response.body.data.id;
     });
@@ -336,12 +323,10 @@ describe('Task Management API Endpoints', () => {
     let taskId: string;
 
     beforeEach(async () => {
-      const response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Task to Delete',
-        });
+      const response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Task to Delete',
+      });
 
       taskId = response.body.data.id;
     });
@@ -388,12 +373,10 @@ describe('Task Management API Endpoints', () => {
     let taskId: string;
 
     beforeEach(async () => {
-      const response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Task to Complete',
-        });
+      const response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Task to Complete',
+      });
 
       taskId = response.body.data.id;
     });
@@ -411,12 +394,10 @@ describe('Task Management API Endpoints', () => {
 
     it('should not complete task with incomplete dependencies', async () => {
       // Create dependency
-      const dep1Response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Dependency Task',
-        });
+      const dep1Response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Dependency Task',
+      });
 
       const dep1Id = dep1Response.body.data.id;
 
@@ -442,12 +423,10 @@ describe('Task Management API Endpoints', () => {
 
     it('should complete task after dependencies are completed', async () => {
       // Create dependency
-      const dep1Response = await request(app)
-        .post('/api/v1/tasks')
-        .send({
-          listId: testListId,
-          title: 'Dependency Task',
-        });
+      const dep1Response = await request(app).post('/api/v1/tasks').send({
+        listId: testListId,
+        title: 'Dependency Task',
+      });
 
       const dep1Id = dep1Response.body.data.id;
 

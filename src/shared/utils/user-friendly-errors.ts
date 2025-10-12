@@ -3,6 +3,7 @@
  */
 
 import {
+  BaseError,
   isActionPlanError,
   isProjectManagementError,
   isNotesManagementError,
@@ -11,6 +12,7 @@ import {
   isTaskManagementError,
   ERROR_CODES,
 } from '../types/errors.js';
+
 import { logger } from './logger.js';
 
 /**
@@ -38,49 +40,63 @@ export interface ErrorContext {
  * User-friendly error message generator
  */
 export class UserFriendlyErrorMessages {
-  private static readonly ERROR_TEMPLATES: Record<string, ErrorMessageTemplates> = {
+  private static readonly ERROR_TEMPLATES: Record<
+    string,
+    ErrorMessageTemplates
+  > = {
     // Action Plan Errors
     [ERROR_CODES.ACTION_PLAN_PARSE_ERROR]: {
-      technical: 'Failed to parse action plan content due to invalid format or structure.',
+      technical:
+        'Failed to parse action plan content due to invalid format or structure.',
       user: 'The action plan could not be understood. Please check the format and try again.',
-      suggestion: 'Try using a simple numbered list format like:\n1. First step\n2. Second step\n3. Third step',
-      documentation: 'Action plans should follow a structured format with clear steps.',
+      suggestion:
+        'Try using a simple numbered list format like:\n1. First step\n2. Second step\n3. Third step',
+      documentation:
+        'Action plans should follow a structured format with clear steps.',
     },
     [ERROR_CODES.ACTION_PLAN_STEP_NOT_FOUND]: {
-      technical: 'The specified action plan step could not be located in the plan structure.',
-      user: 'The step you\'re looking for doesn\'t exist in this action plan.',
-      suggestion: 'Check the step number or refresh the action plan to see current steps.',
+      technical:
+        'The specified action plan step could not be located in the plan structure.',
+      user: "The step you're looking for doesn't exist in this action plan.",
+      suggestion:
+        'Check the step number or refresh the action plan to see current steps.',
     },
     [ERROR_CODES.ACTION_PLAN_VALIDATION_ERROR]: {
       technical: 'Action plan data failed validation checks.',
-      user: 'There\'s an issue with the action plan format.',
-      suggestion: 'Please check that all required fields are filled out correctly.',
+      user: "There's an issue with the action plan format.",
+      suggestion:
+        'Please check that all required fields are filled out correctly.',
     },
 
     // Project Management Errors
     [ERROR_CODES.INVALID_PROJECT_TAG]: {
-      technical: 'Project tag does not meet the required format specifications.',
+      technical:
+        'Project tag does not meet the required format specifications.',
       user: 'The project name contains invalid characters or is too long.',
-      suggestion: 'Use only letters, numbers, hyphens, and underscores. Keep it under 50 characters.',
-      documentation: 'Project tags help organize your tasks and must follow naming conventions.',
+      suggestion:
+        'Use only letters, numbers, hyphens, and underscores. Keep it under 50 characters.',
+      documentation:
+        'Project tags help organize your tasks and must follow naming conventions.',
     },
     [ERROR_CODES.PROJECT_NOT_FOUND]: {
       technical: 'The specified project identifier could not be resolved.',
-      user: 'The project you\'re looking for doesn\'t exist.',
-      suggestion: 'Check the project name spelling or create a new project if needed.',
+      user: "The project you're looking for doesn't exist.",
+      suggestion:
+        'Check the project name spelling or create a new project if needed.',
     },
-
 
     // Notes Management Errors
     [ERROR_CODES.NOTE_VALIDATION_ERROR]: {
       technical: 'Implementation note data failed validation requirements.',
-      user: 'There\'s an issue with the note you\'re trying to save.',
-      suggestion: 'Make sure the note has content and check for any special characters.',
+      user: "There's an issue with the note you're trying to save.",
+      suggestion:
+        'Make sure the note has content and check for any special characters.',
     },
     [ERROR_CODES.NOTE_NOT_FOUND]: {
       technical: 'The requested implementation note could not be located.',
-      user: 'The note you\'re looking for doesn\'t exist.',
-      suggestion: 'The note may have been deleted or moved. Check other tasks or lists.',
+      user: "The note you're looking for doesn't exist.",
+      suggestion:
+        'The note may have been deleted or moved. Check other tasks or lists.',
     },
     [ERROR_CODES.NOTE_TOO_LONG]: {
       technical: 'Note content exceeds the maximum allowed character limit.',
@@ -89,40 +105,44 @@ export class UserFriendlyErrorMessages {
     },
     [ERROR_CODES.INVALID_NOTE_TYPE]: {
       technical: 'The specified note type is not recognized by the system.',
-      user: 'The note type you selected isn\'t valid.',
+      user: "The note type you selected isn't valid.",
       suggestion: 'Choose from: General, Technical, Decision, or Learning.',
     },
 
     // Formatting Errors
     [ERROR_CODES.PRETTY_PRINT_FORMAT_ERROR]: {
-      technical: 'Pretty print formatting engine encountered an error processing the data.',
+      technical:
+        'Pretty print formatting engine encountered an error processing the data.',
       user: 'There was a problem formatting the display.',
       suggestion: 'The information is still available in a simpler format.',
     },
     [ERROR_CODES.INVALID_FORMAT_OPTIONS]: {
-      technical: 'Format options contain invalid values or unsupported configurations.',
-      user: 'Some of your display settings aren\'t valid.',
-      suggestion: 'Check your display preferences and try using default settings.',
+      technical:
+        'Format options contain invalid values or unsupported configurations.',
+      user: "Some of your display settings aren't valid.",
+      suggestion:
+        'Check your display preferences and try using default settings.',
     },
 
     // Cleanup Errors
     [ERROR_CODES.CLEANUP_OPERATION_FAILED]: {
-      technical: 'Cleanup operation could not be completed due to system constraints.',
-      user: 'The cleanup operation couldn\'t be completed.',
-      suggestion: 'Your data is safe and unchanged. Try again later or contact support.',
+      technical:
+        'Cleanup operation could not be completed due to system constraints.',
+      user: "The cleanup operation couldn't be completed.",
+      suggestion:
+        'Your data is safe and unchanged. Try again later or contact support.',
     },
     [ERROR_CODES.CLEANUP_VALIDATION_ERROR]: {
       technical: 'One or more items failed cleanup validation checks.',
-      user: 'Some items can\'t be cleaned up right now.',
-      suggestion: 'This usually happens with active or recently modified items.',
+      user: "Some items can't be cleaned up right now.",
+      suggestion:
+        'This usually happens with active or recently modified items.',
     },
-
-
 
     // Validation
     [ERROR_CODES.VALIDATION_ERROR]: {
       technical: 'Validation checks detected data integrity issues.',
-      user: 'There\'s an issue with the information you provided.',
+      user: "There's an issue with the information you provided.",
       suggestion: 'Please check your input and try again.',
     },
   };
@@ -130,7 +150,10 @@ export class UserFriendlyErrorMessages {
   /**
    * Generate user-friendly error message
    */
-  static generateMessage(error: Error, context: Partial<ErrorContext> = {}): string {
+  static generateMessage(
+    error: Error,
+    context: Partial<ErrorContext> = {}
+  ): string {
     const defaultContext: ErrorContext = {
       userLevel: 'intermediate',
       operation: 'unknown',
@@ -151,7 +174,10 @@ export class UserFriendlyErrorMessages {
     } catch (messageError) {
       logger.error('Failed to generate user-friendly error message', {
         originalError: error.message,
-        messageError: messageError instanceof Error ? messageError.message : 'Unknown error',
+        messageError:
+          messageError instanceof Error
+            ? messageError.message
+            : 'Unknown error',
       });
 
       return this.getFallbackMessage(error, defaultContext);
@@ -161,9 +187,17 @@ export class UserFriendlyErrorMessages {
   /**
    * Generate message for task management errors
    */
-  private static generateErrorMessage(error: any, context: ErrorContext): string {
+  private static generateErrorMessage(
+    error: BaseError | Error,
+    context: ErrorContext
+  ): string {
+    // Only BaseError has code and context properties
+    if (!(error instanceof BaseError)) {
+      return this.generateGenericMessage(error, context);
+    }
+
     const template = this.ERROR_TEMPLATES[error.code];
-    
+
     if (!template) {
       return this.generateGenericMessage(error, context);
     }
@@ -199,36 +233,48 @@ export class UserFriendlyErrorMessages {
   /**
    * Generate message for standard errors
    */
-  private static generateStandardErrorMessage(error: Error, context: ErrorContext): string {
+  private static generateStandardErrorMessage(
+    error: Error,
+    context: ErrorContext
+  ): string {
     const parts: string[] = [];
 
     // Categorize error by message content
     const message = error.message.toLowerCase();
-    
+
     if (message.includes('validation') || message.includes('invalid')) {
-      parts.push('There\'s an issue with the information provided.');
+      parts.push("There's an issue with the information provided.");
       if (context.includeSuggestions) {
         parts.push('Suggestion: Please check your input and try again.');
       }
     } else if (message.includes('not found') || message.includes('missing')) {
       parts.push('The requested item could not be found.');
       if (context.includeSuggestions) {
-        parts.push('Suggestion: Check the spelling or try refreshing the page.');
+        parts.push(
+          'Suggestion: Check the spelling or try refreshing the page.'
+        );
       }
-    } else if (message.includes('permission') || message.includes('unauthorized')) {
-      parts.push('You don\'t have permission to perform this action.');
+    } else if (
+      message.includes('permission') ||
+      message.includes('unauthorized')
+    ) {
+      parts.push("You don't have permission to perform this action.");
       if (context.includeSuggestions) {
-        parts.push('Suggestion: Contact your administrator if you need access.');
+        parts.push(
+          'Suggestion: Contact your administrator if you need access.'
+        );
       }
     } else if (message.includes('timeout') || message.includes('connection')) {
-      parts.push('The operation timed out or couldn\'t connect.');
+      parts.push("The operation timed out or couldn't connect.");
       if (context.includeSuggestions) {
         parts.push('Suggestion: Check your internet connection and try again.');
       }
     } else {
       parts.push('An unexpected error occurred.');
       if (context.includeSuggestions) {
-        parts.push('Suggestion: Try refreshing the page or contact support if the issue persists.');
+        parts.push(
+          'Suggestion: Try refreshing the page or contact support if the issue persists.'
+        );
       }
     }
 
@@ -243,12 +289,15 @@ export class UserFriendlyErrorMessages {
   /**
    * Generate generic message for errors without specific templates
    */
-  private static generateGenericMessage(error: any, context: ErrorContext): string {
+  private static generateGenericMessage(
+    error: BaseError | Error,
+    context: ErrorContext
+  ): string {
     const parts: string[] = [];
 
     // Use the error's user message if available
-    if (error.userMessage) {
-      parts.push(error.userMessage);
+    if ('userMessage' in error && error.userMessage) {
+      parts.push(error.userMessage as string);
     } else {
       parts.push('An error occurred while processing your request.');
     }
@@ -262,7 +311,9 @@ export class UserFriendlyErrorMessages {
       } else if (isNotesManagementError(error)) {
         parts.push('Suggestion: Check your note content and format.');
       } else if (isFormattingError(error)) {
-        parts.push('Suggestion: The information is available in a simpler format.');
+        parts.push(
+          'Suggestion: The information is available in a simpler format.'
+        );
       } else if (isCleanupError(error)) {
         parts.push('Suggestion: Your data remains safe and unchanged.');
       }
@@ -275,13 +326,20 @@ export class UserFriendlyErrorMessages {
    * Format error context for display
    */
   private static formatErrorContext(context: Record<string, unknown>): string {
-    const relevantFields = ['field', 'value', 'requirement', 'operation', 'feature'];
+    const relevantFields = [
+      'field',
+      'value',
+      'requirement',
+      'operation',
+      'feature',
+    ];
     const contextParts: string[] = [];
 
     relevantFields.forEach(field => {
       if (context[field] !== undefined) {
         const value = String(context[field]);
-        if (value.length < 100) { // Only show short values
+        if (value.length < 100) {
+          // Only show short values
           contextParts.push(`${field}: ${value}`);
         }
       }
@@ -293,12 +351,16 @@ export class UserFriendlyErrorMessages {
   /**
    * Get fallback message when message generation fails
    */
-  private static getFallbackMessage(_error: Error, _context: ErrorContext): string {
-    const operation = _context.operation !== 'unknown' ? ` during ${_context.operation}` : '';
-    
+  private static getFallbackMessage(
+    _error: Error,
+    _context: ErrorContext
+  ): string {
+    const operation =
+      _context.operation !== 'unknown' ? ` during ${_context.operation}` : '';
+
     return `An error occurred${operation}. ${
-      _context.includeSuggestions 
-        ? 'Please try again or contact support if the issue persists.' 
+      _context.includeSuggestions
+        ? 'Please try again or contact support if the issue persists.'
         : ''
     }`;
   }
@@ -306,9 +368,12 @@ export class UserFriendlyErrorMessages {
   /**
    * Generate contextual help for specific error scenarios
    */
-  static generateContextualHelp(errorCode: string, _context: Partial<ErrorContext> = {}): string | null {
+  static generateContextualHelp(
+    errorCode: string,
+    _context: Partial<ErrorContext> = {}
+  ): string | null {
     const template = this.ERROR_TEMPLATES[errorCode];
-    
+
     if (!template?.documentation) {
       return null;
     }
@@ -318,23 +383,31 @@ export class UserFriendlyErrorMessages {
     // Add context-specific help
     switch (errorCode) {
       case ERROR_CODES.ACTION_PLAN_PARSE_ERROR:
-        parts.push('Action plans help break down complex tasks into manageable steps.');
+        parts.push(
+          'Action plans help break down complex tasks into manageable steps.'
+        );
         parts.push('Each step should be clear and actionable.');
         break;
 
       case ERROR_CODES.INVALID_PROJECT_TAG:
         parts.push('Project tags help organize and filter your tasks.');
-        parts.push('Good project names are short, descriptive, and easy to remember.');
+        parts.push(
+          'Good project names are short, descriptive, and easy to remember.'
+        );
         break;
 
       case ERROR_CODES.NOTE_TOO_LONG:
         parts.push('Notes are meant for quick thoughts and reminders.');
-        parts.push('For longer content, consider breaking it into multiple notes or using the description field.');
+        parts.push(
+          'For longer content, consider breaking it into multiple notes or using the description field.'
+        );
         break;
 
       case ERROR_CODES.PRETTY_PRINT_FORMAT_ERROR:
         parts.push('Pretty printing makes your task lists easier to read.');
-        parts.push('If formatting fails, the raw data is still available and functional.');
+        parts.push(
+          'If formatting fails, the raw data is still available and functional.'
+        );
         break;
     }
 
@@ -361,7 +434,9 @@ export class UserFriendlyErrorMessages {
   /**
    * Get error severity for UI display
    */
-  static getErrorSeverity(error: Error): 'info' | 'warning' | 'error' | 'critical' {
+  static getErrorSeverity(
+    error: Error
+  ): 'info' | 'warning' | 'error' | 'critical' {
     if (isTaskManagementError(error)) {
       // Most errors are recoverable and not critical
       if (isCleanupError(error)) {
@@ -374,7 +449,7 @@ export class UserFriendlyErrorMessages {
     }
 
     const message = error.message.toLowerCase();
-    
+
     if (message.includes('critical') || message.includes('fatal')) {
       return 'critical';
     }
@@ -384,7 +459,7 @@ export class UserFriendlyErrorMessages {
     if (message.includes('info') || message.includes('notice')) {
       return 'info';
     }
-    
+
     return 'error';
   }
 
@@ -401,12 +476,18 @@ export class UserFriendlyErrorMessages {
         instructions.push('Keep each step concise and clear');
       } else if (isProjectManagementError(error)) {
         instructions.push('Check your project name format');
-        instructions.push('Use only letters, numbers, hyphens, and underscores');
+        instructions.push(
+          'Use only letters, numbers, hyphens, and underscores'
+        );
         instructions.push('Keep project names under 50 characters');
       } else if (isNotesManagementError(error)) {
         instructions.push('Check your note content length');
-        instructions.push('Ensure note type is valid (General, Technical, Decision, Learning)');
-        instructions.push('Remove any special characters that might cause issues');
+        instructions.push(
+          'Ensure note type is valid (General, Technical, Decision, Learning)'
+        );
+        instructions.push(
+          'Remove any special characters that might cause issues'
+        );
       } else if (isFormattingError(error)) {
         instructions.push('Try using default display settings');
         instructions.push('The raw data is still available and functional');
@@ -415,7 +496,6 @@ export class UserFriendlyErrorMessages {
         instructions.push('Your data remains safe and unchanged');
         instructions.push('Try the cleanup operation again later');
         instructions.push('Check that items are eligible for cleanup');
-
       }
     } else {
       // Generic recovery instructions
@@ -439,14 +519,17 @@ export const ErrorMessageUtils = {
     if (message.length <= maxLength) {
       return message;
     }
-    
+
     return message.substring(0, maxLength - 3) + '...';
   },
 
   /**
    * Format error for logging
    */
-  formatForLogging(error: Error, context?: Record<string, unknown>): Record<string, unknown> {
+  formatForLogging(
+    error: Error,
+    context?: Record<string, unknown>
+  ): Record<string, unknown> {
     const logData: Record<string, unknown> = {
       message: error.message,
       name: error.name,
@@ -454,11 +537,10 @@ export const ErrorMessageUtils = {
     };
 
     if (isTaskManagementError(error)) {
-      logData['code'] = (error as any).code;
-      logData['category'] = (error as any).category;
-      logData['recoverable'] = (error as any).recoverable;
-      logData['userMessage'] = (error as any).userMessage;
-      logData['errorContext'] = (error as any).context;
+      const baseError = error as BaseError;
+      logData['code'] = baseError.code;
+      logData['recoverable'] = baseError.recoverable;
+      logData['errorContext'] = baseError.context;
     }
 
     if (context) {
@@ -478,21 +560,23 @@ export const ErrorMessageUtils = {
     suggestedAction?: string;
   } {
     const message = error.message.toLowerCase();
-    
-    const canRetry = message.includes('timeout') || 
-                    message.includes('connection') || 
-                    message.includes('temporary');
-    
-    const canRecover = isTaskManagementError(error) ? 
-                      (error as any).recoverable : 
-                      !message.includes('fatal');
-    
-    const requiresUserAction = message.includes('validation') || 
-                              message.includes('invalid') || 
-                              message.includes('permission');
+
+    const canRetry =
+      message.includes('timeout') ||
+      message.includes('connection') ||
+      message.includes('temporary');
+
+    const canRecover = isTaskManagementError(error)
+      ? (error as BaseError).recoverable
+      : !message.includes('fatal');
+
+    const requiresUserAction =
+      message.includes('validation') ||
+      message.includes('invalid') ||
+      message.includes('permission');
 
     let suggestedAction: string | undefined;
-    
+
     if (requiresUserAction) {
       suggestedAction = 'Please check your input and try again';
     } else if (canRetry) {

@@ -1,17 +1,24 @@
 /**
  * Comprehensive Validation Tests
- * 
+ *
  * Tests all new validation and preprocessing functionality to ensure reliability
  * and prevent regressions. Includes edge cases, performance tests, and integration scenarios.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach as _beforeEach } from 'vitest';
 import { z } from 'zod';
-import { preprocessParameters } from '../../src/shared/utils/parameter-preprocessor.js';
-import { formatZodError, createErrorContext } from '../../src/shared/utils/error-formatter.js';
-import { findClosestEnumValue, getEnumSuggestions } from '../../src/shared/utils/enum-matcher.js';
-import { formatHandlerError } from '../../src/shared/utils/handler-error-formatter.js';
+
 import { getToolExamples } from '../../src/shared/examples/tool-examples.js';
+import {
+  findClosestEnumValue,
+  getEnumSuggestions,
+} from '../../src/shared/utils/enum-matcher.js';
+import {
+  formatZodError,
+  createErrorContext,
+} from '../../src/shared/utils/error-formatter.js';
+import { formatHandlerError } from '../../src/shared/utils/handler-error-formatter.js';
+import { preprocessParameters } from '../../src/shared/utils/parameter-preprocessor.js';
 
 describe('Comprehensive Validation Tests', () => {
   describe('Parameter Preprocessing Edge Cases', () => {
@@ -30,7 +37,11 @@ describe('Comprehensive Validation Tests', () => {
       const result = preprocessParameters(complexParams);
 
       expect(result.parameters.priority).toBe(5);
-      expect(result.parameters.tags).toEqual(['urgent', 'important', 'critical']);
+      expect(result.parameters.tags).toEqual([
+        'urgent',
+        'important',
+        'critical',
+      ]);
       expect(result.parameters.enabled).toBe(true);
       expect(result.parameters.config).toEqual({ retries: 3, timeout: 5000 });
       expect(result.parameters.metadata.nested).toBe(42);
@@ -50,10 +61,10 @@ describe('Comprehensive Validation Tests', () => {
       // Malformed JSON should remain unchanged
       expect(result.parameters.tags).toBe('[invalid json');
       expect(result.parameters.config).toBe('{"incomplete": }');
-      
+
       // Valid JSON should be converted
       expect(result.parameters.validArray).toEqual(['valid', 'array']);
-      
+
       // Should not have errors (graceful handling)
       expect(result.errors).toHaveLength(0);
     });
@@ -73,7 +84,7 @@ describe('Comprehensive Validation Tests', () => {
       expect(typeof result.parameters.veryLarge).toBe('number');
       expect(typeof result.parameters.verySmall).toBe('number');
       expect(typeof result.parameters.scientific).toBe('number');
-      
+
       // These should not be converted (not valid numeric strings)
       expect(result.parameters.infinity).toBe('Infinity');
       expect(result.parameters.negativeInfinity).toBe('-Infinity');
@@ -93,7 +104,7 @@ describe('Comprehensive Validation Tests', () => {
 
       // Only valid numbers should be converted
       expect(result.parameters.number).toBe(123);
-      
+
       // Others should remain as strings
       expect(result.parameters.emoji).toBe('😀');
       expect(result.parameters.unicode).toBe('café');
@@ -145,8 +156,11 @@ describe('Comprehensive Validation Tests', () => {
           },
         });
       } catch (error) {
-        const formatted = formatZodError(error as z.ZodError, createErrorContext('test_tool'));
-        
+        const formatted = formatZodError(
+          error as z.ZodError,
+          createErrorContext('test_tool')
+        );
+
         expect(formatted).toContain('user.profile.settings.priority');
         expect(formatted).toContain('user.profile.settings.tags');
         expect(formatted).toContain('❌');
@@ -171,7 +185,7 @@ describe('Comprehensive Validation Tests', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
         const message = result.content[0]?.text || '';
-        
+
         expect(message).toContain('priority');
         expect(message).toContain('status');
         expect(message).toContain('tags');
@@ -189,16 +203,20 @@ describe('Comprehensive Validation Tests', () => {
       try {
         schema.parse({ priority: 'high' });
       } catch (error) {
-        const addTaskResult = formatHandlerError(error, { toolName: 'add_task' });
-        const searchToolResult = formatHandlerError(error, { toolName: 'search_tool' });
-        
+        const addTaskResult = formatHandlerError(error, {
+          toolName: 'add_task',
+        });
+        const searchToolResult = formatHandlerError(error, {
+          toolName: 'search_tool',
+        });
+
         const addTaskMessage = addTaskResult.content[0]?.text || '';
         const searchToolMessage = searchToolResult.content[0]?.text || '';
-        
+
         // Should contain context-specific guidance (not necessarily tool names)
         expect(addTaskMessage).toContain('💡'); // Should have suggestions
         expect(searchToolMessage).toContain('💡'); // Should have suggestions
-        
+
         // Should have different examples/guidance
         expect(addTaskMessage).not.toBe(searchToolMessage);
       }
@@ -211,7 +229,9 @@ describe('Comprehensive Validation Tests', () => {
       // For single-item sets, only return match if reasonably close
       expect(findClosestEnumValue('single', ['single'])).toBe('single'); // Exact match
       expect(findClosestEnumValue('singl', ['single'])).toBe('single'); // Close match
-      expect(findClosestEnumValue('completely_different', ['single'])).toBeNull(); // Too different
+      expect(
+        findClosestEnumValue('completely_different', ['single'])
+      ).toBeNull(); // Too different
     });
 
     it('should handle very long enum values', () => {
@@ -220,14 +240,14 @@ describe('Comprehensive Validation Tests', () => {
         'another_extremely_long_enum_value_for_testing',
         'short',
       ];
-      
+
       const result = findClosestEnumValue('very_long_enum', longEnums);
       expect(result).toBe('very_long_enum_value_that_exceeds_normal_length');
     });
 
     it('should handle special characters in enum values', () => {
       const specialEnums = ['test-case', 'test_case', 'test.case', 'test@case'];
-      
+
       expect(findClosestEnumValue('test-case', specialEnums)).toBe('test-case');
       expect(findClosestEnumValue('testcase', specialEnums)).toBeTruthy();
       expect(findClosestEnumValue('test case', specialEnums)).toBeTruthy();
@@ -237,11 +257,11 @@ describe('Comprehensive Validation Tests', () => {
       // Use a more ambiguous input that could match multiple options
       const enums = ['pending', 'processing', 'completed'];
       const suggestions = getEnumSuggestions('pen', enums, 3);
-      
-      // Should at least find 'pending' 
+
+      // Should at least find 'pending'
       expect(suggestions.length).toBeGreaterThanOrEqual(1);
       expect(suggestions).toContain('pending');
-      
+
       // Test with a completely different input to get fallback suggestions
       const fallbackSuggestions = getEnumSuggestions('xyz', enums, 3);
       expect(fallbackSuggestions.length).toBeGreaterThanOrEqual(1);
@@ -262,7 +282,7 @@ describe('Comprehensive Validation Tests', () => {
 
       // Step 1: Preprocess parameters
       const preprocessed = preprocessParameters(agentRequest);
-      
+
       expect(preprocessed.parameters.priority).toBe(5);
       expect(preprocessed.parameters.tags).toEqual(['urgent', 'important']);
       expect(preprocessed.parameters.enabled).toBe(true);
@@ -292,13 +312,13 @@ describe('Comprehensive Validation Tests', () => {
       };
 
       const preprocessed = preprocessParameters(problematicRequest);
-      
+
       // Should not crash and should preserve original values
       expect(preprocessed.parameters.priority).toBe('definitely-not-a-number');
       expect(preprocessed.parameters.tags).toBe('[malformed json');
       expect(preprocessed.parameters.enabled).toBe('maybe');
       expect(preprocessed.parameters.config).toBe('{"incomplete": }');
-      
+
       // Should have no conversions but also no errors (graceful handling)
       expect(preprocessed.conversions).toHaveLength(0);
       expect(preprocessed.errors).toHaveLength(0);
@@ -329,19 +349,19 @@ describe('Comprehensive Validation Tests', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
         const message = result.content[0]?.text || '';
-        
+
         // Should contain all the helpful elements
         expect(message).toContain('❌'); // Error indicator
         expect(message).toContain('💡'); // Suggestions
         expect(message).toContain('🔧 Common fixes'); // Common mistakes
         expect(message).toContain('📝 Working example'); // Examples
-        
+
         // Should mention all problematic fields
         expect(message).toContain('priority');
         expect(message).toContain('status');
         expect(message).toContain('tags');
         expect(message).toContain('estimatedDuration');
-        
+
         // Should provide actionable guidance
         expect(message).toMatch(/use.*number|provide.*array|try.*example/i);
       }
@@ -351,13 +371,17 @@ describe('Comprehensive Validation Tests', () => {
   describe('Performance and Scalability', () => {
     it('should handle large parameter objects efficiently', () => {
       const largeParams: Record<string, unknown> = {};
-      
+
       // Create 1000 parameters with various types
       for (let i = 0; i < 1000; i++) {
-        largeParams[`param${i}`] = i % 4 === 0 ? String(i) : // Numbers as strings
-                                   i % 4 === 1 ? `["item${i}"]` : // Arrays as JSON
-                                   i % 4 === 2 ? 'true' : // Booleans as strings
-                                   `value${i}`; // Regular strings
+        largeParams[`param${i}`] =
+          i % 4 === 0
+            ? String(i) // Numbers as strings
+            : i % 4 === 1
+              ? `["item${i}"]` // Arrays as JSON
+              : i % 4 === 2
+                ? 'true' // Booleans as strings
+                : `value${i}`; // Regular strings
       }
 
       const startTime = Date.now();
@@ -375,9 +399,9 @@ describe('Comprehensive Validation Tests', () => {
         ...Object.fromEntries(
           Array.from({ length: 50 }, (_, i) => [
             `field${i}`,
-            z.number().min(1).max(100)
+            z.number().min(1).max(100),
           ])
-        )
+        ),
       });
 
       const badData = Object.fromEntries(
@@ -398,8 +422,11 @@ describe('Comprehensive Validation Tests', () => {
     });
 
     it('should handle enum matching with large sets efficiently', () => {
-      const largeEnumSet = Array.from({ length: 1000 }, (_, i) => `option_${i}`);
-      
+      const largeEnumSet = Array.from(
+        { length: 1000 },
+        (_, i) => `option_${i}`
+      );
+
       const startTime = Date.now();
       const result = findClosestEnumValue('option_500', largeEnumSet);
       const endTime = Date.now();
@@ -420,7 +447,7 @@ describe('Comprehensive Validation Tests', () => {
       };
 
       const preprocessed = preprocessParameters(validRequest);
-      
+
       // Should pass through unchanged
       expect(preprocessed.parameters).toEqual(validRequest);
       expect(preprocessed.conversions).toHaveLength(0);
@@ -435,7 +462,7 @@ describe('Comprehensive Validation Tests', () => {
         schema.parse({});
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'test_tool' });
-        
+
         // Should maintain expected structure
         expect(result).toHaveProperty('content');
         expect(result).toHaveProperty('isError');
@@ -454,7 +481,6 @@ describe('Comprehensive Validation Tests', () => {
         'add_task',
         'search_tool',
         'set_task_priority',
-        'analyze_task',
       ];
 
       majorTools.forEach(toolName => {
@@ -475,14 +501,16 @@ describe('Comprehensive Validation Tests', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
         const message = result.content[0]?.text || '';
-        
+
         // Should contain working example with realistic data
         expect(message).toContain('📝 Working example');
         expect(message).toContain('listId');
         expect(message).toContain('title');
-        
+
         // Example should be valid JSON
-        const exampleMatch = message.match(/📝 Working example:\s*(\{[\s\S]*?\})/);
+        const exampleMatch = message.match(
+          /📝 Working example:\s*(\{[\s\S]*?\})/
+        );
         if (exampleMatch) {
           expect(() => JSON.parse(exampleMatch[1])).not.toThrow();
         }

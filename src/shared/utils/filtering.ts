@@ -1,6 +1,6 @@
 /**
  * Utility functions for filtering, sorting, and paginating todo items
- * 
+ *
  * Provides comprehensive data processing capabilities for todo items including:
  * - Multi-criteria filtering (status, priority, tags, dates, text search)
  * - Flexible sorting by various fields with ascending/descending order
@@ -16,12 +16,13 @@ import {
   type GetTodoListSorting,
   type GetTodoListPagination,
 } from '../types/todo.js';
+
 import { logger } from './logger.js';
 
 export class FilteringUtils {
   /**
    * Apply comprehensive filters to a list of todo items
-   * 
+   *
    * Supports multiple filter types:
    * - Status and priority filtering (single or multiple values)
    * - Tag filtering (must have ALL specified tags)
@@ -29,7 +30,7 @@ export class FilteringUtils {
    * - Text search across title, description, and tags
    * - Boolean filters (has description, has dependencies)
    * - Duration range filtering
-   * 
+   *
    * @param items - Array of todo items to filter
    * @param filters - Filter criteria object
    * @returns TodoItem[] - Filtered array of todo items
@@ -181,14 +182,14 @@ export class FilteringUtils {
 
   /**
    * Sort todo items based on specified criteria
-   * 
+   *
    * Supports sorting by multiple fields:
    * - title: Alphabetical sorting
    * - status: Status enum order
    * - priority: Numeric priority (1-5)
    * - createdAt, updatedAt, completedAt: Date-based sorting
    * - estimatedDuration: Numeric duration sorting
-   * 
+   *
    * @param items - Array of todo items to sort
    * @param sorting - Sorting criteria (field and direction)
    * @returns TodoItem[] - Sorted array of todo items
@@ -257,13 +258,13 @@ export class FilteringUtils {
 
   /**
    * Apply pagination to a list of items
-   * 
+   *
    * Implements offset-based pagination with:
    * - Configurable limit (defaults to all items if not specified)
    * - Offset support for skipping items
    * - hasMore flag to indicate if more items are available
    * - Input validation for reasonable limits
-   * 
+   *
    * @param items - Array of todo items to paginate
    * @param pagination - Pagination parameters (limit and offset)
    * @returns Object containing paginated items, counts, and hasMore flag

@@ -6,23 +6,23 @@ This comprehensive guide covers all configuration options for the MCP Task Manag
 
 ### Core Configuration
 
-| Variable | Default | Description | Valid Values |
-|----------|---------|-------------|--------------|
-| `NODE_ENV` | `development` | Runtime environment mode | `development`, `production`, `test` |
-| `MCP_LOG_LEVEL` | `info` | Logging verbosity level | `error`, `warn`, `info`, `debug` |
-| `DATA_DIRECTORY` | `./data` | Directory for persistent data storage | Any valid directory path |
-| `STORAGE_TYPE` | `file` | Storage backend type | `file`, `memory` |
+| Variable         | Default       | Description                           | Valid Values                        |
+| ---------------- | ------------- | ------------------------------------- | ----------------------------------- |
+| `NODE_ENV`       | `development` | Runtime environment mode              | `development`, `production`, `test` |
+| `MCP_LOG_LEVEL`  | `info`        | Logging verbosity level               | `error`, `warn`, `info`, `debug`    |
+| `DATA_DIRECTORY` | `./data`      | Directory for persistent data storage | Any valid directory path            |
+| `STORAGE_TYPE`   | `file`        | Storage backend type                  | `file`, `memory`                    |
 
 ### Advanced Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MAX_ITEMS_PER_LIST` | `1000` | Maximum tasks per todo list |
-| `MAX_LISTS_PER_CONTEXT` | `100` | Maximum lists per context |
-| `BACKUP_ENABLED` | `true` | Enable automatic backups |
-| `BACKUP_RETENTION_DAYS` | `30` | Days to keep backup files |
+| Variable                 | Default | Description                 |
+| ------------------------ | ------- | --------------------------- |
+| `MAX_ITEMS_PER_LIST`     | `1000`  | Maximum tasks per todo list |
+| `MAX_LISTS_PER_CONTEXT`  | `100`   | Maximum lists per context   |
+| `BACKUP_ENABLED`         | `true`  | Enable automatic backups    |
+| `BACKUP_RETENTION_DAYS`  | `30`    | Days to keep backup files   |
 | `PERFORMANCE_MONITORING` | `false` | Enable performance tracking |
-| `HEALTH_CHECK_INTERVAL` | `30000` | Health check interval (ms) |
+| `HEALTH_CHECK_INTERVAL`  | `30000` | Health check interval (ms)  |
 
 ## 🏗️ Environment-Specific Configurations
 
@@ -48,6 +48,7 @@ MAX_LISTS_PER_CONTEXT=50
 ```
 
 **MCP Client Configuration:**
+
 ```json
 {
   "mcpServers": {
@@ -66,6 +67,7 @@ MAX_LISTS_PER_CONTEXT=50
 ```
 
 **Features:**
+
 - ✅ Verbose debug logging for troubleshooting
 - ✅ Local data directory for easy access
 - ✅ Enhanced error messages and stack traces
@@ -95,6 +97,7 @@ MAX_LISTS_PER_CONTEXT=100
 ```
 
 **MCP Client Configuration:**
+
 ```json
 {
   "mcpServers": {
@@ -113,6 +116,7 @@ MAX_LISTS_PER_CONTEXT=100
 ```
 
 **Features:**
+
 - ✅ Minimal logging for performance
 - ✅ Secure data directory with proper permissions
 - ✅ Optimized error handling
@@ -141,6 +145,7 @@ MAX_LISTS_PER_CONTEXT=10
 ```
 
 **Features:**
+
 - ✅ Memory-only storage for fast test execution
 - ✅ Minimal logging to reduce test noise
 - ✅ Automatic cleanup between test runs
@@ -170,12 +175,14 @@ DATA_DIRECTORY/
 ### Directory Permissions
 
 **Development:**
+
 ```bash
 mkdir -p ./dev-data
 chmod 755 ./dev-data
 ```
 
 **Production:**
+
 ```bash
 sudo mkdir -p /var/lib/task-manager
 sudo chown $USER:$USER /var/lib/task-manager
@@ -202,21 +209,23 @@ BACKUP_COMPRESSION=true
 
 ### Log Levels
 
-| Level | Description | Use Case |
-|-------|-------------|----------|
-| `error` | Only critical errors | Production, minimal logging |
-| `warn` | Errors and warnings | Production, balanced logging |
-| `info` | Informational messages | Development, normal operation |
-| `debug` | Detailed debugging info | Development, troubleshooting |
+| Level   | Description             | Use Case                      |
+| ------- | ----------------------- | ----------------------------- |
+| `error` | Only critical errors    | Production, minimal logging   |
+| `warn`  | Errors and warnings     | Production, balanced logging  |
+| `info`  | Informational messages  | Development, normal operation |
+| `debug` | Detailed debugging info | Development, troubleshooting  |
 
 ### Log Formats
 
 **Simple Format (Development):**
+
 ```
 2024-01-15 10:30:00 [INFO] Task created: "Learn MCP Tools"
 ```
 
 **JSON Format (Production):**
+
 ```json
 {
   "timestamp": "2024-01-15T10:30:00.000Z",
@@ -368,24 +377,24 @@ spec:
         app: task-manager
     spec:
       containers:
-      - name: task-manager
-        image: task-list-mcp:latest
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: MCP_LOG_LEVEL
-          value: "info"
-        - name: STORAGE_TYPE
-          value: "file"
-        - name: DATA_DIRECTORY
-          value: "/app/data"
-        volumeMounts:
-        - name: data-volume
-          mountPath: /app/data
+        - name: task-manager
+          image: task-list-mcp:latest
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: MCP_LOG_LEVEL
+              value: 'info'
+            - name: STORAGE_TYPE
+              value: 'file'
+            - name: DATA_DIRECTORY
+              value: '/app/data'
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
       volumes:
-      - name: data-volume
-        persistentVolumeClaim:
-          claimName: task-manager-pvc
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: task-manager-pvc
 ```
 
 ## 🔧 Configuration Validation
@@ -439,6 +448,7 @@ npm run health
 ### Common Issues
 
 #### Environment Variables Not Loading
+
 ```bash
 # Check if variables are set
 env | grep MCP_
@@ -449,6 +459,7 @@ source .env
 ```
 
 #### Data Directory Issues
+
 ```bash
 # Check directory exists and permissions
 ls -la $DATA_DIRECTORY
@@ -460,6 +471,7 @@ chmod 755 $DATA_DIRECTORY
 ```
 
 #### Storage Backend Issues
+
 ```bash
 # Test file storage
 echo '{"test": true}' > $DATA_DIRECTORY/test.json

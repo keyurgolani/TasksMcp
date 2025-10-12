@@ -1,6 +1,6 @@
 /**
  * Core todo types and interfaces for the MCP Task Manager
- * 
+ *
  * Defines the complete data model for todo lists, tasks, and related entities.
  * Includes features like action plans, implementation notes, and analytics.
  */
@@ -10,11 +10,11 @@
  * Represents the current state of a todo item
  */
 export enum TaskStatus {
-  PENDING = "pending",
-  IN_PROGRESS = "in_progress", 
-  COMPLETED = "completed",
-  BLOCKED = "blocked",
-  CANCELLED = "cancelled",
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  BLOCKED = 'blocked',
+  CANCELLED = 'cancelled',
 }
 
 /**
@@ -36,7 +36,7 @@ export enum Priority {
 export interface ActionStep {
   id: string;
   content: string;
-  status: "pending" | "in_progress" | "completed";
+  status: 'pending' | 'in_progress' | 'completed';
   completedAt?: Date;
   notes?: string;
   order: number;
@@ -65,7 +65,7 @@ export interface ImplementationNote {
   createdAt: Date;
   updatedAt: Date;
   author?: string; // For future multi-user support
-  type: "general" | "technical" | "decision" | "learning";
+  type: 'general' | 'technical' | 'decision' | 'learning';
 }
 
 /**
@@ -147,6 +147,7 @@ export interface TodoListSummary {
 export interface ListAnalytics {
   totalItems: number;
   completedItems: number;
+  pendingItems: number;
   inProgressItems: number;
   blockedItems: number;
   progress: number; // Percentage (0-100)
@@ -156,7 +157,7 @@ export interface ListAnalytics {
     itemsPerDay: number;
     completionRate: number;
   };
-  complexityDistribution: Record<number, number>;
+
   tagFrequency: Record<string, number>;
   dependencyGraph: DependencyNode[];
 }
@@ -188,14 +189,14 @@ export interface GetTodoListFilters {
 
 export interface GetTodoListSorting {
   field:
-    | "title"
-    | "status"
-    | "priority"
-    | "createdAt"
-    | "updatedAt"
-    | "completedAt"
-    | "estimatedDuration";
-  direction: "asc" | "desc";
+    | 'title'
+    | 'status'
+    | 'priority'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'completedAt'
+    | 'estimatedDuration';
+  direction: 'asc' | 'desc';
 }
 
 export interface GetTodoListPagination {

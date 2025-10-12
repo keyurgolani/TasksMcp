@@ -2,11 +2,18 @@
  * Unit tests for MultiSourceAggregator
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach as _beforeEach, vi } from 'vitest';
+
 import { MultiSourceAggregator } from '../../../../src/infrastructure/storage/multi-source-aggregator.js';
-import type { StorageBackend } from '../../../../src/shared/types/storage.js';
-import type { TodoList, TodoListSummary, TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+
 import type { SearchQuery } from '../../../../src/domain/repositories/todo-list.repository.js';
+import type { StorageBackend } from '../../../../src/shared/types/storage.js';
+import type {
+  TodoList,
+  TodoListSummary,
+  TaskStatus as _TaskStatus,
+  Priority as _Priority,
+} from '../../../../src/shared/types/todo.js';
 
 describe('MultiSourceAggregator', () => {
   // Helper to create mock TodoList
@@ -71,7 +78,7 @@ describe('MultiSourceAggregator', () => {
   ): StorageBackend => ({
     save: vi.fn(),
     load: vi.fn((id: string) => {
-      const list = lists.find((l) => l.id === id);
+      const list = lists.find(l => l.id === id);
       return Promise.resolve(list ?? null);
     }),
     delete: vi.fn(),
@@ -115,12 +122,24 @@ describe('MultiSourceAggregator', () => {
       expect(result.items).toHaveLength(3);
       expect(result.totalCount).toBe(3);
       expect(result.hasMore).toBe(false);
-      expect(result.items.map((l) => l.id)).toEqual(['list-1', 'list-2', 'list-3']);
+      expect(result.items.map(l => l.id)).toEqual([
+        'list-1',
+        'list-2',
+        'list-3',
+      ]);
     });
 
     it('should deduplicate lists with same ID', async () => {
-      const list1v1 = createMockList('list-1', 'List 1 v1', new Date('2025-01-10'));
-      const list1v2 = createMockList('list-1', 'List 1 v2', new Date('2025-01-11'));
+      const list1v1 = createMockList(
+        'list-1',
+        'List 1 v1',
+        new Date('2025-01-10')
+      );
+      const list1v2 = createMockList(
+        'list-1',
+        'List 1 v2',
+        new Date('2025-01-11')
+      );
 
       const backend1 = createMockBackend(
         [list1v1],
@@ -151,8 +170,16 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should resolve conflicts using priority strategy', async () => {
-      const list1v1 = createMockList('list-1', 'List 1 v1', new Date('2025-01-11'));
-      const list1v2 = createMockList('list-1', 'List 1 v2', new Date('2025-01-10'));
+      const list1v1 = createMockList(
+        'list-1',
+        'List 1 v1',
+        new Date('2025-01-11')
+      );
+      const list1v2 = createMockList(
+        'list-1',
+        'List 1 v2',
+        new Date('2025-01-10')
+      );
 
       const backend1 = createMockBackend(
         [list1v1],
@@ -182,8 +209,16 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should apply text search filter', async () => {
-      const list1 = createMockList('list-1', 'Shopping List', new Date('2025-01-10'));
-      const list2 = createMockList('list-2', 'Work Tasks', new Date('2025-01-11'));
+      const list1 = createMockList(
+        'list-1',
+        'Shopping List',
+        new Date('2025-01-10')
+      );
+      const list2 = createMockList(
+        'list-2',
+        'Work Tasks',
+        new Date('2025-01-11')
+      );
 
       const backend = createMockBackend(
         [list1, list2],
@@ -210,14 +245,26 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should apply project tag filter', async () => {
-      const list1 = { ...createMockList('list-1', 'List 1', new Date('2025-01-10')), projectTag: 'project-a' };
-      const list2 = { ...createMockList('list-2', 'List 2', new Date('2025-01-11')), projectTag: 'project-b' };
+      const list1 = {
+        ...createMockList('list-1', 'List 1', new Date('2025-01-10')),
+        projectTag: 'project-a',
+      };
+      const list2 = {
+        ...createMockList('list-2', 'List 2', new Date('2025-01-11')),
+        projectTag: 'project-b',
+      };
 
       const backend = createMockBackend(
         [list1, list2],
         [
-          { ...createMockSummary('list-1', 'List 1', new Date('2025-01-10')), projectTag: 'project-a' },
-          { ...createMockSummary('list-2', 'List 2', new Date('2025-01-11')), projectTag: 'project-b' },
+          {
+            ...createMockSummary('list-1', 'List 1', new Date('2025-01-10')),
+            projectTag: 'project-a',
+          },
+          {
+            ...createMockSummary('list-2', 'List 2', new Date('2025-01-11')),
+            projectTag: 'project-b',
+          },
         ]
       );
 
@@ -238,8 +285,18 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should apply status filter', async () => {
-      const list1 = createMockList('list-1', 'List 1', new Date('2025-01-10'), 100); // Completed
-      const list2 = createMockList('list-2', 'List 2', new Date('2025-01-11'), 50); // Active
+      const list1 = createMockList(
+        'list-1',
+        'List 1',
+        new Date('2025-01-10'),
+        100
+      ); // Completed
+      const list2 = createMockList(
+        'list-2',
+        'List 2',
+        new Date('2025-01-11'),
+        50
+      ); // Active
 
       const backend = createMockBackend(
         [list1, list2],
@@ -305,7 +362,7 @@ describe('MultiSourceAggregator', () => {
         createMockList(`list-${i}`, `List ${i}`, new Date(`2025-01-${10 + i}`))
       );
 
-      const summaries = lists.map((l) =>
+      const summaries = lists.map(l =>
         createMockSummary(l.id, l.title, l.updatedAt)
       );
 
@@ -370,9 +427,21 @@ describe('MultiSourceAggregator', () => {
 
   describe('aggregateSummaries', () => {
     it('should aggregate summaries from multiple sources', async () => {
-      const summary1 = createMockSummary('list-1', 'List 1', new Date('2025-01-10'));
-      const summary2 = createMockSummary('list-2', 'List 2', new Date('2025-01-11'));
-      const summary3 = createMockSummary('list-3', 'List 3', new Date('2025-01-12'));
+      const summary1 = createMockSummary(
+        'list-1',
+        'List 1',
+        new Date('2025-01-10')
+      );
+      const summary2 = createMockSummary(
+        'list-2',
+        'List 2',
+        new Date('2025-01-11')
+      );
+      const summary3 = createMockSummary(
+        'list-3',
+        'List 3',
+        new Date('2025-01-12')
+      );
 
       const backend1 = createMockBackend([], [summary1, summary2]);
       const backend2 = createMockBackend([], [summary3]);
@@ -395,8 +464,16 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should deduplicate summaries by priority', async () => {
-      const summary1v1 = createMockSummary('list-1', 'List 1 v1', new Date('2025-01-10'));
-      const summary1v2 = createMockSummary('list-1', 'List 1 v2', new Date('2025-01-11'));
+      const summary1v1 = createMockSummary(
+        'list-1',
+        'List 1 v1',
+        new Date('2025-01-10')
+      );
+      const summary1v2 = createMockSummary(
+        'list-1',
+        'List 1 v2',
+        new Date('2025-01-11')
+      );
 
       const backend1 = createMockBackend([], [summary1v1]);
       const backend2 = createMockBackend([], [summary1v2]);
@@ -419,8 +496,16 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should apply text filter to summaries', async () => {
-      const summary1 = createMockSummary('list-1', 'Shopping List', new Date('2025-01-10'));
-      const summary2 = createMockSummary('list-2', 'Work Tasks', new Date('2025-01-11'));
+      const summary1 = createMockSummary(
+        'list-1',
+        'Shopping List',
+        new Date('2025-01-10')
+      );
+      const summary2 = createMockSummary(
+        'list-2',
+        'Work Tasks',
+        new Date('2025-01-11')
+      );
 
       const backend = createMockBackend([], [summary1, summary2]);
 
@@ -441,8 +526,18 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should apply status filter to summaries', async () => {
-      const summary1 = createMockSummary('list-1', 'List 1', new Date('2025-01-10'), 100);
-      const summary2 = createMockSummary('list-2', 'List 2', new Date('2025-01-11'), 50);
+      const summary1 = createMockSummary(
+        'list-1',
+        'List 1',
+        new Date('2025-01-10'),
+        100
+      );
+      const summary2 = createMockSummary(
+        'list-2',
+        'List 2',
+        new Date('2025-01-11'),
+        50
+      );
 
       const backend = createMockBackend([], [summary1, summary2]);
 
@@ -463,8 +558,16 @@ describe('MultiSourceAggregator', () => {
     });
 
     it('should apply sorting to summaries', async () => {
-      const summary1 = createMockSummary('list-1', 'B List', new Date('2025-01-10'));
-      const summary2 = createMockSummary('list-2', 'A List', new Date('2025-01-11'));
+      const summary1 = createMockSummary(
+        'list-1',
+        'B List',
+        new Date('2025-01-10')
+      );
+      const summary2 = createMockSummary(
+        'list-2',
+        'A List',
+        new Date('2025-01-11')
+      );
 
       const backend = createMockBackend([], [summary1, summary2]);
 
@@ -490,7 +593,11 @@ describe('MultiSourceAggregator', () => {
 
     it('should apply pagination to summaries', async () => {
       const summaries = Array.from({ length: 10 }, (_, i) =>
-        createMockSummary(`list-${i}`, `List ${i}`, new Date(`2025-01-${10 + i}`))
+        createMockSummary(
+          `list-${i}`,
+          `List ${i}`,
+          new Date(`2025-01-${10 + i}`)
+        )
       );
 
       const backend = createMockBackend([], summaries);

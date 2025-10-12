@@ -81,12 +81,12 @@ interface ApiConfig {
 ### Basic Setup
 
 ```typescript
-import { RestApiServer } from "./app/rest-api-server.js";
-import { TodoListManager } from "./domain/lists/todo-list-manager.js";
+import { RestApiServer } from './app/rest-api-server.js';
+import { TaskListManager } from './domain/lists/task-list-manager.js';
 // ... import other managers
 
 // Initialize managers
-const todoListManager = new TodoListManager(storage);
+const taskListManager = new TaskListManager(storage);
 const dependencyManager = new DependencyResolver();
 // ... initialize other managers
 
@@ -94,9 +94,9 @@ const dependencyManager = new DependencyResolver();
 const server = new RestApiServer(
   {
     port: 3001,
-    corsOrigins: ["http://localhost:3000"],
+    corsOrigins: ['http://localhost:3000'],
   },
-  todoListManager,
+  taskListManager,
   dependencyManager,
   exitCriteriaManager,
   actionPlanManager,
@@ -106,7 +106,7 @@ const server = new RestApiServer(
 
 // Start server
 await server.start();
-console.log("Server running on http://localhost:3001");
+console.log('Server running on http://localhost:3001');
 
 // Stop server
 await server.stop();

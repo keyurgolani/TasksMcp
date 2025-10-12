@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
+
 import {
   formatHandlerError,
   createHandlerErrorFormatter,
@@ -75,7 +76,7 @@ describe('Handler Error Formatter', () => {
       });
 
       const schema = z.object({ priority: z.number() });
-      
+
       try {
         schema.parse({ priority: 'high' });
       } catch (error) {
@@ -105,6 +106,7 @@ describe('Handler Error Formatter', () => {
       const errorResult = await wrappedHandler({
         params: { arguments: { priority: 'high' } },
       });
+
       expect((errorResult as any).isError).toBe(true);
     });
   });
@@ -131,7 +133,7 @@ describe('Handler Error Formatter', () => {
         schema.parse({ priority: 'high' });
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
-        
+
         expect(result.content[0]?.text).toContain('📝 Working example');
         expect(result.content[0]?.text).toContain('listId');
         expect(result.content[0]?.text).toContain('title');
@@ -147,7 +149,7 @@ describe('Handler Error Formatter', () => {
         schema.parse({ priority: 'high' });
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
-        
+
         expect(result.content[0]?.text).toContain('🔧 Common fixes');
         expect(result.content[0]?.text).toContain('Use numbers 1-5');
       }
@@ -166,17 +168,17 @@ describe('Handler Error Formatter', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
         const message = result.content[0]?.text || '';
-        
+
         // Should contain clear error indicators
         expect(message).toContain('❌');
-        
+
         // Should contain helpful sections
         expect(message).toContain('🔧 Common fixes');
         expect(message).toContain('📝 Working example');
-        
+
         // Should be reasonably long (detailed)
         expect(message.length).toBeGreaterThan(200);
-        
+
         // Should contain actionable guidance
         expect(message.toLowerCase()).toMatch(/use|provide|try|example/);
       }
@@ -198,7 +200,7 @@ describe('Handler Error Formatter', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
         const message = result.content[0]?.text || '';
-        
+
         // Should handle multiple errors
         expect(message).toContain('validation error');
         expect(message).toContain('priority');

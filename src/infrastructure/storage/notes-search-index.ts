@@ -2,7 +2,6 @@
  * Notes search indexing for fast text search
  */
 
-
 import type { ImplementationNote } from '../../shared/types/todo.js';
 
 export interface SearchResult {
@@ -14,18 +13,26 @@ export interface SearchResult {
 }
 
 export class NotesSearchIndex {
-  private index = new Map<string, {
-    content: string;
-    listId: string;
-    taskId: string | undefined;
-    words: Set<string>;
-  }>();
+  private index = new Map<
+    string,
+    {
+      content: string;
+      listId: string;
+      taskId: string | undefined;
+      words: Set<string>;
+    }
+  >();
   private rebuildCount = 0;
 
   /**
    * Add note to search index
    */
-  addNote(noteId: string, note: ImplementationNote, listId: string, taskId?: string): void {
+  addNote(
+    noteId: string,
+    note: ImplementationNote,
+    listId: string,
+    taskId?: string
+  ): void {
     const words = this.tokenize(note.content);
     this.index.set(noteId, {
       content: note.content,
@@ -45,9 +52,12 @@ export class NotesSearchIndex {
   /**
    * Search notes by query (supports both string and object queries)
    */
-  search(query: string | any, noteContentMapOrLimit?: Map<string, any> | number): SearchResult[] | any {
+  search(
+    query: string | Record<string, unknown>,
+    noteContentMapOrLimit?: Map<string, unknown> | number
+  ): SearchResult[] | Record<string, unknown> {
     // Handle different method signatures for compatibility with tests
-    if (typeof query === 'object' && query.terms) {
+    if (typeof query === 'object' && query['terms']) {
       // Advanced search with object query
       return this.advancedSearch(query);
     }
@@ -56,20 +66,21 @@ export class NotesSearchIndex {
     if (typeof query !== 'string') {
       return [];
     }
-    
-    const limit = typeof noteContentMapOrLimit === 'number' ? noteContentMapOrLimit : 10;
+
+    const limit =
+      typeof noteContentMapOrLimit === 'number' ? noteContentMapOrLimit : 10;
     const queryWords = this.tokenize(query.toLowerCase());
     const results: SearchResult[] = [];
 
     for (const [noteId, indexEntry] of this.index.entries()) {
       let score = 0;
-      
+
       // Calculate score based on word matches
       for (const word of queryWords) {
         if (indexEntry.words.has(word)) {
           score += 1;
         }
-        
+
         // Partial matches get lower score
         for (const indexWord of indexEntry.words) {
           if (indexWord.includes(word) && indexWord !== word) {
@@ -90,23 +101,23 @@ export class NotesSearchIndex {
     }
 
     // Sort by score (highest first) and limit results
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return results.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
   /**
    * Advanced search with object query and filters
    */
-  private advancedSearch(query: any): any {
+  private advancedSearch(
+    query: Record<string, unknown>
+  ): Record<string, unknown> {
     const startTime = performance.now();
-    const results: any[] = [];
-    const terms = query.terms || [];
-    const limit = query.limit || 10;
+    const results: Record<string, unknown>[] = [];
+    const terms = (query['terms'] as string[]) || [];
+    const limit = (query['limit'] as number) || 10;
 
     for (const [noteId, indexEntry] of this.index.entries()) {
       let score = 0;
-      
+
       // Calculate score based on term matches
       for (const term of terms) {
         const termWords = this.tokenize(term.toLowerCase());
@@ -125,8 +136,8 @@ export class NotesSearchIndex {
           content: indexEntry.content,
           score,
           metadata: {
-            entityType: query.entityType || 'task',
-            type: query.noteType || 'technical',
+            entityType: query['entityType'] || 'task',
+            type: query['noteType'] || 'technical',
           },
         });
       }
@@ -136,8 +147,8 @@ export class NotesSearchIndex {
 
     return {
       results: results
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit),
+        .sort((a, b) => (b['score'] as number) - (a['score'] as number))
+        .slice(0, limit as number),
       searchTime,
       indexStats: this.getStats(),
     };
@@ -160,12 +171,14 @@ export class NotesSearchIndex {
   /**
    * Rebuild index from notes
    */
-  rebuild(notes: Array<{
-    id: string;
-    note: ImplementationNote;
-    listId: string;
-    taskId?: string;
-  }>): void {
+  rebuild(
+    notes: Array<{
+      id: string;
+      note: ImplementationNote;
+      listId: string;
+      taskId?: string;
+    }>
+  ): void {
     this.clear();
     for (const { id, note, listId, taskId } of notes) {
       this.addNote(id, note, listId, taskId);
@@ -206,11 +219,23 @@ export class NotesSearchIndex {
   /**
    * Rebuild index from notes array
    */
-  rebuildIndex(notes: Array<{ id: string; content: string; listId: string; taskId?: string }>): void {
+  rebuildIndex(
+    notes: Array<{
+      id: string;
+      content: string;
+      listId: string;
+      taskId?: string;
+    }>
+  ): void {
     this.clear();
     this.rebuildCount++;
     for (const note of notes) {
-      this.addNote(note.id, { content: note.content } as ImplementationNote, note.listId, note.taskId);
+      this.addNote(
+        note.id,
+        { content: note.content } as ImplementationNote,
+        note.listId,
+        note.taskId
+      );
     }
   }
 
@@ -246,15 +271,26 @@ export class NotesSearchIndex {
   /**
    * Index a note (alias for addNote for compatibility)
    */
-  indexNote(note: any, entityId: string, entityType?: string): void {
+  indexNote(
+    note: Record<string, unknown>,
+    entityId: string,
+    entityType?: string
+  ): void {
     const implementationNote: ImplementationNote = {
-      id: note.id || entityId,
-      content: note.content,
-      type: note.type || 'general',
-      createdAt: note.createdAt || new Date(),
-      updatedAt: note.updatedAt || new Date(),
+      id: (note['id'] as string) || entityId,
+      content: note['content'] as string,
+      type:
+        (note['type'] as 'general' | 'technical' | 'decision' | 'learning') ||
+        'general',
+      createdAt: (note['createdAt'] as Date) || new Date(),
+      updatedAt: (note['updatedAt'] as Date) || new Date(),
     };
-    this.addNote(note.id || entityId, implementationNote, entityId, entityType);
+    this.addNote(
+      (note['id'] as string) || entityId,
+      implementationNote,
+      entityId,
+      entityType
+    );
   }
 
   /**

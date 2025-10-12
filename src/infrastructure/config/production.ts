@@ -19,10 +19,7 @@ export const productionConfig = {
     enabled: true,
     interval: 30000,
   },
-  monitoring: {
-    enabled: true,
-    port: 9090,
-  },
+
   backup: {
     ...baseConfig.backup,
     enabled: true,

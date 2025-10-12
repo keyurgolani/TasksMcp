@@ -2,19 +2,20 @@
  * Integration tests for dependency management API endpoints
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import type { Express } from 'express';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+
 import { RestApiServer } from '../../../src/app/rest-api-server.js';
 import { TodoListManager } from '../../../src/domain/lists/todo-list-manager.js';
+import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
+import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../../src/domain/tasks/exit-criteria-manager.js';
-import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { NotesManager } from '../../../src/domain/tasks/notes-manager.js';
-import { IntelligenceManager } from '../../../src/domain/intelligence/intelligence-manager.js';
-import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
 import { MemoryStorageBackend } from '../../../src/infrastructure/storage/memory-storage.js';
-import { TaskStatus } from '../../../src/shared/types/todo.js';
+import { TaskStatus as _TaskStatus } from '../../../src/shared/types/todo.js';
+
+import type { Express } from 'express';
 
 describe('Dependency Management API Endpoints', () => {
   let server: RestApiServer;
@@ -38,7 +39,6 @@ describe('Dependency Management API Endpoints', () => {
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
     const notesManager = new NotesManager(repository);
-    const intelligenceManager = new IntelligenceManager();
 
     // Create and initialize server
     server = new RestApiServer(
@@ -47,8 +47,7 @@ describe('Dependency Management API Endpoints', () => {
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,
-      notesManager,
-      intelligenceManager
+      notesManager
     );
 
     await server.initialize();
@@ -63,47 +62,39 @@ describe('Dependency Management API Endpoints', () => {
 
   beforeEach(async () => {
     // Create a test list with tasks via API
-    const listResponse = await request(app)
-      .post('/api/v1/lists')
-      .send({
-        title: 'Test List',
-        description: 'Test list for dependency endpoints',
-      });
+    const listResponse = await request(app).post('/api/v1/lists').send({
+      title: 'Test List',
+      description: 'Test list for dependency endpoints',
+    });
 
     expect(listResponse.status).toBe(201);
     testListId = listResponse.body.data.id;
 
     // Add three tasks via API
-    const task1Response = await request(app)
-      .post('/api/v1/tasks')
-      .send({
-        listId: testListId,
-        title: 'Task 1',
-        description: 'First task',
-        priority: 3,
-      });
+    const task1Response = await request(app).post('/api/v1/tasks').send({
+      listId: testListId,
+      title: 'Task 1',
+      description: 'First task',
+      priority: 3,
+    });
     expect(task1Response.status).toBe(201);
     task1Id = task1Response.body.data.id;
 
-    const task2Response = await request(app)
-      .post('/api/v1/tasks')
-      .send({
-        listId: testListId,
-        title: 'Task 2',
-        description: 'Second task',
-        priority: 3,
-      });
+    const task2Response = await request(app).post('/api/v1/tasks').send({
+      listId: testListId,
+      title: 'Task 2',
+      description: 'Second task',
+      priority: 3,
+    });
     expect(task2Response.status).toBe(201);
     task2Id = task2Response.body.data.id;
 
-    const task3Response = await request(app)
-      .post('/api/v1/tasks')
-      .send({
-        listId: testListId,
-        title: 'Task 3',
-        description: 'Third task',
-        priority: 3,
-      });
+    const task3Response = await request(app).post('/api/v1/tasks').send({
+      listId: testListId,
+      title: 'Task 3',
+      description: 'Third task',
+      priority: 3,
+    });
     expect(task3Response.status).toBe(201);
     task3Id = task3Response.body.data.id;
   });
@@ -154,7 +145,7 @@ describe('Dependency Management API Endpoints', () => {
       // because the validation prevents it. This test verifies that the graph
       // endpoint correctly reports cycles when they exist (even though they
       // shouldn't exist in practice).
-      
+
       // Set up a simple dependency chain instead
       await request(app)
         .put(`/api/v1/tasks/${task2Id}?listId=${testListId}`)
@@ -224,7 +215,9 @@ describe('Dependency Management API Endpoints', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.isValid).toBe(false);
-      expect(response.body.data.errors).toContain('Item cannot depend on itself');
+      expect(response.body.data.errors).toContain(
+        'Item cannot depend on itself'
+      );
     });
 
     it('should detect circular dependencies', async () => {
@@ -336,6 +329,7 @@ describe('Dependency Management API Endpoints', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2); // Task 2 and Task 3 are now ready
+
       const readyIds = response.body.data.map((task: any) => task.id);
       expect(readyIds).toContain(task2Id);
       expect(readyIds).toContain(task3Id);

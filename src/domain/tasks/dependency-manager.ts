@@ -3,8 +3,9 @@
  */
 
 import { TaskStatus, type TodoItem } from '../../shared/types/todo.js';
-import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
 import { logger } from '../../shared/utils/logger.js';
+
+import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
 
 export interface DependencyNode {
   id: string;
@@ -33,6 +34,15 @@ export interface DependencyValidationResult {
   circularDependencies: string[][];
 }
 
+/**
+ * DependencyResolver manages task dependencies and validates dependency graphs
+ *
+ * This class provides functionality to:
+ * - Validate task dependencies and detect circular dependencies
+ * - Build and analyze dependency graphs
+ * - Calculate task readiness based on dependency completion
+ * - Provide detailed dependency analysis and blocking reasons
+ */
 export class DependencyResolver {
   private readonly graphCache = new Map<string, DependencyGraph>();
   private cacheTimeout: NodeJS.Timeout | undefined;
@@ -42,17 +52,17 @@ export class DependencyResolver {
 
   constructor(repository?: ITodoListRepository) {
     this.repository = repository;
-    
+
     // Setup periodic cache cleanup - more frequent to prevent memory buildup
     this.cacheTimeout = setInterval(() => {
       this.cleanupCache();
     }, 60000); // Clean up every minute (was 5 minutes)
-    
+
     logger.debug('DependencyResolver initialized', {
       hasRepository: !!repository,
     });
   }
-  
+
   /**
    * Gets the repository instance if available
    * @returns The repository instance or undefined
@@ -109,7 +119,9 @@ export class DependencyResolver {
         result.isValid = false;
         result.circularDependencies = cycles;
         result.errors.push(
-          `Circular dependencies detected: ${cycles.map(cycle => cycle.join(' -> ')).join(', ')}`
+          `Circular dependencies detected: ${cycles
+            .map(cycle => cycle.join(' -> '))
+            .join(', ')}`
         );
       }
 
@@ -570,75 +582,6 @@ export class DependencyResolver {
     } catch (error) {
       logger.error('Failed to calculate critical path', { error });
       return [];
-    }
-  }
-
-  /**
-   * Suggests optimal task ordering based on dependencies
-   */
-  suggestTaskOrder(items: TodoItem[]): TodoItem[] {
-    try {
-      const graph = this.buildDependencyGraph(items);
-      const ordered: TodoItem[] = [];
-      const processed = new Set<string>();
-
-      // Topological sort with priority consideration
-      const queue: string[] = [...graph.roots];
-
-      while (queue.length > 0) {
-        // Sort queue by priority and depth
-        queue.sort((a, b) => {
-          const nodeA = graph.nodes.get(a);
-          const nodeB = graph.nodes.get(b);
-          const itemA = items.find(i => i.id === a);
-          const itemB = items.find(i => i.id === b);
-
-          if (!nodeA || !nodeB || !itemA || !itemB) return 0;
-
-          // First by depth (deeper items first)
-          if (nodeA.depth !== nodeB.depth) {
-            return nodeB.depth - nodeA.depth;
-          }
-
-          // Then by priority (higher priority first)
-          return itemB.priority - itemA.priority;
-        });
-
-        const currentId = queue.shift();
-        if (currentId === undefined) break;
-        const currentItem = items.find(i => i.id === currentId);
-
-        if (currentItem && !processed.has(currentId)) {
-          ordered.push(currentItem);
-          processed.add(currentId);
-
-          // Add dependents whose dependencies are all processed
-          const node = graph.nodes.get(currentId);
-          if (node) {
-            for (const dependentId of node.dependents) {
-              const dependentNode = graph.nodes.get(dependentId);
-              if (dependentNode && !processed.has(dependentId)) {
-                const allDepsProcessed = dependentNode.dependencies.every(dep =>
-                  processed.has(dep)
-                );
-                if (allDepsProcessed && !queue.includes(dependentId)) {
-                  queue.push(dependentId);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      logger.debug('Task order suggested', {
-        originalCount: items.length,
-        orderedCount: ordered.length,
-      });
-
-      return ordered;
-    } catch (error) {
-      logger.error('Failed to suggest task order', { error });
-      return items; // Return original order on error
     }
   }
 

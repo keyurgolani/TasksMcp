@@ -3,10 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { handleGetList } from '../../../../src/api/handlers/get-list.js';
-import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+
+import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
@@ -84,7 +86,7 @@ describe('handleGetList with dependency information', () => {
     const result = await handleGetList(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.tasks).toHaveLength(1);
     expect(response.tasks[0]).toMatchObject({
@@ -148,12 +150,14 @@ describe('handleGetList with dependency information', () => {
     const result = await handleGetList(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.tasks).toHaveLength(2);
-    
+
     // Check dependency task
-    const dependencyTaskResponse = response.tasks.find((t: any) => t.id === dependencyId);
+    const dependencyTaskResponse = response.tasks.find(
+      (t: any) => t.id === dependencyId
+    );
     expect(dependencyTaskResponse).toMatchObject({
       id: dependencyId,
       dependencies: [],
@@ -161,7 +165,9 @@ describe('handleGetList with dependency information', () => {
     });
 
     // Check dependent task
-    const dependentTaskResponse = response.tasks.find((t: any) => t.id === dependentId);
+    const dependentTaskResponse = response.tasks.find(
+      (t: any) => t.id === dependentId
+    );
     expect(dependentTaskResponse).toMatchObject({
       id: dependentId,
       dependencies: [dependencyId],
@@ -222,12 +228,14 @@ describe('handleGetList with dependency information', () => {
     const result = await handleGetList(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.tasks).toHaveLength(2);
-    
+
     // Check dependency task
-    const dependencyTaskResponse = response.tasks.find((t: any) => t.id === dependencyId);
+    const dependencyTaskResponse = response.tasks.find(
+      (t: any) => t.id === dependencyId
+    );
     expect(dependencyTaskResponse).toMatchObject({
       id: dependencyId,
       dependencies: [],
@@ -235,7 +243,9 @@ describe('handleGetList with dependency information', () => {
     });
 
     // Check dependent task (should be blocked)
-    const dependentTaskResponse = response.tasks.find((t: any) => t.id === dependentId);
+    const dependentTaskResponse = response.tasks.find(
+      (t: any) => t.id === dependentId
+    );
     expect(dependentTaskResponse).toMatchObject({
       id: dependentId,
       dependencies: [dependencyId],
@@ -308,12 +318,14 @@ describe('handleGetList with dependency information', () => {
     const result = await handleGetList(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.tasks).toHaveLength(3);
-    
+
     // Check dependent task (should be blocked by dep2 only, since dep1 is completed)
-    const dependentTaskResponse = response.tasks.find((t: any) => t.id === dependentId);
+    const dependentTaskResponse = response.tasks.find(
+      (t: any) => t.id === dependentId
+    );
     expect(dependentTaskResponse).toMatchObject({
       id: dependentId,
       dependencies: [dep1Id, dep2Id],

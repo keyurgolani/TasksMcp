@@ -1,6 +1,6 @@
 /**
  * Comprehensive Validation Tests
- * 
+ *
  * Tests for all new validation and preprocessing functionality to ensure reliability
  * and prevent regressions. This covers parameter preprocessing, error formatting,
  * and enum fuzzy matching with extensive edge cases.
@@ -8,24 +8,25 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { z, ZodError } from 'zod';
+
 import {
-  ParameterPreprocessor,
-  preprocessParameters,
-  type PreprocessingConfig,
-  type PreprocessingResult,
-} from '../../../../src/shared/utils/parameter-preprocessor.js';
+  EnumMatcher,
+  findClosestEnumValue as _findClosestEnumValue,
+  getEnumSuggestions as _getEnumSuggestions,
+  type EnumMatchResult as _EnumMatchResult,
+} from '../../../../src/shared/utils/enum-matcher.js';
 import {
   ErrorFormatter,
-  formatZodError,
-  createErrorContext,
+  formatZodError as _formatZodError,
+  createErrorContext as _createErrorContext,
   type EnhancedErrorMessage,
 } from '../../../../src/shared/utils/error-formatter.js';
 import {
-  EnumMatcher,
-  findClosestEnumValue,
-  getEnumSuggestions,
-  type EnumMatchResult,
-} from '../../../../src/shared/utils/enum-matcher.js';
+  ParameterPreprocessor,
+  preprocessParameters as _preprocessParameters,
+  type PreprocessingConfig as _PreprocessingConfig,
+  type PreprocessingResult as _PreprocessingResult,
+} from '../../../../src/shared/utils/parameter-preprocessor.js';
 
 describe('Comprehensive Validation Tests', () => {
   describe('Parameter Preprocessing Edge Cases', () => {
@@ -50,11 +51,16 @@ describe('Comprehensive Validation Tests', () => {
 
       expect(result.parameters['task.priority']).toBe(5);
       expect(result.parameters['config.enabled']).toBe(true);
-      expect(result.parameters['metadata.tags']).toEqual(['urgent', 'important']);
+      expect(result.parameters['metadata.tags']).toEqual([
+        'urgent',
+        'important',
+      ]);
       expect(result.parameters['settings.timeout']).toBe(30.5);
       expect(result.parameters['flags.debug']).toBe(false);
       expect(result.parameters['data.count']).toBe(0);
-      expect(result.parameters['info.description']).toBe('Regular string - no conversion');
+      expect(result.parameters['info.description']).toBe(
+        'Regular string - no conversion'
+      );
       expect(result.conversions).toHaveLength(6);
       expect(result.errors).toHaveLength(0);
     });
@@ -75,10 +81,10 @@ describe('Comprehensive Validation Tests', () => {
       expect(result.parameters.invalidJson2).toBe('{"key": value}');
       expect(result.parameters.invalidJson3).toBe('[1, 2, 3]extra');
       expect(result.parameters.invalidJson4).toBe('{broken json}');
-      
+
       // Valid JSON should be converted
       expect(result.parameters.validJson).toEqual(['valid', 'array']);
-      
+
       expect(result.conversions).toHaveLength(1); // Only validJson converted
       expect(result.errors).toHaveLength(0); // No errors, just no conversion
     });
@@ -129,7 +135,7 @@ describe('Comprehensive Validation Tests', () => {
       expect(result.parameters.arabic).toBe('مرحبا');
       expect(result.parameters.specialChars).toBe('!@#$%^&*()');
       expect(result.parameters.mixedContent).toBe('Hello 世界 🌍');
-      
+
       // Numbers and booleans should still be converted
       expect(result.parameters.numberWithUnicode).toBe(42);
       expect(result.parameters.booleanWithUnicode).toBe(true);
@@ -202,12 +208,18 @@ describe('Comprehensive Validation Tests', () => {
           },
         });
       } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(error as ZodError);
+        const formatted = ErrorFormatter.formatValidationError(
+          error as ZodError
+        );
         const deepError = formatted[0];
-        
+
         expect(deepError.field).toBe('level1.level2.level3.deepValue');
-        expect(deepError.message).toContain('level1.level2.level3.deepValue: Expected number');
-        expect(deepError.suggestion).toContain('Please provide a value of type number');
+        expect(deepError.message).toContain(
+          'level1.level2.level3.deepValue: Expected number'
+        );
+        expect(deepError.suggestion).toContain(
+          'Please provide a value of type number'
+        );
       }
     });
 
@@ -227,20 +239,22 @@ describe('Comprehensive Validation Tests', () => {
           enabled: 'maybe',
         });
       } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(error as ZodError);
-        
+        const formatted = ErrorFormatter.formatValidationError(
+          error as ZodError
+        );
+
         expect(formatted).toHaveLength(4);
-        
+
         const priorityError = formatted.find(e => e.field === 'priority');
         expect(priorityError?.code).toBe('invalid_type');
-        
+
         const statusError = formatted.find(e => e.field === 'status');
-        expect(statusError?.code).toBe('invalid_enum_value');
+        expect(statusError?.code).toBe('invalid_value');
         expect(statusError?.suggestion).toContain('Please choose one of:');
-        
+
         const tagsError = formatted.find(e => e.field === 'tags');
         expect(tagsError?.code).toBe('invalid_type');
-        
+
         const enabledError = formatted.find(e => e.field === 'enabled');
         expect(enabledError?.code).toBe('invalid_type');
       }
@@ -259,32 +273,45 @@ describe('Comprehensive Validation Tests', () => {
           error as ZodError,
           { toolName: 'add_task' }
         );
-        
+
         const filterTasksFormatted = ErrorFormatter.formatValidationError(
           error as ZodError,
           { toolName: 'search_tool' }
         );
 
         // Should have different suggestions based on tool context
-        const addTaskPriorityError = addTaskFormatted.find(e => e.field === 'priority');
-        const filterTasksPriorityError = filterTasksFormatted.find(e => e.field === 'priority');
-        
-        expect(addTaskPriorityError?.suggestion).toBe('Use numbers 1-5, where 5 is highest priority');
-        expect(filterTasksPriorityError?.suggestion).toBe('Use numbers 1-5 to filter by priority level');
+        const addTaskPriorityError = addTaskFormatted.find(
+          e => e.field === 'priority'
+        );
+        const filterTasksPriorityError = filterTasksFormatted.find(
+          e => e.field === 'priority'
+        );
+
+        expect(addTaskPriorityError?.suggestion).toBe(
+          'Use numbers 1-5, where 5 is highest priority'
+        );
+        expect(filterTasksPriorityError?.suggestion).toBe(
+          'Use numbers 1-5 to filter by priority level'
+        );
       }
     });
 
     it('should handle error display formatting edge cases', () => {
-      const manyErrors: EnhancedErrorMessage[] = Array.from({ length: 15 }, (_, i) => ({
-        message: `Error ${i + 1}`,
-        suggestion: `Suggestion ${i + 1}`,
-        example: `Example ${i + 1}`,
-        field: `field${i + 1}`,
-        code: 'test',
-      }));
+      const manyErrors: EnhancedErrorMessage[] = Array.from(
+        { length: 15 },
+        (_, i) => ({
+          message: `Error ${i + 1}`,
+          suggestion: `Suggestion ${i + 1}`,
+          example: `Example ${i + 1}`,
+          field: `field${i + 1}`,
+          code: 'test',
+        })
+      );
 
-      const display = ErrorFormatter.formatErrorsForDisplay(manyErrors, { maxErrors: 5 });
-      
+      const display = ErrorFormatter.formatErrorsForDisplay(manyErrors, {
+        maxErrors: 5,
+      });
+
       expect(display).toContain('Found 15 validation errors:');
       expect(display).toContain('1. Error 1');
       expect(display).toContain('5. Error 5');
@@ -313,11 +340,16 @@ describe('Comprehensive Validation Tests', () => {
     });
 
     it('should handle very long enum values and inputs', () => {
-      const longEnum = 'this_is_a_very_long_enum_value_that_might_cause_performance_issues';
-      const longInput = 'this_is_a_very_long_input_that_should_match_the_enum_value';
-      
-      const result = matcher.findClosestEnumValue(longInput, [longEnum, 'short']);
-      
+      const longEnum =
+        'this_is_a_very_long_enum_value_that_might_cause_performance_issues';
+      const longInput =
+        'this_is_a_very_long_input_that_should_match_the_enum_value';
+
+      const result = matcher.findClosestEnumValue(longInput, [
+        longEnum,
+        'short',
+      ]);
+
       expect(result.suggestions.length).toBeGreaterThan(0);
       expect(result.match).toBeDefined();
     });
@@ -331,18 +363,24 @@ describe('Comprehensive Validation Tests', () => {
         'test/with/slashes',
       ];
 
-      const result1 = matcher.findClosestEnumValue('test-with-dashes', specialEnums);
+      const result1 = matcher.findClosestEnumValue(
+        'test-with-dashes',
+        specialEnums
+      );
       expect(result1.match).toBe('test-with-dashes');
       expect(result1.matchType).toBe('exact');
 
-      const result2 = matcher.findClosestEnumValue('test with dashes', specialEnums);
+      const result2 = matcher.findClosestEnumValue(
+        'test with dashes',
+        specialEnums
+      );
       expect(result2.suggestions.length).toBeGreaterThan(0);
     });
 
     it('should provide multiple suggestions when confidence is low', () => {
       const enums = ['apple', 'application', 'apply', 'appreciate'];
       const result = matcher.findClosestEnumValue('app', enums);
-      
+
       expect(result.suggestions.length).toBeGreaterThan(1);
       expect(result.suggestions.every(s => s.confidence > 0)).toBe(true);
     });
@@ -350,12 +388,15 @@ describe('Comprehensive Validation Tests', () => {
     it('should handle case sensitivity configuration correctly', () => {
       const caseSensitive = new EnumMatcher({ caseSensitive: true });
       const caseInsensitive = new EnumMatcher({ caseSensitive: false });
-      
+
       const enums = ['Test', 'TEST', 'test'];
-      
+
       const sensitiveResult = caseSensitive.findClosestEnumValue('test', enums);
-      const insensitiveResult = caseInsensitive.findClosestEnumValue('TEST', enums);
-      
+      const insensitiveResult = caseInsensitive.findClosestEnumValue(
+        'TEST',
+        enums
+      );
+
       expect(sensitiveResult.match).toBe('test');
       expect(insensitiveResult.matchType).toBe('exact');
     });
@@ -364,7 +405,7 @@ describe('Comprehensive Validation Tests', () => {
   describe('Integration Scenarios', () => {
     it('should handle complete preprocessing and validation pipeline', () => {
       const preprocessor = new ParameterPreprocessor();
-      
+
       // Simulate agent input with type coercion needs
       const agentInput = {
         priority: '5',
@@ -375,7 +416,7 @@ describe('Comprehensive Validation Tests', () => {
 
       // Preprocess parameters
       const preprocessed = preprocessor.preprocessParameters(agentInput);
-      
+
       expect(preprocessed.parameters.priority).toBe(5);
       expect(preprocessed.parameters.enabled).toBe(true);
       expect(preprocessed.parameters.tags).toEqual(['urgent', 'important']);
@@ -395,7 +436,7 @@ describe('Comprehensive Validation Tests', () => {
 
     it('should handle preprocessing failures gracefully', () => {
       const preprocessor = new ParameterPreprocessor();
-      
+
       // Parameters that might cause issues but shouldn't crash
       const problematicInput = {
         validNumber: '42',
@@ -405,9 +446,11 @@ describe('Comprehensive Validation Tests', () => {
       };
 
       const result = preprocessor.preprocessParameters(problematicInput);
-      
+
       expect(result.parameters.validNumber).toBe(42);
-      expect(result.parameters.invalidButSafe).toBe('not-a-number-but-thats-ok');
+      expect(result.parameters.invalidButSafe).toBe(
+        'not-a-number-but-thats-ok'
+      );
       expect(result.parameters.emptyString).toBe('');
       expect(result.parameters.nullValue).toBe(null);
       expect(result.errors).toHaveLength(0); // Should not have errors
@@ -415,7 +458,7 @@ describe('Comprehensive Validation Tests', () => {
 
     it('should provide end-to-end enhanced error experience', () => {
       const preprocessor = new ParameterPreprocessor();
-      
+
       // Agent input that will fail validation even after preprocessing
       const agentInput = {
         priority: '10', // Will be converted to 10, but max is 5
@@ -443,9 +486,9 @@ describe('Comprehensive Validation Tests', () => {
           error as ZodError,
           { toolName: 'add_task' }
         );
-        
+
         expect(formatted.length).toBeGreaterThan(0);
-        
+
         const display = ErrorFormatter.formatErrorsForDisplay(formatted);
         expect(display).toContain('❌');
         expect(display).toContain('💡');
@@ -456,7 +499,7 @@ describe('Comprehensive Validation Tests', () => {
   describe('Performance and Scalability', () => {
     it('should handle large parameter objects efficiently', () => {
       const preprocessor = new ParameterPreprocessor();
-      
+
       // Create large parameter object
       const largeParams: Record<string, unknown> = {};
       for (let i = 0; i < 1000; i++) {
@@ -489,7 +532,9 @@ describe('Comprehensive Validation Tests', () => {
         complexSchema.parse(invalidInput);
       } catch (error) {
         const startTime = Date.now();
-        const formatted = ErrorFormatter.formatValidationError(error as ZodError);
+        const formatted = ErrorFormatter.formatValidationError(
+          error as ZodError
+        );
         const endTime = Date.now();
 
         expect(endTime - startTime).toBeLessThan(50); // Should be fast
@@ -499,10 +544,13 @@ describe('Comprehensive Validation Tests', () => {
 
     it('should handle enum matching with large sets efficiently', () => {
       const matcher = new EnumMatcher();
-      
+
       // Create large enum set
-      const largeEnumSet = Array.from({ length: 1000 }, (_, i) => `option_${i}`);
-      
+      const largeEnumSet = Array.from(
+        { length: 1000 },
+        (_, i) => `option_${i}`
+      );
+
       const startTime = Date.now();
       const result = matcher.findClosestEnumValue('option_500', largeEnumSet);
       const endTime = Date.now();
@@ -516,7 +564,7 @@ describe('Comprehensive Validation Tests', () => {
   describe('Backward Compatibility', () => {
     it('should not break existing valid requests', () => {
       const preprocessor = new ParameterPreprocessor();
-      
+
       // Existing request that should work without changes
       const existingRequest = {
         priority: 5, // Already a number
@@ -526,7 +574,7 @@ describe('Comprehensive Validation Tests', () => {
       };
 
       const result = preprocessor.preprocessParameters(existingRequest);
-      
+
       expect(result.parameters).toEqual(existingRequest); // Should be unchanged
       expect(result.conversions).toHaveLength(0); // No conversions needed
     });
@@ -539,13 +587,15 @@ describe('Comprehensive Validation Tests', () => {
       try {
         schema.parse({ priority: 'invalid' });
       } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(error as ZodError);
-        
+        const formatted = ErrorFormatter.formatValidationError(
+          error as ZodError
+        );
+
         // Should still have the basic structure
         expect(formatted[0]).toHaveProperty('message');
         expect(formatted[0]).toHaveProperty('field');
         expect(formatted[0]).toHaveProperty('code');
-        
+
         // But now with enhancements
         expect(formatted[0]).toHaveProperty('suggestion');
         expect(formatted[0]).toHaveProperty('example');
@@ -556,7 +606,7 @@ describe('Comprehensive Validation Tests', () => {
   describe('Tool Examples Integration', () => {
     it('should provide examples for all major tools', () => {
       const tools = ['add_task', 'search_tool', 'create_list'];
-      
+
       tools.forEach(toolName => {
         const schema = z.object({
           priority: z.number(),
@@ -569,7 +619,7 @@ describe('Comprehensive Validation Tests', () => {
             error as ZodError,
             { toolName }
           );
-          
+
           // Should have some guidance (either suggestion or example)
           const priorityError = formatted.find(e => e.field === 'priority');
           expect(
@@ -591,7 +641,7 @@ describe('Comprehensive Validation Tests', () => {
           error as ZodError,
           { toolName: 'add_task' }
         );
-        
+
         const tagsError = formatted.find(e => e.field === 'tags');
         expect(tagsError?.example).toBe('["urgent", "important", "bug-fix"]');
       }
@@ -602,32 +652,36 @@ describe('Comprehensive Validation Tests', () => {
     it('should not leak memory with repeated operations', () => {
       const preprocessor = new ParameterPreprocessor();
       const matcher = new EnumMatcher();
-      
+
       // Perform many operations
       for (let i = 0; i < 100; i++) {
         preprocessor.preprocessParameters({
           number: String(i),
           boolean: i % 2 === 0 ? 'true' : 'false',
         });
-        
-        matcher.findClosestEnumValue(`option${i}`, ['option1', 'option2', 'option3']);
+
+        matcher.findClosestEnumValue(`option${i}`, [
+          'option1',
+          'option2',
+          'option3',
+        ]);
       }
-      
+
       // Should complete without issues
       expect(true).toBe(true);
     });
 
     it('should handle cache management correctly', () => {
       const matcher = new EnumMatcher();
-      
+
       // Fill cache
       for (let i = 0; i < 10; i++) {
         matcher.findClosestEnumValue(`test${i}`, ['option1', 'option2']);
       }
-      
+
       const stats = matcher.getCacheStats();
       expect(stats.size).toBeGreaterThan(0);
-      
+
       // Clear cache
       matcher.clearCache();
       expect(matcher.getCacheStats().size).toBe(0);

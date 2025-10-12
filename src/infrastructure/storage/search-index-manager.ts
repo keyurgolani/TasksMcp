@@ -3,7 +3,7 @@
  */
 
 import { logger } from '../../shared/utils/logger.js';
-import { performanceMonitor } from '../monitoring/performance-monitor.js';
+
 import type { ImplementationNote } from '../../shared/types/todo.js';
 
 export interface SearchIndex {
@@ -26,7 +26,7 @@ export interface NoteIndexEntry {
   updatedAt: Date;
   contentLength: number;
   termCount: number;
-  projectTag?: string;
+  projectTag: string | undefined;
 }
 
 export interface SearchQuery {
@@ -50,159 +50,140 @@ export interface SearchResult {
 
 export interface SearchResponse {
   results: SearchResult[];
-  total: number;
-  hasMore: boolean;
+  totalResults: number;
   searchTime: number;
-  indexStats: {
-    totalNotes: number;
-    totalTerms: number;
-    indexSize: number;
-  };
+  query: SearchQuery;
 }
 
 export interface IndexStats {
   totalNotes: number;
   totalTerms: number;
   averageTermsPerNote: number;
-  memoryUsage: number;
-  lastRebuild: Date;
-  rebuildCount: number;
+  indexSize: number;
+  typeDistribution: Record<string, number>;
 }
 
-export class NotesSearchIndex {
-  private index: SearchIndex = {
-    termIndex: new Map(),
-    noteMetadata: new Map(),
-    typeIndex: new Map(),
-    dateIndex: new Map(),
-  };
-
-  private readonly stopWords = new Set([
-    'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
-    'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
-    'to', 'was', 'will', 'with', 'would', 'you', 'your', 'this', 'they',
-  ]);
-
-  private rebuildCount = 0;
-  private lastRebuild = new Date();
+export class NotesSearchIndexManager {
+  private index: SearchIndex;
 
   constructor() {
-    logger.debug('NotesSearchIndex initialized');
+    this.index = {
+      termIndex: new Map(),
+      noteMetadata: new Map(),
+      typeIndex: new Map(),
+      dateIndex: new Map(),
+    };
+
+    logger.debug('NotesSearchIndexManager initialized');
   }
 
   /**
-   * Add or update a note in the search index
+   * Add a note to the search index
    */
-  indexNote(
+  addNoteToIndex(
     note: ImplementationNote,
     entityId: string,
     entityType: 'task' | 'list',
     projectTag?: string
   ): void {
-    performanceMonitor.timeOperation(
-      'notes_index_add',
-      async () => {
-        // Remove existing entry if it exists
-        this.removeNoteFromIndex(note.id);
+    // Remove existing entry if it exists
+    this.removeNoteFromIndex(note.id);
 
-        // Extract and normalize terms from content
-        const terms = this.extractTerms(note.content);
-        
-        // Create metadata entry
-        const metadata: NoteIndexEntry = {
-          id: note.id,
-          entityId,
-          entityType,
-          type: note.type,
-          createdAt: note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt),
-          updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
-          contentLength: note.content.length,
-          termCount: terms.length,
-          projectTag: projectTag || '',
-        };
+    // Extract and normalize terms from content
+    const terms = this.extractTerms(note.content);
 
-        // Add to metadata index
-        this.index.noteMetadata.set(note.id, metadata);
+    // Create metadata entry
+    const metadata: NoteIndexEntry = {
+      id: note.id,
+      entityId,
+      entityType,
+      type: note.type,
+      createdAt:
+        note.createdAt instanceof Date
+          ? note.createdAt
+          : new Date(note.createdAt),
+      updatedAt:
+        note.updatedAt instanceof Date
+          ? note.updatedAt
+          : new Date(note.updatedAt),
+      contentLength: note.content.length,
+      termCount: terms.length,
+      projectTag,
+    };
 
-        // Add to term index
-        for (const term of terms) {
-          if (!this.index.termIndex.has(term)) {
-            this.index.termIndex.set(term, new Set());
-          }
-          this.index.termIndex.get(term)!.add(note.id);
-        }
+    // Add to metadata index
+    this.index.noteMetadata.set(note.id, metadata);
 
-        // Add to type index
-        if (!this.index.typeIndex.has(note.type)) {
-          this.index.typeIndex.set(note.type, new Set());
-        }
-        this.index.typeIndex.get(note.type)!.add(note.id);
+    // Add to term index
+    for (const term of terms) {
+      if (!this.index.termIndex.has(term)) {
+        this.index.termIndex.set(term, new Set());
+      }
+      this.index.termIndex.get(term)!.add(note.id);
+    }
 
-        // Add to date index
-        const dateKey = this.formatDateKey(metadata.createdAt);
-        if (!this.index.dateIndex.has(dateKey)) {
-          this.index.dateIndex.set(dateKey, new Set());
-        }
-        this.index.dateIndex.get(dateKey)!.add(note.id);
+    // Add to type index
+    if (!this.index.typeIndex.has(note.type)) {
+      this.index.typeIndex.set(note.type, new Set());
+    }
+    this.index.typeIndex.get(note.type)!.add(note.id);
 
-        logger.debug('Note indexed', {
-          noteId: note.id,
-          entityId,
-          entityType,
-          termCount: terms.length,
-          contentLength: note.content.length,
-        });
-      },
-      { noteId: note.id, entityId, entityType }
-    );
+    // Add to date index
+    const dateKey = this.formatDateKey(metadata.createdAt);
+    if (!this.index.dateIndex.has(dateKey)) {
+      this.index.dateIndex.set(dateKey, new Set());
+    }
+    this.index.dateIndex.get(dateKey)!.add(note.id);
+
+    logger.debug('Note added to index', {
+      noteId: note.id,
+      entityId,
+      entityType,
+      termCount: terms.length,
+      contentLength: note.content.length,
+    });
   }
 
   /**
    * Remove a note from the search index
    */
   removeNoteFromIndex(noteId: string): void {
-    performanceMonitor.timeOperation(
-      'notes_index_remove',
-      async () => {
-        const metadata = this.index.noteMetadata.get(noteId);
-        if (!metadata) {
-          return; // Note not in index
-        }
+    const metadata = this.index.noteMetadata.get(noteId);
+    if (!metadata) {
+      return; // Note not in index
+    }
 
-        // Remove from metadata index
-        this.index.noteMetadata.delete(noteId);
+    // Remove from metadata index
+    this.index.noteMetadata.delete(noteId);
 
-        // Remove from term index
-        for (const [term, noteIds] of this.index.termIndex) {
-          noteIds.delete(noteId);
-          if (noteIds.size === 0) {
-            this.index.termIndex.delete(term);
-          }
-        }
+    // Remove from term index
+    for (const [term, noteIds] of this.index.termIndex) {
+      noteIds.delete(noteId);
+      if (noteIds.size === 0) {
+        this.index.termIndex.delete(term);
+      }
+    }
 
-        // Remove from type index
-        const typeNotes = this.index.typeIndex.get(metadata.type);
-        if (typeNotes) {
-          typeNotes.delete(noteId);
-          if (typeNotes.size === 0) {
-            this.index.typeIndex.delete(metadata.type);
-          }
-        }
+    // Remove from type index
+    const typeSet = this.index.typeIndex.get(metadata.type);
+    if (typeSet) {
+      typeSet.delete(noteId);
+      if (typeSet.size === 0) {
+        this.index.typeIndex.delete(metadata.type);
+      }
+    }
 
-        // Remove from date index
-        const dateKey = this.formatDateKey(metadata.createdAt);
-        const dateNotes = this.index.dateIndex.get(dateKey);
-        if (dateNotes) {
-          dateNotes.delete(noteId);
-          if (dateNotes.size === 0) {
-            this.index.dateIndex.delete(dateKey);
-          }
-        }
+    // Remove from date index
+    const dateKey = this.formatDateKey(metadata.createdAt);
+    const dateSet = this.index.dateIndex.get(dateKey);
+    if (dateSet) {
+      dateSet.delete(noteId);
+      if (dateSet.size === 0) {
+        this.index.dateIndex.delete(dateKey);
+      }
+    }
 
-        logger.debug('Note removed from index', { noteId });
-      },
-      { noteId }
-    );
+    logger.debug('Note removed from index', { noteId });
   }
 
   /**
@@ -213,91 +194,81 @@ export class NotesSearchIndex {
     noteContentMap: Map<string, ImplementationNote>
   ): SearchResponse {
     const startTime = performance.now();
-    
-    try {
-      // Normalize search terms
-      const searchTerms = query.terms
-        .map(term => this.normalizeText(term))
-        .filter(term => term.length > 0 && !this.stopWords.has(term));
 
-      if (searchTerms.length === 0) {
-        return this.createEmptySearchResponse(startTime);
-      }
-
-      // Find candidate note IDs based on term matches
-      let candidateIds = this.findCandidateNotes(searchTerms);
-
-      // Apply filters
-      candidateIds = this.applyFilters(candidateIds, query);
-
-      // Score and rank results
-      const scoredResults = this.scoreResults(candidateIds, searchTerms, noteContentMap);
-
-      // Sort by score (descending)
-      scoredResults.sort((a, b) => b.score - a.score);
-
-      // Apply pagination
-      const total = scoredResults.length;
-      const offset = query.offset || 0;
-      const limit = query.limit || 50;
-      const paginatedResults = scoredResults.slice(offset, offset + limit);
-
-      const searchTime = performance.now() - startTime;
-
-      logger.debug('Notes search completed', {
-        query: query.terms.join(' '),
-        totalResults: total,
-        returnedResults: paginatedResults.length,
-        searchTime,
-      });
-
-      return {
-        results: paginatedResults,
-        total,
-        hasMore: offset + limit < total,
-        searchTime,
-        indexStats: {
-          totalNotes: this.index.noteMetadata.size,
-          totalTerms: this.index.termIndex.size,
-          indexSize: this.calculateIndexSize(),
-        },
-      };
-    } catch (error) {
-      logger.error('Notes search failed', { query, error });
+    // Handle empty query
+    if (!query.terms || query.terms.length === 0) {
       return this.createEmptySearchResponse(startTime);
     }
+
+    // Normalize search terms
+    const searchTerms = query.terms.map(term => this.normalizeText(term));
+
+    // Find candidate notes based on term matching
+    const candidateIds = this.findCandidateNotes(searchTerms);
+
+    // Apply additional filters
+    const filteredIds = this.applyFilters(candidateIds, query);
+
+    // Score and rank results
+    const results = this.scoreResults(filteredIds, searchTerms, noteContentMap);
+
+    // Apply pagination
+    const offset = query.offset || 0;
+    const limit = query.limit || 10;
+    const paginatedResults = results.slice(offset, offset + limit);
+
+    const searchTime = performance.now() - startTime;
+
+    logger.debug('Search completed', {
+      query: query.terms,
+      candidateCount: candidateIds.size,
+      filteredCount: filteredIds.size,
+      resultCount: results.length,
+      searchTime,
+    });
+
+    return {
+      results: paginatedResults,
+      totalResults: results.length,
+      searchTime,
+      query,
+    };
   }
 
   /**
-   * Rebuild the entire search index
+   * Rebuild the entire index from a collection of notes
    */
   rebuildIndex(
-    notes: Array<ImplementationNote & { entityId: string; entityType: 'task' | 'list'; projectTag?: string }>
+    notes: Array<
+      ImplementationNote & {
+        entityId: string;
+        entityType: 'task' | 'list';
+        projectTag?: string;
+      }
+    >
   ): void {
-    performanceMonitor.timeOperation(
-      'notes_index_rebuild',
-      async () => {
-        logger.info('Rebuilding notes search index', { noteCount: notes.length });
+    logger.info('Rebuilding notes search index', {
+      noteCount: notes.length,
+    });
 
-        // Clear existing index
-        this.clearIndex();
+    // Clear existing index
+    this.clearIndex();
 
-        // Index all notes
-        for (const note of notes) {
-          this.indexNote(note, note.entityId, note.entityType, note.projectTag);
-        }
+    // Add all notes to index
+    for (const note of notes) {
+      this.addNoteToIndex(
+        note,
+        note.entityId,
+        note.entityType,
+        note.projectTag
+      );
+    }
 
-        this.rebuildCount++;
-        this.lastRebuild = new Date();
-
-        logger.info('Notes search index rebuilt', {
-          noteCount: notes.length,
-          termCount: this.index.termIndex.size,
-          rebuildCount: this.rebuildCount,
-        });
-      },
-      { noteCount: notes.length }
-    );
+    logger.info('Notes search index rebuilt', {
+      noteCount: notes.length,
+      termCount: this.index.termIndex.size,
+      indexSize: this.calculateIndexSize(),
+    });
   }
 
   /**
@@ -306,21 +277,27 @@ export class NotesSearchIndex {
   getStats(): IndexStats {
     const totalNotes = this.index.noteMetadata.size;
     const totalTerms = this.index.termIndex.size;
-    
+
     let totalTermsInNotes = 0;
     for (const metadata of this.index.noteMetadata.values()) {
       totalTermsInNotes += metadata.termCount;
     }
 
-    const averageTermsPerNote = totalNotes > 0 ? totalTermsInNotes / totalNotes : 0;
+    const averageTermsPerNote =
+      totalNotes > 0 ? totalTermsInNotes / totalNotes : 0;
+
+    // Calculate type distribution
+    const typeDistribution: Record<string, number> = {};
+    for (const [type, noteIds] of this.index.typeIndex) {
+      typeDistribution[type] = noteIds.size;
+    }
 
     return {
       totalNotes,
       totalTerms,
       averageTermsPerNote,
-      memoryUsage: this.calculateIndexSize(),
-      lastRebuild: this.lastRebuild,
-      rebuildCount: this.rebuildCount,
+      indexSize: this.calculateIndexSize(),
+      typeDistribution,
     };
   }
 
@@ -332,106 +309,99 @@ export class NotesSearchIndex {
     this.index.noteMetadata.clear();
     this.index.typeIndex.clear();
     this.index.dateIndex.clear();
-    
+
     logger.debug('Notes search index cleared');
   }
 
   /**
-   * Get suggestions for autocomplete
+   * Get search suggestions based on partial term
    */
   getSuggestions(partialTerm: string, limit: number = 10): string[] {
-    const normalizedTerm = this.normalizeText(partialTerm);
-    if (normalizedTerm.length < 2) {
-      return [];
-    }
+    const normalizedPartial = this.normalizeText(partialTerm);
+    const suggestions: string[] = [];
 
-    const suggestions: Array<{ term: string; frequency: number }> = [];
-
-    for (const [term, noteIds] of this.index.termIndex) {
-      if (term.startsWith(normalizedTerm) && term !== normalizedTerm) {
-        suggestions.push({
-          term,
-          frequency: noteIds.size,
-        });
+    for (const term of this.index.termIndex.keys()) {
+      if (term.startsWith(normalizedPartial) && term !== normalizedPartial) {
+        suggestions.push(term);
+        if (suggestions.length >= limit) {
+          break;
+        }
       }
     }
 
-    // Sort by frequency (descending) and then alphabetically
-    suggestions.sort((a, b) => {
-      if (a.frequency !== b.frequency) {
-        return b.frequency - a.frequency;
-      }
-      return a.term.localeCompare(b.term);
-    });
-
-    return suggestions.slice(0, limit).map(s => s.term);
+    return suggestions.sort();
   }
 
-  // Private methods
+  // Private helper methods
 
+  /**
+   * Extract and normalize terms from content
+   */
   private extractTerms(content: string): string[] {
-    // Split content into words and normalize
+    // Split on word boundaries and normalize
     const words = content
       .toLowerCase()
-      .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
-      .split(/\s+/)
-      .filter(word => word.length > 0);
+      .split(/\W+/)
+      .filter(word => word.length > 2) // Filter out very short words
+      .map(word => this.normalizeText(word));
 
-    // Remove stop words and short words
-    const terms = words.filter(word => 
-      word.length >= 2 && 
-      !this.stopWords.has(word) &&
-      !/^\d+$/.test(word) // Remove pure numbers
-    );
-
-    // Add bigrams for better phrase matching
-    const bigrams: string[] = [];
-    for (let i = 0; i < terms.length - 1; i++) {
-      const bigram = `${terms[i]} ${terms[i + 1]}`;
-      bigrams.push(bigram);
-    }
-
-    return [...terms, ...bigrams];
+    // Remove duplicates
+    return Array.from(new Set(words));
   }
 
+  /**
+   * Normalize text for consistent indexing
+   */
   private normalizeText(text: string): string {
-    return text
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .trim()
-      .replace(/\s+/g, ' ');
+    return text.toLowerCase().trim();
   }
 
+  /**
+   * Format date for indexing
+   */
   private formatDateKey(date: Date): string {
     return date.toISOString().split('T')[0]!; // YYYY-MM-DD
   }
 
+  /**
+   * Find candidate notes based on term matching
+   */
   private findCandidateNotes(searchTerms: string[]): Set<string> {
     if (searchTerms.length === 0) {
       return new Set();
     }
 
-    // Start with notes that match the first term
-    let candidates = new Set(this.index.termIndex.get(searchTerms[0]!) || []);
+    // Start with notes that contain the first term
+    const firstTerm = searchTerms[0]!;
+    let candidates = new Set(this.index.termIndex.get(firstTerm) || []);
 
-    // For multiple terms, find intersection (AND logic)
+    // Intersect with notes containing other terms (AND logic)
     for (let i = 1; i < searchTerms.length; i++) {
-      const termNotes = this.index.termIndex.get(searchTerms[i]!) || new Set();
+      const term = searchTerms[i]!;
+      const termNotes = this.index.termIndex.get(term) || new Set();
       candidates = new Set([...candidates].filter(id => termNotes.has(id)));
     }
 
     return candidates;
   }
 
-  private applyFilters(candidateIds: Set<string>, query: SearchQuery): Set<string> {
+  /**
+   * Apply additional filters to candidate notes
+   */
+  private applyFilters(
+    candidateIds: Set<string>,
+    query: SearchQuery
+  ): Set<string> {
     let filteredIds = new Set(candidateIds);
 
     // Filter by entity type
     if (query.entityType) {
-      filteredIds = new Set([...filteredIds].filter(id => {
-        const metadata = this.index.noteMetadata.get(id);
-        return metadata?.entityType === query.entityType;
-      }));
+      filteredIds = new Set(
+        [...filteredIds].filter(id => {
+          const metadata = this.index.noteMetadata.get(id);
+          return metadata && metadata.entityType === query.entityType;
+        })
+      );
     }
 
     // Filter by note type
@@ -442,35 +412,36 @@ export class NotesSearchIndex {
 
     // Filter by project tag
     if (query.projectTag) {
-      filteredIds = new Set([...filteredIds].filter(id => {
-        const metadata = this.index.noteMetadata.get(id);
-        return metadata?.projectTag === query.projectTag;
-      }));
+      filteredIds = new Set(
+        [...filteredIds].filter(id => {
+          const metadata = this.index.noteMetadata.get(id);
+          return metadata && metadata.projectTag === query.projectTag;
+        })
+      );
     }
 
     // Filter by date range
     if (query.dateFrom || query.dateTo) {
-      filteredIds = new Set([...filteredIds].filter(id => {
-        const metadata = this.index.noteMetadata.get(id);
-        if (!metadata) return false;
+      filteredIds = new Set(
+        [...filteredIds].filter(id => {
+          const metadata = this.index.noteMetadata.get(id);
+          if (!metadata) return false;
 
-        const noteDate = metadata.createdAt;
-        
-        if (query.dateFrom && noteDate < query.dateFrom) {
-          return false;
-        }
-        
-        if (query.dateTo && noteDate > query.dateTo) {
-          return false;
-        }
-        
-        return true;
-      }));
+          const noteDate = metadata.createdAt;
+          if (query.dateFrom && noteDate < query.dateFrom) return false;
+          if (query.dateTo && noteDate > query.dateTo) return false;
+
+          return true;
+        })
+      );
     }
 
     return filteredIds;
   }
 
+  /**
+   * Score and rank search results
+   */
   private scoreResults(
     candidateIds: Set<string>,
     searchTerms: string[],
@@ -481,18 +452,17 @@ export class NotesSearchIndex {
     for (const noteId of candidateIds) {
       const metadata = this.index.noteMetadata.get(noteId);
       const note = noteContentMap.get(noteId);
-      
+
       if (!metadata || !note) {
         continue;
       }
 
-      // Calculate relevance score
-      const score = this.calculateRelevanceScore(note.content, searchTerms, metadata);
-      
-      // Find matched terms
+      const score = this.calculateRelevanceScore(
+        note.content,
+        searchTerms,
+        metadata
+      );
       const matchedTerms = this.findMatchedTerms(note.content, searchTerms);
-      
-      // Generate snippet
       const snippet = this.generateSnippet(note.content, searchTerms);
 
       results.push({
@@ -504,9 +474,13 @@ export class NotesSearchIndex {
       });
     }
 
-    return results;
+    // Sort by relevance score (descending)
+    return results.sort((a, b) => b.score - a.score);
   }
 
+  /**
+   * Calculate relevance score for a note
+   */
   private calculateRelevanceScore(
     content: string,
     searchTerms: string[],
@@ -515,61 +489,62 @@ export class NotesSearchIndex {
     const normalizedContent = this.normalizeText(content);
     let score = 0;
 
+    // Term frequency scoring
     for (const term of searchTerms) {
-      // Count term frequency
-      const termRegex = new RegExp(`\\b${term}\\b`, 'gi');
-      const matches = normalizedContent.match(termRegex) || [];
-      const termFrequency = matches.length;
-      
-      if (termFrequency > 0) {
-        // TF-IDF inspired scoring
-        const tf = termFrequency / metadata.termCount;
-        const idf = Math.log(this.index.noteMetadata.size / (this.index.termIndex.get(term)?.size || 1));
-        score += tf * idf;
+      const termRegex = new RegExp(term, 'gi');
+      const matches = normalizedContent.match(termRegex);
+      if (matches) {
+        score += matches.length;
       }
     }
 
-    // Boost score based on note type (decisions and technical notes are more important)
-    switch (metadata.type) {
-      case 'decision':
-        score *= 1.5;
-        break;
-      case 'technical':
-        score *= 1.3;
-        break;
-      case 'learning':
-        score *= 1.2;
-        break;
-      case 'general':
-        score *= 1.0;
-        break;
-    }
+    // Boost score based on note type importance
+    const typeBoosts: Record<string, number> = {
+      'implementation-note': 1.0,
+      'progress-update': 0.8,
+      'decision-record': 1.2,
+      troubleshooting: 0.9,
+    };
+    score *= typeBoosts[metadata.type] || 1.0;
 
     // Boost recent notes slightly
-    const daysSinceCreation = (Date.now() - metadata.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    const recencyBoost = Math.max(0.1, 1 - (daysSinceCreation / 365)); // Decay over a year
-    score *= (1 + recencyBoost * 0.1);
+    const daysSinceCreation =
+      (Date.now() - metadata.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const recencyBoost = Math.max(0.1, 1 - daysSinceCreation / 365); // Decay over a year
+    score *= 1 + recencyBoost * 0.1;
+
+    // Normalize by content length to avoid bias toward longer notes
+    score = score / Math.sqrt(metadata.contentLength);
 
     return score;
   }
 
+  /**
+   * Find which search terms matched in the content
+   */
   private findMatchedTerms(content: string, searchTerms: string[]): string[] {
     const normalizedContent = this.normalizeText(content);
-    const matchedTerms: string[] = [];
+    const matched: string[] = [];
 
     for (const term of searchTerms) {
-      const termRegex = new RegExp(`\\b${term}\\b`, 'i');
-      if (termRegex.test(normalizedContent)) {
-        matchedTerms.push(term);
+      if (normalizedContent.includes(term)) {
+        matched.push(term);
       }
     }
 
-    return matchedTerms;
+    return matched;
   }
 
-  private generateSnippet(content: string, searchTerms: string[], maxLength: number = 200): string {
+  /**
+   * Generate a snippet showing search term context
+   */
+  private generateSnippet(
+    content: string,
+    searchTerms: string[],
+    maxLength: number = 200
+  ): string {
     const normalizedContent = this.normalizeText(content);
-    
+
     // Find the first occurrence of any search term
     let bestPosition = -1;
     for (const term of searchTerms) {
@@ -581,110 +556,59 @@ export class NotesSearchIndex {
 
     if (bestPosition === -1) {
       // No terms found, return beginning of content
-      return content.substring(0, maxLength) + (content.length > maxLength ? '...' : '');
+      return (
+        content.substring(0, maxLength) +
+        (content.length > maxLength ? '...' : '')
+      );
     }
 
-    // Create snippet around the found term
-    const snippetStart = Math.max(0, bestPosition - maxLength / 2);
-    const snippetEnd = Math.min(content.length, snippetStart + maxLength);
-    
-    let snippet = content.substring(snippetStart, snippetEnd);
-    
-    // Add ellipsis if needed
-    if (snippetStart > 0) {
-      snippet = '...' + snippet;
-    }
-    if (snippetEnd < content.length) {
-      snippet = snippet + '...';
-    }
+    // Calculate snippet boundaries
+    const halfLength = Math.floor(maxLength / 2);
+    const start = Math.max(0, bestPosition - halfLength);
+    const end = Math.min(content.length, start + maxLength);
+
+    let snippet = content.substring(start, end);
+
+    // Add ellipsis if truncated
+    if (start > 0) snippet = '...' + snippet;
+    if (end < content.length) snippet = snippet + '...';
 
     return snippet;
   }
 
+  /**
+   * Calculate approximate index size in bytes
+   */
   private calculateIndexSize(): number {
     let size = 0;
-    
+
     // Estimate term index size
     for (const [term, noteIds] of this.index.termIndex) {
       size += term.length * 2; // UTF-16 encoding
       size += noteIds.size * 36; // UUID size
     }
-    
+
     // Estimate metadata size
-    for (const metadata of this.index.noteMetadata.values()) {
-      size += JSON.stringify(metadata).length * 2;
+    for (const _metadata of this.index.noteMetadata.values()) {
+      size += 200; // Approximate metadata object size
     }
-    
-    // Add overhead for Maps and Sets
-    size += this.index.termIndex.size * 100; // Map overhead
-    size += this.index.noteMetadata.size * 100;
-    size += this.index.typeIndex.size * 100;
-    size += this.index.dateIndex.size * 100;
-    
+
+    // Add other indexes
+    size += this.index.typeIndex.size * 50;
+    size += this.index.dateIndex.size * 50;
+
     return size;
   }
 
+  /**
+   * Create empty search response
+   */
   private createEmptySearchResponse(startTime: number): SearchResponse {
     return {
       results: [],
-      total: 0,
-      hasMore: false,
+      totalResults: 0,
       searchTime: performance.now() - startTime,
-      indexStats: {
-        totalNotes: this.index.noteMetadata.size,
-        totalTerms: this.index.termIndex.size,
-        indexSize: this.calculateIndexSize(),
-      },
+      query: { terms: [] },
     };
   }
 }
-
-// Global notes search index instance
-let _notesSearchIndex: NotesSearchIndex | undefined;
-
-export const notesSearchIndex = {
-  get instance(): NotesSearchIndex {
-    if (!_notesSearchIndex) {
-      _notesSearchIndex = new NotesSearchIndex();
-    }
-    return _notesSearchIndex;
-  },
-
-  indexNote(
-    note: ImplementationNote,
-    entityId: string,
-    entityType: 'task' | 'list',
-    projectTag?: string
-  ): void {
-    this.instance.indexNote(note, entityId, entityType, projectTag);
-  },
-
-  removeNoteFromIndex(noteId: string): void {
-    this.instance.removeNoteFromIndex(noteId);
-  },
-
-  search(
-    query: SearchQuery,
-    noteContentMap: Map<string, ImplementationNote>
-  ): SearchResponse {
-    return this.instance.search(query, noteContentMap);
-  },
-
-  rebuildIndex(
-    notes: Array<ImplementationNote & { entityId: string; entityType: 'task' | 'list'; projectTag?: string }>
-  ): void {
-    this.instance.rebuildIndex(notes);
-  },
-
-  getStats(): IndexStats {
-    return this.instance.getStats();
-  },
-
-  clearIndex(): void {
-    this.instance.clearIndex();
-  },
-
-  getSuggestions(partialTerm: string, limit?: number): string[] {
-    return this.instance.getSuggestions(partialTerm, limit);
-  },
-};

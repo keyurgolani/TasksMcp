@@ -12,6 +12,7 @@ This directory contains development artifacts, completion summaries, and validat
 ## Purpose
 
 These documents serve as:
+
 - Historical record of implementation decisions
 - Validation evidence for completed features
 - Reference for future development work
@@ -20,6 +21,7 @@ These documents serve as:
 ## Related Documentation
 
 For user-facing documentation, see:
+
 - [API Documentation](../api/) - REST API and MCP tool reference
 - [Guides](../guides/) - Setup and usage guides
 - [Examples](../examples/) - Code examples and patterns

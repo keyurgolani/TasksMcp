@@ -9,6 +9,7 @@
 ### Q: Which AI agents work with the MCP Task Manager?
 
 **A:** The MCP Task Manager works with any MCP-compatible client, including:
+
 - **Claude Desktop** (Anthropic) - Full natural language integration
 - **Kiro IDE** - Complete workspace integration
 - **Custom MCP clients** - Any client supporting MCP 1.0+
@@ -17,6 +18,7 @@
 ### Q: Do I need to install anything locally?
 
 **A:** No! The recommended approach uses `npx task-list-mcp@latest`, which requires no local installation. You just need:
+
 - Node.js 18.0.0 or higher
 - An MCP client (like Claude Desktop)
 - A simple configuration file
@@ -60,6 +62,7 @@ See the [Troubleshooting Guide](../guides/troubleshooting.md) for more details.
 ### Q: Can I use this without an internet connection?
 
 **A:** Yes, but with limitations:
+
 - **npx method**: Requires internet for first download, then works offline
 - **Global install**: `npm install -g task-list-mcp` works fully offline after installation
 - **Local development**: Clone the repository for complete offline usage
@@ -69,6 +72,7 @@ See the [Troubleshooting Guide](../guides/troubleshooting.md) for more details.
 ### Q: How many tools are available?
 
 **A:** The MCP Task Manager provides **20 focused tools** organized in 6 categories:
+
 - **List Management** (4 tools): Create, retrieve, list, delete
 - **Task Management** (6 tools): Add, update, remove, complete, priorities, tags
 - **Search & Display** (3 tools): Search, filter, formatted display
@@ -79,6 +83,7 @@ See the [Troubleshooting Guide](../guides/troubleshooting.md) for more details.
 ### Q: What's the difference between priority levels?
 
 **A:** Priority levels use a 1-5 scale:
+
 - **5 (Critical)**: Urgent, blocking other work, immediate attention required
 - **4 (High)**: Important, time-sensitive, should be done soon
 - **3 (Medium)**: Normal priority, regular tasks (default)
@@ -95,6 +100,7 @@ See the [Troubleshooting Guide](../guides/troubleshooting.md) for more details.
 - **Prevent Rework**: Catch issues before tasks are marked complete
 
 Example:
+
 ```json
 {
   "exitCriteria": [
@@ -143,12 +149,14 @@ Example:
 **A:** Bulk operations allow you to perform multiple actions in a single request:
 
 **Use Cases:**
+
 - **Sprint Setup**: Create multiple tasks at once
 - **Priority Updates**: Adjust priorities for multiple tasks
 - **Status Changes**: Mark multiple tasks as complete
 - **Cleanup**: Remove or archive multiple completed tasks
 
 **Benefits:**
+
 - **Efficiency**: Fewer API calls
 - **Consistency**: Atomic operations with rollback
 - **Performance**: Faster than individual operations
@@ -162,6 +170,7 @@ Example:
 - **Mermaid Format**: Diagram-as-code for documentation
 
 **Use Cases:**
+
 - **Project Planning**: Visualize project structure
 - **Bottleneck Identification**: Find tasks blocking others
 - **Team Coordination**: Share project structure visually
@@ -174,6 +183,7 @@ Example:
 **A:** The MCP Task Manager includes smart parameter preprocessing, but some common issues:
 
 **Priority Errors:**
+
 ```json
 // ❌ Wrong
 {"priority": "high"}
@@ -186,6 +196,7 @@ Example:
 ```
 
 **UUID Errors:**
+
 ```json
 // ❌ Wrong
 {"listId": "abc-123"}
@@ -195,6 +206,7 @@ Example:
 ```
 
 **Array Errors:**
+
 ```json
 // ❌ Wrong
 {"tags": "urgent,important"}
@@ -246,6 +258,7 @@ Example:
 - **Location**: Configurable via `DATA_DIRECTORY` environment variable
 
 **Default Locations:**
+
 - **Development**: `./data` in current directory
 - **Production**: User-specified secure location
 
@@ -259,6 +272,7 @@ Example:
 - **Backup Encryption**: Planned for future versions
 
 **Recommendations:**
+
 - Use secure directory permissions (700 or 750)
 - Regular backups of `DATA_DIRECTORY`
 - Monitor access logs if enabled
@@ -294,6 +308,7 @@ Example:
 - **Optimization**: Built-in performance monitoring
 
 **Best Practices for Large Projects:**
+
 - Use pagination for large result sets
 - Filter searches to specific lists when possible
 - Use bulk operations for efficiency
@@ -315,17 +330,20 @@ Example:
 **A:** Update methods depend on installation:
 
 **npx Method (Recommended):**
+
 ```bash
 # Automatically uses latest version
 npx task-list-mcp@latest --version
 ```
 
 **Global Installation:**
+
 ```bash
 npm update -g task-list-mcp
 ```
 
 **Development Installation:**
+
 ```bash
 git pull origin main
 npm install
@@ -346,11 +364,13 @@ npm run build
 **A:** Backup strategies:
 
 **Automatic Backups:**
+
 - Enabled by default in production
 - Stored in `DATA_DIRECTORY/backups/`
 - Configurable retention period
 
 **Manual Backup:**
+
 ```bash
 # Copy entire data directory
 cp -r $DATA_DIRECTORY /path/to/backup/

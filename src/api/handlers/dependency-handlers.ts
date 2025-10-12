@@ -2,13 +2,19 @@
  * Dependency management API handlers
  */
 
-import type { Response } from 'express';
 import { z } from 'zod';
-import type { ApiRequest, ApiResponse, HandlerContext } from '../../shared/types/api.js';
-import type { DependencyValidationResult } from '../../domain/tasks/dependency-manager.js';
-import type { TodoItem } from '../../shared/types/todo.js';
-import { logger } from '../../shared/utils/logger.js';
+
 import { ApiError } from '../../shared/errors/api-error.js';
+import { logger } from '../../shared/utils/logger.js';
+
+import type { DependencyValidationResult } from '../../domain/tasks/dependency-manager.js';
+import type {
+  ApiRequest,
+  ApiResponse,
+  HandlerContext,
+} from '../../shared/types/api.js';
+import type { TodoItem } from '../../shared/types/todo.js';
+import type { Response } from 'express';
 
 /**
  * Zod schemas for request validation
@@ -36,74 +42,70 @@ export async function getDependencyGraphHandler(
   res: Response,
   context: HandlerContext
 ): Promise<void> {
-  try {
-    const startTime = Date.now();
-    const listId = req.params['listId'];
-    if (!listId) {
-      throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
-    }
-    
-    logger.info('Getting dependency graph', {
-      requestId: req.id,
-      listId,
-    });
-    
-    // Get the list
-    const list = await context.todoListManager.getTodoList({
-      listId,
-      includeArchived: false,
-    });
-    
-    if (!list) {
-      throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-    
-    // Build dependency graph
-    const graph = context.dependencyManager.buildDependencyGraph(list.items);
-    
-    // Convert Map to object for JSON serialization
-    const serializedGraph = {
-      nodes: Array.from(graph.nodes.entries()).map(([nodeId, node]) => ({
-        id: nodeId,
-        title: node.title,
-        status: node.status,
-        dependencies: node.dependencies,
-        dependents: node.dependents,
-        depth: node.depth,
-        isReady: node.isReady,
-        blockedBy: node.blockedBy,
-      })),
-      roots: graph.roots,
-      leaves: graph.leaves,
-      cycles: graph.cycles,
-      readyItems: graph.readyItems,
-      blockedItems: graph.blockedItems,
-    };
-    
-    const duration = Date.now() - startTime;
-    
-    const response: ApiResponse<typeof serializedGraph> = {
-      success: true,
-      data: serializedGraph,
-      meta: {
-        requestId: req.id,
-        timestamp: new Date().toISOString(),
-        duration,
-      },
-    };
-    
-    logger.info('Dependency graph retrieved successfully', {
-      requestId: req.id,
-      listId,
-      nodeCount: graph.nodes.size,
-      cycleCount: graph.cycles.length,
-      duration,
-    });
-    
-    res.status(200).json(response);
-  } catch (error) {
-    throw error;
+  const startTime = Date.now();
+  const listId = req.params['listId'];
+  if (!listId) {
+    throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
   }
+
+  logger.info('Getting dependency graph', {
+    requestId: req.id,
+    listId,
+  });
+
+  // Get the list
+  const list = await context.todoListManager.getTodoList({
+    listId,
+    includeArchived: false,
+  });
+
+  if (!list) {
+    throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
+  }
+
+  // Build dependency graph
+  const graph = context.dependencyManager.buildDependencyGraph(list.items);
+
+  // Convert Map to object for JSON serialization
+  const serializedGraph = {
+    nodes: Array.from(graph.nodes.entries()).map(([nodeId, node]) => ({
+      id: nodeId,
+      title: node.title,
+      status: node.status,
+      dependencies: node.dependencies,
+      dependents: node.dependents,
+      depth: node.depth,
+      isReady: node.isReady,
+      blockedBy: node.blockedBy,
+    })),
+    roots: graph.roots,
+    leaves: graph.leaves,
+    cycles: graph.cycles,
+    readyItems: graph.readyItems,
+    blockedItems: graph.blockedItems,
+  };
+
+  const duration = Date.now() - startTime;
+
+  const response: ApiResponse<typeof serializedGraph> = {
+    success: true,
+    data: serializedGraph,
+    meta: {
+      requestId: req.id,
+      timestamp: new Date().toISOString(),
+      duration,
+    },
+  };
+
+  logger.info('Dependency graph retrieved successfully', {
+    requestId: req.id,
+    listId,
+    nodeCount: graph.nodes.size,
+    cycleCount: graph.cycles.length,
+    duration,
+  });
+
+  res.status(200).json(response);
 }
 
 /**
@@ -116,42 +118,42 @@ export async function validateDependenciesHandler(
 ): Promise<void> {
   try {
     const startTime = Date.now();
-    
+
     // Validate request body
     const input = validateDependenciesSchema.parse(req.body);
-    
+
     logger.info('Validating dependencies', {
       requestId: req.id,
       listId: input.listId,
       taskId: input.taskId,
       dependencyCount: input.dependencies.length,
     });
-    
+
     // Get the list
     const list = await context.todoListManager.getTodoList({
       listId: input.listId,
       includeArchived: false,
     });
-    
+
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${input.listId}`, 404);
     }
-    
+
     // Verify task exists
     const task = list.items.find(item => item.id === input.taskId);
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${input.taskId}`, 404);
     }
-    
+
     // Validate dependencies
     const validationResult = context.dependencyManager.validateDependencies(
       input.taskId,
       input.dependencies,
       list.items
     );
-    
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<DependencyValidationResult> = {
       success: true,
       data: validationResult,
@@ -161,7 +163,7 @@ export async function validateDependenciesHandler(
         duration,
       },
     };
-    
+
     logger.info('Dependencies validated', {
       requestId: req.id,
       listId: input.listId,
@@ -171,12 +173,12 @@ export async function validateDependenciesHandler(
       warningCount: validationResult.warnings.length,
       duration,
     });
-    
+
     res.status(200).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid request body', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;
@@ -191,55 +193,51 @@ export async function getReadyTasksHandler(
   res: Response,
   context: HandlerContext
 ): Promise<void> {
-  try {
-    const startTime = Date.now();
-    const listId = req.params['listId'];
-    if (!listId) {
-      throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
-    }
-    
-    logger.info('Getting ready tasks', {
-      requestId: req.id,
-      listId,
-    });
-    
-    // Get the list
-    const list = await context.todoListManager.getTodoList({
-      listId,
-      includeArchived: false,
-    });
-    
-    if (!list) {
-      throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-    
-    // Get ready tasks
-    const readyTasks = context.dependencyManager.getReadyItems(list.items);
-    
-    const duration = Date.now() - startTime;
-    
-    const response: ApiResponse<TodoItem[]> = {
-      success: true,
-      data: readyTasks,
-      meta: {
-        requestId: req.id,
-        timestamp: new Date().toISOString(),
-        duration,
-      },
-    };
-    
-    logger.info('Ready tasks retrieved successfully', {
-      requestId: req.id,
-      listId,
-      readyCount: readyTasks.length,
-      totalTasks: list.items.length,
-      duration,
-    });
-    
-    res.status(200).json(response);
-  } catch (error) {
-    throw error;
+  const startTime = Date.now();
+  const listId = req.params['listId'];
+  if (!listId) {
+    throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
   }
+
+  logger.info('Getting ready tasks', {
+    requestId: req.id,
+    listId,
+  });
+
+  // Get the list
+  const list = await context.todoListManager.getTodoList({
+    listId,
+    includeArchived: false,
+  });
+
+  if (!list) {
+    throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
+  }
+
+  // Get ready tasks
+  const readyTasks = context.dependencyManager.getReadyItems(list.items);
+
+  const duration = Date.now() - startTime;
+
+  const response: ApiResponse<TodoItem[]> = {
+    success: true,
+    data: readyTasks,
+    meta: {
+      requestId: req.id,
+      timestamp: new Date().toISOString(),
+      duration,
+    },
+  };
+
+  logger.info('Ready tasks retrieved successfully', {
+    requestId: req.id,
+    listId,
+    readyCount: readyTasks.length,
+    totalTasks: list.items.length,
+    duration,
+  });
+
+  res.status(200).json(response);
 }
 
 /**
@@ -252,57 +250,56 @@ export async function setDependenciesHandler(
 ): Promise<void> {
   try {
     const startTime = Date.now();
-    
+
     // Validate request body
     const input = setDependenciesSchema.parse(req.body);
-    
+
     logger.info('Setting task dependencies', {
       requestId: req.id,
       listId: input.listId,
       taskId: input.taskId,
       dependencyCount: input.dependencies.length,
     });
-    
+
     // Get the list
     const list = await context.todoListManager.getTodoList({
       listId: input.listId,
       includeArchived: false,
     });
-    
+
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${input.listId}`, 404);
     }
-    
+
     if (list.isArchived) {
-      throw new ApiError('CONFLICT', 'Cannot modify dependencies in archived list', 409);
+      throw new ApiError(
+        'CONFLICT',
+        'Cannot modify dependencies in archived list',
+        409
+      );
     }
-    
+
     // Verify task exists
     const task = list.items.find(item => item.id === input.taskId);
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${input.taskId}`, 404);
     }
-    
+
     // Validate dependencies before setting
     const validationResult = context.dependencyManager.validateDependencies(
       input.taskId,
       input.dependencies,
       list.items
     );
-    
+
     if (!validationResult.isValid) {
-      throw new ApiError(
-        'VALIDATION_ERROR',
-        'Invalid dependencies',
-        400,
-        {
-          errors: validationResult.errors,
-          warnings: validationResult.warnings,
-          circularDependencies: validationResult.circularDependencies,
-        }
-      );
+      throw new ApiError('VALIDATION_ERROR', 'Invalid dependencies', 400, {
+        errors: validationResult.errors,
+        warnings: validationResult.warnings,
+        circularDependencies: validationResult.circularDependencies,
+      });
     }
-    
+
     // Update task with new dependencies
     const updatedList = await context.todoListManager.updateTodoList({
       listId: input.listId,
@@ -312,16 +309,18 @@ export async function setDependenciesHandler(
         dependencies: input.dependencies,
       },
     });
-    
+
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === input.taskId);
-    
+    const updatedTask = updatedList.items.find(
+      item => item.id === input.taskId
+    );
+
     if (!updatedTask) {
       throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
     }
-    
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<TodoItem> = {
       success: true,
       data: updatedTask,
@@ -331,7 +330,7 @@ export async function setDependenciesHandler(
         duration,
       },
     };
-    
+
     logger.info('Task dependencies set successfully', {
       requestId: req.id,
       listId: input.listId,
@@ -340,12 +339,12 @@ export async function setDependenciesHandler(
       warningCount: validationResult.warnings.length,
       duration,
     });
-    
+
     res.status(200).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid request body', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;

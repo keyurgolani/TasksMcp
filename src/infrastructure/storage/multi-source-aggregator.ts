@@ -1,9 +1,9 @@
 /**
  * Multi-Source Aggregator
- * 
+ *
  * Aggregates data from multiple storage sources, handling deduplication,
  * conflict resolution, and cross-source filtering/sorting/pagination.
- * 
+ *
  * Key responsibilities:
  * - Query multiple sources in parallel
  * - Deduplicate lists with the same ID
@@ -11,16 +11,17 @@
  * - Apply filtering, sorting, and pagination across aggregated results
  */
 
-import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
-import type { ConflictResolutionStrategy } from '../config/data-source-config.js';
+import { logger } from '../../shared/utils/logger.js';
+
 import type {
   SearchQuery,
   SearchResult,
   SortOptions,
   PaginationOptions,
 } from '../../domain/repositories/todo-list.repository.js';
-import { logger } from '../../shared/utils/logger.js';
+import type { StorageBackend } from '../../shared/types/storage.js';
+import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { ConflictResolutionStrategy } from '../config/data-source-config.js';
 
 /**
  * Configuration for the aggregator
@@ -81,13 +82,18 @@ export class MultiSourceAggregator {
 
   /**
    * Aggregate lists from multiple sources
-   * 
+   *
    * @param sources - Array of storage backends to query
    * @param query - Search query parameters
    * @returns Aggregated and deduplicated search results
    */
   async aggregateLists(
-    sources: Array<{ backend: StorageBackend; id: string; name?: string; priority: number }>,
+    sources: Array<{
+      backend: StorageBackend;
+      id: string;
+      name?: string;
+      priority: number;
+    }>,
     query: SearchQuery
   ): Promise<SearchResult<TodoList>> {
     logger.debug('Aggregating lists from multiple sources', {
@@ -156,13 +162,18 @@ export class MultiSourceAggregator {
 
   /**
    * Aggregate list summaries from multiple sources
-   * 
+   *
    * @param sources - Array of storage backends to query
    * @param query - Search query parameters
    * @returns Aggregated and deduplicated summaries
    */
   async aggregateSummaries(
-    sources: Array<{ backend: StorageBackend; id: string; name?: string; priority: number }>,
+    sources: Array<{
+      backend: StorageBackend;
+      id: string;
+      name?: string;
+      priority: number;
+    }>,
     query: SearchQuery
   ): Promise<SearchResult<TodoListSummary>> {
     logger.debug('Aggregating summaries from multiple sources', {
@@ -186,7 +197,10 @@ export class MultiSourceAggregator {
     });
 
     // Apply filters
-    const filteredSummaries = this.applySummaryFilters(deduplicatedSummaries, query);
+    const filteredSummaries = this.applySummaryFilters(
+      deduplicatedSummaries,
+      query
+    );
 
     // Get total count before pagination
     const totalCount = filteredSummaries.length;
@@ -197,7 +211,10 @@ export class MultiSourceAggregator {
       : filteredSummaries;
 
     // Apply pagination
-    const paginatedSummaries = this.applyPagination(sortedSummaries, query.pagination);
+    const paginatedSummaries = this.applyPagination(
+      sortedSummaries,
+      query.pagination
+    );
 
     const hasMore =
       (query.pagination?.offset ?? 0) + paginatedSummaries.length < totalCount;
@@ -228,15 +245,20 @@ export class MultiSourceAggregator {
    * Query all sources for lists
    */
   private async queryAllSources(
-    sources: Array<{ backend: StorageBackend; id: string; name?: string; priority: number }>,
+    sources: Array<{
+      backend: StorageBackend;
+      id: string;
+      name?: string;
+      priority: number;
+    }>,
     query: SearchQuery
   ): Promise<TodoListWithMetadata[]> {
-    const queryPromises = sources.map(async (source) => {
+    const queryPromises = sources.map(async source => {
       try {
         const lists = await this.querySourceWithTimeout(source.backend, query);
 
         // Attach source metadata to each list
-        return lists.map((list) => ({
+        return lists.map(list => ({
           ...list,
           _sourceMetadata: {
             sourceId: source.id,
@@ -258,8 +280,10 @@ export class MultiSourceAggregator {
       // Execute queries in parallel
       const results = await Promise.allSettled(queryPromises);
       return results
-        .filter((r) => r.status === 'fulfilled')
-        .flatMap((r) => (r as PromiseFulfilledResult<TodoListWithMetadata[]>).value);
+        .filter(r => r.status === 'fulfilled')
+        .flatMap(
+          r => (r as PromiseFulfilledResult<TodoListWithMetadata[]>).value
+        );
     } else {
       // Execute queries sequentially
       const results: TodoListWithMetadata[] = [];
@@ -279,10 +303,15 @@ export class MultiSourceAggregator {
    * Query all sources for summaries
    */
   private async queryAllSourcesForSummaries(
-    sources: Array<{ backend: StorageBackend; id: string; name?: string; priority: number }>,
+    sources: Array<{
+      backend: StorageBackend;
+      id: string;
+      name?: string;
+      priority: number;
+    }>,
     query: SearchQuery
   ): Promise<Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>> {
-    const queryPromises = sources.map(async (source) => {
+    const queryPromises = sources.map(async source => {
       try {
         const listOptions: { projectTag?: string; includeArchived: boolean } = {
           includeArchived: query.includeArchived ?? false,
@@ -298,7 +327,7 @@ export class MultiSourceAggregator {
         );
 
         // Attach source metadata
-        return summaries.map((summary) => ({
+        return summaries.map(summary => ({
           ...summary,
           _sourceMetadata: {
             sourceId: source.id,
@@ -319,10 +348,19 @@ export class MultiSourceAggregator {
     if (this.config.parallelQueries) {
       const results = await Promise.allSettled(queryPromises);
       return results
-        .filter((r) => r.status === 'fulfilled')
-        .flatMap((r) => (r as PromiseFulfilledResult<Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>>).value);
+        .filter(r => r.status === 'fulfilled')
+        .flatMap(
+          r =>
+            (
+              r as PromiseFulfilledResult<
+                Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>
+              >
+            ).value
+        );
     } else {
-      const results: Array<TodoListSummary & { _sourceMetadata: SourceMetadata }> = [];
+      const results: Array<
+        TodoListSummary & { _sourceMetadata: SourceMetadata }
+      > = [];
       for (const promise of queryPromises) {
         try {
           const summaries = await promise;
@@ -431,7 +469,10 @@ export class MultiSourceAggregator {
     summaries: Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>
   ): TodoListSummary[] {
     // Group by ID
-    const grouped = new Map<string, Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>>();
+    const grouped = new Map<
+      string,
+      Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>
+    >();
 
     for (const summary of summaries) {
       if (!grouped.has(summary.id)) {
@@ -452,7 +493,9 @@ export class MultiSourceAggregator {
         }
       } else {
         // Sort by priority (highest first)
-        versions.sort((a, b) => b._sourceMetadata.priority - a._sourceMetadata.priority);
+        versions.sort(
+          (a, b) => b._sourceMetadata.priority - a._sourceMetadata.priority
+        );
         const version = versions[0];
         if (version) {
           const { _sourceMetadata, ...summary } = version;
@@ -485,16 +528,22 @@ export class MultiSourceAggregator {
 
       case 'manual':
         // For manual resolution, we'll use priority as fallback
-        logger.warn('Manual conflict resolution not implemented, using priority', {
-          listId,
-        });
+        logger.warn(
+          'Manual conflict resolution not implemented, using priority',
+          {
+            listId,
+          }
+        );
         return this.resolveByPriority(versions);
 
       case 'merge':
         // For merge strategy, we'll use latest as fallback
-        logger.warn('Merge conflict resolution not fully implemented, using latest', {
-          listId,
-        });
+        logger.warn(
+          'Merge conflict resolution not fully implemented, using latest',
+          {
+            listId,
+          }
+        );
         return this.resolveByLatest(versions);
 
       default:
@@ -562,12 +611,13 @@ export class MultiSourceAggregator {
    * Apply filters to lists
    */
   private applyFilters(lists: TodoList[], query: SearchQuery): TodoList[] {
-    return lists.filter((list) => {
+    return lists.filter(list => {
       // Text search
       if (query.text) {
         const searchText = query.text.toLowerCase();
         const titleMatch = list.title.toLowerCase().includes(searchText);
-        const descMatch = list.description?.toLowerCase().includes(searchText) ?? false;
+        const descMatch =
+          list.description?.toLowerCase().includes(searchText) ?? false;
         if (!titleMatch && !descMatch) {
           return false;
         }
@@ -590,7 +640,7 @@ export class MultiSourceAggregator {
 
       // Task status filter
       if (query.taskStatus && query.taskStatus.length > 0) {
-        const hasMatchingTask = list.items.some((item) =>
+        const hasMatchingTask = list.items.some(item =>
           query.taskStatus!.includes(item.status)
         );
         if (!hasMatchingTask) {
@@ -600,7 +650,7 @@ export class MultiSourceAggregator {
 
       // Task priority filter
       if (query.taskPriority && query.taskPriority.length > 0) {
-        const hasMatchingTask = list.items.some((item) =>
+        const hasMatchingTask = list.items.some(item =>
           query.taskPriority!.includes(item.priority)
         );
         if (!hasMatchingTask) {
@@ -610,8 +660,8 @@ export class MultiSourceAggregator {
 
       // Task tags filter
       if (query.taskTags && query.taskTags.length > 0) {
-        const hasMatchingTask = list.items.some((item) =>
-          query.taskTags!.some((tag) => item.tags.includes(tag))
+        const hasMatchingTask = list.items.some(item =>
+          query.taskTags!.some(tag => item.tags.includes(tag))
         );
         if (!hasMatchingTask) {
           return false;
@@ -621,7 +671,10 @@ export class MultiSourceAggregator {
       // Date range filter
       if (query.dateRange) {
         const listDate = list.updatedAt;
-        if (listDate < query.dateRange.start || listDate > query.dateRange.end) {
+        if (
+          listDate < query.dateRange.start ||
+          listDate > query.dateRange.end
+        ) {
           return false;
         }
       }
@@ -637,7 +690,7 @@ export class MultiSourceAggregator {
     summaries: TodoListSummary[],
     query: SearchQuery
   ): TodoListSummary[] {
-    return summaries.filter((summary) => {
+    return summaries.filter(summary => {
       // Text search
       if (query.text) {
         const searchText = query.text.toLowerCase();
@@ -687,8 +740,8 @@ export class MultiSourceAggregator {
           break;
         case 'priority':
           // For lists, use highest priority task
-          aVal = Math.max(...a.items.map((i) => i.priority), 0);
-          bVal = Math.max(...b.items.map((i) => i.priority), 0);
+          aVal = Math.max(...a.items.map(i => i.priority), 0);
+          bVal = Math.max(...b.items.map(i => i.priority), 0);
           break;
         case 'status':
           // For lists, use progress as proxy for status

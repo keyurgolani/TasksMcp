@@ -3,11 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import {
   ParameterPreprocessor,
   preprocessParameters,
   createPreprocessor,
-  type PreprocessingConfig,
+  type PreprocessingConfig as _PreprocessingConfig,
 } from '../../../../src/shared/utils/parameter-preprocessor.js';
 
 describe('ParameterPreprocessor', () => {
@@ -113,7 +114,9 @@ describe('ParameterPreprocessor', () => {
       });
 
       expect(result.parameters.config).toEqual({ enabled: true, count: 5 });
-      expect(result.parameters.nested).toEqual({ user: { name: 'John', age: 30 } });
+      expect(result.parameters.nested).toEqual({
+        user: { name: 'John', age: 30 },
+      });
       expect(result.conversions).toHaveLength(2);
       expect(result.conversions[0].conversionType).toBe('json->object');
     });
@@ -144,7 +147,9 @@ describe('ParameterPreprocessor', () => {
       expect(result.parameters.string).toBe('"hello"');
       expect(result.parameters.null).toBe('null');
       // number and boolean might be converted by other rules
-      expect(result.conversions.filter(c => c.conversionType.startsWith('json->'))).toHaveLength(0);
+      expect(
+        result.conversions.filter(c => c.conversionType.startsWith('json->'))
+      ).toHaveLength(0);
     });
   });
 
@@ -220,7 +225,9 @@ describe('ParameterPreprocessor', () => {
       expect(result.parameters.empty).toBe('');
       expect(result.parameters.one).toBe(1); // Converted by number rule
       expect(result.parameters.zero).toBe(0); // Converted by number rule
-      expect(result.conversions.filter(c => c.conversionType === 'string->boolean')).toHaveLength(0);
+      expect(
+        result.conversions.filter(c => c.conversionType === 'string->boolean')
+      ).toHaveLength(0);
     });
   });
 
@@ -397,7 +404,7 @@ describe('ParameterPreprocessor', () => {
     it('should handle parameters with special characters', () => {
       const result = preprocessor.preprocessParameters({
         'param-with-dash': '5',
-        'param_with_underscore': 'true',
+        param_with_underscore: 'true',
         'param.with.dots': '["array"]',
       });
 

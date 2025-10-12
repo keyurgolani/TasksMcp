@@ -3,8 +3,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { McpTaskManagerServer } from '../../src/app/server.js';
-import { StorageFactory } from '../../src/infrastructure/storage/storage-factory.js';
+import { StorageFactory as _StorageFactory } from '../../src/infrastructure/storage/storage-factory.js';
 import { TestCleanup } from '../setup.js';
 
 describe('Server Parameter Preprocessing Integration', () => {
@@ -15,7 +16,7 @@ describe('Server Parameter Preprocessing Integration', () => {
     await TestCleanup.registerEnvVar('STORAGE_TYPE', 'memory');
     server = new McpTaskManagerServer();
     await server.start();
-    
+
     // Register server for cleanup
     TestCleanup.registerServer(server);
   });
@@ -58,7 +59,7 @@ describe('Server Parameter Preprocessing Integration', () => {
       const startTime = Date.now();
       const healthCheck = await server.healthCheck();
       const endTime = Date.now();
-      
+
       expect(healthCheck).toBe(true);
       expect(endTime - startTime).toBeLessThan(100); // Should be fast
     });

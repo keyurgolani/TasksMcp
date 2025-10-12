@@ -1,17 +1,28 @@
 /**
  * MCP handler for updating basic task properties
- * 
+ *
  * Handles the update_task tool request to modify existing task properties
  * such as title, description, and estimated duration. Validates input
  * parameters and ensures at least one field is provided for update.
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskResponse, ExitCriteriaResponse } from '../../shared/types/mcp-types.js';
+
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type {
+  TaskResponse,
+  ExitCriteriaResponse,
+} from '../../shared/types/mcp-types.js';
 
 /**
  * Validation schema for update task request parameters
@@ -20,7 +31,11 @@ import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/h
 const UpdateTaskSchema = z.object({
   listId: z.string().uuid('List ID must be a valid UUID'),
   taskId: z.string().uuid('Task ID must be a valid UUID'),
-  title: z.string().min(1, 'Title cannot be empty').max(200, 'Title too long').optional(),
+  title: z
+    .string()
+    .min(1, 'Title cannot be empty')
+    .max(200, 'Title too long')
+    .optional(),
   description: z.string().max(1000, 'Description too long').optional(),
   estimatedDuration: z.number().min(1, 'Duration must be positive').optional(),
   exitCriteria: z.array(z.string().min(1).max(500)).max(20).optional(),
@@ -28,10 +43,10 @@ const UpdateTaskSchema = z.object({
 
 /**
  * Handles MCP update_task tool requests
- * 
+ *
  * Updates an existing task's properties within a todo list. Validates that at least
  * one field is provided for update and returns the updated task information.
- * 
+ *
  * @param request - The MCP call tool request containing update parameters
  * @param todoListManager - The todo list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated task details or error
@@ -46,10 +61,17 @@ export async function handleUpdateTask(
     });
 
     const args = UpdateTaskSchema.parse(request.params?.arguments);
-    
+
     // Ensure at least one field is provided for update
-    if (!args.title && !args.description && !args.estimatedDuration && !args.exitCriteria) {
-      throw new Error('At least one field to update must be provided (title, description, estimatedDuration, or exitCriteria)');
+    if (
+      !args.title &&
+      !args.description &&
+      !args.estimatedDuration &&
+      !args.exitCriteria
+    ) {
+      throw new Error(
+        'At least one field to update must be provided (title, description, estimatedDuration, or exitCriteria)'
+      );
     }
 
     // Update the task with provided fields
@@ -60,7 +82,9 @@ export async function handleUpdateTask(
       itemData: {
         ...(args.title && { title: args.title }),
         ...(args.description && { description: args.description }),
-        ...(args.estimatedDuration && { estimatedDuration: args.estimatedDuration }),
+        ...(args.estimatedDuration && {
+          estimatedDuration: args.estimatedDuration,
+        }),
         ...(args.exitCriteria && { exitCriteria: args.exitCriteria }),
       },
     });
@@ -71,18 +95,20 @@ export async function handleUpdateTask(
     }
 
     // Format exit criteria for response
-    const exitCriteriaResponse: ExitCriteriaResponse[] = updatedTask.exitCriteria.map(criteria => ({
-      id: criteria.id,
-      description: criteria.description,
-      isMet: criteria.isMet,
-      ...(criteria.metAt && { 
-        metAt: criteria.metAt instanceof Date 
-          ? criteria.metAt.toISOString() 
-          : new Date(criteria.metAt).toISOString() 
-      }),
-      ...(criteria.notes && { notes: criteria.notes }),
-      order: criteria.order,
-    }));
+    const exitCriteriaResponse: ExitCriteriaResponse[] =
+      updatedTask.exitCriteria.map(criteria => ({
+        id: criteria.id,
+        description: criteria.description,
+        isMet: criteria.isMet,
+        ...(criteria.metAt && {
+          metAt:
+            criteria.metAt instanceof Date
+              ? criteria.metAt.toISOString()
+              : new Date(criteria.metAt).toISOString(),
+        }),
+        ...(criteria.notes && { notes: criteria.notes }),
+        order: criteria.order,
+      }));
 
     const response: TaskResponse = {
       id: updatedTask.id,
@@ -94,7 +120,9 @@ export async function handleUpdateTask(
       createdAt: updatedTask.createdAt.toISOString(),
       updatedAt: updatedTask.updatedAt.toISOString(),
       estimatedDuration: updatedTask.estimatedDuration,
-      ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
+      ...(exitCriteriaResponse.length > 0 && {
+        exitCriteria: exitCriteriaResponse,
+      }),
     };
 
     logger.info('Task updated successfully', {
@@ -113,7 +141,10 @@ export async function handleUpdateTask(
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('update_task', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'update_task',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

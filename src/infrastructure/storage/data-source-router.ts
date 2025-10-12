@@ -1,15 +1,20 @@
 /**
  * Data Source Router
- * 
+ *
  * Routes storage operations to appropriate data sources based on configuration.
  * Implements source selection logic, connection pooling, lifecycle management,
  * and fallback/error recovery mechanisms.
  */
 
+import { logger } from '../../shared/utils/logger.js';
+
+import {
+  StorageFactory,
+  type StorageConfiguration,
+} from './storage-factory.js';
+
 import type { StorageBackend } from '../../shared/types/storage.js';
 import type { TodoList } from '../../shared/types/todo.js';
-import { StorageFactory, type StorageConfiguration } from './storage-factory.js';
-import { logger } from '../../shared/utils/logger.js';
 
 /**
  * Configuration for a single data source
@@ -82,10 +87,7 @@ export class DataSourceRouter {
   private healthCheckInterval: NodeJS.Timeout | undefined;
   private isShuttingDown = false;
 
-  constructor(
-    config: DataSourceConfig[],
-    routerConfig: RouterConfig = {}
-  ) {
+  constructor(config: DataSourceConfig[], routerConfig: RouterConfig = {}) {
     // Sort by priority (higher priority first)
     this.config = config
       .filter(c => c.enabled)
@@ -112,10 +114,10 @@ export class DataSourceRouter {
       sources: this.config.length,
     });
 
-    const initPromises = this.config.map(async (sourceConfig) => {
+    const initPromises = this.config.map(async sourceConfig => {
       try {
         const backend = await this.createBackend(sourceConfig);
-        
+
         // Initialize the backend
         if (typeof backend.initialize === 'function') {
           await backend.initialize();
@@ -315,11 +317,11 @@ export class DataSourceRouter {
       // Try fallback sources if enabled
       if (this.routerConfig.enableFallback && sources.length > 1) {
         logger.info('Attempting write on fallback source');
-        
+
         for (let i = 1; i < sources.length; i++) {
           const fallbackSource = sources[i];
           if (!fallbackSource) continue;
-          
+
           try {
             const result = await this.executeWithTimeout(
               () => this.performWrite<T>(fallbackSource.backend, operation),
@@ -327,7 +329,7 @@ export class DataSourceRouter {
             );
 
             fallbackSource.failureCount = 0;
-            
+
             logger.info('Write succeeded on fallback source', {
               sourceId: fallbackSource.config.id,
             });
@@ -502,9 +504,7 @@ export class DataSourceRouter {
   /**
    * Check health of a single source
    */
-  private async checkSourceHealth(
-    source: ConnectionPoolEntry
-  ): Promise<void> {
+  private async checkSourceHealth(source: ConnectionPoolEntry): Promise<void> {
     try {
       const healthy = await this.performHealthCheck(source.backend);
 
@@ -639,7 +639,7 @@ export class DataSourceRouter {
 
     // Shutdown all backends
     const shutdownPromises = Array.from(this.connectionPool.values()).map(
-      async (entry) => {
+      async entry => {
         if (entry.backend && typeof entry.backend.shutdown === 'function') {
           try {
             await entry.backend.shutdown();

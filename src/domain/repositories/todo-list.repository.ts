@@ -1,10 +1,10 @@
 /**
  * Repository interface for TodoList aggregate
- * 
+ *
  * Defines the contract for data access operations on TodoLists.
  * This interface is part of the domain layer and should not depend on
  * infrastructure concerns like specific storage implementations.
- * 
+ *
  * Following the Repository pattern from Domain-Driven Design:
  * - Provides collection-like interface for domain aggregates
  * - Abstracts data access details from domain logic
@@ -144,7 +144,7 @@ export interface SearchResult<T> {
 
 /**
  * Repository interface for TodoList aggregate
- * 
+ *
  * This interface defines all data access operations for TodoLists.
  * Implementations must handle:
  * - Data persistence and retrieval
@@ -152,7 +152,7 @@ export interface SearchResult<T> {
  * - Transaction management (where applicable)
  * - Error handling and recovery
  * - Connection pooling (for database backends)
- * 
+ *
  * Expected behaviors:
  * - save() should be idempotent (can be called multiple times with same data)
  * - findById() returns null if not found (does not throw)
@@ -164,10 +164,10 @@ export interface SearchResult<T> {
 export interface ITodoListRepository {
   /**
    * Saves a TodoList to the repository
-   * 
+   *
    * This operation should be idempotent - calling it multiple times
    * with the same data should have the same effect as calling it once.
-   * 
+   *
    * @param list - The TodoList to save
    * @throws Error if save operation fails
    */
@@ -175,7 +175,7 @@ export interface ITodoListRepository {
 
   /**
    * Finds a TodoList by its unique identifier
-   * 
+   *
    * @param id - The unique identifier of the list
    * @param options - Optional parameters for the find operation
    * @returns The TodoList if found, null otherwise
@@ -185,7 +185,7 @@ export interface ITodoListRepository {
 
   /**
    * Finds all TodoLists matching the given options
-   * 
+   *
    * @param options - Optional parameters for filtering and pagination
    * @returns Array of TodoLists matching the criteria
    * @throws Error if the find operation fails
@@ -194,13 +194,13 @@ export interface ITodoListRepository {
 
   /**
    * Searches for TodoLists using complex query criteria
-   * 
+   *
    * Supports:
    * - Full-text search
    * - Multiple filter criteria
    * - Sorting by various fields
    * - Pagination
-   * 
+   *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with items and metadata
    * @throws Error if the search operation fails
@@ -209,10 +209,10 @@ export interface ITodoListRepository {
 
   /**
    * Searches for TodoList summaries (lightweight version)
-   * 
+   *
    * Returns only summary information without full task details.
    * Useful for list views and dashboards.
-   * 
+   *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with summaries and metadata
    * @throws Error if the search operation fails
@@ -221,7 +221,7 @@ export interface ITodoListRepository {
 
   /**
    * Deletes a TodoList from the repository
-   * 
+   *
    * @param id - The unique identifier of the list to delete
    * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
@@ -230,7 +230,7 @@ export interface ITodoListRepository {
 
   /**
    * Checks if a TodoList exists in the repository
-   * 
+   *
    * @param id - The unique identifier to check
    * @returns true if the list exists, false otherwise
    * @throws Error if the check operation fails
@@ -239,7 +239,7 @@ export interface ITodoListRepository {
 
   /**
    * Counts TodoLists matching the given query
-   * 
+   *
    * @param query - Optional query to filter which lists to count
    * @returns The number of lists matching the query
    * @throws Error if the count operation fails
@@ -248,10 +248,10 @@ export interface ITodoListRepository {
 
   /**
    * Performs a health check on the repository
-   * 
+   *
    * Verifies that the repository is operational and can access
    * its underlying storage.
-   * 
+   *
    * @returns true if healthy, false otherwise
    */
   healthCheck(): Promise<boolean>;

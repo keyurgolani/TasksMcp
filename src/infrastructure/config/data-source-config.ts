@@ -1,6 +1,6 @@
 /**
  * Data source configuration system for multi-source data delegation
- * 
+ *
  * This module provides configuration management for pluggable storage backends,
  * supporting filesystem, PostgreSQL, MongoDB, and in-memory storage with
  * multi-source aggregation capabilities.
@@ -16,11 +16,11 @@ export type DataSourceType = 'filesystem' | 'postgresql' | 'mongodb' | 'memory';
 /**
  * Conflict resolution strategies for multi-source aggregation
  */
-export type ConflictResolutionStrategy = 
-  | 'latest'      // Use the most recently updated version
-  | 'priority'    // Use version from highest priority source
-  | 'manual'      // Require manual resolution
-  | 'merge';      // Attempt to merge changes
+export type ConflictResolutionStrategy =
+  | 'latest' // Use the most recently updated version
+  | 'priority' // Use version from highest priority source
+  | 'manual' // Require manual resolution
+  | 'merge'; // Attempt to merge changes
 
 /**
  * File system storage configuration
@@ -70,57 +70,57 @@ export interface MemoryConfig {
 
 /**
  * Data source configuration
- * 
+ *
  * Defines a single data source with its connection parameters,
  * priority, access mode, and routing rules.
  */
 export interface DataSourceConfig {
   /** Unique identifier for this data source */
   id: string;
-  
+
   /** Display name for logging and UI */
   name: string;
-  
+
   /** Type of storage backend */
   type: DataSourceType;
-  
+
   /** Priority for conflict resolution (higher = preferred) */
   priority: number;
-  
+
   /** Whether this source is read-only */
   readonly: boolean;
-  
+
   /** Whether this source is currently enabled */
   enabled: boolean;
-  
+
   /** Project tags for routing specific lists to this source */
   tags?: string[] | undefined;
-  
+
   /** Type-specific configuration */
   config: FileSystemConfig | PostgreSQLConfig | MongoDBConfig | MemoryConfig;
 }
 
 /**
  * Multi-source configuration
- * 
+ *
  * Defines how multiple data sources are aggregated and managed.
  */
 export interface MultiSourceConfig {
   /** List of configured data sources */
   sources: DataSourceConfig[];
-  
+
   /** Default conflict resolution strategy */
   conflictResolution: ConflictResolutionStrategy;
-  
+
   /** Whether to enable multi-source aggregation */
   aggregationEnabled: boolean;
-  
+
   /** Timeout for source operations (ms) */
   operationTimeout: number;
-  
+
   /** Number of retries for failed operations */
   maxRetries: number;
-  
+
   /** Whether to continue if some sources fail */
   allowPartialFailure: boolean;
 }
@@ -204,7 +204,7 @@ const MultiSourceConfigSchema = z.object({
 
 /**
  * Validate a data source configuration
- * 
+ *
  * @param config - Configuration to validate
  * @returns Validated configuration
  * @throws ZodError if validation fails
@@ -215,7 +215,7 @@ export function validateDataSourceConfig(config: unknown): DataSourceConfig {
 
 /**
  * Validate a multi-source configuration
- * 
+ *
  * @param config - Configuration to validate
  * @returns Validated configuration
  * @throws ZodError if validation fails
@@ -226,7 +226,7 @@ export function validateMultiSourceConfig(config: unknown): MultiSourceConfig {
 
 /**
  * Get default multi-source configuration
- * 
+ *
  * Provides sensible defaults for single file-based storage.
  */
 export function getDefaultMultiSourceConfig(): MultiSourceConfig {

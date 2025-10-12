@@ -34,6 +34,7 @@ Thank you for your interest in contributing to the MCP Task Manager! This docume
 ### Environment Setup
 
 1. **Create a development environment**:
+
    ```bash
    export NODE_ENV=development
    export MCP_LOG_LEVEL=debug
@@ -41,6 +42,7 @@ Thank you for your interest in contributing to the MCP Task Manager! This docume
    ```
 
 2. **Run in development mode**:
+
    ```bash
    npm run dev
    ```
@@ -78,6 +80,7 @@ Thank you for your interest in contributing to the MCP Task Manager! This docume
 ### Branch Naming
 
 Use descriptive branch names:
+
 - `feature/add-bulk-operations`
 - `fix/priority-validation-error`
 - `docs/update-api-reference`
@@ -86,6 +89,7 @@ Use descriptive branch names:
 ### Commit Messages
 
 Follow conventional commit format:
+
 ```
 type(scope): description
 
@@ -95,6 +99,7 @@ type(scope): description
 ```
 
 Examples:
+
 - `feat(api): add bulk task operations tool`
 - `fix(validation): correct priority range validation`
 - `docs(readme): update installation instructions`
@@ -138,6 +143,7 @@ tests/
 - **Clean up**: Properly clean up resources after tests
 
 Example test:
+
 ```typescript
 describe('TodoListManager', () => {
   describe('createList', () => {
@@ -196,26 +202,32 @@ docs/
 
 ```markdown
 ## Bug Description
+
 Brief description of the issue
 
 ## Steps to Reproduce
+
 1. Step one
 2. Step two
 3. Step three
 
 ## Expected Behavior
+
 What should happen
 
 ## Actual Behavior
+
 What actually happens
 
 ## Environment
+
 - Node.js version:
 - npm version:
 - Operating system:
 - MCP Task Manager version:
 
 ## Additional Context
+
 Any other relevant information
 ```
 
@@ -231,18 +243,23 @@ Any other relevant information
 
 ```markdown
 ## Feature Description
+
 Clear description of the proposed feature
 
 ## Use Case
+
 Why is this feature needed? What problem does it solve?
 
 ## Proposed Solution
+
 How should this feature work?
 
 ## Alternatives Considered
+
 What other approaches were considered?
 
 ## Additional Context
+
 Any other relevant information
 ```
 
@@ -307,6 +324,7 @@ By contributing to this project, you agree that your contributions will be licen
 ## 🙏 Recognition
 
 Contributors are recognized in:
+
 - **README.md**: Major contributors listed
 - **Release notes**: Contributors mentioned in releases
 - **GitHub**: Automatic contributor recognition

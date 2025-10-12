@@ -4,24 +4,23 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
+import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
+import { handleGetList } from '../../src/api/handlers/get-list.js';
+import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
+import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
+import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
-import type { TodoList, TodoItem } from '../../src/shared/types/todo.js';
-import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
+import { Priority } from '../../src/shared/types/todo.js';
 import { createTodoListManager } from '../utils/test-helpers.js';
 
+import type { TodoList, TodoItem } from '../../src/shared/types/todo.js';
+
 // Import all dependency handlers
-import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
-import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
-import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
 
 // Import enhanced existing handlers
-import { handleAddTask } from '../../src/api/handlers/add-task.js';
-import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
-import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
-import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
 
 describe('Dependency Management Workflows Integration Tests', () => {
   let todoListManager: TodoListManager;
@@ -29,7 +28,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
   let projectList: TodoList;
   let setupTask: TodoItem;
   let developTask: TodoItem;
-  let testTask: TodoItem;
+  let _testTask: TodoItem;
   let deployTask: TodoItem;
 
   beforeEach(async () => {
@@ -41,7 +40,8 @@ describe('Dependency Management Workflows Integration Tests', () => {
     // Create a realistic project scenario with 10-15 tasks
     projectList = await todoListManager.createTodoList({
       title: 'Web Application Development Project',
-      description: 'Complete web application with authentication, API, and deployment',
+      description:
+        'Complete web application with authentication, API, and deployment',
       tasks: [
         {
           title: 'Setup Development Environment',
@@ -146,10 +146,18 @@ describe('Dependency Management Workflows Integration Tests', () => {
     });
 
     // Store references to key tasks for dependency setup
-    setupTask = projectList.items.find(task => task.title.includes('Setup Development'))!;
-    developTask = projectList.items.find(task => task.title.includes('User Authentication'))!;
-    testTask = projectList.items.find(task => task.title.includes('Unit Tests'))!;
-    deployTask = projectList.items.find(task => task.title.includes('Production Deployment'))!;
+    setupTask = projectList.items.find(task =>
+      task.title.includes('Setup Development')
+    )!;
+    developTask = projectList.items.find(task =>
+      task.title.includes('User Authentication')
+    )!;
+    _testTask = projectList.items.find(task =>
+      task.title.includes('Unit Tests')
+    )!;
+    deployTask = projectList.items.find(task =>
+      task.title.includes('Production Deployment')
+    )!;
   });
 
   afterEach(async () => {
@@ -159,309 +167,415 @@ describe('Dependency Management Workflows Integration Tests', () => {
   describe('End-to-End Dependency Workflow', () => {
     it('should handle complete project workflow from setup to deployment', async () => {
       // Step 1: Setup realistic dependencies using set_task_dependencies
-      const dbSchemaTask = projectList.items.find(task => task.title.includes('Database Schema'))!;
-      const apiTask = projectList.items.find(task => task.title.includes('REST API'))!;
-      const frontendAuthTask = projectList.items.find(task => task.title.includes('Frontend Authentication'))!;
-      const frontendComponentsTask = projectList.items.find(task => task.title.includes('Frontend Components'))!;
-      const unitTestsTask = projectList.items.find(task => task.title.includes('Unit Tests'))!;
-      const integrationTestsTask = projectList.items.find(task => task.title.includes('Integration Tests'))!;
-      const cicdTask = projectList.items.find(task => task.title.includes('CI/CD'))!;
-      const stagingTask = projectList.items.find(task => task.title.includes('Staging'))!;
-      const perfTestTask = projectList.items.find(task => task.title.includes('Performance'))!;
-      const securityTask = projectList.items.find(task => task.title.includes('Security'))!;
-      const docsTask = projectList.items.find(task => task.title.includes('Documentation'))!;
+      const dbSchemaTask = projectList.items.find(task =>
+        task.title.includes('Database Schema')
+      )!;
+      const apiTask = projectList.items.find(task =>
+        task.title.includes('REST API')
+      )!;
+      const frontendAuthTask = projectList.items.find(task =>
+        task.title.includes('Frontend Authentication')
+      )!;
+      const frontendComponentsTask = projectList.items.find(task =>
+        task.title.includes('Frontend Components')
+      )!;
+      const unitTestsTask = projectList.items.find(task =>
+        task.title.includes('Unit Tests')
+      )!;
+      const integrationTestsTask = projectList.items.find(task =>
+        task.title.includes('Integration Tests')
+      )!;
+      const cicdTask = projectList.items.find(task =>
+        task.title.includes('CI/CD')
+      )!;
+      const stagingTask = projectList.items.find(task =>
+        task.title.includes('Staging')
+      )!;
+      const perfTestTask = projectList.items.find(task =>
+        task.title.includes('Performance')
+      )!;
+      const securityTask = projectList.items.find(task =>
+        task.title.includes('Security')
+      )!;
+      const docsTask = projectList.items.find(task =>
+        task.title.includes('Documentation')
+      )!;
 
       // Setup foundational dependencies
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: dbSchemaTask.id,
-            dependencyIds: [setupTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: dbSchemaTask.id,
+              dependencyIds: [setupTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: developTask.id,
-            dependencyIds: [setupTask.id, dbSchemaTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: developTask.id,
+              dependencyIds: [setupTask.id, dbSchemaTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: apiTask.id,
-            dependencyIds: [developTask.id, dbSchemaTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: apiTask.id,
+              dependencyIds: [developTask.id, dbSchemaTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: frontendAuthTask.id,
-            dependencyIds: [developTask.id, frontendComponentsTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: frontendAuthTask.id,
+              dependencyIds: [developTask.id, frontendComponentsTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: unitTestsTask.id,
-            dependencyIds: [apiTask.id, frontendAuthTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: unitTestsTask.id,
+              dependencyIds: [apiTask.id, frontendAuthTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: integrationTestsTask.id,
-            dependencyIds: [unitTestsTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: integrationTestsTask.id,
+              dependencyIds: [unitTestsTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: cicdTask.id,
-            dependencyIds: [integrationTestsTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: cicdTask.id,
+              dependencyIds: [integrationTestsTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: stagingTask.id,
-            dependencyIds: [cicdTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: stagingTask.id,
+              dependencyIds: [cicdTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: perfTestTask.id,
-            dependencyIds: [stagingTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: perfTestTask.id,
+              dependencyIds: [stagingTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: securityTask.id,
-            dependencyIds: [stagingTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: securityTask.id,
+              dependencyIds: [stagingTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: deployTask.id,
-            dependencyIds: [perfTestTask.id, securityTask.id, docsTask.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: deployTask.id,
+              dependencyIds: [perfTestTask.id, securityTask.id, docsTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Step 2: Analyze initial project state
-      const initialAnalysis = await handleAnalyzeTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'analyze_task_dependencies',
-          arguments: {
-            listId: projectList.id,
+      const initialAnalysis = await handleAnalyzeTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'analyze_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       expect(initialAnalysis.isError).toBeFalsy();
-      const analysisData = JSON.parse(initialAnalysis.content[0]?.text as string);
+      const analysisData = JSON.parse(
+        initialAnalysis.content[0]?.text as string
+      );
       expect(analysisData.summary.totalTasks).toBe(14);
       expect(analysisData.criticalPath.length).toBeGreaterThan(5);
       expect(analysisData.recommendations.length).toBeGreaterThan(0);
 
       // Step 3: Get initial ready tasks
-      const initialReady = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: projectList.id,
+      const initialReady = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       expect(initialReady.isError).toBeFalsy();
       const readyData = JSON.parse(initialReady.content[0]?.text as string);
-      
+
       // Should have setup task and frontend components as ready (no dependencies)
       expect(readyData.readyTasks.length).toBeGreaterThanOrEqual(2);
+
       const readyTaskIds = readyData.readyTasks.map((task: any) => task.id);
       expect(readyTaskIds).toContain(setupTask.id);
       expect(readyTaskIds).toContain(frontendComponentsTask.id);
 
       // Step 4: Complete setup task and verify cascade
-      await handleCompleteTask({
-        method: 'tools/call',
-        params: {
-          name: 'complete_task',
-          arguments: {
-            listId: projectList.id,
-            taskId: setupTask.id,
+      await handleCompleteTask(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'complete_task',
+            arguments: {
+              listId: projectList.id,
+              taskId: setupTask.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Step 5: Check that database schema is now ready
-      const afterSetupReady = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: projectList.id,
+      const afterSetupReady = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const afterSetupData = JSON.parse(afterSetupReady.content[0]?.text as string);
-      const afterSetupIds = afterSetupData.readyTasks.map((task: any) => task.id);
+      const afterSetupData = JSON.parse(
+        afterSetupReady.content[0]?.text as string
+      );
+      const afterSetupIds = afterSetupData.readyTasks.map(
+        (task: any) => task.id
+      );
       expect(afterSetupIds).toContain(dbSchemaTask.id);
 
       // Step 6: Complete database schema and auth tasks
-      await handleCompleteTask({
-        method: 'tools/call',
-        params: {
-          name: 'complete_task',
-          arguments: {
-            listId: projectList.id,
-            taskId: dbSchemaTask.id,
+      await handleCompleteTask(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'complete_task',
+            arguments: {
+              listId: projectList.id,
+              taskId: dbSchemaTask.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleCompleteTask({
-        method: 'tools/call',
-        params: {
-          name: 'complete_task',
-          arguments: {
-            listId: projectList.id,
-            taskId: developTask.id,
+      await handleCompleteTask(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'complete_task',
+            arguments: {
+              listId: projectList.id,
+              taskId: developTask.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Step 7: Verify API task is now ready
-      const afterAuthReady = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: projectList.id,
+      const afterAuthReady = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const afterAuthData = JSON.parse(afterAuthReady.content[0]?.text as string);
+      const afterAuthData = JSON.parse(
+        afterAuthReady.content[0]?.text as string
+      );
+
       const afterAuthIds = afterAuthData.readyTasks.map((task: any) => task.id);
       expect(afterAuthIds).toContain(apiTask.id);
 
       // Step 8: Test enhanced get_list with dependency information
-      const enhancedList = await handleGetList({
-        method: 'tools/call',
-        params: {
-          name: 'get_list',
-          arguments: {
-            listId: projectList.id,
+      const enhancedList = await handleGetList(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_list',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       expect(enhancedList.isError).toBeFalsy();
       const listData = JSON.parse(enhancedList.content[0]?.text as string);
-      
+
       // Verify dependency information is included
-      const apiTaskInList = listData.tasks.find((task: any) => task.id === apiTask.id);
-      expect(apiTaskInList.dependencies).toEqual([developTask.id, dbSchemaTask.id]);
+      const apiTaskInList = listData.tasks.find(
+        (task: any) => task.id === apiTask.id
+      );
+      expect(apiTaskInList.dependencies).toEqual([
+        developTask.id,
+        dbSchemaTask.id,
+      ]);
       expect(apiTaskInList.isReady).toBe(true);
 
       // Step 9: Test filtering by dependency status
-      const readyTasksFilter = await handleSearchTool({
-        method: 'tools/call',
-        params: {
-          name: 'search_tool',
-          arguments: {
-            listId: projectList.id,
-            isReady: true,
-            includeDependencyInfo: true,
+      const readyTasksFilter = await handleSearchTool(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'search_tool',
+            arguments: {
+              listId: projectList.id,
+              isReady: true,
+              includeDependencyInfo: true,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       expect(readyTasksFilter.isError).toBeFalsy();
-      const filteredData = JSON.parse(readyTasksFilter.content[0]?.text as string);
+      const filteredData = JSON.parse(
+        readyTasksFilter.content[0]?.text as string
+      );
       expect(filteredData.results.length).toBeGreaterThan(0);
-      
+
       // All returned tasks should be ready
       for (const task of filteredData.results) {
         expect(task.isReady).toBe(true);
       }
 
       // Step 10: Final analysis after progress
-      const finalAnalysis = await handleAnalyzeTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'analyze_task_dependencies',
-          arguments: {
-            listId: projectList.id,
+      const finalAnalysis = await handleAnalyzeTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'analyze_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const finalAnalysisData = JSON.parse(finalAnalysis.content[0]?.text as string);
-      expect(finalAnalysisData.summary.readyTasks).toBeGreaterThanOrEqual(readyData.readyTasks.length);
+      const finalAnalysisData = JSON.parse(
+        finalAnalysis.content[0]?.text as string
+      );
+      expect(finalAnalysisData.summary.readyTasks).toBeGreaterThanOrEqual(
+        readyData.readyTasks.length
+      );
       expect(finalAnalysisData.recommendations.length).toBeGreaterThan(0);
-      
+
       // Check that recommendations contain relevant advice
       const recommendationText = finalAnalysisData.recommendations.join(' ');
       expect(recommendationText).toMatch(/ready|tasks|Focus|Prioritize/i);
@@ -475,66 +589,84 @@ describe('Dependency Management Workflows Integration Tests', () => {
       const task4 = projectList.items[3]!;
 
       // Set dependencies sequentially to avoid race conditions in test
-      const result1 = await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: task2.id,
-            dependencyIds: [task1.id],
+      const result1 = await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
       expect(result1.isError).toBeFalsy();
-      
-      const result2 = await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: task3.id,
-            dependencyIds: [task1.id],
+
+      const result2 = await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: task3.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
       expect(result2.isError).toBeFalsy();
-      
-      const result3 = await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: task4.id,
-            dependencyIds: [task2.id, task3.id],
+
+      const result3 = await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: task4.id,
+              dependencyIds: [task2.id, task3.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
       expect(result3.isError).toBeFalsy();
 
       // Verify final state is consistent
-      const finalList = await handleGetList({
-        method: 'tools/call',
-        params: {
-          name: 'get_list',
-          arguments: {
-            listId: projectList.id,
+      const finalList = await handleGetList(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_list',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       expect(finalList.isError).toBeFalsy();
       const finalData = JSON.parse(finalList.content[0]?.text as string);
-      const task2Final = finalData.tasks.find((task: any) => task.id === task2.id);
-      const task3Final = finalData.tasks.find((task: any) => task.id === task3.id);
-      const task4Final = finalData.tasks.find((task: any) => task.id === task4.id);
+      const task2Final = finalData.tasks.find(
+        (task: any) => task.id === task2.id
+      );
+      const task3Final = finalData.tasks.find(
+        (task: any) => task.id === task3.id
+      );
+      const task4Final = finalData.tasks.find(
+        (task: any) => task.id === task4.id
+      );
 
       expect(task2Final).toBeDefined();
       expect(task3Final).toBeDefined();
       expect(task4Final).toBeDefined();
-      
+
       expect(task2Final.dependencies).toEqual([task1.id]);
       expect(task3Final.dependencies).toEqual([task1.id]);
       expect(task4Final.dependencies).toEqual([task2.id, task3.id]);
@@ -546,76 +678,100 @@ describe('Dependency Management Workflows Integration Tests', () => {
       const task2 = projectList.items[1]!;
       const task3 = projectList.items[2]!;
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: task2.id,
-            dependencyIds: [task1.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: projectList.id,
-            taskId: task3.id,
-            dependencyIds: [task2.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+              taskId: task3.id,
+              dependencyIds: [task2.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Test consistency across different tools
-      const getListResult = await handleGetList({
-        method: 'tools/call',
-        params: {
-          name: 'get_list',
-          arguments: {
-            listId: projectList.id,
+      const getListResult = await handleGetList(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_list',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const readyTasksResult = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: projectList.id,
+      const readyTasksResult = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const analysisResult = await handleAnalyzeTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'analyze_task_dependencies',
-          arguments: {
-            listId: projectList.id,
+      const analysisResult = await handleAnalyzeTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'analyze_task_dependencies',
+            arguments: {
+              listId: projectList.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Parse results
       const listData = JSON.parse(getListResult.content[0]?.text as string);
       const readyData = JSON.parse(readyTasksResult.content[0]?.text as string);
-      const analysisData = JSON.parse(analysisResult.content[0]?.text as string);
+      const analysisData = JSON.parse(
+        analysisResult.content[0]?.text as string
+      );
 
       // Verify consistency
-      const task1InList = listData.tasks.find((task: any) => task.id === task1.id);
-      const task2InList = listData.tasks.find((task: any) => task.id === task2.id);
-      const task3InList = listData.tasks.find((task: any) => task.id === task3.id);
+      const task1InList = listData.tasks.find(
+        (task: any) => task.id === task1.id
+      );
+      const task2InList = listData.tasks.find(
+        (task: any) => task.id === task2.id
+      );
+      const task3InList = listData.tasks.find(
+        (task: any) => task.id === task3.id
+      );
 
       expect(task1InList.isReady).toBe(true);
       expect(task2InList.isReady).toBe(false);
       expect(task3InList.isReady).toBe(false);
 
       // Ready tasks should only include task1 (and other tasks without dependencies)
+
       const readyTaskIds = readyData.readyTasks.map((task: any) => task.id);
       expect(readyTaskIds).toContain(task1.id);
       expect(readyTaskIds).not.toContain(task2.id);
@@ -645,12 +801,12 @@ describe('Dependency Management Workflows Integration Tests', () => {
 
       // Setup realistic dependency chains
       const tasks = largeProject.items;
-      
+
       // Create foundational dependencies (first 10 tasks are foundational)
       for (let i = 10; i < 30; i++) {
         const dependencyCount = Math.floor(Math.random() * 3) + 1;
         const dependencies = [];
-        
+
         for (let j = 0; j < dependencyCount; j++) {
           const depIndex = Math.floor(Math.random() * Math.min(i, 10));
           if (!dependencies.includes(tasks[depIndex]!.id)) {
@@ -659,17 +815,20 @@ describe('Dependency Management Workflows Integration Tests', () => {
         }
 
         if (dependencies.length > 0) {
-          await handleSetTaskDependencies({
-            method: 'tools/call',
-            params: {
-              name: 'set_task_dependencies',
-              arguments: {
-                listId: largeProject.id,
-                taskId: tasks[i]!.id,
-                dependencyIds: dependencies,
+          await handleSetTaskDependencies(
+            {
+              method: 'tools/call',
+              params: {
+                name: 'set_task_dependencies',
+                arguments: {
+                  listId: largeProject.id,
+                  taskId: tasks[i]!.id,
+                  dependencyIds: dependencies,
+                },
               },
             },
-          }, todoListManager);
+            todoListManager
+          );
         }
       }
 
@@ -677,7 +836,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
       for (let i = 30; i < 50; i++) {
         const dependencyCount = Math.floor(Math.random() * 4) + 2;
         const dependencies = [];
-        
+
         for (let j = 0; j < dependencyCount; j++) {
           const depIndex = Math.floor(Math.random() * (i - 10)) + 10;
           if (!dependencies.includes(tasks[depIndex]!.id)) {
@@ -686,62 +845,73 @@ describe('Dependency Management Workflows Integration Tests', () => {
         }
 
         if (dependencies.length > 0) {
-          await handleSetTaskDependencies({
-            method: 'tools/call',
-            params: {
-              name: 'set_task_dependencies',
-              arguments: {
-                listId: largeProject.id,
-                taskId: tasks[i]!.id,
-                dependencyIds: dependencies,
+          await handleSetTaskDependencies(
+            {
+              method: 'tools/call',
+              params: {
+                name: 'set_task_dependencies',
+                arguments: {
+                  listId: largeProject.id,
+                  taskId: tasks[i]!.id,
+                  dependencyIds: dependencies,
+                },
               },
             },
-          }, todoListManager);
+            todoListManager
+          );
         }
       }
 
       // Test performance of dependency analysis on large project
       const startTime = Date.now();
-      
-      const analysisResult = await handleAnalyzeTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'analyze_task_dependencies',
-          arguments: {
-            listId: largeProject.id,
+
+      const analysisResult = await handleAnalyzeTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'analyze_task_dependencies',
+            arguments: {
+              listId: largeProject.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       const analysisTime = Date.now() - startTime;
-      
+
       expect(analysisResult.isError).toBeFalsy();
       expect(analysisTime).toBeLessThan(5000); // Should complete within 5 seconds
-      
-      const analysisData = JSON.parse(analysisResult.content[0]?.text as string);
+
+      const analysisData = JSON.parse(
+        analysisResult.content[0]?.text as string
+      );
       expect(analysisData.summary.totalTasks).toBe(50);
       expect(analysisData.criticalPath.length).toBeGreaterThan(0);
       expect(analysisData.recommendations.length).toBeGreaterThan(0);
 
       // Test ready tasks performance
       const readyStartTime = Date.now();
-      
-      const readyResult = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: largeProject.id,
-            limit: 20,
+
+      const readyResult = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: largeProject.id,
+              limit: 20,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       const readyTime = Date.now() - readyStartTime;
-      
+
       expect(readyResult.isError).toBeFalsy();
       expect(readyTime).toBeLessThan(2000); // Should complete within 2 seconds
-      
+
       const readyData = JSON.parse(readyResult.content[0]?.text as string);
       expect(readyData.readyTasks.length).toBeGreaterThan(0);
       expect(readyData.readyTasks.length).toBeLessThanOrEqual(20);
@@ -754,231 +924,381 @@ describe('Dependency Management Workflows Integration Tests', () => {
         description: 'Project with frontend, backend, and DevOps tracks',
         tasks: [
           // Frontend track
-          { title: 'Frontend: Setup React Project', priority: Priority.HIGH, tags: ['frontend'] },
-          { title: 'Frontend: Create Component Library', priority: Priority.MEDIUM, tags: ['frontend'] },
-          { title: 'Frontend: Implement Authentication UI', priority: Priority.HIGH, tags: ['frontend', 'auth'] },
-          { title: 'Frontend: Build Dashboard', priority: Priority.MEDIUM, tags: ['frontend'] },
-          { title: 'Frontend: Add Data Visualization', priority: Priority.LOW, tags: ['frontend'] },
-          
+          {
+            title: 'Frontend: Setup React Project',
+            priority: Priority.HIGH,
+            tags: ['frontend'],
+          },
+          {
+            title: 'Frontend: Create Component Library',
+            priority: Priority.MEDIUM,
+            tags: ['frontend'],
+          },
+          {
+            title: 'Frontend: Implement Authentication UI',
+            priority: Priority.HIGH,
+            tags: ['frontend', 'auth'],
+          },
+          {
+            title: 'Frontend: Build Dashboard',
+            priority: Priority.MEDIUM,
+            tags: ['frontend'],
+          },
+          {
+            title: 'Frontend: Add Data Visualization',
+            priority: Priority.LOW,
+            tags: ['frontend'],
+          },
+
           // Backend track
-          { title: 'Backend: Setup Node.js Server', priority: Priority.HIGH, tags: ['backend'] },
-          { title: 'Backend: Design Database Schema', priority: Priority.HIGH, tags: ['backend', 'database'] },
-          { title: 'Backend: Implement Authentication API', priority: Priority.HIGH, tags: ['backend', 'auth'] },
-          { title: 'Backend: Create Business Logic APIs', priority: Priority.MEDIUM, tags: ['backend'] },
-          { title: 'Backend: Add Data Processing', priority: Priority.LOW, tags: ['backend'] },
-          
+          {
+            title: 'Backend: Setup Node.js Server',
+            priority: Priority.HIGH,
+            tags: ['backend'],
+          },
+          {
+            title: 'Backend: Design Database Schema',
+            priority: Priority.HIGH,
+            tags: ['backend', 'database'],
+          },
+          {
+            title: 'Backend: Implement Authentication API',
+            priority: Priority.HIGH,
+            tags: ['backend', 'auth'],
+          },
+          {
+            title: 'Backend: Create Business Logic APIs',
+            priority: Priority.MEDIUM,
+            tags: ['backend'],
+          },
+          {
+            title: 'Backend: Add Data Processing',
+            priority: Priority.LOW,
+            tags: ['backend'],
+          },
+
           // DevOps track
-          { title: 'DevOps: Setup Docker Containers', priority: Priority.MEDIUM, tags: ['devops'] },
-          { title: 'DevOps: Configure CI/CD Pipeline', priority: Priority.MEDIUM, tags: ['devops'] },
-          { title: 'DevOps: Setup Monitoring', priority: Priority.LOW, tags: ['devops'] },
-          
+          {
+            title: 'DevOps: Setup Docker Containers',
+            priority: Priority.MEDIUM,
+            tags: ['devops'],
+          },
+          {
+            title: 'DevOps: Configure CI/CD Pipeline',
+            priority: Priority.MEDIUM,
+            tags: ['devops'],
+          },
+          {
+            title: 'DevOps: Setup Monitoring',
+            priority: Priority.LOW,
+            tags: ['devops'],
+          },
+
           // Integration tasks
-          { title: 'Integration: Connect Frontend to Backend', priority: Priority.HIGH, tags: ['integration'] },
-          { title: 'Integration: End-to-End Testing', priority: Priority.MEDIUM, tags: ['integration', 'testing'] },
-          { title: 'Integration: Performance Testing', priority: Priority.LOW, tags: ['integration', 'testing'] },
-          { title: 'Integration: Security Testing', priority: Priority.MEDIUM, tags: ['integration', 'security'] },
-          
+          {
+            title: 'Integration: Connect Frontend to Backend',
+            priority: Priority.HIGH,
+            tags: ['integration'],
+          },
+          {
+            title: 'Integration: End-to-End Testing',
+            priority: Priority.MEDIUM,
+            tags: ['integration', 'testing'],
+          },
+          {
+            title: 'Integration: Performance Testing',
+            priority: Priority.LOW,
+            tags: ['integration', 'testing'],
+          },
+          {
+            title: 'Integration: Security Testing',
+            priority: Priority.MEDIUM,
+            tags: ['integration', 'security'],
+          },
+
           // Final tasks
-          { title: 'Final: User Acceptance Testing', priority: Priority.HIGH, tags: ['testing'] },
-          { title: 'Final: Production Deployment', priority: Priority.HIGH, tags: ['deployment'] },
-          { title: 'Final: Go-Live Support', priority: Priority.MEDIUM, tags: ['support'] },
+          {
+            title: 'Final: User Acceptance Testing',
+            priority: Priority.HIGH,
+            tags: ['testing'],
+          },
+          {
+            title: 'Final: Production Deployment',
+            priority: Priority.HIGH,
+            tags: ['deployment'],
+          },
+          {
+            title: 'Final: Go-Live Support',
+            priority: Priority.MEDIUM,
+            tags: ['support'],
+          },
         ],
         projectTag: 'parallel-development',
       });
 
       const tasks = parallelProject.items;
-      
+
       // Setup track dependencies
-      const frontendTasks = tasks.filter(task => task.tags.includes('frontend'));
+      const frontendTasks = tasks.filter(task =>
+        task.tags.includes('frontend')
+      );
       const backendTasks = tasks.filter(task => task.tags.includes('backend'));
       const devopsTasks = tasks.filter(task => task.tags.includes('devops'));
-      const integrationTasks = tasks.filter(task => task.tags.includes('integration'));
+      const integrationTasks = tasks.filter(task =>
+        task.tags.includes('integration')
+      );
       const finalTasks = tasks.filter(task => task.title.startsWith('Final:'));
 
       // Frontend dependencies
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: frontendTasks[1]!.id, // Component Library
-            dependencyIds: [frontendTasks[0]!.id], // Setup React
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: frontendTasks[1]!.id, // Component Library
+              dependencyIds: [frontendTasks[0]!.id], // Setup React
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: frontendTasks[2]!.id, // Auth UI
-            dependencyIds: [frontendTasks[1]!.id], // Component Library
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: frontendTasks[2]!.id, // Auth UI
+              dependencyIds: [frontendTasks[1]!.id], // Component Library
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: frontendTasks[3]!.id, // Dashboard
-            dependencyIds: [frontendTasks[1]!.id], // Component Library
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: frontendTasks[3]!.id, // Dashboard
+              dependencyIds: [frontendTasks[1]!.id], // Component Library
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Backend dependencies
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: backendTasks[2]!.id, // Auth API
-            dependencyIds: [backendTasks[0]!.id, backendTasks[1]!.id], // Server + Schema
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: backendTasks[2]!.id, // Auth API
+              dependencyIds: [backendTasks[0]!.id, backendTasks[1]!.id], // Server + Schema
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: backendTasks[3]!.id, // Business Logic
-            dependencyIds: [backendTasks[1]!.id], // Schema
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: backendTasks[3]!.id, // Business Logic
+              dependencyIds: [backendTasks[1]!.id], // Schema
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Integration dependencies (require both frontend and backend)
-      const frontendAuthTask = frontendTasks.find(task => task.title.includes('Authentication UI'))!;
-      const backendAuthTask = backendTasks.find(task => task.title.includes('Authentication API'))!;
-      
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: integrationTasks[0]!.id, // Connect Frontend to Backend
-            dependencyIds: [frontendAuthTask.id, backendAuthTask.id],
+      const frontendAuthTask = frontendTasks.find(task =>
+        task.title.includes('Authentication UI')
+      )!;
+      const backendAuthTask = backendTasks.find(task =>
+        task.title.includes('Authentication API')
+      )!;
+
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: integrationTasks[0]!.id, // Connect Frontend to Backend
+              dependencyIds: [frontendAuthTask.id, backendAuthTask.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Final tasks depend on integration
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: finalTasks[0]!.id, // UAT
-            dependencyIds: [integrationTasks[0]!.id, integrationTasks[1]!.id],
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: finalTasks[0]!.id, // UAT
+              dependencyIds: [integrationTasks[0]!.id, integrationTasks[1]!.id],
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleSetTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'set_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: finalTasks[1]!.id, // Production Deployment
-            dependencyIds: [finalTasks[0]!.id, devopsTasks[1]!.id], // UAT + CI/CD
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: finalTasks[1]!.id, // Production Deployment
+              dependencyIds: [finalTasks[0]!.id, devopsTasks[1]!.id], // UAT + CI/CD
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Test that multiple tracks can progress in parallel
-      const initialReady = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: parallelProject.id,
+      const initialReady = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: parallelProject.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const initialReadyData = JSON.parse(initialReady.content[0]?.text as string);
-      const readyTaskTitles = initialReadyData.readyTasks.map((task: any) => task.title);
-      
+      const initialReadyData = JSON.parse(
+        initialReady.content[0]?.text as string
+      );
+      const readyTaskTitles = initialReadyData.readyTasks.map(
+        (task: any) => task.title
+      );
+
       // Should have ready tasks from multiple tracks
-      expect(readyTaskTitles.some((title: string) => title.includes('Frontend:'))).toBe(true);
-      expect(readyTaskTitles.some((title: string) => title.includes('Backend:'))).toBe(true);
-      expect(readyTaskTitles.some((title: string) => title.includes('DevOps:'))).toBe(true);
+      expect(
+        readyTaskTitles.some((title: string) => title.includes('Frontend:'))
+      ).toBe(true);
+      expect(
+        readyTaskTitles.some((title: string) => title.includes('Backend:'))
+      ).toBe(true);
+      expect(
+        readyTaskTitles.some((title: string) => title.includes('DevOps:'))
+      ).toBe(true);
 
       // Complete foundational tasks from each track
-      await handleCompleteTask({
-        method: 'tools/call',
-        params: {
-          name: 'complete_task',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: frontendTasks[0]!.id, // Frontend Setup
+      await handleCompleteTask(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'complete_task',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: frontendTasks[0]!.id, // Frontend Setup
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleCompleteTask({
-        method: 'tools/call',
-        params: {
-          name: 'complete_task',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: backendTasks[0]!.id, // Backend Setup
+      await handleCompleteTask(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'complete_task',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: backendTasks[0]!.id, // Backend Setup
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      await handleCompleteTask({
-        method: 'tools/call',
-        params: {
-          name: 'complete_task',
-          arguments: {
-            listId: parallelProject.id,
-            taskId: backendTasks[1]!.id, // Database Schema
+      await handleCompleteTask(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'complete_task',
+            arguments: {
+              listId: parallelProject.id,
+              taskId: backendTasks[1]!.id, // Database Schema
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       // Verify that dependent tasks are now ready
-      const afterFoundationReady = await handleGetReadyTasks({
-        method: 'tools/call',
-        params: {
-          name: 'get_ready_tasks',
-          arguments: {
-            listId: parallelProject.id,
+      const afterFoundationReady = await handleGetReadyTasks(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'get_ready_tasks',
+            arguments: {
+              listId: parallelProject.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
-      const afterFoundationData = JSON.parse(afterFoundationReady.content[0]?.text as string);
-      const afterFoundationTitles = afterFoundationData.readyTasks.map((task: any) => task.title);
-      
-      expect(afterFoundationTitles).toContain('Frontend: Create Component Library');
-      expect(afterFoundationTitles).toContain('Backend: Implement Authentication API');
-      expect(afterFoundationTitles).toContain('Backend: Create Business Logic APIs');
+      const afterFoundationData = JSON.parse(
+        afterFoundationReady.content[0]?.text as string
+      );
+      const afterFoundationTitles = afterFoundationData.readyTasks.map(
+        (task: any) => task.title
+      );
+
+      expect(afterFoundationTitles).toContain(
+        'Frontend: Create Component Library'
+      );
+      expect(afterFoundationTitles).toContain(
+        'Backend: Implement Authentication API'
+      );
+      expect(afterFoundationTitles).toContain(
+        'Backend: Create Business Logic APIs'
+      );
 
       // Analyze the project state
-      const analysis = await handleAnalyzeTaskDependencies({
-        method: 'tools/call',
-        params: {
-          name: 'analyze_task_dependencies',
-          arguments: {
-            listId: parallelProject.id,
+      const analysis = await handleAnalyzeTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'analyze_task_dependencies',
+            arguments: {
+              listId: parallelProject.id,
+            },
           },
         },
-      }, todoListManager);
+        todoListManager
+      );
 
       const analysisData = JSON.parse(analysis.content[0]?.text as string);
       expect(analysisData.criticalPath.length).toBeGreaterThan(5);
@@ -1018,7 +1338,7 @@ function getTaskTitle(index: number): string {
     'Production Deployment',
     'Post-Launch Monitoring',
   ];
-  
+
   return titles[index % titles.length] || `Generic Task ${index + 1}`;
 }
 
@@ -1057,6 +1377,6 @@ function getTags(index: number): string[] {
     ['deployment', 'production'],
     ['monitoring', 'support'],
   ];
-  
+
   return tagSets[index % tagSets.length] || ['general'];
 }

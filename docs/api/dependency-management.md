@@ -29,11 +29,11 @@ Set all dependencies for a task, replacing any existing dependencies.
 
 #### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `listId` | string (UUID) | Yes | UUID of the list containing the task |
-| `taskId` | string (UUID) | Yes | UUID of the task to set dependencies for |
-| `dependencyIds` | array of UUIDs | Yes | Array of task IDs this task depends on (max 10, empty array removes all) |
+| Parameter       | Type           | Required | Description                                                              |
+| --------------- | -------------- | -------- | ------------------------------------------------------------------------ |
+| `listId`        | string (UUID)  | Yes      | UUID of the list containing the task                                     |
+| `taskId`        | string (UUID)  | Yes      | UUID of the task to set dependencies for                                 |
+| `dependencyIds` | array of UUIDs | Yes      | Array of task IDs this task depends on (max 10, empty array removes all) |
 
 #### Example Request
 
@@ -95,7 +95,7 @@ Set all dependencies for a task, replacing any existing dependencies.
 // Self-dependency attempt
 {
   "content": [{
-    "type": "text", 
+    "type": "text",
     "text": "Validation error: Task cannot depend on itself"
   }],
   "isError": true
@@ -110,10 +110,10 @@ Get tasks that are ready to work on (have no incomplete dependencies).
 
 #### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `listId` | string (UUID) | Yes | UUID of the list to get ready tasks from |
-| `limit` | number | No | Maximum number of ready tasks to return (1-50, default: 20) |
+| Parameter | Type          | Required | Description                                                 |
+| --------- | ------------- | -------- | ----------------------------------------------------------- |
+| `listId`  | string (UUID) | Yes      | UUID of the list to get ready tasks from                    |
+| `limit`   | number        | No       | Maximum number of ready tasks to return (1-50, default: 20) |
 
 #### Example Request
 
@@ -145,7 +145,7 @@ Get tasks that are ready to work on (have no incomplete dependencies).
       "updatedAt": "2025-01-15T09:00:00.000Z"
     },
     {
-      "id": "task-002", 
+      "id": "task-002",
       "title": "Write project documentation",
       "description": "Create README and API documentation",
       "status": "pending",
@@ -181,12 +181,14 @@ Get tasks that are ready to work on (have no incomplete dependencies).
 #### Next Action Examples
 
 When tasks are ready:
+
 - "Start with high-priority tasks: \"Task Name\""
 - "Begin with: \"Task Name\""
 - "5 tasks are ready to work on. Focus on one at a time for best results."
 - "3 quick tasks (≤30 min) available for filling small time slots."
 
 When no tasks are ready:
+
 - "All tasks are completed! Consider adding new tasks or archiving this list."
 - "7 tasks are blocked by dependencies. Focus on completing prerequisite tasks."
 - "2 tasks are in progress. Consider completing them before starting new ones."
@@ -199,9 +201,9 @@ Get a comprehensive analysis of task dependencies and project structure.
 
 #### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `listId` | string (UUID) | Yes | UUID of the list to analyze |
+| Parameter | Type          | Required | Description                 |
+| --------- | ------------- | -------- | --------------------------- |
+| `listId`  | string (UUID) | Yes      | UUID of the list to analyze |
 
 #### Example Request
 
@@ -227,7 +229,7 @@ Get a comprehensive analysis of task dependencies and project structure.
   },
   "criticalPath": [
     "task-setup",
-    "task-database", 
+    "task-database",
     "task-api",
     "task-frontend",
     "task-testing",
@@ -249,21 +251,25 @@ Get a comprehensive analysis of task dependencies and project structure.
 #### Analysis Components
 
 **Summary Statistics:**
+
 - **totalTasks** - Total number of tasks in the list
 - **readyTasks** - Tasks with no incomplete dependencies
 - **blockedTasks** - Tasks waiting for dependencies
 - **tasksWithDependencies** - Tasks that have at least one dependency
 
 **Critical Path:**
+
 - Array of task IDs representing the longest chain of dependent tasks
 - Completing critical path tasks has the highest impact on project completion
 - Tasks are ordered from start to finish
 
 **Issues:**
+
 - **circularDependencies** - Arrays of task IDs forming dependency loops
 - **bottlenecks** - Task IDs that block 3 or more other tasks
 
 **Recommendations:**
+
 - Plain language suggestions for improving project flow
 - Prioritization advice based on dependency analysis
 - Specific actions to resolve bottlenecks and issues
@@ -271,20 +277,25 @@ Get a comprehensive analysis of task dependencies and project structure.
 #### Recommendation Types
 
 **Critical Path Recommendations:**
+
 - "Focus on the critical path: Start with \"Task Name\" as it affects X other tasks."
 
 **Ready Task Recommendations:**
+
 - "X tasks are ready. Prioritize high-priority tasks like \"Task Name\"."
 - "No tasks are ready! Focus on completing \"Task Name\" which is blocking X other tasks."
 
 **Bottleneck Recommendations:**
+
 - "Bottleneck alert: \"Task Name\" is blocking multiple tasks. Consider breaking it down or prioritizing it."
 
 **Progress Recommendations:**
+
 - "Project is in early stages. Focus on completing foundational tasks to unlock more work."
 - "Project is nearing completion! Focus on finishing remaining tasks and final reviews."
 
 **Complexity Recommendations:**
+
 - "High dependency complexity detected. Consider simplifying task relationships or breaking down complex tasks."
 
 ## Enhanced Existing Tools
@@ -353,7 +364,7 @@ The `show_tasks` tool now displays dependency status indicators:
   • Write documentation (Priority: 3) [2h]
 
 🔴 Blocked Tasks:
-  • Deploy to production (Priority: 4) [1h] 
+  • Deploy to production (Priority: 4) [1h]
     ↳ Waiting for: Run tests, Code review
 ```
 
@@ -370,7 +381,7 @@ The `show_tasks` tool now displays dependency status indicators:
 // 2. Set up dependencies
 {"name": "set_task_dependencies", "arguments": {
   "listId": "...",
-  "taskId": "install-deps-id", 
+  "taskId": "install-deps-id",
   "dependencyIds": ["setup-env-id"]
 }}
 
@@ -392,8 +403,8 @@ The `show_tasks` tool now displays dependency status indicators:
 
 // 3. Filter by priority if needed
 {"name": "filter_tasks", "arguments": {
-  "listId": "...", 
-  "isReady": true, 
+  "listId": "...",
+  "isReady": true,
   "priority": 4
 }}
 ```
@@ -439,16 +450,19 @@ The `show_tasks` tool now displays dependency status indicators:
 ### Common Issues
 
 **"Circular dependency detected"**
+
 - Review the dependency chain shown in the error
 - Remove one dependency to break the loop
 - Consider if the circular relationship indicates tasks should be combined
 
 **"No tasks are ready"**
+
 - Check `analyze_task_dependencies` for bottlenecks
 - Look for tasks with status "in_progress" that need completion
 - Review if some dependencies are no longer needed
 
 **"Task not found"**
+
 - Verify all task IDs exist in the specified list
 - Check that you're using the correct list ID
 - Ensure tasks haven't been deleted
@@ -471,6 +485,7 @@ If you're currently tracking dependencies manually:
 ---
 
 **Next Steps:**
+
 - Try the [Advanced Workflow Examples](../examples/advanced.md) for dependency management patterns
 - Learn about [Enhanced Tool Features](./enhanced-tools.md)
 - Review [Performance Optimization](./tool-performance.md) for large projects

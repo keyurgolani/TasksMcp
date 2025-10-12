@@ -2,9 +2,10 @@
  * Request logging middleware
  */
 
-import type { Request, Response, NextFunction } from 'express';
-import type { ApiRequest } from '../../shared/types/api.js';
 import { logger } from '../../shared/utils/logger.js';
+
+import type { ApiRequest } from '../../shared/types/api.js';
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * Middleware to log incoming requests and responses
@@ -15,7 +16,7 @@ export function requestLoggerMiddleware(
   next: NextFunction
 ): void {
   const apiReq = req as ApiRequest;
-  
+
   // Log incoming request
   logger.info('Incoming request', {
     requestId: apiReq.id,
@@ -25,12 +26,12 @@ export function requestLoggerMiddleware(
     ip: req.ip,
     userAgent: req.get('user-agent'),
   });
-  
+
   // Capture response
   const originalSend = res.send;
   res.send = function (data): Response {
     const duration = Date.now() - apiReq.startTime;
-    
+
     logger.info('Request completed', {
       requestId: apiReq.id,
       method: req.method,
@@ -38,9 +39,9 @@ export function requestLoggerMiddleware(
       statusCode: res.statusCode,
       duration,
     });
-    
+
     return originalSend.call(this, data);
   };
-  
+
   next();
 }

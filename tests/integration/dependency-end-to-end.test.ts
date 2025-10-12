@@ -4,35 +4,23 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createTodoListManager } from '../utils/test-helpers.js';
+
+import { handleAddTask } from '../../src/api/handlers/add-task.js';
+import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
+import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
+import { handleGetList } from '../../src/api/handlers/get-list.js';
+import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
+import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
+import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
+import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { logger } from '../../src/shared/utils/logger.js';
 import { TestCleanup } from '../setup.js';
 import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleAddTask } from '../../src/api/handlers/add-task.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import type { TodoList } from '../../src/shared/types/todo.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { logger } from '../../src/shared/utils/logger.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('Dependency Management End-to-End Integration Tests', () => {
   let todoListManager: TodoListManager;
@@ -65,6 +53,7 @@ describe('Dependency Management End-to-End Integration Tests', () => {
   /**
    * Helper function to make MCP tool calls
    */
+
   async function callTool(toolName: string, args: any) {
     const request: CallToolRequest = {
       method: 'tools/call',
@@ -113,7 +102,8 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       const designTaskResult = await callTool('add_task', {
         listId: testList.id,
         title: 'Design System Architecture',
-        description: 'Create system design, define interfaces, plan database schema',
+        description:
+          'Create system design, define interfaces, plan database schema',
         priority: 4,
         tags: ['design', 'architecture'],
         estimatedDuration: 240,
@@ -158,7 +148,9 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         dependencies: [backendTask.id, frontendTask.id],
       });
       expect(integrationTaskResult.isError).toBeFalsy();
-      const integrationTask = JSON.parse(integrationTaskResult.content[0]!.text);
+      const integrationTask = JSON.parse(
+        integrationTaskResult.content[0]!.text
+      );
 
       const deploymentTaskResult = await callTool('add_task', {
         listId: testList.id,
@@ -170,7 +162,7 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         dependencies: [integrationTask.id],
       });
       expect(deploymentTaskResult.isError).toBeFalsy();
-      const deploymentTask = JSON.parse(deploymentTaskResult.content[0]!.text);
+      const _deploymentTask = JSON.parse(deploymentTaskResult.content[0]!.text);
 
       // Step 4: Analyze the project structure
       const analysisResult = await callTool('analyze_task_dependencies', {
@@ -192,7 +184,9 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       const readyTasks = JSON.parse(readyTasksResult.content[0]!.text);
 
       expect(readyTasks.readyTasks.length).toBe(1);
-      expect(readyTasks.readyTasks[0]!.title).toBe('Setup Development Environment');
+      expect(readyTasks.readyTasks[0]!.title).toBe(
+        'Setup Development Environment'
+      );
 
       // Step 6: Complete setup task and verify workflow progression
       const completeSetupResult = await callTool('complete_task', {
@@ -206,10 +200,14 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         listId: testList.id,
       });
       expect(readyTasksAfterSetupResult.isError).toBeFalsy();
-      const readyTasksAfterSetup = JSON.parse(readyTasksAfterSetupResult.content[0]!.text);
+      const readyTasksAfterSetup = JSON.parse(
+        readyTasksAfterSetupResult.content[0]!.text
+      );
 
       expect(readyTasksAfterSetup.readyTasks.length).toBe(1);
-      expect(readyTasksAfterSetup.readyTasks[0]!.title).toBe('Design System Architecture');
+      expect(readyTasksAfterSetup.readyTasks[0]!.title).toBe(
+        'Design System Architecture'
+      );
 
       // Step 8: Complete design task
       const completeDesignResult = await callTool('complete_task', {
@@ -223,10 +221,14 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         listId: testList.id,
       });
       expect(readyTasksAfterDesignResult.isError).toBeFalsy();
-      const readyTasksAfterDesign = JSON.parse(readyTasksAfterDesignResult.content[0]!.text);
+      const readyTasksAfterDesign = JSON.parse(
+        readyTasksAfterDesignResult.content[0]!.text
+      );
 
       expect(readyTasksAfterDesign.readyTasks.length).toBe(2); // Backend and Frontend
-      const readyTitles = readyTasksAfterDesign.readyTasks.map((task: any) => task.title);
+      const readyTitles = readyTasksAfterDesign.readyTasks.map(
+        (task: any) => task.title
+      );
       expect(readyTitles).toContain('Implement Backend API');
       expect(readyTitles).toContain('Implement Frontend UI');
 
@@ -264,7 +266,9 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       const task3 = JSON.parse(task3Result.content[0]!.text);
 
       // Verify initial state
-      let readyTasksResult = await callTool('get_ready_tasks', { listId: testList.id });
+      let readyTasksResult = await callTool('get_ready_tasks', {
+        listId: testList.id,
+      });
       let readyTasks = JSON.parse(readyTasksResult.content[0]!.text);
       expect(readyTasks.readyTasks.length).toBe(2); // Task 1 and Task 3
 
@@ -277,7 +281,9 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       expect(addDependencyResult.isError).toBeFalsy();
 
       // Verify Task 3 is no longer ready
-      readyTasksResult = await callTool('get_ready_tasks', { listId: testList.id });
+      readyTasksResult = await callTool('get_ready_tasks', {
+        listId: testList.id,
+      });
       readyTasks = JSON.parse(readyTasksResult.content[0]!.text);
       expect(readyTasks.readyTasks.length).toBe(1); // Only Task 1
 
@@ -290,7 +296,9 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       expect(removeDependencyResult.isError).toBeFalsy();
 
       // Verify Task 3 is ready again
-      readyTasksResult = await callTool('get_ready_tasks', { listId: testList.id });
+      readyTasksResult = await callTool('get_ready_tasks', {
+        listId: testList.id,
+      });
       readyTasks = JSON.parse(readyTasksResult.content[0]!.text);
       expect(readyTasks.readyTasks.length).toBe(2); // Task 1 and Task 3 again
 
@@ -301,7 +309,7 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         priority: 3,
         dependencies: [task1.id, task3.id], // Depends on multiple tasks
       });
-      const task4 = JSON.parse(task4Result.content[0]!.text);
+      const _task4 = JSON.parse(task4Result.content[0]!.text);
 
       // Analyze the complex structure
       const analysisResult = await callTool('analyze_task_dependencies', {
@@ -493,7 +501,7 @@ describe('Dependency Management End-to-End Integration Tests', () => {
         priority: 3,
         dependencies: [task1.id],
       });
-      const task2 = JSON.parse(task2Result.content[0]!.text);
+      const _task2 = JSON.parse(task2Result.content[0]!.text);
 
       // Test that analysis provides helpful recommendations
       const analysisResult = await callTool('analyze_task_dependencies', {
@@ -512,8 +520,10 @@ describe('Dependency Management End-to-End Integration Tests', () => {
       expect(readyTasksResult.isError).toBeFalsy();
       const readyTasks = JSON.parse(readyTasksResult.content[0]!.text);
 
-      expect(readyTasks.nextActions.length).toBeGreaterThan(0);
-      expect(readyTasks.nextActions[0]).toBeDefined();
+      expect(readyTasks._methodologyGuidance).toBeDefined();
+      expect(readyTasks._methodologyGuidance.dailyWorkflow).toBeInstanceOf(
+        Array
+      );
 
       // Test that show_tasks displays dependency information clearly
       const showTasksResult = await callTool('show_tasks', {
@@ -528,7 +538,7 @@ describe('Dependency Management End-to-End Integration Tests', () => {
 
       logger.info('User experience validation completed', {
         recommendationCount: analysis.recommendations.length,
-        nextActionCount: readyTasks.nextActions.length,
+        methodologyGuidanceProvided: !!readyTasks._methodologyGuidance,
         showOutputLength: showOutput.length,
       });
     });

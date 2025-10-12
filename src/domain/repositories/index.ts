@@ -1,10 +1,10 @@
 /**
  * Repository interfaces for domain aggregates
- * 
+ *
  * This module exports all repository interfaces defined in the domain layer.
  * These interfaces define the contract for data access operations without
  * coupling to specific storage implementations.
- * 
+ *
  * Following Domain-Driven Design principles:
  * - Repositories provide collection-like interfaces for aggregates
  * - They abstract persistence details from domain logic

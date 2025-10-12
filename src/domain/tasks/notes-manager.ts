@@ -3,9 +3,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
+import { logger } from '../../shared/utils/logger.js';
+
 import type { ImplementationNote } from '../../shared/types/todo.js';
 import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
-import { logger } from '../../shared/utils/logger.js';
 
 export interface CreateNoteInput {
   entityId: string; // Task ID or List ID
@@ -30,7 +32,9 @@ export interface SearchNotesInput {
 }
 
 export interface SearchNotesResult {
-  notes: Array<ImplementationNote & { entityId: string; entityType: 'task' | 'list' }>;
+  notes: Array<
+    ImplementationNote & { entityId: string; entityType: 'task' | 'list' }
+  >;
   total: number;
   hasMore: boolean;
 }
@@ -48,12 +52,12 @@ export class NotesManager {
 
   constructor(repository?: ITodoListRepository) {
     this.repository = repository;
-    
+
     logger.debug('NotesManager initialized', {
       hasRepository: !!repository,
     });
   }
-  
+
   /**
    * Gets the repository instance if available
    * @returns The repository instance or undefined
@@ -250,10 +254,17 @@ export class NotesManager {
    * Validates note type
    */
   private validateNoteType(type: ImplementationNote['type']): void {
-    const validTypes: ImplementationNote['type'][] = ['general', 'technical', 'decision', 'learning'];
-    
+    const validTypes: ImplementationNote['type'][] = [
+      'general',
+      'technical',
+      'decision',
+      'learning',
+    ];
+
     if (!validTypes.includes(type)) {
-      throw new Error(`Invalid note type: ${type}. Valid types are: ${validTypes.join(', ')}`);
+      throw new Error(
+        `Invalid note type: ${type}. Valid types are: ${validTypes.join(', ')}`
+      );
     }
   }
 
@@ -272,10 +283,12 @@ export class NotesManager {
 
       // Sort notes by creation date
       const sortedNotes = [...notes].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
-        
-        return sortOrder === 'desc' 
+        const dateA =
+          a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB =
+          b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+
+        return sortOrder === 'desc'
           ? dateB.getTime() - dateA.getTime()
           : dateA.getTime() - dateB.getTime();
       });
@@ -299,7 +312,9 @@ export class NotesManager {
    * Searches notes by content and filters
    */
   async searchNotes(
-    allNotes: Array<ImplementationNote & { entityId: string; entityType: 'task' | 'list' }>,
+    allNotes: Array<
+      ImplementationNote & { entityId: string; entityType: 'task' | 'list' }
+    >,
     input: SearchNotesInput
   ): Promise<SearchNotesResult> {
     try {
@@ -316,13 +331,15 @@ export class NotesManager {
       const offset = input.offset ?? 0;
 
       // Filter notes based on criteria
-      let filteredNotes = allNotes.filter(note => {
+      const filteredNotes = allNotes.filter(note => {
         // Text search in content
-        const matchesQuery = query === '' || note.content.toLowerCase().includes(query);
-        
+        const matchesQuery =
+          query === '' || note.content.toLowerCase().includes(query);
+
         // Entity type filter
-        const matchesEntityType = !input.entityType || note.entityType === input.entityType;
-        
+        const matchesEntityType =
+          !input.entityType || note.entityType === input.entityType;
+
         // Note type filter
         const matchesNoteType = !input.noteType || note.type === input.noteType;
 
@@ -334,14 +351,16 @@ export class NotesManager {
         if (query) {
           const aExactMatch = a.content.toLowerCase().includes(query);
           const bExactMatch = b.content.toLowerCase().includes(query);
-          
+
           if (aExactMatch && !bExactMatch) return -1;
           if (!aExactMatch && bExactMatch) return 1;
         }
 
         // Sort by creation date (most recent first)
-        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        const dateA =
+          a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB =
+          b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
         return dateB.getTime() - dateA.getTime();
       });
 
@@ -389,7 +408,10 @@ export class NotesManager {
     endDate: Date
   ): ImplementationNote[] {
     return notes.filter(note => {
-      const noteDate = note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt);
+      const noteDate =
+        note.createdAt instanceof Date
+          ? note.createdAt
+          : new Date(note.createdAt);
       return noteDate >= startDate && noteDate <= endDate;
     });
   }
@@ -400,7 +422,7 @@ export class NotesManager {
   getNotesToday(notes: ImplementationNote[]): ImplementationNote[] {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -437,10 +459,11 @@ export class NotesManager {
     // Try to truncate at word boundary
     const truncated = content.substring(0, maxLength);
     const lastSpaceIndex = truncated.lastIndexOf(' ');
-    
-    const finalContent = lastSpaceIndex > maxLength * 0.8 
-      ? truncated.substring(0, lastSpaceIndex) + suffix
-      : truncated + suffix;
+
+    const finalContent =
+      lastSpaceIndex > maxLength * 0.8
+        ? truncated.substring(0, lastSpaceIndex) + suffix
+        : truncated + suffix;
 
     return { content: finalContent, isTruncated: true };
   }
@@ -458,7 +481,7 @@ export class NotesManager {
     oldestDate?: Date;
   } {
     const total = notes.length;
-    
+
     if (total === 0) {
       return {
         total: 0,
@@ -485,12 +508,15 @@ export class NotesManager {
       byType[note.type]++;
       totalLength += note.content.length;
 
-      const noteDate = note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt);
-      
+      const noteDate =
+        note.createdAt instanceof Date
+          ? note.createdAt
+          : new Date(note.createdAt);
+
       if (!mostRecentDate || noteDate > mostRecentDate) {
         mostRecentDate = noteDate;
       }
-      
+
       if (!oldestDate || noteDate < oldestDate) {
         oldestDate = noteDate;
       }
@@ -536,19 +562,29 @@ export class NotesManager {
 
     // Sort notes
     const sortedNotes = [...notes].sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
-      
-      return sortOrder === 'desc' 
+      const dateA =
+        a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+      const dateB =
+        b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+
+      return sortOrder === 'desc'
         ? dateB.getTime() - dateA.getTime()
         : dateA.getTime() - dateB.getTime();
     });
 
     if (groupByType) {
-      return this.formatNotesGroupedByType(sortedNotes, maxContentLength, includeMetadata);
+      return this.formatNotesGroupedByType(
+        sortedNotes,
+        maxContentLength,
+        includeMetadata
+      );
     }
 
-    return this.formatNotesLinear(sortedNotes, maxContentLength, includeMetadata);
+    return this.formatNotesLinear(
+      sortedNotes,
+      maxContentLength,
+      includeMetadata
+    );
   }
 
   /**
@@ -560,22 +596,28 @@ export class NotesManager {
     includeMetadata: boolean
   ): string {
     const formattedNotes = notes.map((note, index) => {
-      const { content, isTruncated } = this.truncateNoteContent(note.content, maxContentLength);
-      const createdAt = note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt);
-      
+      const { content, isTruncated } = this.truncateNoteContent(
+        note.content,
+        maxContentLength
+      );
+      const createdAt =
+        note.createdAt instanceof Date
+          ? note.createdAt
+          : new Date(note.createdAt);
+
       let formatted = `${index + 1}. [${note.type.toUpperCase()}] ${content}`;
-      
+
       if (isTruncated) {
         formatted += ' (truncated)';
       }
-      
+
       if (includeMetadata) {
         formatted += `\n   Created: ${createdAt.toLocaleString()}`;
         if (note.author) {
           formatted += ` by ${note.author}`;
         }
       }
-      
+
       return formatted;
     });
 
@@ -590,7 +632,10 @@ export class NotesManager {
     maxContentLength: number,
     includeMetadata: boolean
   ): string {
-    const groupedNotes: Record<ImplementationNote['type'], ImplementationNote[]> = {
+    const groupedNotes: Record<
+      ImplementationNote['type'],
+      ImplementationNote[]
+    > = {
       general: [],
       technical: [],
       decision: [],
@@ -610,24 +655,30 @@ export class NotesManager {
 
       const typeName = type.charAt(0).toUpperCase() + type.slice(1);
       sections.push(`${typeName} Notes (${typeNotes.length}):`);
-      
+
       const formattedTypeNotes = typeNotes.map((note, index) => {
-        const { content, isTruncated } = this.truncateNoteContent(note.content, maxContentLength);
-        const createdAt = note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt);
-        
+        const { content, isTruncated } = this.truncateNoteContent(
+          note.content,
+          maxContentLength
+        );
+        const createdAt =
+          note.createdAt instanceof Date
+            ? note.createdAt
+            : new Date(note.createdAt);
+
         let formatted = `  ${index + 1}. ${content}`;
-        
+
         if (isTruncated) {
           formatted += ' (truncated)';
         }
-        
+
         if (includeMetadata) {
           formatted += `\n     Created: ${createdAt.toLocaleString()}`;
           if (note.author) {
             formatted += ` by ${note.author}`;
           }
         }
-        
+
         return formatted;
       });
 
@@ -650,7 +701,8 @@ export class NotesManager {
     const errors: string[] = [];
     const warnings: string[] = [];
     const validNotes: ImplementationNote[] = [];
-    const invalidNotes: Array<{ note: ImplementationNote; errors: string[] }> = [];
+    const invalidNotes: Array<{ note: ImplementationNote; errors: string[] }> =
+      [];
 
     for (const note of notes) {
       try {
@@ -661,11 +713,17 @@ export class NotesManager {
         }
 
         if (!note.content || typeof note.content !== 'string') {
-          invalidNotes.push({ note, errors: ['Missing or invalid note content'] });
+          invalidNotes.push({
+            note,
+            errors: ['Missing or invalid note content'],
+          });
           continue;
         }
 
-        if (!note.type || !['general', 'technical', 'decision', 'learning'].includes(note.type)) {
+        if (
+          !note.type ||
+          !['general', 'technical', 'decision', 'learning'].includes(note.type)
+        ) {
           invalidNotes.push({ note, errors: ['Missing or invalid note type'] });
           continue;
         }
@@ -681,7 +739,10 @@ export class NotesManager {
 
         validNotes.push(note);
       } catch (validationError) {
-        const errorMessage = validationError instanceof Error ? validationError.message : 'Unknown validation error';
+        const errorMessage =
+          validationError instanceof Error
+            ? validationError.message
+            : 'Unknown validation error';
         invalidNotes.push({ note, errors: [errorMessage] });
       }
     }

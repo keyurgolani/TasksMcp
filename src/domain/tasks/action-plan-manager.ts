@@ -3,9 +3,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
+import { logger } from '../../shared/utils/logger.js';
+
 import type { ActionPlan, ActionStep } from '../../shared/types/todo.js';
 import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
-import { logger } from '../../shared/utils/logger.js';
 
 export interface CreateActionPlanInput {
   taskId: string;
@@ -38,12 +40,12 @@ export class ActionPlanManager {
 
   constructor(repository?: ITodoListRepository) {
     this.repository = repository;
-    
+
     logger.debug('ActionPlanManager initialized', {
       hasRepository: !!repository,
     });
   }
-  
+
   /**
    * Gets the repository instance if available
    * @returns The repository instance or undefined
@@ -153,11 +155,10 @@ export class ActionPlanManager {
 
       const steps: ActionStep[] = [];
       const lines = content.split('\n');
-      let order = 0;
 
       for (const line of lines) {
         const trimmedLine = line.trim();
-        
+
         // Skip empty lines
         if (!trimmedLine) {
           continue;
@@ -165,12 +166,12 @@ export class ActionPlanManager {
 
         // Look for various bullet point patterns
         const bulletPatterns = [
-          /^[-*+]\s+(.+)$/,           // - item, * item, + item
-          /^\d+\.\s+(.+)$/,          // 1. item, 2. item
-          /^[a-zA-Z]\.\s+(.+)$/,     // a. item, A. item
-          /^[ivxlcdm]+\.\s+(.+)$/i,  // i. item, ii. item (roman numerals)
-          /^\[\s*\]\s+(.+)$/,        // [ ] item (checkbox)
-          /^\[x\]\s+(.+)$/i,         // [x] item (completed checkbox)
+          /^[-*+]\s+(.+)$/, // - item, * item, + item
+          /^\d+\.\s+(.+)$/, // 1. item, 2. item
+          /^[a-zA-Z]\.\s+(.+)$/, // a. item, A. item
+          /^[ivxlcdm]+\.\s+(.+)$/i, // i. item, ii. item (roman numerals)
+          /^\[\s*\]\s+(.+)$/, // [ ] item (checkbox)
+          /^\[x\]\s+(.+)$/i, // [x] item (completed checkbox)
         ];
 
         let stepContent: string | null = null;
@@ -181,7 +182,7 @@ export class ActionPlanManager {
           const match = trimmedLine.match(pattern);
           if (match && match[1]) {
             stepContent = match[1].trim();
-            
+
             // Check if it's a completed checkbox
             if (/^\[x\]\s+/i.test(trimmedLine)) {
               initialStatus = 'completed';
@@ -201,7 +202,7 @@ export class ActionPlanManager {
             id: uuidv4(),
             content: stepContent,
             status: initialStatus,
-            order: order++,
+            order: steps.length,
           };
 
           // Set completedAt if initially completed
@@ -221,7 +222,11 @@ export class ActionPlanManager {
       return steps;
     } catch (error) {
       logger.error('Failed to parse steps from content', { error });
-      throw new Error(`Failed to parse action plan steps: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to parse action plan steps: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   }
 
@@ -239,7 +244,9 @@ export class ActionPlanManager {
         newStatus: input.status,
       });
 
-      const stepIndex = existingPlan.steps.findIndex(step => step.id === input.stepId);
+      const stepIndex = existingPlan.steps.findIndex(
+        step => step.id === input.stepId
+      );
       if (stepIndex === -1) {
         throw new Error(`Step not found: ${input.stepId}`);
       }
@@ -302,7 +309,9 @@ export class ActionPlanManager {
         return 0;
       }
 
-      const completedSteps = plan.steps.filter(step => step.status === 'completed').length;
+      const completedSteps = plan.steps.filter(
+        step => step.status === 'completed'
+      ).length;
       const progress = Math.round((completedSteps / plan.steps.length) * 100);
 
       logger.debug('Plan progress calculated', {
@@ -325,10 +334,14 @@ export class ActionPlanManager {
   /**
    * Suggests task status update based on action plan progress
    */
-  suggestTaskStatusUpdate(plan: ActionPlan): 'pending' | 'in_progress' | 'completed' | null {
+  suggestTaskStatusUpdate(
+    plan: ActionPlan
+  ): 'pending' | 'in_progress' | 'completed' | null {
     try {
       const progress = this.calculatePlanProgress(plan);
-      const inProgressSteps = plan.steps.filter(step => step.status === 'in_progress').length;
+      const inProgressSteps = plan.steps.filter(
+        step => step.status === 'in_progress'
+      ).length;
 
       // If all steps are completed, suggest completed
       if (progress === 100) {
@@ -345,11 +358,10 @@ export class ActionPlanManager {
         return 'pending';
       }
 
-      logger.debug('Task status suggestion calculated', {
+      logger.debug('Task status calculated', {
         planId: plan.id,
         progress,
         inProgressSteps,
-        suggestion: null,
       });
 
       return null;
@@ -365,7 +377,9 @@ export class ActionPlanManager {
   /**
    * Validates action plan content
    */
-  private validateActionPlanContent(content: string): ActionPlanValidationResult {
+  private validateActionPlanContent(
+    content: string
+  ): ActionPlanValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -376,12 +390,16 @@ export class ActionPlanManager {
 
     // Check content length (reasonable limits)
     if (content.length > 50000) {
-      errors.push('Action plan content is too long (maximum 50,000 characters)');
+      errors.push(
+        'Action plan content is too long (maximum 50,000 characters)'
+      );
     }
 
     // Check for minimum meaningful content
     if (content.trim().length < 10) {
-      warnings.push('Action plan content is very short and may not be meaningful');
+      warnings.push(
+        'Action plan content is very short and may not be meaningful'
+      );
     }
 
     // Try to parse steps and warn if none found
@@ -390,9 +408,11 @@ export class ActionPlanManager {
       if (steps.length === 0) {
         warnings.push('No structured steps found in action plan content');
       } else if (steps.length > 100) {
-        warnings.push('Action plan has many steps (>100), consider breaking into smaller plans');
+        warnings.push(
+          'Action plan has many steps (>100), consider breaking into smaller plans'
+        );
       }
-    } catch (error) {
+    } catch (_error) {
       warnings.push('Could not parse structured steps from content');
     }
 
@@ -428,8 +448,12 @@ export class ActionPlanManager {
     estimatedTimeRemaining?: number;
   } {
     const totalSteps = plan.steps.length;
-    const completedSteps = plan.steps.filter(s => s.status === 'completed').length;
-    const inProgressSteps = plan.steps.filter(s => s.status === 'in_progress').length;
+    const completedSteps = plan.steps.filter(
+      s => s.status === 'completed'
+    ).length;
+    const inProgressSteps = plan.steps.filter(
+      s => s.status === 'in_progress'
+    ).length;
     const pendingSteps = plan.steps.filter(s => s.status === 'pending').length;
     const progress = this.calculatePlanProgress(plan);
 
@@ -445,7 +469,10 @@ export class ActionPlanManager {
   /**
    * Gets all steps with a specific status
    */
-  getStepsByStatus(plan: ActionPlan, status: ActionStep['status']): ActionStep[] {
+  getStepsByStatus(
+    plan: ActionPlan,
+    status: ActionStep['status']
+  ): ActionStep[] {
     return plan.steps.filter(step => step.status === status);
   }
 
@@ -458,7 +485,7 @@ export class ActionPlanManager {
       return null;
     }
 
-    // Sort by order and return the first one
+    // Return the pending step with the lowest order
     return pendingSteps.sort((a, b) => a.order - b.order)[0] || null;
   }
 
@@ -475,7 +502,10 @@ export class ActionPlanManager {
       .map(step => ({
         stepId: step.id,
         stepContent: step.content,
-        completedAt: step.completedAt instanceof Date ? step.completedAt : new Date(step.completedAt!),
+        completedAt:
+          step.completedAt instanceof Date
+            ? step.completedAt
+            : new Date(step.completedAt!),
       }))
       .sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
   }
@@ -485,14 +515,16 @@ export class ActionPlanManager {
    */
   calculateAverageStepCompletionTime(plan: ActionPlan): number | null {
     const timeline = this.getCompletionTimeline(plan);
-    
+
     if (timeline.length < 2) {
       return null; // Need at least 2 completed steps to calculate average
     }
 
     let totalTime = 0;
     for (let i = 1; i < timeline.length; i++) {
-      const timeDiff = timeline[i]!.completedAt.getTime() - timeline[i - 1]!.completedAt.getTime();
+      const timeDiff =
+        timeline[i]!.completedAt.getTime() -
+        timeline[i - 1]!.completedAt.getTime();
       totalTime += timeDiff;
     }
 
@@ -612,7 +644,10 @@ export class ActionPlanManager {
     }
 
     // Define valid transitions for steps
-    const validTransitions: Record<ActionStep['status'], ActionStep['status'][]> = {
+    const validTransitions: Record<
+      ActionStep['status'],
+      ActionStep['status'][]
+    > = {
       pending: ['in_progress', 'completed'],
       in_progress: ['completed', 'pending'],
       completed: ['pending', 'in_progress'],
@@ -642,7 +677,10 @@ export class ActionPlanManager {
       if (step.status !== 'completed' || !step.completedAt) {
         return false;
       }
-      const completedDate = step.completedAt instanceof Date ? step.completedAt : new Date(step.completedAt);
+      const completedDate =
+        step.completedAt instanceof Date
+          ? step.completedAt
+          : new Date(step.completedAt);
       return completedDate >= today;
     }).length;
 
@@ -650,7 +688,9 @@ export class ActionPlanManager {
     if (stats.progress === 100) {
       statusText = 'All steps completed';
     } else if (stats.inProgressSteps > 0) {
-      statusText = `${stats.inProgressSteps} step${stats.inProgressSteps > 1 ? 's' : ''} in progress`;
+      statusText = `${stats.inProgressSteps} step${
+        stats.inProgressSteps > 1 ? 's' : ''
+      } in progress`;
     } else if (stats.completedSteps > 0) {
       statusText = `${stats.completedSteps}/${stats.totalSteps} steps completed`;
     } else {

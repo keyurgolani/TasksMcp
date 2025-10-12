@@ -4,12 +4,20 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskResponse } from '../../shared/types/mcp-types.js';
+
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type { TaskResponse } from '../../shared/types/mcp-types.js';
 
 /**
  * Validation schema for set task dependencies request parameters
@@ -24,7 +32,7 @@ const SetTaskDependenciesSchema = z.object({
 /**
  * Handles MCP set_task_dependencies tool requests
  * Sets all dependencies for a task, replacing any existing dependencies
- * 
+ *
  * @param request - The MCP call tool request containing dependency parameters
  * @param todoListManager - The todo list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated task details or error
@@ -34,7 +42,7 @@ export async function handleSetTaskDependencies(
   todoListManager: TodoListManager
 ): Promise<CallToolResult> {
   const dependencyResolver = new DependencyResolver();
-  
+
   try {
     logger.debug('Processing set_task_dependencies request', {
       params: request.params?.arguments,
@@ -43,7 +51,9 @@ export async function handleSetTaskDependencies(
     const args = SetTaskDependenciesSchema.parse(request.params?.arguments);
 
     // Get the current list to validate task and dependencies exist
-    const currentList = await todoListManager.getTodoList({ listId: args.listId });
+    const currentList = await todoListManager.getTodoList({
+      listId: args.listId,
+    });
     if (!currentList) {
       return {
         content: [
@@ -117,7 +127,9 @@ export async function handleSetTaskDependencies(
     // Find the updated task
     const updatedTask = result.items.find(item => item.id === args.taskId);
     if (!updatedTask) {
-      throw new Error('Failed to update task dependencies - task not found in result');
+      throw new Error(
+        'Failed to update task dependencies - task not found in result'
+      );
     }
 
     const response: TaskResponse = {
@@ -143,18 +155,25 @@ export async function handleSetTaskDependencies(
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            ...response,
-            dependencies: updatedTask.dependencies,
-            message: `Dependencies updated successfully${validationResult.warnings.length > 0 ? ` (${validationResult.warnings.length} warnings)` : ''}`,
-            warnings: validationResult.warnings,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              ...response,
+              dependencies: updatedTask.dependencies,
+              message: `Dependencies updated successfully${validationResult.warnings.length > 0 ? ` (${validationResult.warnings.length} warnings)` : ''}`,
+              warnings: validationResult.warnings,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('set_task_dependencies', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'set_task_dependencies',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   } finally {
     // Clean up the dependency resolver

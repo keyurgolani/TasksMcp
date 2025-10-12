@@ -1,6 +1,6 @@
 /**
  * Pretty Print Formatter for Human-Readable Task and List Display
- * 
+ *
  * Provides comprehensive formatting capabilities for todo lists and tasks with:
  * - Multiple output formats (compact, detailed, grouped)
  * - Progress visualization with bars and statistics
@@ -8,13 +8,13 @@
  * - Caching for performance optimization
  * - Lazy loading for large datasets
  * - Customizable formatting options
- * 
+ *
  * Key Features:
  * - Status and priority icons with color coding
  * - Action plan step-by-step formatting
  * - Implementation notes with type indicators
  * - Flexible grouping (by status, priority, project)
- * - Performance monitoring and caching
+ * - Performance optimization and caching
  * - Responsive width handling
  */
 
@@ -27,6 +27,7 @@ import {
   TaskStatus,
   Priority,
 } from '../types/todo.js';
+
 import { logger } from './logger.js';
 
 /**
@@ -93,7 +94,10 @@ export class PrettyPrintFormatter {
   };
 
   /** Cache for formatted results to improve performance on repeated requests */
-  private cache = new Map<string, { result: FormattedOutput; timestamp: number }>();
+  private cache = new Map<
+    string,
+    { result: FormattedOutput; timestamp: number }
+  >();
   private cacheHits = 0;
   private cacheMisses = 0;
   private readonly cacheTimeout = 5 * 60 * 1000; // 5 minutes cache timeout
@@ -101,15 +105,18 @@ export class PrettyPrintFormatter {
   /**
    * Formats a complete todo list with all its tasks and metadata
    * Supports grouping, filtering, caching, and lazy loading for large datasets
-   * 
+   *
    * @param list - The todo list to format
    * @param options - Formatting options to customize the output
    * @returns FormattedOutput - The formatted content with metadata
    */
-  formatTaskList(list: TodoList, options: Partial<FormatOptions> = {}): FormattedOutput {
+  formatTaskList(
+    list: TodoList,
+    options: Partial<FormatOptions> = {}
+  ): FormattedOutput {
     const startTime = performance.now();
     const opts = { ...this.defaultOptions, ...options };
-    
+
     try {
       // Check cache if enabled
       if (opts.enableCaching) {
@@ -125,7 +132,12 @@ export class PrettyPrintFormatter {
       const lines: string[] = [];
       let itemsToProcess = list.items;
       let wasTruncated = false;
-      let chunks: Array<{ content: string; itemCount: number; startIndex: number; endIndex: number }> = [];
+      let chunks: Array<{
+        content: string;
+        itemCount: number;
+        startIndex: number;
+        endIndex: number;
+      }> = [];
 
       // Apply maxItems limit
       if (opts.maxItems && list.items.length > opts.maxItems) {
@@ -159,7 +171,10 @@ export class PrettyPrintFormatter {
           const allChunkContent = chunks.map(chunk => chunk.content).join('\n');
           lines.push(allChunkContent);
         } else {
-          const formattedTasks = this.formatTasksWithGrouping(itemsToProcess, opts);
+          const formattedTasks = this.formatTasksWithGrouping(
+            itemsToProcess,
+            opts
+          );
           lines.push(...formattedTasks);
         }
       } else {
@@ -168,7 +183,7 @@ export class PrettyPrintFormatter {
 
       const content = lines.join('\n');
       const processingTime = performance.now() - startTime;
-      
+
       const result: FormattedOutput = {
         content,
         metadata: {
@@ -199,7 +214,10 @@ export class PrettyPrintFormatter {
   /**
    * Format a single task item
    */
-  formatTask(task: TodoItem, options: Partial<FormatOptions> = {}): FormattedOutput {
+  formatTask(
+    task: TodoItem,
+    options: Partial<FormatOptions> = {}
+  ): FormattedOutput {
     try {
       const opts = { ...this.defaultOptions, ...options };
       const lines: string[] = [];
@@ -236,7 +254,7 @@ export class PrettyPrintFormatter {
       }
 
       const content = lines.join('\n');
-      
+
       return {
         content,
         metadata: {
@@ -255,20 +273,25 @@ export class PrettyPrintFormatter {
   /**
    * Format a summary of multiple tasks
    */
-  formatTaskSummary(tasks: TodoItem[], options: Partial<FormatOptions> = {}): FormattedOutput {
+  formatTaskSummary(
+    tasks: TodoItem[],
+    options: Partial<FormatOptions> = {}
+  ): FormattedOutput {
     try {
       const opts = { ...this.defaultOptions, ...options };
       const lines: string[] = [];
 
       // Calculate statistics
       const stats = this.calculateTaskStatistics(tasks);
-      
+
       lines.push(this.formatSectionHeader('Task Summary', opts));
       lines.push(`Total Tasks: ${stats.total}`);
-      
+
       if (opts.includeProgress) {
         lines.push(this.formatProgressBar(stats.completed, stats.total, opts));
-        lines.push(`Progress: ${stats.completed}/${stats.total} (${stats.progressPercentage}%)`);
+        lines.push(
+          `Progress: ${stats.completed}/${stats.total} (${stats.progressPercentage}%)`
+        );
       }
 
       // Status breakdown
@@ -277,7 +300,9 @@ export class PrettyPrintFormatter {
       Object.entries(stats.byStatus).forEach(([status, count]) => {
         if (count > 0) {
           const icon = this.getStatusIcon(status as TaskStatus, opts);
-          lines.push(`  ${icon} ${this.formatStatusName(status as TaskStatus)}: ${count}`);
+          lines.push(
+            `  ${icon} ${this.formatStatusName(status as TaskStatus)}: ${count}`
+          );
         }
       });
 
@@ -289,12 +314,14 @@ export class PrettyPrintFormatter {
           .sort(([a], [b]) => b - a) // Sort by priority (high to low)
           .forEach(([priority, count]) => {
             const icon = this.getPriorityIcon(priority, opts);
-            lines.push(`  ${icon} ${this.formatPriorityName(priority)}: ${count}`);
+            lines.push(
+              `  ${icon} ${this.formatPriorityName(priority)}: ${count}`
+            );
           });
       }
 
       const content = lines.join('\n');
-      
+
       return {
         content,
         metadata: {
@@ -305,7 +332,10 @@ export class PrettyPrintFormatter {
         },
       };
     } catch (error) {
-      logger.error('Failed to format task summary', { taskCount: tasks.length, error });
+      logger.error('Failed to format task summary', {
+        taskCount: tasks.length,
+        error,
+      });
       return this.formatError('Failed to format task summary', error);
     }
   }
@@ -313,10 +343,14 @@ export class PrettyPrintFormatter {
   /**
    * Format a progress bar
    */
-  formatProgressBar(completed: number, total: number, options: Partial<FormatOptions> = {}): string {
+  formatProgressBar(
+    completed: number,
+    total: number,
+    options: Partial<FormatOptions> = {}
+  ): string {
     try {
       const opts = { ...this.defaultOptions, ...options };
-      
+
       if (total === 0) {
         return opts.colorize ? '\x1b[90m[no tasks]\x1b[0m' : '[no tasks]';
       }
@@ -328,17 +362,21 @@ export class PrettyPrintFormatter {
 
       const filledChar = opts.colorize ? '\x1b[32m█\x1b[0m' : '█';
       const emptyChar = opts.colorize ? '\x1b[90m░\x1b[0m' : '░';
-      
+
       const filled = filledChar.repeat(filledWidth);
       const empty = emptyChar.repeat(emptyWidth);
-      
-      const percentageText = opts.colorize 
+
+      const percentageText = opts.colorize
         ? `\x1b[1m${percentage}%\x1b[0m`
         : `${percentage}%`;
 
       return `[${filled}${empty}] ${percentageText}`;
     } catch (error) {
-      logger.error('Failed to format progress bar', { completed, total, error });
+      logger.error('Failed to format progress bar', {
+        completed,
+        total,
+        error,
+      });
       return '[error formatting progress]';
     }
   }
@@ -346,17 +384,26 @@ export class PrettyPrintFormatter {
   /**
    * Format an action plan with steps
    */
-  formatActionPlan(plan: ActionPlan, options: Partial<FormatOptions> = {}): string {
+  formatActionPlan(
+    plan: ActionPlan,
+    options: Partial<FormatOptions> = {}
+  ): string {
     try {
       const opts = { ...this.defaultOptions, ...options };
       const lines: string[] = [];
 
       lines.push(this.formatSectionHeader('Action Plan', opts, '  '));
-      
+
       if (opts.includeProgress && plan.steps.length > 0) {
-        const completedSteps = plan.steps.filter(step => step.status === 'completed').length;
-        lines.push(`  ${this.formatProgressBar(completedSteps, plan.steps.length, opts)}`);
-        lines.push(`  Progress: ${completedSteps}/${plan.steps.length} steps completed`);
+        const completedSteps = plan.steps.filter(
+          step => step.status === 'completed'
+        ).length;
+        lines.push(
+          `  ${this.formatProgressBar(completedSteps, plan.steps.length, opts)}`
+        );
+        lines.push(
+          `  Progress: ${completedSteps}/${plan.steps.length} steps completed`
+        );
         lines.push('');
       }
 
@@ -387,10 +434,12 @@ export class PrettyPrintFormatter {
   private formatListHeader(list: TodoList, opts: FormatOptions): string {
     const title = opts.colorize ? `\x1b[1m${list.title}\x1b[0m` : list.title;
     const projectTag = list.projectTag || list.context || 'default';
-    const project = opts.colorize ? `\x1b[36m[${projectTag}]\x1b[0m` : `[${projectTag}]`;
-    
+    const project = opts.colorize
+      ? `\x1b[36m[${projectTag}]\x1b[0m`
+      : `[${projectTag}]`;
+
     let header = `${title} ${project}`;
-    
+
     if (opts.showIds) {
       const id = opts.colorize ? `\x1b[90m(${list.id})\x1b[0m` : `(${list.id})`;
       header += ` ${id}`;
@@ -401,13 +450,15 @@ export class PrettyPrintFormatter {
 
   private formatListSummary(list: TodoList, opts: FormatOptions): string {
     const lines: string[] = [];
-    
+
     if (opts.includeProgress) {
-      lines.push(this.formatProgressBar(list.completedItems, list.totalItems, opts));
+      lines.push(
+        this.formatProgressBar(list.completedItems, list.totalItems, opts)
+      );
     }
-    
+
     lines.push(`Tasks: ${list.completedItems}/${list.totalItems} completed`);
-    
+
     if (list.description) {
       lines.push(`Description: ${list.description}`);
     }
@@ -415,13 +466,19 @@ export class PrettyPrintFormatter {
     return lines.join('\n');
   }
 
-  private formatTasksWithGrouping(tasks: TodoItem[], opts: FormatOptions): string[] {
+  private formatTasksWithGrouping(
+    tasks: TodoItem[],
+    opts: FormatOptions
+  ): string[] {
     const lines: string[] = [];
 
     if (opts.groupBy === 'none') {
       // No grouping, just list all tasks
       tasks.forEach(task => {
-        if (opts.compactMode || (!opts.includeActionPlans && !opts.includeNotes)) {
+        if (
+          opts.compactMode ||
+          (!opts.includeActionPlans && !opts.includeNotes)
+        ) {
           lines.push(this.formatTaskLine(task, opts));
         } else {
           const taskOutput = this.formatTask(task, opts);
@@ -434,16 +491,19 @@ export class PrettyPrintFormatter {
     } else {
       // Group tasks
       const groups = this.groupTasks(tasks, opts.groupBy);
-      
+
       Object.entries(groups).forEach(([groupName, groupTasks], groupIndex) => {
         if (groupIndex > 0) {
           lines.push('');
         }
-        
+
         lines.push(this.formatGroupHeader(groupName, groupTasks.length, opts));
-        
+
         groupTasks.forEach(task => {
-          if (opts.compactMode || (!opts.includeActionPlans && !opts.includeNotes)) {
+          if (
+            opts.compactMode ||
+            (!opts.includeActionPlans && !opts.includeNotes)
+          ) {
             lines.push(this.formatTaskLine(task, opts));
           } else {
             const taskOutput = this.formatTask(task, opts);
@@ -462,13 +522,13 @@ export class PrettyPrintFormatter {
   private formatTaskHeader(task: TodoItem, opts: FormatOptions): string {
     const statusIcon = this.getStatusIcon(task.status, opts);
     const priorityIcon = this.getPriorityIcon(task.priority, opts);
-    
+
     let header = `${statusIcon} ${task.title}`;
-    
+
     if (task.priority !== Priority.MEDIUM) {
       header += ` ${priorityIcon}`;
     }
-    
+
     if (opts.showIds) {
       const id = opts.colorize ? `\x1b[90m(${task.id})\x1b[0m` : `(${task.id})`;
       header += ` ${id}`;
@@ -479,24 +539,26 @@ export class PrettyPrintFormatter {
 
   private formatTaskLine(task: TodoItem, opts: FormatOptions): string {
     const lines: string[] = [];
-    
+
     // Main task line
     lines.push(this.formatTaskHeader(task, opts));
-    
+
     // Additional details in compact mode
     if (opts.compactMode) {
       const details: string[] = [];
-      
+
       if (task.estimatedDuration) {
         details.push(`${task.estimatedDuration}min`);
       }
-      
+
       if (task.tags.length > 0) {
         details.push(`#${task.tags.join(' #')}`);
       }
-      
+
       if (details.length > 0) {
-        const detailText = opts.colorize ? `\x1b[90m(${details.join(', ')})\x1b[0m` : `(${details.join(', ')})`;
+        const detailText = opts.colorize
+          ? `\x1b[90m(${details.join(', ')})\x1b[0m`
+          : `(${details.join(', ')})`;
         lines[0] += ` ${detailText}`;
       }
     } else {
@@ -504,27 +566,33 @@ export class PrettyPrintFormatter {
       if (task.description) {
         lines.push(this.formatTaskDescription(task.description, opts));
       }
-      
+
       const metadata = this.formatTaskMetadata(task, opts);
       if (metadata) {
         lines.push(metadata);
       }
-      
+
       // Action plan progress
       if (opts.includeActionPlans && task.actionPlan && opts.includeProgress) {
-        const completedSteps = task.actionPlan.steps.filter(s => s.status === 'completed').length;
+        const completedSteps = task.actionPlan.steps.filter(
+          s => s.status === 'completed'
+        ).length;
         const totalSteps = task.actionPlan.steps.length;
         if (totalSteps > 0) {
           lines.push(`  Plan: ${completedSteps}/${totalSteps} steps completed`);
         }
       }
-      
+
       // Notes summary
       if (opts.includeNotes && task.implementationNotes?.length > 0) {
         const noteCount = task.implementationNotes.length;
-        const recentNote = task.implementationNotes[task.implementationNotes.length - 1];
+        const recentNote =
+          task.implementationNotes[task.implementationNotes.length - 1];
         if (recentNote) {
-          const truncated = this.truncateText(recentNote.content, opts.truncateNotes);
+          const truncated = this.truncateText(
+            recentNote.content,
+            opts.truncateNotes
+          );
           lines.push(`  Note: ${truncated} (${noteCount} total)`);
         }
       }
@@ -533,28 +601,34 @@ export class PrettyPrintFormatter {
     return lines.join('\n');
   }
 
-  private formatTaskDescription(description: string, opts: FormatOptions): string {
+  private formatTaskDescription(
+    description: string,
+    opts: FormatOptions
+  ): string {
     const truncated = this.truncateText(description, opts.maxWidth - 4);
     const color = opts.colorize ? '\x1b[90m' : '';
     const reset = opts.colorize ? '\x1b[0m' : '';
     return `  ${color}${truncated}${reset}`;
   }
 
-  private formatTaskMetadata(task: TodoItem, opts: FormatOptions): string | null {
+  private formatTaskMetadata(
+    task: TodoItem,
+    opts: FormatOptions
+  ): string | null {
     const metadata: string[] = [];
-    
+
     if (task.estimatedDuration) {
       metadata.push(`Duration: ${task.estimatedDuration}min`);
     }
-    
+
     if (task.dependencies.length > 0) {
       metadata.push(`Dependencies: ${task.dependencies.length}`);
     }
-    
+
     if (task.tags.length > 0) {
       metadata.push(`Tags: #${task.tags.join(' #')}`);
     }
-    
+
     if (task.completedAt) {
       const date = task.completedAt.toLocaleDateString();
       metadata.push(`Completed: ${date}`);
@@ -570,39 +644,59 @@ export class PrettyPrintFormatter {
     return `  ${color}${text}${reset}`;
   }
 
-  private formatActionStep(step: ActionStep, index: number, opts: FormatOptions): string {
+  private formatActionStep(
+    step: ActionStep,
+    index: number,
+    opts: FormatOptions
+  ): string {
     const statusIcon = this.getStepStatusIcon(step.status, opts);
     const stepNumber = opts.colorize ? `\x1b[90m${index}.\x1b[0m` : `${index}.`;
-    
+
     let line = `    ${stepNumber} ${statusIcon} ${step.content}`;
-    
+
     if (step.notes && !opts.compactMode) {
       const truncated = this.truncateText(step.notes, opts.truncateNotes);
-      const noteText = opts.colorize ? `\x1b[90m(${truncated})\x1b[0m` : `(${truncated})`;
+      const noteText = opts.colorize
+        ? `\x1b[90m(${truncated})\x1b[0m`
+        : `(${truncated})`;
       line += ` ${noteText}`;
     }
 
     return line;
   }
 
-  private formatNote(note: ImplementationNote, opts: FormatOptions, indent: string = ''): string {
+  private formatNote(
+    note: ImplementationNote,
+    opts: FormatOptions,
+    indent: string = ''
+  ): string {
     const typeIcon = this.getNoteTypeIcon(note.type, opts);
     const date = note.createdAt.toLocaleDateString();
     const truncated = this.truncateText(note.content, opts.truncateNotes);
-    
+
     const dateText = opts.colorize ? `\x1b[90m[${date}]\x1b[0m` : `[${date}]`;
-    
+
     return `${indent}${typeIcon} ${truncated} ${dateText}`;
   }
 
-  private formatSectionHeader(title: string, opts: FormatOptions, indent: string = ''): string {
+  private formatSectionHeader(
+    title: string,
+    opts: FormatOptions,
+    indent: string = ''
+  ): string {
     const text = opts.colorize ? `\x1b[1m${title}:\x1b[0m` : `${title}:`;
     return `${indent}${text}`;
   }
 
-  private formatGroupHeader(groupName: string, count: number, opts: FormatOptions): string {
+  private formatGroupHeader(
+    groupName: string,
+    count: number,
+    opts: FormatOptions
+  ): string {
     const title = opts.colorize ? `\x1b[1m${groupName}\x1b[0m` : groupName;
-    const countText = opts.colorize ? `\x1b[90m(${count})\x1b[0m` : `(${count})`;
+    const countText = opts.colorize
+      ? `\x1b[90m(${count})\x1b[0m`
+      : `(${count})`;
     return `${title} ${countText}`;
   }
 
@@ -614,7 +708,7 @@ export class PrettyPrintFormatter {
   private formatError(message: string, error: unknown): FormattedOutput {
     const errorText = error instanceof Error ? error.message : 'Unknown error';
     const content = `Error: ${message}\nDetails: ${errorText}`;
-    
+
     return {
       content,
       metadata: {
@@ -631,94 +725,145 @@ export class PrettyPrintFormatter {
   private getStatusIcon(status: TaskStatus, opts: FormatOptions): string {
     if (!opts.colorize) {
       switch (status) {
-        case TaskStatus.PENDING: return '○';
-        case TaskStatus.IN_PROGRESS: return '◐';
-        case TaskStatus.COMPLETED: return '●';
-        case TaskStatus.BLOCKED: return '◯';
-        case TaskStatus.CANCELLED: return '✗';
-        default: return '?';
+        case TaskStatus.PENDING:
+          return '○';
+        case TaskStatus.IN_PROGRESS:
+          return '◐';
+        case TaskStatus.COMPLETED:
+          return '●';
+        case TaskStatus.BLOCKED:
+          return '◯';
+        case TaskStatus.CANCELLED:
+          return '✗';
+        default:
+          return '?';
       }
     }
 
     switch (status) {
-      case TaskStatus.PENDING: return '\x1b[90m○\x1b[0m';
-      case TaskStatus.IN_PROGRESS: return '\x1b[33m◐\x1b[0m';
-      case TaskStatus.COMPLETED: return '\x1b[32m●\x1b[0m';
-      case TaskStatus.BLOCKED: return '\x1b[31m◯\x1b[0m';
-      case TaskStatus.CANCELLED: return '\x1b[31m✗\x1b[0m';
-      default: return '\x1b[90m?\x1b[0m';
+      case TaskStatus.PENDING:
+        return '\x1b[90m○\x1b[0m';
+      case TaskStatus.IN_PROGRESS:
+        return '\x1b[33m◐\x1b[0m';
+      case TaskStatus.COMPLETED:
+        return '\x1b[32m●\x1b[0m';
+      case TaskStatus.BLOCKED:
+        return '\x1b[31m◯\x1b[0m';
+      case TaskStatus.CANCELLED:
+        return '\x1b[31m✗\x1b[0m';
+      default:
+        return '\x1b[90m?\x1b[0m';
     }
   }
 
   private getPriorityIcon(priority: Priority, opts: FormatOptions): string {
     if (!opts.colorize) {
       switch (priority) {
-        case Priority.CRITICAL: return '🔥';
-        case Priority.HIGH: return '⬆';
-        case Priority.MEDIUM: return '→';
-        case Priority.LOW: return '⬇';
-        case Priority.MINIMAL: return '↓';
-        default: return '';
+        case Priority.CRITICAL:
+          return '🔥';
+        case Priority.HIGH:
+          return '⬆';
+        case Priority.MEDIUM:
+          return '→';
+        case Priority.LOW:
+          return '⬇';
+        case Priority.MINIMAL:
+          return '↓';
+        default:
+          return '';
       }
     }
 
     switch (priority) {
-      case Priority.CRITICAL: return '\x1b[91m🔥\x1b[0m';
-      case Priority.HIGH: return '\x1b[31m⬆\x1b[0m';
-      case Priority.MEDIUM: return '\x1b[33m→\x1b[0m';
-      case Priority.LOW: return '\x1b[32m⬇\x1b[0m';
-      case Priority.MINIMAL: return '\x1b[90m↓\x1b[0m';
-      default: return '';
+      case Priority.CRITICAL:
+        return '\x1b[91m🔥\x1b[0m';
+      case Priority.HIGH:
+        return '\x1b[31m⬆\x1b[0m';
+      case Priority.MEDIUM:
+        return '\x1b[33m→\x1b[0m';
+      case Priority.LOW:
+        return '\x1b[32m⬇\x1b[0m';
+      case Priority.MINIMAL:
+        return '\x1b[90m↓\x1b[0m';
+      default:
+        return '';
     }
   }
 
-  private getStepStatusIcon(status: ActionStep['status'], opts: FormatOptions): string {
+  private getStepStatusIcon(
+    status: ActionStep['status'],
+    opts: FormatOptions
+  ): string {
     if (!opts.colorize) {
       switch (status) {
-        case 'pending': return '○';
-        case 'in_progress': return '◐';
-        case 'completed': return '●';
-        default: return '?';
+        case 'pending':
+          return '○';
+        case 'in_progress':
+          return '◐';
+        case 'completed':
+          return '●';
+        default:
+          return '?';
       }
     }
 
     switch (status) {
-      case 'pending': return '\x1b[90m○\x1b[0m';
-      case 'in_progress': return '\x1b[33m◐\x1b[0m';
-      case 'completed': return '\x1b[32m●\x1b[0m';
-      default: return '\x1b[90m?\x1b[0m';
+      case 'pending':
+        return '\x1b[90m○\x1b[0m';
+      case 'in_progress':
+        return '\x1b[33m◐\x1b[0m';
+      case 'completed':
+        return '\x1b[32m●\x1b[0m';
+      default:
+        return '\x1b[90m?\x1b[0m';
     }
   }
 
-  private getNoteTypeIcon(type: ImplementationNote['type'], opts: FormatOptions): string {
+  private getNoteTypeIcon(
+    type: ImplementationNote['type'],
+    opts: FormatOptions
+  ): string {
     if (!opts.colorize) {
       switch (type) {
-        case 'general': return '📝';
-        case 'technical': return '⚙️';
-        case 'decision': return '🎯';
-        case 'learning': return '💡';
-        default: return '📄';
+        case 'general':
+          return '📝';
+        case 'technical':
+          return '⚙️';
+        case 'decision':
+          return '🎯';
+        case 'learning':
+          return '💡';
+        default:
+          return '📄';
       }
     }
 
     // For colorized output, use simpler symbols that work better with colors
     switch (type) {
-      case 'general': return '\x1b[34m•\x1b[0m';
-      case 'technical': return '\x1b[36m⚙\x1b[0m';
-      case 'decision': return '\x1b[35m→\x1b[0m';
-      case 'learning': return '\x1b[33m!\x1b[0m';
-      default: return '\x1b[90m•\x1b[0m';
+      case 'general':
+        return '\x1b[34m•\x1b[0m';
+      case 'technical':
+        return '\x1b[36m⚙\x1b[0m';
+      case 'decision':
+        return '\x1b[35m→\x1b[0m';
+      case 'learning':
+        return '\x1b[33m!\x1b[0m';
+      default:
+        return '\x1b[90m•\x1b[0m';
     }
   }
 
   // Utility methods
 
-  private groupTasks(tasks: TodoItem[], groupBy: FormatOptions['groupBy']): Record<string, TodoItem[]> {
+  private groupTasks(
+    tasks: TodoItem[],
+    groupBy: FormatOptions['groupBy']
+  ): Record<string, TodoItem[]> {
     const groups: Record<string, TodoItem[]> = {};
 
     tasks.forEach(task => {
       let groupKey: string;
-      
+
       switch (groupBy) {
         case 'status':
           groupKey = this.formatStatusName(task.status);
@@ -760,7 +905,7 @@ export class PrettyPrintFormatter {
     tasks.forEach(task => {
       // Count by status
       stats.byStatus[task.status]++;
-      
+
       if (task.status === TaskStatus.COMPLETED) {
         stats.completed++;
       }
@@ -770,14 +915,16 @@ export class PrettyPrintFormatter {
       stats.byPriority.set(task.priority, currentCount + 1);
     });
 
-    stats.progressPercentage = stats.total > 0 
-      ? Math.round((stats.completed / stats.total) * 100)
-      : 0;
+    stats.progressPercentage =
+      stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
     return stats;
   }
 
-  private calculateGroupCount(tasks: TodoItem[], groupBy: FormatOptions['groupBy']): number {
+  private calculateGroupCount(
+    tasks: TodoItem[],
+    groupBy: FormatOptions['groupBy']
+  ): number {
     if (groupBy === 'none') {
       return 1;
     }
@@ -788,23 +935,35 @@ export class PrettyPrintFormatter {
 
   private formatStatusName(status: TaskStatus): string {
     switch (status) {
-      case TaskStatus.PENDING: return 'Pending';
-      case TaskStatus.IN_PROGRESS: return 'In Progress';
-      case TaskStatus.COMPLETED: return 'Completed';
-      case TaskStatus.BLOCKED: return 'Blocked';
-      case TaskStatus.CANCELLED: return 'Cancelled';
-      default: return 'Unknown';
+      case TaskStatus.PENDING:
+        return 'Pending';
+      case TaskStatus.IN_PROGRESS:
+        return 'In Progress';
+      case TaskStatus.COMPLETED:
+        return 'Completed';
+      case TaskStatus.BLOCKED:
+        return 'Blocked';
+      case TaskStatus.CANCELLED:
+        return 'Cancelled';
+      default:
+        return 'Unknown';
     }
   }
 
   private formatPriorityName(priority: Priority): string {
     switch (priority) {
-      case Priority.CRITICAL: return 'Critical';
-      case Priority.HIGH: return 'High';
-      case Priority.MEDIUM: return 'Medium';
-      case Priority.LOW: return 'Low';
-      case Priority.MINIMAL: return 'Minimal';
-      default: return 'Unknown';
+      case Priority.CRITICAL:
+        return 'Critical';
+      case Priority.HIGH:
+        return 'High';
+      case Priority.MEDIUM:
+        return 'Medium';
+      case Priority.LOW:
+        return 'Low';
+      case Priority.MINIMAL:
+        return 'Minimal';
+      default:
+        return 'Unknown';
     }
   }
 
@@ -812,16 +971,17 @@ export class PrettyPrintFormatter {
     if (text.length <= maxLength) {
       return text;
     }
-    
+
     return text.substring(0, maxLength - 3) + '...';
   }
-
-
 
   /**
    * Generate cache key for a list and options
    */
-  private generateCacheKey(list: TodoList, options: Partial<FormatOptions>): string {
+  private generateCacheKey(
+    list: TodoList,
+    options: Partial<FormatOptions>
+  ): string {
     const optionsStr = JSON.stringify(options);
     return `${list.id}-${list.updatedAt.getTime()}-${optionsStr}`;
   }
@@ -859,7 +1019,10 @@ export class PrettyPrintFormatter {
   /**
    * Format tasks in chunks for lazy loading
    */
-  private formatTasksInChunks(items: TodoItem[], options: FormatOptions): Array<{
+  private formatTasksInChunks(
+    items: TodoItem[],
+    options: FormatOptions
+  ): Array<{
     content: string;
     itemCount: number;
     startIndex: number;
@@ -871,7 +1034,7 @@ export class PrettyPrintFormatter {
     for (let i = 0; i < items.length; i += chunkSize) {
       const chunkItems = items.slice(i, i + chunkSize);
       const chunkLines = this.formatTasksWithGrouping(chunkItems, options);
-      
+
       chunks.push({
         content: chunkLines.join('\n'),
         itemCount: chunkItems.length,

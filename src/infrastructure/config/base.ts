@@ -19,18 +19,7 @@ export const baseConfig = {
     enabled: true,
     interval: 30000, // 30 seconds
   },
-  monitoring: {
-    enabled: true,
-    port: 9090,
-    performanceInterval: 5000, // 5 seconds
-    memoryInterval: 10000, // 10 seconds
-    metricsRetention: 3600000, // 1 hour
-    alerting: {
-      enabled: true,
-      escalationTime: 1800000, // 30 minutes
-      cooldownTime: 300000, // 5 minutes
-    },
-  },
+
   performance: {
     maxConcurrentOperations: 100,
     operationTimeout: 30000, // 30 seconds

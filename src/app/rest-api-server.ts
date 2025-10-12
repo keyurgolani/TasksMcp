@@ -3,21 +3,35 @@
  * Provides HTTP API for task management
  */
 
-import express, { type Express, type Request, type Response } from 'express';
 import cors from 'cors';
-import type { Server } from 'http';
-import type { ApiConfig, ApiRequest, HandlerContext } from '../shared/types/api.js';
-import type { TodoListManager } from '../domain/lists/todo-list-manager.js';
-import type { DependencyResolver } from '../domain/tasks/dependency-manager.js';
-import type { ExitCriteriaManager } from '../domain/tasks/exit-criteria-manager.js';
-import type { ActionPlanManager } from '../domain/tasks/action-plan-manager.js';
-import type { NotesManager } from '../domain/tasks/notes-manager.js';
-import type { IntelligenceManager } from '../domain/intelligence/intelligence-manager.js';
+import express, {
+  type Express,
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express';
+
+import { healthCheckHandler } from '../api/handlers/health-check.js';
+import {
+  errorHandlerMiddleware,
+  notFoundHandler,
+} from '../api/middleware/error-handler.js';
 import { requestIdMiddleware } from '../api/middleware/request-id.js';
 import { requestLoggerMiddleware } from '../api/middleware/request-logger.js';
-import { errorHandlerMiddleware, notFoundHandler } from '../api/middleware/error-handler.js';
-import { healthCheckHandler } from '../api/handlers/health-check.js';
 import { logger } from '../shared/utils/logger.js';
+
+import type { TodoListManager } from '../domain/lists/todo-list-manager.js';
+import type { ActionPlanManager } from '../domain/tasks/action-plan-manager.js';
+import type { DependencyResolver } from '../domain/tasks/dependency-manager.js';
+import type { ExitCriteriaManager } from '../domain/tasks/exit-criteria-manager.js';
+import type { NotesManager } from '../domain/tasks/notes-manager.js';
+import type {
+  ApiConfig,
+  ApiRequest,
+  HandlerContext,
+  RestApiHandler,
+} from '../shared/types/api.js';
+import type { Server } from 'http';
 
 /**
  * Default API configuration
@@ -47,12 +61,11 @@ export class RestApiServer {
     dependencyManager: DependencyResolver,
     exitCriteriaManager: ExitCriteriaManager,
     actionPlanManager: ActionPlanManager,
-    notesManager: NotesManager,
-    intelligenceManager: IntelligenceManager
+    notesManager: NotesManager
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.app = express();
-    
+
     // Store manager context
     this.context = {
       todoListManager,
@@ -60,9 +73,8 @@ export class RestApiServer {
       exitCriteriaManager,
       actionPlanManager,
       notesManager,
-      intelligenceManager,
     };
-    
+
     this.setupMiddleware();
     // Note: setupRoutes and setupErrorHandling are now async and called in initialize()
   }
@@ -83,23 +95,27 @@ export class RestApiServer {
   private setupMiddleware(): void {
     // Request ID generation (must be first)
     this.app.use(requestIdMiddleware);
-    
+
     // CORS
-    this.app.use(cors({
-      origin: this.config.corsOrigins,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-      exposedHeaders: ['X-Request-ID'],
-    }));
-    
+    this.app.use(
+      cors({
+        origin: this.config.corsOrigins,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+        exposedHeaders: ['X-Request-ID'],
+      })
+    );
+
     // Body parsing
     this.app.use(express.json({ limit: this.config.bodyLimit }));
-    this.app.use(express.urlencoded({ extended: true, limit: this.config.bodyLimit }));
-    
+    this.app.use(
+      express.urlencoded({ extended: true, limit: this.config.bodyLimit })
+    );
+
     // Request logging
     this.app.use(requestLoggerMiddleware);
-    
+
     // Request timeout
     this.app.use((req: Request, res: Response, next) => {
       req.setTimeout(this.config.requestTimeout);
@@ -115,7 +131,7 @@ export class RestApiServer {
     // Health check endpoint
     this.app.get('/health', healthCheckHandler);
     this.app.get('/api/health', healthCheckHandler);
-    
+
     // API info endpoint
     this.app.get('/api', (_req: Request, res: Response) => {
       res.json({
@@ -128,10 +144,10 @@ export class RestApiServer {
         },
       });
     });
-    
+
     // API v1 routes
     const apiRouter = express.Router();
-    
+
     // API root endpoint
     apiRouter.get('/', (_req: Request, res: Response) => {
       res.json({
@@ -144,26 +160,25 @@ export class RestApiServer {
           exitCriteria: '/api/v1/exit-criteria',
           actionPlans: '/api/v1/action-plans',
           notes: '/api/v1/notes',
-          intelligence: '/api/v1/intelligence',
         },
       });
     });
-    
+
     // List management routes
     await this.setupListRoutes(apiRouter);
-    
+
     // Task management routes
     await this.setupTaskRoutes(apiRouter);
-    
+
     // Dependency management routes
     await this.setupDependencyRoutes(apiRouter);
-    
+
     // Advanced feature routes (exit criteria, action plans, notes)
     await this.setupAdvancedFeatureRoutes(apiRouter);
-    
+
     // Mount the router AFTER all routes are added
     this.app.use('/api/v1', apiRouter);
-    
+
     logger.info('API routes configured', {
       routes: [
         'POST /api/v1/lists',
@@ -200,10 +215,10 @@ export class RestApiServer {
   private async setupListRoutes(router: express.Router): Promise<void> {
     // Dynamically import handlers
     const handlers = await import('../api/handlers/list-handlers.js');
-    
+
     // Create a wrapper to inject context
-    const wrapHandler = (handler: any) => {
-      return async (req: Request, res: Response, next: any) => {
+    const wrapHandler = (handler: RestApiHandler) => {
+      return async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req as ApiRequest, res, this.context);
         } catch (error) {
@@ -211,7 +226,7 @@ export class RestApiServer {
         }
       };
     };
-    
+
     router.post('/lists', wrapHandler(handlers.createListHandler));
     router.get('/lists', wrapHandler(handlers.listAllListsHandler));
     router.get('/lists/:id', wrapHandler(handlers.getListHandler));
@@ -225,10 +240,10 @@ export class RestApiServer {
   private async setupTaskRoutes(router: express.Router): Promise<void> {
     // Dynamically import handlers
     const handlers = await import('../api/handlers/task-handlers.js');
-    
+
     // Create a wrapper to inject context
-    const wrapHandler = (handler: any) => {
-      return async (req: Request, res: Response, next: any) => {
+    const wrapHandler = (handler: RestApiHandler) => {
+      return async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req as ApiRequest, res, this.context);
         } catch (error) {
@@ -236,13 +251,16 @@ export class RestApiServer {
         }
       };
     };
-    
+
     router.post('/tasks', wrapHandler(handlers.createTaskHandler));
     router.get('/tasks', wrapHandler(handlers.searchTasksHandler));
     router.get('/tasks/:id', wrapHandler(handlers.getTaskHandler));
     router.put('/tasks/:id', wrapHandler(handlers.updateTaskHandler));
     router.delete('/tasks/:id', wrapHandler(handlers.deleteTaskHandler));
-    router.post('/tasks/:id/complete', wrapHandler(handlers.completeTaskHandler));
+    router.post(
+      '/tasks/:id/complete',
+      wrapHandler(handlers.completeTaskHandler)
+    );
   }
 
   /**
@@ -251,10 +269,10 @@ export class RestApiServer {
   private async setupDependencyRoutes(router: express.Router): Promise<void> {
     // Dynamically import handlers
     const handlers = await import('../api/handlers/dependency-handlers.js');
-    
+
     // Create a wrapper to inject context
-    const wrapHandler = (handler: any) => {
-      return async (req: Request, res: Response, next: any) => {
+    const wrapHandler = (handler: RestApiHandler) => {
+      return async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req as ApiRequest, res, this.context);
         } catch (error) {
@@ -262,23 +280,39 @@ export class RestApiServer {
         }
       };
     };
-    
-    router.get('/dependencies/graph/:listId', wrapHandler(handlers.getDependencyGraphHandler));
-    router.post('/dependencies/validate', wrapHandler(handlers.validateDependenciesHandler));
-    router.get('/dependencies/ready/:listId', wrapHandler(handlers.getReadyTasksHandler));
-    router.post('/dependencies/set', wrapHandler(handlers.setDependenciesHandler));
+
+    router.get(
+      '/dependencies/graph/:listId',
+      wrapHandler(handlers.getDependencyGraphHandler)
+    );
+    router.post(
+      '/dependencies/validate',
+      wrapHandler(handlers.validateDependenciesHandler)
+    );
+    router.get(
+      '/dependencies/ready/:listId',
+      wrapHandler(handlers.getReadyTasksHandler)
+    );
+    router.post(
+      '/dependencies/set',
+      wrapHandler(handlers.setDependenciesHandler)
+    );
   }
 
   /**
    * Set up advanced feature routes (exit criteria, action plans, notes)
    */
-  private async setupAdvancedFeatureRoutes(router: express.Router): Promise<void> {
+  private async setupAdvancedFeatureRoutes(
+    router: express.Router
+  ): Promise<void> {
     // Dynamically import handlers
-    const handlers = await import('../api/handlers/advanced-feature-handlers.js');
-    
+    const handlers = await import(
+      '../api/handlers/advanced-feature-handlers.js'
+    );
+
     // Create a wrapper to inject context
-    const wrapHandler = (handler: any) => {
-      return async (req: Request, res: Response, next: any) => {
+    const wrapHandler = (handler: RestApiHandler) => {
+      return async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req as ApiRequest, res, this.context);
         } catch (error) {
@@ -286,21 +320,48 @@ export class RestApiServer {
         }
       };
     };
-    
+
     // Exit criteria routes
-    router.get('/exit-criteria/task/:taskId', wrapHandler(handlers.getTaskExitCriteriaHandler));
-    router.post('/exit-criteria/task/:taskId', wrapHandler(handlers.addExitCriteriaHandler));
-    router.put('/exit-criteria/:id', wrapHandler(handlers.updateExitCriteriaHandler));
-    
+    router.get(
+      '/exit-criteria/task/:taskId',
+      wrapHandler(handlers.getTaskExitCriteriaHandler)
+    );
+    router.post(
+      '/exit-criteria/task/:taskId',
+      wrapHandler(handlers.addExitCriteriaHandler)
+    );
+    router.put(
+      '/exit-criteria/:id',
+      wrapHandler(handlers.updateExitCriteriaHandler)
+    );
+
     // Action plan routes
-    router.get('/action-plans/task/:taskId', wrapHandler(handlers.getActionPlanHandler));
-    router.post('/action-plans/task/:taskId', wrapHandler(handlers.createActionPlanHandler));
-    router.put('/action-plans/:id', wrapHandler(handlers.updateActionPlanHandler));
-    router.post('/action-plans/:id/steps/:stepId/complete', wrapHandler(handlers.completeStepHandler));
-    
+    router.get(
+      '/action-plans/task/:taskId',
+      wrapHandler(handlers.getActionPlanHandler)
+    );
+    router.post(
+      '/action-plans/task/:taskId',
+      wrapHandler(handlers.createActionPlanHandler)
+    );
+    router.put(
+      '/action-plans/:id',
+      wrapHandler(handlers.updateActionPlanHandler)
+    );
+    router.post(
+      '/action-plans/:id/steps/:stepId/complete',
+      wrapHandler(handlers.completeStepHandler)
+    );
+
     // Notes routes
-    router.get('/notes/task/:taskId', wrapHandler(handlers.getTaskNotesHandler));
-    router.post('/notes/task/:taskId', wrapHandler(handlers.addTaskNoteHandler));
+    router.get(
+      '/notes/task/:taskId',
+      wrapHandler(handlers.getTaskNotesHandler)
+    );
+    router.post(
+      '/notes/task/:taskId',
+      wrapHandler(handlers.addTaskNoteHandler)
+    );
   }
 
   /**
@@ -309,7 +370,7 @@ export class RestApiServer {
   private setupErrorHandling(): void {
     // 404 handler for undefined routes
     this.app.use(notFoundHandler);
-    
+
     // Global error handler (must be last)
     this.app.use(errorHandlerMiddleware);
   }
@@ -327,7 +388,7 @@ export class RestApiServer {
           });
           resolve();
         });
-        
+
         this.server.on('error', (error: Error) => {
           logger.error('Server error', { error });
           reject(error);
@@ -346,9 +407,9 @@ export class RestApiServer {
     if (!this.server) {
       return;
     }
-    
+
     return new Promise((resolve, reject) => {
-      this.server!.close((error) => {
+      this.server!.close(error => {
         if (error) {
           logger.error('Error stopping server', { error });
           reject(error);

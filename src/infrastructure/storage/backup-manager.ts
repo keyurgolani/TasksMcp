@@ -4,11 +4,13 @@
 
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
+
+import { logger } from '../../shared/utils/logger.js';
 import { ConfigManager } from '../config/index.js';
 import { StorageFactory } from '../storage/storage-factory.js';
-import { logger } from '../../shared/utils/logger.js';
-import type { TodoList } from '../../shared/types/todo.js';
+
 import type { StorageBackend } from '../../shared/types/storage.js';
+import type { TodoList } from '../../shared/types/todo.js';
 
 export interface BackupMetadata {
   id: string;

@@ -2,10 +2,10 @@
 
 /**
  * Unified Script Runner for MCP Task Manager
- * 
+ *
  * This script provides a consistent interface for all project scripts,
  * organizing them into logical categories and providing help documentation.
- * 
+ *
  * Usage: npm run script <category> <action> [options]
  * Example: npm run script build prod
  *          npm run script test all
@@ -13,7 +13,7 @@
  */
 
 import { spawn } from 'child_process';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -30,7 +30,7 @@ const colors = {
   cyan: '\x1b[36m',
   white: '\x1b[37m',
   reset: '\x1b[0m',
-  bold: '\x1b[1m'
+  bold: '\x1b[1m',
 };
 
 function log(message, color = colors.reset) {
@@ -44,144 +44,150 @@ const SCRIPT_CATEGORIES = {
     actions: {
       dev: {
         description: 'Build for development',
-        command: 'npm run build:dev'
+        command: 'npm run build:dev',
       },
       prod: {
         description: 'Build for production',
-        command: 'npm run build:prod'
+        command: 'npm run build:prod',
       },
       clean: {
         description: 'Clean build artifacts',
-        command: 'npm run clean:build'
-      }
-    }
+        command: 'npm run clean:build',
+      },
+    },
   },
-  
+
   test: {
     description: 'Testing and validation scripts',
     actions: {
       all: {
         description: 'Run all tests',
-        command: 'npm run test:run'
+        command: 'npm run test:run',
       },
       unit: {
         description: 'Run unit tests only',
-        command: 'npm run test:run -- tests/unit'
+        command: 'npm run test:run -- tests/unit',
       },
       integration: {
         description: 'Run integration tests only',
-        command: 'npm run test:run -- tests/integration'
+        command: 'npm run test:run -- tests/integration',
       },
       performance: {
         description: 'Run performance tests only',
-        command: 'npm run test:run -- tests/performance'
+        command: 'npm run test:run -- tests/performance',
       },
       watch: {
         description: 'Run tests in watch mode',
-        command: 'npm run test'
-      }
-    }
+        command: 'npm run test',
+      },
+    },
   },
-  
+
   validate: {
     description: 'Validation and quality assurance scripts',
     actions: {
       project: {
         description: 'Validate project structure and configuration',
-        script: 'validate.sh'
+        script: 'validate.sh',
       },
       lint: {
         description: 'Run TypeScript linting',
-        command: 'npm run lint'
-      }
-    }
+        command: 'npm run lint',
+      },
+    },
   },
-  
+
   clean: {
     description: 'Cleanup and maintenance scripts',
     actions: {
       basic: {
         description: 'Basic cleanup (logs, temp files)',
-        script: 'clean.sh'
+        script: 'clean.sh',
       },
       deep: {
         description: 'Deep cleanup (includes node_modules)',
         script: 'clean.sh',
-        args: ['--deep']
+        args: ['--deep'],
       },
       build: {
         description: 'Clean build artifacts only',
         script: 'clean.sh',
-        args: ['--build']
-      }
-    }
+        args: ['--build'],
+      },
+    },
   },
-  
+
   version: {
     description: 'Version management scripts',
     actions: {
       sync: {
         description: 'Sync version across all files',
-        script: 'sync-version.js'
+        script: 'sync-version.js',
       },
       update: {
         description: 'Update version and sync files',
-        script: 'update-version.sh'
-      }
-    }
+        script: 'update-version.sh',
+      },
+    },
   },
-  
+
   deploy: {
     description: 'Deployment and release scripts',
     actions: {
       prepare: {
         description: 'Prepare for deployment',
         script: 'deploy.sh',
-        args: ['prepare']
+        args: ['prepare'],
       },
       staging: {
         description: 'Deploy to staging environment',
         script: 'deploy.sh',
-        args: ['staging']
+        args: ['staging'],
       },
       production: {
         description: 'Deploy to production environment',
         script: 'deploy.sh',
-        args: ['production']
-      }
-    }
+        args: ['production'],
+      },
+    },
   },
-  
+
   dev: {
     description: 'Development utility scripts',
     actions: {
       start: {
         description: 'Start development server',
-        command: 'npm run dev'
+        command: 'npm run dev',
       },
       health: {
         description: 'Check application health',
-        command: 'npm run health'
-      }
-    }
-  }
+        command: 'npm run health',
+      },
+    },
+  },
 };
 
 // Help functions
 function showHelp() {
-  log(`${colors.bold}${colors.cyan}MCP Task Manager - Unified Script Runner${colors.reset}\n`);
-  log(`${colors.bold}Usage:${colors.reset} npm run script <category> <action> [options]\n`);
-  
+  log(
+    `${colors.bold}${colors.cyan}MCP Task Manager - Unified Script Runner${colors.reset}\n`
+  );
+  log(
+    `${colors.bold}Usage:${colors.reset} npm run script <category> <action> [options]\n`
+  );
+
   log(`${colors.bold}Available Categories:${colors.reset}\n`);
-  
+
   Object.entries(SCRIPT_CATEGORIES).forEach(([category, config]) => {
     log(`  ${colors.green}${category}${colors.reset} - ${config.description}`);
     Object.entries(config.actions).forEach(([action, actionConfig]) => {
-      log(`    ${colors.yellow}${action}${colors.reset} - ${actionConfig.description}`);
+      log(
+        `    ${colors.yellow}${action}${colors.reset} - ${actionConfig.description}`
+      );
     });
     log('');
   });
-  
+
   log(`${colors.bold}Examples:${colors.reset}`);
   log(`  npm run script build prod     # Build for production`);
   log(`  npm run script test all       # Run all tests`);
@@ -194,15 +200,22 @@ function showHelp() {
 function showCategoryHelp(category) {
   const config = SCRIPT_CATEGORIES[category];
   if (!config) {
-    log(`${colors.red}Unknown category: ${category}${colors.reset}`, colors.red);
+    log(
+      `${colors.red}Unknown category: ${category}${colors.reset}`,
+      colors.red
+    );
     return;
   }
-  
-  log(`${colors.bold}${colors.cyan}${category}${colors.reset} - ${config.description}\n`);
+
+  log(
+    `${colors.bold}${colors.cyan}${category}${colors.reset} - ${config.description}\n`
+  );
   log(`${colors.bold}Available actions:${colors.reset}\n`);
-  
+
   Object.entries(config.actions).forEach(([action, actionConfig]) => {
-    log(`  ${colors.yellow}${action}${colors.reset} - ${actionConfig.description}`);
+    log(
+      `  ${colors.yellow}${action}${colors.reset} - ${actionConfig.description}`
+    );
   });
   log('');
 }
@@ -215,19 +228,23 @@ async function runScript(category, action, args = []) {
     log(`Run 'npm run script help' to see available categories.`);
     process.exit(1);
   }
-  
+
   const actionConfig = categoryConfig.actions[action];
   if (!actionConfig) {
-    log(`${colors.red}Unknown action: ${action} for category: ${category}${colors.reset}`);
+    log(
+      `${colors.red}Unknown action: ${action} for category: ${category}${colors.reset}`
+    );
     showCategoryHelp(category);
     process.exit(1);
   }
-  
+
   log(`${colors.blue}Running: ${category}/${action}${colors.reset}`);
-  log(`${colors.cyan}Description: ${actionConfig.description}${colors.reset}\n`);
-  
+  log(
+    `${colors.cyan}Description: ${actionConfig.description}${colors.reset}\n`
+  );
+
   let command, commandArgs;
-  
+
   if (actionConfig.command) {
     // NPM command
     const parts = actionConfig.command.split(' ');
@@ -246,25 +263,31 @@ async function runScript(category, action, args = []) {
     log(`${colors.red}Invalid action configuration${colors.reset}`);
     process.exit(1);
   }
-  
+
   return new Promise((resolve, reject) => {
     const child = spawn(command, commandArgs, {
       stdio: 'inherit',
-      shell: true
+      shell: true,
     });
-    
-    child.on('close', (code) => {
+
+    child.on('close', code => {
       if (code === 0) {
-        log(`\n${colors.green}✅ ${category}/${action} completed successfully${colors.reset}`);
+        log(
+          `\n${colors.green}✅ ${category}/${action} completed successfully${colors.reset}`
+        );
         resolve();
       } else {
-        log(`\n${colors.red}❌ ${category}/${action} failed with exit code ${code}${colors.reset}`);
+        log(
+          `\n${colors.red}❌ ${category}/${action} failed with exit code ${code}${colors.reset}`
+        );
         reject(new Error(`Script failed with exit code ${code}`));
       }
     });
-    
-    child.on('error', (error) => {
-      log(`${colors.red}❌ Failed to execute ${category}/${action}: ${error.message}${colors.reset}`);
+
+    child.on('error', error => {
+      log(
+        `${colors.red}❌ Failed to execute ${category}/${action}: ${error.message}${colors.reset}`
+      );
       reject(error);
     });
   });
@@ -273,38 +296,45 @@ async function runScript(category, action, args = []) {
 // Main execution
 async function main() {
   const args = process.argv.slice(2);
-  
-  if (args.length === 0 || args[0] === 'help' || args[0] === '--help' || args[0] === '-h') {
+
+  if (
+    args.length === 0 ||
+    args[0] === 'help' ||
+    args[0] === '--help' ||
+    args[0] === '-h'
+  ) {
     showHelp();
     return;
   }
-  
+
   const [category, action, ...scriptArgs] = args;
-  
+
   if (!action) {
     showCategoryHelp(category);
     return;
   }
-  
+
   try {
     await runScript(category, action, scriptArgs);
-  } catch (error) {
+  } catch (_error) {
     process.exit(1);
   }
 }
 
 // Handle uncaught errors
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   log(`${colors.red}Uncaught exception: ${error.message}${colors.reset}`);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  log(`${colors.red}Unhandled rejection at: ${promise}, reason: ${reason}${colors.reset}`);
+  log(
+    `${colors.red}Unhandled rejection at: ${promise}, reason: ${reason}${colors.reset}`
+  );
   process.exit(1);
 });
 
-main().catch((error) => {
+main().catch(error => {
   log(`${colors.red}Script runner failed: ${error.message}${colors.reset}`);
   process.exit(1);
 });

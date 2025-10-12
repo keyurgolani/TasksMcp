@@ -10,7 +10,7 @@ export interface RetryOptions {
   maxDelay?: number;
   backoffFactor?: number;
   jitter?: boolean;
-  retryCondition?: (error: any) => boolean;
+  retryCondition?: (error: Error) => boolean;
 }
 
 export class RetryError extends Error {
@@ -89,7 +89,9 @@ export class RetryLogic {
     }
 
     throw new RetryError(
-      `Operation failed after ${maxRetries + 1} attempts: ${lastError!.message}`,
+      `Operation failed after ${maxRetries + 1} attempts: ${
+        lastError!.message
+      }`,
       maxRetries + 1,
       lastError!
     );
@@ -98,11 +100,11 @@ export class RetryLogic {
   /**
    * Check if an error is retryable (common patterns)
    */
-  static isRetryableError(error: any): boolean {
+  static isRetryableError(error: Error | unknown): boolean {
     if (!error) return false;
 
-    const errorMessage = error.message?.toLowerCase() || '';
-    const errorCode = error.code;
+    const errorMessage = (error as Error).message?.toLowerCase() || '';
+    const errorCode = (error as Error & { code?: string }).code;
 
     // File system errors that are typically retryable
     const retryableCodes = [
@@ -114,7 +116,7 @@ export class RetryLogic {
       'EACCES', // Permission denied (might be temporary)
     ];
 
-    if (retryableCodes.includes(errorCode)) {
+    if (errorCode && retryableCodes.includes(errorCode)) {
       return true;
     }
 
@@ -135,17 +137,17 @@ export class RetryLogic {
   /**
    * Create a retry condition function for file operations
    */
-  static fileOperationRetryCondition(error: any): boolean {
+  static fileOperationRetryCondition(error: Error | unknown): boolean {
     return RetryLogic.isRetryableError(error);
   }
 
   /**
    * Create a retry condition function for index operations
    */
-  static indexOperationRetryCondition(error: any): boolean {
+  static indexOperationRetryCondition(error: Error | unknown): boolean {
     if (!error) return false;
 
-    const errorMessage = error.message?.toLowerCase() || '';
+    const errorMessage = (error as Error).message?.toLowerCase() || '';
 
     // Retry on common index operation errors
     const indexRetryablePatterns = [
@@ -169,13 +171,13 @@ export class RetryLogic {
  */
 export function withRetry(options: RetryOptions = {}) {
   return function (
-    _target: any,
+    _target: unknown,
     _propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       return RetryLogic.execute(
         () => originalMethod.apply(this, args),
         options

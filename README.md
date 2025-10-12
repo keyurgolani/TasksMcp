@@ -4,10 +4,12 @@ An intelligent Model Context Protocol (MCP) server that provides sophisticated t
 
 ## 🤖 Agent-Friendly Features
 
-The MCP Task Manager is specifically designed to work seamlessly with AI agents like Claude Desktop and Kiro IDE, including **multi-agent orchestration environments** where multiple AI agents work together on complex projects. 
+The MCP Task Manager is specifically designed to work seamlessly with AI agents like Claude Desktop and Kiro IDE, including **multi-agent orchestration environments** where multiple AI agents work together on complex projects.
 
 ### 📚 Essential for AI Agents
+
 **All agents should review the [Agent Best Practices Guide](./docs/guides/agent-best-practices.md)** for proven methodologies that maximize effectiveness:
+
 - **Plan and Reflect**: Thorough planning before action, reflection after completion
 - **Use Tools, Don't Guess**: Always investigate using available tools rather than making assumptions
 - **Persist Until Complete**: Ensure all exit criteria are met before marking tasks complete
@@ -15,6 +17,7 @@ The MCP Task Manager is specifically designed to work seamlessly with AI agents 
 Key agent-friendly improvements include:
 
 ### ✨ Smart Parameter Preprocessing
+
 - **Automatic Type Conversion**: Converts common agent input patterns before validation
   - String numbers → Numbers: `"5"` becomes `5`
   - JSON strings → Arrays: `'["tag1", "tag2"]'` becomes `["tag1", "tag2"]`
@@ -23,12 +26,14 @@ Key agent-friendly improvements include:
 - **Performance Optimized**: <50ms overhead per request
 
 ### 🎯 Enhanced Error Messages
+
 - **Visual Indicators**: Clear error formatting with emojis (❌, 💡, 📝)
 - **Actionable Guidance**: Specific suggestions on how to fix validation errors
 - **Tool-Specific Help**: Context-aware error messages based on the tool being used
 - **Working Examples**: Include actual usage examples in error responses
 
 ### 🤝 Multi-Agent Orchestration Support
+
 - **Task Dependencies**: Set up complex task relationships with prerequisite management
 - **Ready Task Discovery**: Find tasks that are unblocked and ready for parallel execution
 - **Agent Assignment**: Orchestration agents can identify and assign ready tasks to specialized agents
@@ -36,6 +41,7 @@ Key agent-friendly improvements include:
 - **Progress Tracking**: Monitor completion status across distributed agent workflows
 
 ### 🔧 Common Agent Patterns Supported
+
 ```javascript
 // These all work seamlessly now:
 {
@@ -47,17 +53,20 @@ Key agent-friendly improvements include:
 ```
 
 ### 📊 Validation Improvements
+
 - **80%+ Success Rate**: For valid agent input patterns requiring conversion
 - **Clear Error Guidance**: Non-technical error messages with helpful suggestions
 - **Enum Suggestions**: Provides valid options when invalid choices are made
 - **Multiple Error Handling**: Clear formatting when multiple validation issues occur
 
 **Before Agent-Friendly Updates:**
+
 ```
 Error: Expected number, received string at priority
 ```
 
 **After Agent-Friendly Updates:**
+
 ```
 ❌ priority: Expected number, but received string
 💡 Use numbers 1-5, where 5 is highest priority
@@ -97,8 +106,6 @@ npm run build
 # Test that everything works
 npx task-list-mcp@latest --version
 ```
-
-
 
 ## ⚡ Automatic MCP Client Setup
 
@@ -140,11 +147,13 @@ Add to your Claude Desktop `mcp.json` configuration file:
 ```
 
 **Environment Variables Explained:**
+
 - `NODE_ENV`: Environment mode (development, production, test) - controls logging and error handling
 - `MCP_LOG_LEVEL`: Logging verbosity (error, warn, info, debug) - set to "info" for normal operation
 - `DATA_DIRECTORY`: Directory for persistent data storage - will be created if it doesn't exist
 
 **Setup Validation:**
+
 1. Save the configuration file
 2. Restart Claude Desktop
 3. Verify the task-manager server appears in available tools
@@ -189,13 +198,15 @@ Add to your workspace `.kiro/settings/mcp.json`:
 ```
 
 **Environment Variables Explained:**
+
 - `NODE_ENV`: Environment mode (development, production, test) - controls logging and error handling
-- `MCP_LOG_LEVEL`: Logging verbosity (error, warn, info, debug) - set to "info" for normal operation  
+- `MCP_LOG_LEVEL`: Logging verbosity (error, warn, info, debug) - set to "info" for normal operation
 - `DATA_DIRECTORY`: Directory for persistent data storage - will be created if it doesn't exist
 
 **Auto-Approve Tools:** All 15 available MCP tools are included for seamless AI agent integration. Remove tools from this list if you want manual approval for specific operations.
 
 **Setup Validation:**
+
 1. Save the configuration file to `.kiro/settings/mcp.json`
 2. Check the MCP Server view in the Kiro feature panel
 3. Verify the task-manager server shows as "Connected"
@@ -218,16 +229,17 @@ npx task-list-mcp@latest --config ./my-config.json
 
 The MCP Task Manager supports several environment variables to customize its behavior:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NODE_ENV` | No | `development` | Environment mode: `development`, `production`, or `test` |
-| `MCP_LOG_LEVEL` | No | `info` | Logging verbosity: `error`, `warn`, `info`, or `debug` |
-| `DATA_DIRECTORY` | No | `./data` | Directory for persistent data storage |
-| `STORAGE_TYPE` | No | `file` | Storage backend: `file` or `memory` |
+| Variable         | Required | Default       | Description                                              |
+| ---------------- | -------- | ------------- | -------------------------------------------------------- |
+| `NODE_ENV`       | No       | `development` | Environment mode: `development`, `production`, or `test` |
+| `MCP_LOG_LEVEL`  | No       | `info`        | Logging verbosity: `error`, `warn`, `info`, or `debug`   |
+| `DATA_DIRECTORY` | No       | `./data`      | Directory for persistent data storage                    |
+| `STORAGE_TYPE`   | No       | `file`        | Storage backend: `file` or `memory`                      |
 
 ### Environment-Specific Configuration Examples
 
 #### Development Environment
+
 ```json
 {
   "mcpServers": {
@@ -246,12 +258,14 @@ The MCP Task Manager supports several environment variables to customize its beh
 ```
 
 **Development Features:**
+
 - Verbose debug logging for troubleshooting
 - Local data directory for easy access
 - Enhanced error messages and stack traces
 - Automatic data validation and consistency checks
 
 #### Production Environment
+
 ```json
 {
   "mcpServers": {
@@ -270,12 +284,14 @@ The MCP Task Manager supports several environment variables to customize its beh
 ```
 
 **Production Features:**
+
 - Minimal logging for performance
 - Secure data directory with proper permissions
 - Optimized error handling
 - Automatic backup and recovery mechanisms
 
 #### Testing Environment
+
 ```json
 {
   "mcpServers": {
@@ -294,6 +310,7 @@ The MCP Task Manager supports several environment variables to customize its beh
 ```
 
 **Testing Features:**
+
 - Memory-only storage for fast test execution
 - Minimal logging to reduce test noise
 - Automatic cleanup between test runs
@@ -302,27 +319,35 @@ The MCP Task Manager supports several environment variables to customize its beh
 ### Environment Variable Details
 
 #### `NODE_ENV`
+
 Controls the overall behavior and optimization level:
+
 - **`development`**: Enhanced debugging, verbose logging, development-friendly error messages
 - **`production`**: Optimized performance, minimal logging, production-ready error handling
 - **`test`**: Fast execution, minimal output, deterministic behavior
 
 #### `MCP_LOG_LEVEL`
+
 Controls logging verbosity:
+
 - **`error`**: Only critical errors (recommended for production)
 - **`warn`**: Errors and warnings (good balance for most use cases)
 - **`info`**: Errors, warnings, and informational messages (default)
 - **`debug`**: All messages including detailed debugging information (development only)
 
 #### `DATA_DIRECTORY`
+
 Specifies where persistent data is stored:
+
 - Must be writable by the process running the MCP server
 - Will be created automatically if it doesn't exist
 - Should be backed up regularly in production environments
 - Use absolute paths for production deployments
 
 #### `STORAGE_TYPE`
+
 Selects the storage backend:
+
 - **`file`**: Persistent file-based storage with atomic operations (default)
 - **`memory`**: In-memory storage for testing and development (data lost on restart)
 
@@ -331,6 +356,7 @@ Selects the storage backend:
 #### Common Configuration Issues
 
 **Server Won't Start**
+
 ```bash
 # Check if the command is accessible
 npx task-list-mcp@latest --version
@@ -340,6 +366,7 @@ NODE_ENV=development npx task-list-mcp@latest
 ```
 
 **Permission Errors**
+
 ```bash
 # Check directory permissions
 ls -la /path/to/data/directory
@@ -350,6 +377,7 @@ chmod 755 ~/.local/share/task-manager
 ```
 
 **Environment Variable Not Working**
+
 1. Verify JSON syntax in configuration file
 2. Restart your MCP client after configuration changes
 3. Check client logs for environment variable parsing errors
@@ -359,6 +387,7 @@ chmod 755 ~/.local/share/task-manager
    ```
 
 **Data Directory Issues**
+
 ```bash
 # Verify directory exists and is writable
 test -w /path/to/data/directory && echo "Writable" || echo "Not writable"
@@ -373,24 +402,28 @@ ls -la /path/to/data/directory
 #### Validation Steps
 
 1. **Test Configuration Syntax**
+
    ```bash
    # Validate JSON syntax
    cat ~/.config/claude/mcp.json | jq .
    ```
 
 2. **Verify Server Startup**
+
    ```bash
    # Test server starts with your configuration
    npx task-list-mcp@latest --version
    ```
 
 3. **Check Environment Variables**
+
    ```bash
    # Test with explicit environment variables
    NODE_ENV=production MCP_LOG_LEVEL=info npx task-list-mcp@latest --help
    ```
 
 4. **Validate Data Directory**
+
    ```bash
    # Ensure directory is accessible
    mkdir -p "$DATA_DIRECTORY" && echo "Directory OK" || echo "Directory Error"
@@ -406,12 +439,14 @@ ls -la /path/to/data/directory
 The MCP Task Manager provides **18 focused MCP tools** organized into 5 categories for intelligent task management and multi-agent orchestration:
 
 ### List Management (4 tools)
+
 1. **`create_list`** - Create new todo lists with simple parameters
 2. **`get_list`** - Retrieve a specific todo list by ID with optional filtering
 3. **`list_all_lists`** - Get all todo lists with basic information and filtering
 4. **`delete_list`** - Delete or archive a todo list (reversible by default)
 
 ### Task Management (6 tools)
+
 5. **`add_task`** - Add new tasks with priority, tags, and time estimates
 6. **`update_task`** - Update task properties (title, description, duration)
 7. **`remove_task`** - Remove tasks from lists
@@ -420,15 +455,18 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 10. **`add_task_tags`** - Add organizational tags to tasks
 
 ### Search & Display (3 tools)
+
 11. **`search_tasks`** - Search tasks by text across titles and descriptions
 12. **`filter_tasks`** - Filter tasks by status, priority, tags, and other criteria
 13. **`show_tasks`** - Display formatted task lists with grouping and styling options
 
 ### Advanced Features (2 tools)
+
 14. **`analyze_task`** - AI-powered task complexity analysis with breakdown suggestions
 15. **`get_task_suggestions`** - Generate AI-powered task recommendations for lists
 
 ### Multi-Agent Orchestration (3 tools)
+
 16. **`set_task_dependencies`** - Set task prerequisites and relationships for workflow management
 17. **`get_ready_tasks`** - Find tasks ready for execution (no incomplete dependencies)
 18. **`analyze_task_dependencies`** - Analyze project structure, critical paths, and bottlenecks with **DAG visualization**
@@ -436,6 +474,7 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 ### Quick Examples
 
 #### `create_list`
+
 Creates a new todo list with simple parameters.
 
 ```json
@@ -450,6 +489,7 @@ Creates a new todo list with simple parameters.
 ```
 
 #### `add_task`
+
 Adds a new task to a todo list.
 
 ```json
@@ -467,6 +507,7 @@ Adds a new task to a todo list.
 ```
 
 #### `get_list`
+
 Retrieves a specific todo list by ID.
 
 ```json
@@ -482,8 +523,9 @@ Retrieves a specific todo list by ID.
 ### 📖 Documentation
 
 For complete documentation:
+
 - **[Installation Guide](./docs/guides/installation.md)** - Setup and configuration
-- **[Getting Started](./docs/guides/getting-started.md)** - Basic usage tutorial  
+- **[Getting Started](./docs/guides/getting-started.md)** - Basic usage tutorial
 - **[API Reference](./docs/api/tools.md)** - Complete tool documentation
 - **[Examples](./docs/examples/)** - Usage examples and patterns
 - **[Troubleshooting](./docs/guides/troubleshooting.md)** - Common issues and solutions
@@ -497,17 +539,20 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 ### Key Orchestration Features
 
 #### Task Dependency Management
+
 - **Set Prerequisites**: Define which tasks must be completed before others can begin
 - **Prevent Conflicts**: Automatic circular dependency detection and prevention
 - **Workflow Control**: Ensure proper task sequencing across multiple agents
 - **DAG Visualization**: Visual representation of task dependencies in multiple formats
 
 #### Ready Task Discovery
+
 - **Find Available Work**: Identify tasks with no incomplete dependencies
 - **Priority Sorting**: Get ready tasks sorted by priority and creation time
 - **Parallel Execution**: Multiple agents can work on independent ready tasks simultaneously
 
 #### Project Analysis & Optimization
+
 - **Critical Path Analysis**: Identify the longest chain of dependent tasks
 - **Bottleneck Detection**: Find tasks that block multiple others
 - **Progress Monitoring**: Track completion status across distributed workflows
@@ -528,7 +573,7 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 
 // 2. Orchestration agent finds ready tasks for assignment
 {
-  "name": "get_ready_tasks", 
+  "name": "get_ready_tasks",
   "arguments": {
     "listId": "web-app-project",
     "limit": 5
@@ -538,7 +583,7 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 
 // 3. Orchestration agent assigns tasks to specialized agents:
 // - Database Agent → "setup-database"
-// - Documentation Agent → "write-docs" 
+// - Documentation Agent → "write-docs"
 // - API Agent → "design-api"
 
 // 4. As tasks complete, more become ready for assignment
@@ -561,6 +606,7 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 - **Quality Gates**: Dependency-based approval workflows with multiple reviewers
 
 This makes the MCP Task Manager ideal for:
+
 - **Large Development Projects** with multiple specialized AI agents
 - **Content Creation Pipelines** with writers, editors, and publishers
 - **Research Projects** with data collection, analysis, and reporting agents
@@ -614,12 +660,15 @@ npm test -- --testPathPattern=integration
 Once configured in your MCP client, you can use natural language:
 
 **In Claude Desktop:**
+
 > "Create a todo list called 'Website Redesign' with tasks for planning, design, and development"
 
 **In Kiro IDE:**
+
 > "I need a todo list for my API project with initial setup tasks"
 
 The MCP server will automatically:
+
 - Create structured todo lists with proper metadata
 - Generate unique IDs for tracking
 - Calculate progress and completion statistics
@@ -696,6 +745,7 @@ This project follows production-ready standards:
 ### Installation Issues
 
 #### npx Installation Problems
+
 ```bash
 # Check npm version (npm 7.0.0+ recommended)
 npm --version
@@ -710,11 +760,10 @@ npx task-list-mcp@latest --version
 node --version  # Must be 18.0.0+
 ```
 
-
-
 ### Server Issues
 
 #### Server Won't Start
+
 ```bash
 # Test the server directly
 npx task-list-mcp@latest --version
@@ -727,6 +776,7 @@ npm run build && node dist/cli.js --version
 ```
 
 #### MCP Client Can't Connect
+
 1. **Check configuration syntax**: Ensure JSON is valid
 2. **Verify command paths**: `npx` must be in PATH
 3. **Test server manually**: Run the command from terminal first
@@ -734,6 +784,7 @@ npm run build && node dist/cli.js --version
 5. **Restart client**: Restart Claude Desktop or Kiro after config changes
 
 #### Permission Errors
+
 ```bash
 # For npx (may need to fix npm permissions)
 npm config get prefix
@@ -746,6 +797,7 @@ chmod +x dist/cli.js
 ### Configuration Issues
 
 #### Automatic Setup Fails
+
 ```bash
 # Check if config directories exist
 ls -la ~/Library/Application\ Support/Claude/  # macOS
@@ -756,6 +808,7 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 ```
 
 #### Server Not Found in MCP Client
+
 1. **Restart the MCP client** after configuration changes
 2. **Check server name** matches configuration (should be "task-manager")
 3. **Verify command accessibility**: Run `npx task-list-mcp@latest --version` in terminal
@@ -779,12 +832,14 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 ## 📊 Performance & Limitations
 
 ### Current Implementation Status
+
 - **File-based storage**: Persistent storage with atomic operations and backup capabilities
 - **Memory storage option**: Available for development and testing
 - **Complete CRUD operations**: Full create, read, update, delete functionality
 - **No authentication**: Open access (suitable for development only)
 
 ### Performance Characteristics
+
 - **Response time**: ~5ms for create operations, ~2ms for read operations
 - **Complex operations**: ~10-50ms for AI analysis and bulk operations
 - **Concurrent operations**: Supports 100+ simultaneous requests
@@ -796,6 +851,7 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 ## 🛣️ Roadmap
 
 ### Current Status (v1.0.0) ✅
+
 - **Complete**: 15 focused MCP tools for comprehensive task management
 - **Complete**: AI-powered complexity analysis and task suggestions
 - **Complete**: File-based storage with atomic operations and backup
@@ -804,12 +860,14 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 - **Complete**: Production-ready CLI interface and configuration
 
 ### Phase 2: Enhanced Intelligence (Planned)
+
 - Advanced natural language processing for task analysis
 - Improved complexity scoring algorithms with machine learning
 - Better task generation with context awareness
 - Predictive task completion estimates
 
 ### Phase 3: Production Features (Future)
+
 - Database backend support (PostgreSQL, MongoDB)
 - Authentication and authorization systems
 - Rate limiting and security hardening
@@ -817,6 +875,7 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 - REST API interface alongside MCP
 
 ### Phase 4: Enterprise Readiness (Future)
+
 - Advanced analytics and reporting dashboards
 - Multi-tenant support with data isolation
 - API rate limiting and monitoring
@@ -824,9 +883,9 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 
 ## 📦 Installation Methods Summary
 
-| Method | Command | Use Case | Prerequisites |
-|--------|---------|----------|---------------|
-| **npx** | `npx task-list-mcp@latest` | Quick start, always latest | Node.js 18+, npm |
+| Method    | Command                    | Use Case                   | Prerequisites    |
+| --------- | -------------------------- | -------------------------- | ---------------- |
+| **npx**   | `npx task-list-mcp@latest` | Quick start, always latest | Node.js 18+, npm |
 | **Local** | `git clone && npm install` | Development, customization | Node.js 18+, git |
 
 ### Implementation Status
@@ -856,6 +915,7 @@ MIT License - see LICENSE file for details
 6. Open a Pull Request
 
 ### Development Standards
+
 - **TypeScript strict mode**: No `any` types allowed
 - **MCP protocol compliance**: All tools must follow MCP specification
 - **Production ready**: Optimized for performance and reliability

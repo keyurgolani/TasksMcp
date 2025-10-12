@@ -3,10 +3,18 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
 
 const RemoveTaskSchema = z.object({
   listId: z.string().uuid(),
@@ -43,18 +51,25 @@ export async function handleRemoveTask(
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            success: true,
-            message: `Task ${args.taskId} removed from list ${args.listId}`,
-            listId: args.listId,
-            taskId: args.taskId,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Task ${args.taskId} removed from list ${args.listId}`,
+              listId: args.listId,
+              taskId: args.taskId,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('remove_task', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'remove_task',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

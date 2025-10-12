@@ -4,35 +4,23 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+
 import { handleAddTask } from '../../src/api/handlers/add-task.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleAnalyzeTaskDependencies } from '../../src/api/handlers/analyze-task-dependencies.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import type { TodoList } from '../../src/shared/types/todo.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { TaskStatus } from '../../src/shared/types/todo.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import { TaskStatus as _TaskStatus } from '../../src/shared/types/todo.js';
 import { logger } from '../../src/shared/utils/logger.js';
 import { createTodoListManager } from '../utils/test-helpers.js';
+
+import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
+import type { TodoList } from '../../src/shared/types/todo.js';
 
 describe('Dependency Management Production Readiness Tests', () => {
   let todoListManager: TodoListManager;
@@ -53,6 +41,7 @@ describe('Dependency Management Production Readiness Tests', () => {
   /**
    * Helper function to make MCP tool calls
    */
+
   async function callTool(toolName: string, args: any) {
     const request: CallToolRequest = {
       method: 'tools/call',
@@ -86,7 +75,10 @@ describe('Dependency Management Production Readiness Tests', () => {
     it('should have all dependency tools properly registered', async () => {
       // Test that all new dependency tools are accessible
       const toolTests = [
-        { name: 'set_task_dependencies', requiredParams: ['listId', 'taskId', 'dependencyIds'] },
+        {
+          name: 'set_task_dependencies',
+          requiredParams: ['listId', 'taskId', 'dependencyIds'],
+        },
         { name: 'get_ready_tasks', requiredParams: ['listId'] },
         { name: 'analyze_task_dependencies', requiredParams: ['listId'] },
       ];
@@ -100,6 +92,7 @@ describe('Dependency Management Production Readiness Tests', () => {
         });
 
         // Test with valid parameters
+
         const validArgs: any = { listId: testList.id };
         if (toolTest.requiredParams.includes('taskId')) {
           validArgs.taskId = testList.items[0]!.id;
@@ -251,7 +244,9 @@ describe('Dependency Management Production Readiness Tests', () => {
       for (const scenario of errorScenarios) {
         const result = await callTool(scenario.tool, scenario.args);
         expect(result.isError).toBe(true);
-        expect(result.content[0]!.text.toLowerCase()).toContain(scenario.expectedError.toLowerCase());
+        expect(result.content[0]!.text.toLowerCase()).toContain(
+          scenario.expectedError.toLowerCase()
+        );
         logger.info(`Error scenario '${scenario.name}' handled correctly`);
       }
     });
@@ -267,17 +262,21 @@ describe('Dependency Management Production Readiness Tests', () => {
       });
 
       // Simulate concurrent dependency modifications
-      const concurrentOperations = testList.items.slice(0, 5).map(async (task, index) => {
-        const dependencies = testList.items.slice(0, index).map(item => item.id);
-        return await callTool('set_task_dependencies', {
-          listId: testList.id,
-          taskId: task.id,
-          dependencyIds: dependencies,
+      const concurrentOperations = testList.items
+        .slice(0, 5)
+        .map(async (task, index) => {
+          const dependencies = testList.items
+            .slice(0, index)
+            .map(item => item.id);
+          return await callTool('set_task_dependencies', {
+            listId: testList.id,
+            taskId: task.id,
+            dependencyIds: dependencies,
+          });
         });
-      });
 
       const results = await Promise.all(concurrentOperations);
-      
+
       // Most operations should succeed (allow for some race conditions)
       const successfulResults = results.filter(result => !result.isError);
       expect(successfulResults.length).toBeGreaterThanOrEqual(3);
@@ -307,7 +306,10 @@ describe('Dependency Management Production Readiness Tests', () => {
           title: `Production Task ${i + 1}`,
           description: `Task ${i + 1} for production scale testing`,
           priority: Math.floor(Math.random() * 5) + 1,
-          tags: [`module-${Math.floor(i / 20)}`, `priority-${Math.floor(i / 10)}`],
+          tags: [
+            `module-${Math.floor(i / 20)}`,
+            `priority-${Math.floor(i / 10)}`,
+          ],
           estimatedDuration: Math.floor(Math.random() * 240) + 30,
         })),
       });
@@ -316,7 +318,8 @@ describe('Dependency Management Production Readiness Tests', () => {
       const taskIds = testList.items.map(item => item.id);
       for (let i = 10; i < taskIds.length; i += 5) {
         const dependencyCount = Math.min(3, Math.floor(i / 20) + 1);
-        const dependencies = taskIds.slice(Math.max(0, i - 10), i)
+        const dependencies = taskIds
+          .slice(Math.max(0, i - 10), i)
           .sort(() => 0.5 - Math.random())
           .slice(0, dependencyCount);
 
@@ -455,7 +458,7 @@ describe('Dependency Management Production Readiness Tests', () => {
       expect(graph.nodes.size).toBe(testList.items.length);
 
       // Validate that all dependencies exist
-      for (const [nodeId, node] of graph.nodes) {
+      for (const [_nodeId, node] of graph.nodes) {
         for (const depId of node.dependencies) {
           expect(graph.nodes.has(depId)).toBe(true);
         }
@@ -531,8 +534,8 @@ describe('Dependency Management Production Readiness Tests', () => {
       });
       const readyTasks = JSON.parse(readyTasksResult.content[0]!.text);
 
-      expect(readyTasks.nextActions.length).toBeGreaterThan(0);
-      expect(readyTasks.nextActions[0]).toContain('Setup Environment');
+      expect(readyTasks._methodologyGuidance).toBeDefined();
+      expect(readyTasks._methodologyGuidance.tip).toBeDefined();
 
       // Test that show_tasks output is readable and informative
       const showTasksResult = await callTool('show_tasks', {
@@ -546,7 +549,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
       logger.info('User experience validation passed', {
         recommendationCount: analysis.recommendations.length,
-        nextActionCount: readyTasks.nextActions.length,
+        methodologyGuidanceProvided: !!readyTasks._methodologyGuidance,
         criticalPathLength: analysis.criticalPath.length,
       });
     });
@@ -598,7 +601,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
           const result = await callTool(toolName, args);
           results[toolName] = !result.isError;
-        } catch (error) {
+        } catch (_error) {
           results[toolName] = false;
         }
       }
@@ -625,7 +628,10 @@ describe('Dependency Management Production Readiness Tests', () => {
         totalTools: Object.keys(results).length,
         analysisTime: `${analysisTime.toFixed(2)}ms`,
         memoryIncrease: `${(memoryIncrease / 1024 / 1024).toFixed(2)}MB`,
-        allSystemsGo: allToolsWorking && analysisTime < 100 && memoryIncrease < 5 * 1024 * 1024,
+        allSystemsGo:
+          allToolsWorking &&
+          analysisTime < 100 &&
+          memoryIncrease < 5 * 1024 * 1024,
       });
 
       // Final assertion - system is production ready
