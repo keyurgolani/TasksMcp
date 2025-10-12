@@ -5,7 +5,7 @@
 import { logger } from '../../shared/utils/logger.js';
 
 import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList } from '../../shared/types/todo.js';
+import type { TaskList } from '../../shared/types/task.js';
 
 export interface ProjectSummary {
   tag: string;
@@ -33,7 +33,7 @@ export interface ProjectStats {
 }
 
 /**
- * Manages project-level operations and statistics for todo lists
+ * Manages project-level operations and statistics for task lists
  *
  * Provides functionality for:
  * - Project tag validation and normalization
@@ -107,25 +107,21 @@ export class ProjectManager {
     try {
       logger.debug('Listing all projects');
 
-      const allListSummaries = await this.storage.list({
-        includeArchived: true,
-      });
+      const allListSummaries = await this.storage.list({});
 
       // Load full list data for each summary
-      const allLists: TodoList[] = [];
+      const allLists: TaskList[] = [];
       for (const summary of allListSummaries) {
         // Handle both real summaries and mocked full objects
         if (
           'items' in summary &&
           Array.isArray((summary as { items: unknown[] }).items)
         ) {
-          // This is a full TodoList object (from mocked tests)
-          allLists.push(summary as unknown as TodoList);
+          // This is a full TaskList object (from mocked tests)
+          allLists.push(summary as unknown as TaskList);
         } else {
           // This is a real summary, load the full list
-          const fullList = await this.storage.load(summary.id, {
-            includeArchived: true,
-          });
+          const fullList = await this.storage.load(summary.id, {});
           if (fullList) {
             allLists.push(fullList);
           }
@@ -134,7 +130,7 @@ export class ProjectManager {
       const projectMap = new Map<
         string,
         {
-          lists: TodoList[];
+          lists: TaskList[];
           totalTasks: number;
           completedTasks: number;
           lastActivity: Date;
@@ -215,25 +211,22 @@ export class ProjectManager {
       }
 
       const allListSummaries = await this.storage.list({
-        includeArchived: true,
         context: projectTag, // Use context parameter since storage interface uses context
       });
 
       // Load full list data for each summary
-      const allLists: TodoList[] = [];
+      const allLists: TaskList[] = [];
       for (const summary of allListSummaries) {
         // Handle both real summaries and mocked full objects
         if (
           'items' in summary &&
           Array.isArray((summary as { items: unknown[] }).items)
         ) {
-          // This is a full TodoList object (from mocked tests)
-          allLists.push(summary as unknown as TodoList);
+          // This is a full TaskList object (from mocked tests)
+          allLists.push(summary as unknown as TaskList);
         } else {
           // This is a real summary, load the full list
-          const fullList = await this.storage.load(summary.id, {
-            includeArchived: true,
-          });
+          const fullList = await this.storage.load(summary.id, {});
           if (fullList) {
             allLists.push(fullList);
           }
@@ -351,31 +344,27 @@ export class ProjectManager {
     try {
       logger.debug('Starting context to projectTag migration');
 
-      const allListSummaries = await this.storage.list({
-        includeArchived: true,
-      });
+      const allListSummaries = await this.storage.list({});
 
       for (const summary of allListSummaries) {
-        let list: TodoList;
+        let list: TaskList;
 
         // Handle both real summaries and mocked full objects (for tests)
         if (
           'items' in summary &&
           Array.isArray((summary as { items: unknown[] }).items)
         ) {
-          // This is a full TodoList object (from mocked tests)
-          list = summary as unknown as TodoList;
+          // This is a full TaskList object (from mocked tests)
+          list = summary as unknown as TaskList;
         } else {
           // This is a real summary, load the full list
-          const loadedList = await this.storage.load(summary.id, {
-            includeArchived: true,
-          });
+          const loadedList = await this.storage.load(summary.id, {});
           if (!loadedList) continue;
           list = loadedList;
         }
 
         let needsUpdate = false;
-        const updates: Partial<TodoList> = {};
+        const updates: Partial<TaskList> = {};
 
         // If projectTag is missing but context exists, migrate context to projectTag
         if (!list.projectTag && list.context) {

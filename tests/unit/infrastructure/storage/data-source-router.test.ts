@@ -6,9 +6,9 @@ import {
 } from '../../../../src/infrastructure/storage/data-source-router.js';
 
 import type { StorageBackend } from '../../../../src/shared/types/storage.js';
-import type { TodoList } from '../../../../src/shared/types/todo.js';
+import type { TaskList } from '../../../../src/shared/types/task.js';
 
-function createMockTodoList(): TodoList {
+function createMockTaskList(): TaskList {
   return {
     id: 'test-list',
     title: 'Test List',
@@ -49,16 +49,16 @@ class MockStorageBackend implements StorageBackend {
   async save(): Promise<void> {
     this.saveCallCount++;
   }
-  async load(): Promise<TodoList | null> {
-    return createMockTodoList();
+  async load(): Promise<TaskList | null> {
+    return createMockTaskList();
   }
   async delete(): Promise<void> {}
   async list(): Promise<[]> {
     return [];
   }
   async shutdown(): Promise<void> {}
-  async loadAllData(): Promise<{ version: string; todoLists: TodoList[] }> {
-    return { version: '1.0', todoLists: [] };
+  async loadAllData(): Promise<{ version: string; taskLists: TaskList[] }> {
+    return { version: '1.0', taskLists: [] };
   }
   async saveAllData(): Promise<void> {}
 }
@@ -116,7 +116,7 @@ describe('DataSourceRouter', () => {
     router = new DataSourceRouter(config);
     await router.initialize();
 
-    const result = await router.routeOperation<TodoList | null>(
+    const result = await router.routeOperation<TaskList | null>(
       {
         type: 'read',
         key: 'test-key',
@@ -148,7 +148,7 @@ describe('DataSourceRouter', () => {
       {
         type: 'write',
         key: 'test-key',
-        data: createMockTodoList(),
+        data: createMockTaskList(),
       },
       {}
     );

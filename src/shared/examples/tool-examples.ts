@@ -1,7 +1,7 @@
 /**
  * Tool Usage Examples Library
  *
- * Comprehensive library of usage examples for each MCP tool to include in error responses
+ * Library of usage examples for each MCP tool to include in error responses
  * and documentation. Focuses on commonly problematic parameters and realistic use cases.
  */
 
@@ -101,7 +101,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
     examples: [
       {
         tool: 'create_list',
-        description: 'Create a simple task list',
+        description: 'Create a task list',
         parameters: {
           title: 'Daily Tasks',
         },
@@ -115,8 +115,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
           description: 'Tasks for building the new online store',
           projectTag: 'ecommerce',
         },
-        outcome:
-          'Creates a comprehensive project list with description and tag',
+        outcome: 'Creates a project list with description and tag',
       },
     ],
     commonMistakes: [
@@ -289,12 +288,12 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
     examples: [
       {
         tool: 'add_task',
-        description: 'Add a simple task',
+        description: 'Add a basic task',
         parameters: {
           listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
           title: 'Write project documentation',
         },
-        outcome: 'Creates a basic task with default priority (3)',
+        outcome: 'Creates a task with default priority (3)',
       },
       {
         tool: 'add_task',
@@ -308,7 +307,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
           tags: ['urgent', 'security', 'backend'],
           estimatedDuration: 180,
         },
-        outcome: 'Creates a comprehensive task with all details',
+        outcome: 'Creates a task with all details',
       },
       {
         tool: 'add_task',

@@ -20,7 +20,7 @@ import { requestIdMiddleware } from '../api/middleware/request-id.js';
 import { requestLoggerMiddleware } from '../api/middleware/request-logger.js';
 import { logger } from '../shared/utils/logger.js';
 
-import type { TodoListManager } from '../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../domain/lists/task-list-manager.js';
 import type { ActionPlanManager } from '../domain/tasks/action-plan-manager.js';
 import type { DependencyResolver } from '../domain/tasks/dependency-manager.js';
 import type { ExitCriteriaManager } from '../domain/tasks/exit-criteria-manager.js';
@@ -57,7 +57,7 @@ export class RestApiServer {
 
   constructor(
     config: Partial<ApiConfig>,
-    todoListManager: TodoListManager,
+    todoListManager: TaskListManager,
     dependencyManager: DependencyResolver,
     exitCriteriaManager: ExitCriteriaManager,
     actionPlanManager: ActionPlanManager,

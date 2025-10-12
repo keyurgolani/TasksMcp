@@ -139,7 +139,7 @@ Example:
 - **Text Search**: Find tasks by title, description, or tags
 - **Advanced Filtering**: Filter by status, priority, tags, dependencies
 - **Cross-List Search**: Search across all projects or specific lists
-- **Sorting Options**: Sort by priority, date, relevance, or title
+- **Dependency-Based Ordering**: Tasks are ordered by dependency completion
 - **Pagination**: Handle large result sets efficiently
 
 **Recommendation**: Use `search_tool` instead of the legacy `search_tasks` and `filter_tasks` tools.

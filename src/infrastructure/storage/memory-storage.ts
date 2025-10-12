@@ -11,13 +11,13 @@ import {
 import { logger } from '../../shared/utils/logger.js';
 
 import type {
-  TodoList,
-  TodoListSummary,
-  TodoItem,
-} from '../../shared/types/todo.js';
+  TaskList,
+  TaskListSummary,
+  Task,
+} from '../../shared/types/task.js';
 
 export class MemoryStorageBackend extends StorageBackend {
-  private readonly data: Map<string, TodoList> = new Map();
+  private readonly data: Map<string, TaskList> = new Map();
   private initialized = false;
 
   async initialize(): Promise<void> {
@@ -34,7 +34,7 @@ export class MemoryStorageBackend extends StorageBackend {
 
   async save(
     key: string,
-    data: TodoList,
+    data: TaskList,
     options?: SaveOptions
   ): Promise<void> {
     if (!this.initialized) {
@@ -42,6 +42,11 @@ export class MemoryStorageBackend extends StorageBackend {
     }
 
     try {
+      logger.debug('MemoryStorage.save called', { key, title: data.title });
+      logger.debug('MemoryStorage data size before save', {
+        size: this.data.size,
+      });
+
       // Validate data if requested
       if (options?.validate === true) {
         this.validateTodoList(data);
@@ -60,9 +65,16 @@ export class MemoryStorageBackend extends StorageBackend {
       }
 
       // Deep clone to prevent mutations
-      const clonedData = JSON.parse(JSON.stringify(data)) as TodoList;
+      const clonedData = JSON.parse(JSON.stringify(data)) as TaskList;
       this.validateTodoList(clonedData);
       this.data.set(key, clonedData);
+
+      logger.debug('MemoryStorage data size after save', {
+        size: this.data.size,
+      });
+      logger.debug('MemoryStorage data keys after save', {
+        keys: Array.from(this.data.keys()),
+      });
 
       logger.debug('Todo list saved to memory storage', {
         key,
@@ -79,7 +91,7 @@ export class MemoryStorageBackend extends StorageBackend {
     }
   }
 
-  async load(key: string, options?: LoadOptions): Promise<TodoList | null> {
+  async load(key: string, _options?: LoadOptions): Promise<TaskList | null> {
     if (!this.initialized) {
       throw new Error('Storage backend not initialized');
     }
@@ -90,13 +102,8 @@ export class MemoryStorageBackend extends StorageBackend {
         return Promise.resolve(null);
       }
 
-      // Filter archived lists if requested
-      if (options?.includeArchived !== true && data.isArchived) {
-        return Promise.resolve(null);
-      }
-
       // Deep clone to prevent mutations
-      const clonedData = JSON.parse(JSON.stringify(data)) as TodoList;
+      const clonedData = JSON.parse(JSON.stringify(data)) as TaskList;
 
       // Convert date strings back to Date objects
       clonedData.createdAt = new Date(clonedData.createdAt);
@@ -120,7 +127,7 @@ export class MemoryStorageBackend extends StorageBackend {
         });
       }
 
-      clonedData.items.forEach((item: TodoItem) => {
+      clonedData.items.forEach((item: Task) => {
         item.createdAt = new Date(item.createdAt);
         item.updatedAt = new Date(item.updatedAt);
         if (item.completedAt !== undefined) {
@@ -184,7 +191,7 @@ export class MemoryStorageBackend extends StorageBackend {
     try {
       const data = this.data.get(key);
       if (data === undefined) {
-        throw new Error(`Todo list not found: ${key}`);
+        throw new Error(`Task list not found: ${key}`);
       }
 
       if (permanent) {
@@ -209,17 +216,28 @@ export class MemoryStorageBackend extends StorageBackend {
     return Promise.resolve();
   }
 
-  async list(options?: ListOptions): Promise<TodoListSummary[]> {
+  async list(options?: ListOptions): Promise<TaskListSummary[]> {
     if (!this.initialized) {
       throw new Error('Storage backend not initialized');
     }
 
     try {
-      const summaries: TodoListSummary[] = [];
+      logger.debug('MemoryStorage.list called', {
+        options,
+        dataSize: this.data.size,
+      });
+      logger.debug('MemoryStorage data keys', {
+        keys: Array.from(this.data.keys()),
+      });
+
+      const summaries: TaskListSummary[] = [];
 
       for (const [key, data] of this.data.entries()) {
+        logger.debug('Processing key', { key, id: data.id, title: data.title });
+
         // Skip backup entries
         if (key.includes('_backup_')) {
+          logger.debug('Skipping backup entry', { key });
           continue;
         }
 
@@ -228,15 +246,15 @@ export class MemoryStorageBackend extends StorageBackend {
           options?.context !== undefined &&
           data.context !== options.context
         ) {
+          logger.debug('Skipping due to context filter', {
+            key,
+            expected: options.context,
+            actual: data.context,
+          });
           continue;
         }
 
-        // Filter archived lists if requested
-        if (options?.includeArchived !== true && data.isArchived) {
-          continue;
-        }
-
-        summaries.push({
+        const summary = {
           id: data.id,
           title: data.title,
           progress: data.progress,
@@ -245,7 +263,9 @@ export class MemoryStorageBackend extends StorageBackend {
           lastUpdated: new Date(data.updatedAt),
           context: data.context,
           projectTag: data.projectTag || data.context || 'default',
-        });
+        };
+        logger.debug('Adding summary', { summary });
+        summaries.push(summary);
       }
 
       // Apply pagination if specified
@@ -279,7 +299,7 @@ export class MemoryStorageBackend extends StorageBackend {
   }
 
   // Helper method for data validation
-  private validateTodoList(data: TodoList): void {
+  private validateTodoList(data: TaskList): void {
     if (!data.id || typeof data.id !== 'string') {
       throw new Error('Invalid todo list: missing or invalid id');
     }
@@ -395,7 +415,7 @@ export class MemoryStorageBackend extends StorageBackend {
   async loadAllData(): Promise<
     import('../../shared/types/storage.js').StorageData
   > {
-    const todoLists: TodoList[] = [];
+    const todoLists: TaskList[] = [];
 
     for (const [key, data] of this.data.entries()) {
       if (!key.includes('_backup_')) {

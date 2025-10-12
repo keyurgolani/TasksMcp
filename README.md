@@ -1,6 +1,6 @@
 # MCP Task Manager
 
-An intelligent Model Context Protocol (MCP) server that provides sophisticated task management capabilities for AI agents. Features automatic complexity analysis, task breakdown, persistent state management, and **agent-friendly parameter preprocessing** for seamless AI integration.
+A Model Context Protocol (MCP) server that provides task management capabilities for AI agents. Features task breakdown, persistent state management, and **agent-friendly parameter preprocessing** for seamless AI integration.
 
 ## 🤖 Agent-Friendly Features
 
@@ -548,7 +548,7 @@ The MCP Task Manager is uniquely designed to support **multi-agent environments*
 #### Ready Task Discovery
 
 - **Find Available Work**: Identify tasks with no incomplete dependencies
-- **Priority Sorting**: Get ready tasks sorted by priority and creation time
+- **Dependency-Based Ordering**: Get ready tasks based on dependency completion
 - **Parallel Execution**: Multiple agents can work on independent ready tasks simultaneously
 
 #### Project Analysis & Optimization

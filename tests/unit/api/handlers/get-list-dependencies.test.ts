@@ -5,9 +5,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { handleGetList } from '../../../../src/api/handlers/get-list.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/task.js';
 
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
@@ -32,15 +32,15 @@ vi.mock('../../../../src/domain/tasks/dependency-manager.js', () => ({
 }));
 
 describe('handleGetList with dependency information', () => {
-  let mockTodoListManager: TodoListManager;
+  let mockTaskListManager: TaskListManager;
 
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
 
-    // Mock TodoListManager
-    mockTodoListManager = {
-      getTodoList: vi.fn(),
+    // Mock TaskListManager
+    mockTaskListManager = {
+      getTaskList: vi.fn(),
     } as any;
   });
 
@@ -80,10 +80,10 @@ describe('handleGetList with dependency information', () => {
       items: [mockTask],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([mockTask]);
 
-    const result = await handleGetList(request, mockTodoListManager);
+    const result = await handleGetList(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -144,10 +144,10 @@ describe('handleGetList with dependency information', () => {
       items: [mockDependencyTask, mockDependentTask],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([mockDependentTask]); // Dependent task is ready
 
-    const result = await handleGetList(request, mockTodoListManager);
+    const result = await handleGetList(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -222,10 +222,10 @@ describe('handleGetList with dependency information', () => {
       items: [mockDependencyTask, mockDependentTask],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([mockDependencyTask]); // Only dependency task is ready
 
-    const result = await handleGetList(request, mockTodoListManager);
+    const result = await handleGetList(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -312,10 +312,10 @@ describe('handleGetList with dependency information', () => {
       items: [mockDep1Task, mockDep2Task, mockDependentTask],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([mockDep2Task]); // Only dep2 is ready
 
-    const result = await handleGetList(request, mockTodoListManager);
+    const result = await handleGetList(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -345,12 +345,12 @@ describe('handleGetList with dependency information', () => {
       },
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(null);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(null);
 
-    const result = await handleGetList(request, mockTodoListManager);
+    const result = await handleGetList(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Todo list not found');
+    expect(result.content[0].text).toContain('Task list not found');
   });
 
   it('should handle validation errors', async () => {
@@ -364,7 +364,7 @@ describe('handleGetList with dependency information', () => {
       },
     };
 
-    const result = await handleGetList(request, mockTodoListManager);
+    const result = await handleGetList(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('❌');
@@ -391,10 +391,10 @@ describe('handleGetList with dependency information', () => {
       items: [],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([]);
 
-    await handleGetList(request, mockTodoListManager);
+    await handleGetList(request, mockTaskListManager);
 
     expect(mockCleanup).toHaveBeenCalled();
   });

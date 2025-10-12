@@ -1,36 +1,36 @@
 /**
- * Test helper utilities for creating TodoListManager instances
+ * Test helper utilities for creating TaskListManager instances
  * with the repository pattern
  */
 
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
-import { TodoListRepositoryAdapter } from '../../src/domain/repositories/todo-list-repository.adapter.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
+import { TaskListRepositoryAdapter } from '../../src/domain/repositories/task-list-repository.adapter.js';
 
 import type { StorageBackend } from '../../src/shared/types/storage.js';
 
 /**
- * Creates a TodoListManager instance with repository pattern
+ * Creates a TaskListManager instance with repository pattern
  *
  * This helper wraps the storage backend in a repository adapter
- * and creates a TodoListManager with both the repository and storage
+ * and creates a TaskListManager with both the repository and storage
  * (storage is needed for backward compatibility with ProjectManager)
  *
  * IMPORTANT: The storage backend must be initialized BEFORE calling this function.
  *
  * @param storage - The storage backend to use (must be initialized)
- * @returns A configured TodoListManager instance
+ * @returns A configured TaskListManager instance
  *
  * @example
  * ```typescript
  * const storage = new MemoryStorageBackend();
  * await storage.initialize(); // MUST initialize first!
- * const manager = createTodoListManager(storage);
+ * const manager = createTaskListManager(storage);
  * await manager.initialize();
  * ```
  */
-export function createTodoListManager(
+export function createTaskListManager(
   storage: StorageBackend
-): TodoListManager {
-  const repository = new TodoListRepositoryAdapter(storage);
-  return new TodoListManager(repository, storage);
+): TaskListManager {
+  const repository = new TaskListRepositoryAdapter(storage);
+  return new TaskListManager(repository, storage);
 }

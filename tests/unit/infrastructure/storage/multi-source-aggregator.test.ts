@@ -6,23 +6,23 @@ import { describe, it, expect, beforeEach as _beforeEach, vi } from 'vitest';
 
 import { MultiSourceAggregator } from '../../../../src/infrastructure/storage/multi-source-aggregator.js';
 
-import type { SearchQuery } from '../../../../src/domain/repositories/todo-list.repository.js';
+import type { SearchQuery } from '../../../../src/domain/repositories/task-list.repository.js';
 import type { StorageBackend } from '../../../../src/shared/types/storage.js';
 import type {
-  TodoList,
-  TodoListSummary,
+  TaskList,
+  TaskListSummary,
   TaskStatus as _TaskStatus,
   Priority as _Priority,
-} from '../../../../src/shared/types/todo.js';
+} from '../../../../src/shared/types/task.js';
 
 describe('MultiSourceAggregator', () => {
-  // Helper to create mock TodoList
+  // Helper to create mock TaskList
   const createMockList = (
     id: string,
     title: string,
     updatedAt: Date,
     progress = 50
-  ): TodoList => ({
+  ): TaskList => ({
     id,
     title,
     description: `Description for ${title}`,
@@ -54,13 +54,13 @@ describe('MultiSourceAggregator', () => {
     },
   });
 
-  // Helper to create mock TodoListSummary
+  // Helper to create mock TaskListSummary
   const createMockSummary = (
     id: string,
     title: string,
     lastUpdated: Date,
     progress = 50
-  ): TodoListSummary => ({
+  ): TaskListSummary => ({
     id,
     title,
     totalItems: 10,
@@ -73,8 +73,8 @@ describe('MultiSourceAggregator', () => {
 
   // Helper to create mock storage backend
   const createMockBackend = (
-    lists: TodoList[],
-    summaries: TodoListSummary[]
+    lists: TaskList[],
+    summaries: TaskListSummary[]
   ): StorageBackend => ({
     save: vi.fn(),
     load: vi.fn((id: string) => {

@@ -11,12 +11,13 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
 import type { TaskWithDependencies } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 const GetListSchema = z.object({
   listId: z.string().uuid(),
@@ -25,7 +26,7 @@ const GetListSchema = z.object({
 
 export async function handleGetList(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing get_list request', {
@@ -33,19 +34,19 @@ export async function handleGetList(
     });
 
     const args = GetListSchema.parse(request.params?.arguments);
-    const todoList = await todoListManager.getTodoList({
+    const todoList = await todoListManager.getTaskList({
       listId: args.listId,
       includeCompleted: args.includeCompleted,
     });
 
     if (!todoList) {
-      throw new Error(`Todo list not found: ${args.listId}`);
+      throw new Error(`Task list not found: ${args.listId}`);
     }
 
     // Calculate dependency information for all tasks
     const dependencyResolver = new DependencyResolver();
     const readyItems = dependencyResolver.getReadyItems(todoList.items);
-    const readyItemIds = new Set(readyItems.map(item => item.id));
+    const readyItemIds = new Set(readyItems.map((item: Task) => item.id));
 
     const tasksWithDependencies: TaskWithDependencies[] = todoList.items.map(
       task => {
@@ -55,7 +56,9 @@ export async function handleGetList(
         // Calculate what this task is blocked by if it's not ready
         if (!isReady && task.dependencies.length > 0) {
           for (const depId of task.dependencies) {
-            const depTask = todoList.items.find(item => item.id === depId);
+            const depTask = todoList.items.find(
+              (item: Task) => item.id === depId
+            );
             if (depTask && depTask.status !== 'completed') {
               blockedBy.push(depId);
             }

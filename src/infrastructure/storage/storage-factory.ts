@@ -189,7 +189,7 @@ export class StorageFactory {
   /**
    * Validate storage configuration for completeness and correctness
    *
-   * Performs comprehensive validation of storage configuration to ensure
+   * Performs validation of storage configuration to ensure
    * all required parameters are present and valid.
    *
    * @param config - Storage configuration to validate

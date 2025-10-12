@@ -9,14 +9,14 @@ import {
   DependencyResolver,
   type DependencyGraph,
 } from '../../domain/tasks/dependency-manager.js';
-import { TaskStatus, type TodoItem } from '../../shared/types/todo.js';
+import { TaskStatus, type Task } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type { DependencyAnalysisResponse } from '../../shared/types/mcp-types.js';
 import type {
   CallToolRequest,
@@ -27,7 +27,7 @@ import type {
  * Generate ASCII DAG visualization
  */
 function generateAsciiDAG(
-  tasks: TodoItem[],
+  tasks: Task[],
   dependencyGraph: DependencyGraph
 ): string {
   const lines: string[] = [];
@@ -35,12 +35,12 @@ function generateAsciiDAG(
   lines.push('');
 
   // Group tasks by status for better visualization
-  const readyTasks = tasks.filter(task => {
+  const readyTasks = tasks.filter((task: Task) => {
     const node = dependencyGraph.nodes.get(task.id);
     return node?.isReady && task.status !== TaskStatus.COMPLETED;
   });
 
-  const blockedTasks = tasks.filter(task => {
+  const blockedTasks = tasks.filter((task: Task) => {
     const node = dependencyGraph.nodes.get(task.id);
     return !node?.isReady && task.status !== TaskStatus.COMPLETED;
   });
@@ -120,7 +120,7 @@ function generateAsciiDAG(
 /**
  * Generate DOT format for Graphviz
  */
-function generateDotDAG(tasks: TodoItem[]): string {
+function generateDotDAG(tasks: Task[]): string {
   const lines: string[] = [];
   lines.push('digraph TaskDAG {');
   lines.push('  rankdir=TB;');
@@ -163,7 +163,7 @@ function generateDotDAG(tasks: TodoItem[]): string {
 /**
  * Generate Mermaid format
  */
-function generateMermaidDAG(tasks: TodoItem[]): string {
+function generateMermaidDAG(tasks: Task[]): string {
   const lines: string[] = [];
   lines.push('graph TD');
 
@@ -231,7 +231,7 @@ const AnalyzeTaskDependenciesSchema = z.object({
  */
 export async function handleAnalyzeTaskDependencies(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   const dependencyResolver = new DependencyResolver();
 
@@ -243,7 +243,7 @@ export async function handleAnalyzeTaskDependencies(
     const args = AnalyzeTaskDependenciesSchema.parse(request.params?.arguments);
 
     // Get the todo list with all tasks (including completed ones for proper analysis)
-    const todoList = await todoListManager.getTodoList({
+    const todoList = await todoListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
@@ -253,7 +253,7 @@ export async function handleAnalyzeTaskDependencies(
         content: [
           {
             type: 'text',
-            text: `Error: Todo list with ID ${args.listId} not found`,
+            text: `Error: Task list with ID ${args.listId} not found`,
           },
         ],
         isError: true,
@@ -302,8 +302,11 @@ export async function handleAnalyzeTaskDependencies(
     // Critical path recommendations
     if (criticalPath.length > 0) {
       const criticalPathTasks = criticalPath
-        .map(id => todoList.items.find(task => task.id === id))
-        .filter(task => task && task.status !== TaskStatus.COMPLETED);
+        .map(id => todoList.items.find((task: Task) => task.id === id))
+        .filter(
+          (task: Task | undefined): task is Task =>
+            task !== undefined && task.status !== TaskStatus.COMPLETED
+        );
 
       if (criticalPathTasks.length > 0) {
         const firstIncompleteTask = criticalPathTasks[0];
@@ -351,7 +354,9 @@ export async function handleAnalyzeTaskDependencies(
         );
       }
     } else if (readyTasks.length > 0) {
-      const highPriorityReady = readyTasks.filter(task => task.priority >= 4);
+      const highPriorityReady = readyTasks.filter(
+        (task: Task) => task.priority >= 4
+      );
       if (highPriorityReady.length > 0) {
         recommendations.push(
           `${
@@ -370,8 +375,8 @@ export async function handleAnalyzeTaskDependencies(
     // Bottleneck recommendations
     if (bottlenecks.length > 0) {
       const bottleneckTasks = bottlenecks
-        .map(id => todoList.items.find(task => task.id === id))
-        .filter(task => task);
+        .map(id => todoList.items.find((task: Task) => task.id === id))
+        .filter((task: Task | undefined): task is Task => task !== undefined);
 
       if (bottleneckTasks.length > 0) {
         recommendations.push(

@@ -130,18 +130,18 @@ describe('Tool Examples Library', () => {
 
       expect(addTaskExamples.examples.length).toBeGreaterThan(1);
 
-      const simpleExample = addTaskExamples.examples.find(e =>
-        e.description.toLowerCase().includes('simple')
+      const basicExample = addTaskExamples.examples.find(e =>
+        e.description.toLowerCase().includes('basic')
       );
       const detailedExample = addTaskExamples.examples.find(e =>
         e.description.toLowerCase().includes('detailed')
       );
 
-      expect(simpleExample).toBeDefined();
+      expect(basicExample).toBeDefined();
       expect(detailedExample).toBeDefined();
 
-      // Simple example should have fewer parameters
-      expect(Object.keys(simpleExample!.parameters).length).toBeLessThan(
+      // Basic example should have fewer parameters
+      expect(Object.keys(basicExample!.parameters).length).toBeLessThan(
         Object.keys(detailedExample!.parameters).length
       );
     });

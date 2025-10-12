@@ -252,9 +252,7 @@ _Review task details, action plan, and exit criteria before beginning work_
   "tool": "search_tool",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "priority": [4, 5],
-    "sortBy": "priority",
-    "sortOrder": "desc"
+    "priority": [4, 5]
   }
 }
 ```
@@ -268,8 +266,7 @@ _Review task details, action plan, and exit criteria before beginning work_
   "tool": "search_tool",
   "parameters": {
     "tags": ["research"],
-    "tagOperator": "AND",
-    "sortBy": "createdAt"
+    "tagOperator": "AND"
   }
 }
 ```
@@ -287,8 +284,6 @@ _Review task details, action plan, and exit criteria before beginning work_
     "priority": [4, 5],
     "tags": ["design", "urgent"],
     "tagOperator": "OR",
-    "sortBy": "priority",
-    "sortOrder": "desc",
     "limit": 5
   }
 }
@@ -305,8 +300,7 @@ _Review task details, action plan, and exit criteria before beginning work_
   "tool": "search_tool",
   "parameters": {
     "query": "wireframes design",
-    "includeCompleted": true,
-    "sortBy": "updatedAt"
+    "includeCompleted": true
   }
 }
 ```

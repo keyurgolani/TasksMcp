@@ -11,13 +11,14 @@
 import {
   TaskStatus,
   Priority,
-  type TodoItem,
-  type GetTodoListFilters,
-  type GetTodoListSorting,
-  type GetTodoListPagination,
-} from '../types/todo.js';
+  type Task,
+  type GetTaskListFilters,
+  type GetTaskListPagination,
+} from '../../shared/types/task.js';
 
 import { logger } from './logger.js';
+
+import type { SortOptions } from '../../domain/repositories/task-list.repository.js';
 
 export class FilteringUtils {
   /**
@@ -33,12 +34,9 @@ export class FilteringUtils {
    *
    * @param items - Array of todo items to filter
    * @param filters - Filter criteria object
-   * @returns TodoItem[] - Filtered array of todo items
+   * @returns Task[] - Filtered array of todo items
    */
-  static applyFilters(
-    items: TodoItem[],
-    filters: GetTodoListFilters
-  ): TodoItem[] {
+  static applyFilters(items: Task[], filters: GetTaskListFilters): Task[] {
     try {
       logger.debug('Applying filters to items', {
         itemCount: items.length,
@@ -75,7 +73,7 @@ export class FilteringUtils {
         );
       }
 
-      // Assignee filter (if we add assignee field to TodoItem in the future)
+      // Assignee filter (if we add assignee field to Task in the future)
       if (filters.assignee !== undefined) {
         const assigneeFilter = filters.assignee;
         filteredItems = filteredItems.filter(item => {
@@ -84,7 +82,7 @@ export class FilteringUtils {
         });
       }
 
-      // Due date filters (if we add dueDate field to TodoItem in the future)
+      // Due date filters (if we add dueDate field to Task in the future)
       if (filters.dueDateBefore !== undefined) {
         const { dueDateBefore } = filters;
         filteredItems = filteredItems.filter(item => {
@@ -181,82 +179,6 @@ export class FilteringUtils {
   }
 
   /**
-   * Sort todo items based on specified criteria
-   *
-   * Supports sorting by multiple fields:
-   * - title: Alphabetical sorting
-   * - status: Status enum order
-   * - priority: Numeric priority (1-5)
-   * - createdAt, updatedAt, completedAt: Date-based sorting
-   * - estimatedDuration: Numeric duration sorting
-   *
-   * @param items - Array of todo items to sort
-   * @param sorting - Sorting criteria (field and direction)
-   * @returns TodoItem[] - Sorted array of todo items
-   */
-  static applySorting(
-    items: TodoItem[],
-    sorting: GetTodoListSorting
-  ): TodoItem[] {
-    try {
-      logger.debug('Applying sorting to items', {
-        itemCount: items.length,
-        field: sorting.field,
-        direction: sorting.direction,
-      });
-
-      const sortedItems = [...items].sort((a, b) => {
-        let comparison = 0;
-
-        switch (sorting.field) {
-          case 'title':
-            comparison = a.title.localeCompare(b.title);
-            break;
-          case 'status':
-            comparison = a.status.localeCompare(b.status);
-            break;
-          case 'priority':
-            comparison = a.priority - b.priority;
-            break;
-          case 'createdAt':
-            comparison = a.createdAt.getTime() - b.createdAt.getTime();
-            break;
-          case 'updatedAt':
-            comparison = a.updatedAt.getTime() - b.updatedAt.getTime();
-            break;
-          case 'completedAt': {
-            // Handle optional completedAt field
-            const aCompleted = a.completedAt?.getTime() ?? 0;
-            const bCompleted = b.completedAt?.getTime() ?? 0;
-            comparison = aCompleted - bCompleted;
-            break;
-          }
-          case 'estimatedDuration': {
-            const aDuration = a.estimatedDuration ?? 0;
-            const bDuration = b.estimatedDuration ?? 0;
-            comparison = aDuration - bDuration;
-            break;
-          }
-          default:
-            logger.warn('Unknown sorting field', { field: sorting.field });
-            return 0;
-        }
-
-        return sorting.direction === 'desc' ? -comparison : comparison;
-      });
-
-      logger.debug('Sorting applied successfully', {
-        itemCount: sortedItems.length,
-      });
-
-      return sortedItems;
-    } catch (error) {
-      logger.error('Failed to apply sorting', { error });
-      throw error;
-    }
-  }
-
-  /**
    * Apply pagination to a list of items
    *
    * Implements offset-based pagination with:
@@ -270,10 +192,10 @@ export class FilteringUtils {
    * @returns Object containing paginated items, counts, and hasMore flag
    */
   static applyPagination(
-    items: TodoItem[],
-    pagination: GetTodoListPagination
+    items: Task[],
+    pagination: GetTaskListPagination
   ): {
-    items: TodoItem[];
+    items: Task[];
     totalCount: number;
     hasMore: boolean;
   } {
@@ -322,15 +244,15 @@ export class FilteringUtils {
   }
 
   /**
-   * Apply all processing steps: filter, sort, and paginate
+   * Apply all processing steps: filter and paginate
    */
   static processItems(
-    items: TodoItem[],
-    filters?: GetTodoListFilters,
-    sorting?: GetTodoListSorting,
-    pagination?: GetTodoListPagination
+    items: Task[],
+    filters?: GetTaskListFilters,
+    sorting?: SortOptions,
+    pagination?: GetTaskListPagination
   ): {
-    items: TodoItem[];
+    items: Task[];
     totalCount: number;
     filteredCount: number;
     hasMore: boolean;
@@ -389,9 +311,82 @@ export class FilteringUtils {
   }
 
   /**
+   * Apply sorting to a list of todo items
+   *
+   * @param items - Array of todo items to sort
+   * @param sorting - Sort options (field and direction)
+   * @returns Task[] - Sorted array of todo items
+   */
+  static applySorting(items: Task[], sorting: SortOptions): Task[] {
+    try {
+      logger.debug('Applying sorting to items', {
+        itemCount: items.length,
+        field: sorting.field,
+        direction: sorting.direction,
+      });
+
+      const sortedItems = [...items].sort((a, b) => {
+        let aVal: string | number | Date;
+        let bVal: string | number | Date;
+
+        switch (sorting.field) {
+          case 'title':
+            aVal = a.title.toLowerCase();
+            bVal = b.title.toLowerCase();
+            break;
+          case 'status':
+            aVal = a.status;
+            bVal = b.status;
+            break;
+          case 'priority':
+            aVal = a.priority;
+            bVal = b.priority;
+            break;
+          case 'createdAt':
+            aVal = a.createdAt.getTime();
+            bVal = b.createdAt.getTime();
+            break;
+          case 'updatedAt':
+            aVal = a.updatedAt.getTime();
+            bVal = b.updatedAt.getTime();
+            break;
+          case 'completedAt':
+            aVal = a.completedAt?.getTime() ?? 0;
+            bVal = b.completedAt?.getTime() ?? 0;
+            break;
+          case 'estimatedDuration':
+            aVal = a.estimatedDuration ?? 0;
+            bVal = b.estimatedDuration ?? 0;
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) {
+          return sorting.direction === 'asc' ? -1 : 1;
+        }
+        if (aVal > bVal) {
+          return sorting.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+
+      logger.debug('Sorting applied successfully', {
+        originalCount: items.length,
+        sortedCount: sortedItems.length,
+      });
+
+      return sortedItems;
+    } catch (error) {
+      logger.error('Failed to apply sorting', { error });
+      throw error;
+    }
+  }
+
+  /**
    * Validate filter parameters
    */
-  static validateFilters(filters: GetTodoListFilters): void {
+  static validateFilters(filters: GetTaskListFilters): void {
     // Validate status values
     if (filters.status !== undefined) {
       const statusArray = Array.isArray(filters.status)
@@ -458,32 +453,9 @@ export class FilteringUtils {
   }
 
   /**
-   * Validate sorting parameters
-   */
-  static validateSorting(sorting: GetTodoListSorting): void {
-    const validFields = [
-      'title',
-      'status',
-      'priority',
-      'createdAt',
-      'updatedAt',
-      'completedAt',
-      'estimatedDuration',
-    ];
-    if (!validFields.includes(sorting.field)) {
-      throw new Error(`Invalid sorting field: ${sorting.field}`);
-    }
-
-    const validDirections = ['asc', 'desc'];
-    if (!validDirections.includes(sorting.direction)) {
-      throw new Error(`Invalid sorting direction: ${sorting.direction}`);
-    }
-  }
-
-  /**
    * Validate pagination parameters
    */
-  static validatePagination(pagination: GetTodoListPagination): void {
+  static validatePagination(pagination: GetTaskListPagination): void {
     if (pagination.limit !== undefined && pagination.limit < 1) {
       throw new Error('Pagination limit must be positive');
     }

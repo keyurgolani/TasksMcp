@@ -87,7 +87,7 @@ The original complex tools are still available but not recommended for new integ
 
 1. **[create_todo_list](./mcp-tools.md#create_todo_list)** - Create new todo lists with optional initial tasks
 2. **[get_todo_list](./mcp-tools.md#get_todo_list)** - Retrieve todo lists with advanced filtering and pagination
-3. **[update_todo_list](./mcp-tools.md#update_todo_list)** - Update lists with add/modify/remove/reorder operations
+3. **[update_todo_list](./mcp-tools.md#update_todo_list)** - Update lists with add/modify/remove operations
 4. **[list_todo_lists](./mcp-tools.md#list_todo_lists)** - List all todo lists with filtering options
 5. **[delete_todo_list](./mcp-tools.md#delete_todo_list)** - Delete or archive todo lists
 6. **[analyze_task_complexity](./mcp-tools.md#analyze_task_complexity)** - AI-powered task complexity analysis and breakdown

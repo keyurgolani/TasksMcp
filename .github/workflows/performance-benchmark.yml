@@ -2,9 +2,9 @@ name: Performance Benchmark
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -33,10 +33,10 @@ jobs:
         timeout-minutes: 5
         run: |
           echo "Running performance benchmarks..."
-          
+
           echo "Package size:"
           npm pack --dry-run | grep "package size" || echo "Could not determine package size"
-          
+
           echo "Verifying build output..."
           ls -la dist/
           echo "Checking if CLI exists..."
@@ -46,7 +46,7 @@ jobs:
             echo "❌ CLI file missing"
             exit 1
           fi
-          
+
           echo "Testing CLI version command..."
           if node dist/app/cli.js --version; then
             echo "✅ CLI version command works"
@@ -56,7 +56,7 @@ jobs:
             node dist/app/cli.js --help || echo "CLI help also failed"
             exit 1
           fi
-          
+
           echo "Measuring startup time..."
           echo "Running 5 startup time tests..."
           TOTAL=0
@@ -75,7 +75,7 @@ jobs:
               echo "  Test failed or timed out"
             fi
           done
-          
+
           if [ $SUCCESS_COUNT -gt 0 ]; then
             AVERAGE=$((TOTAL / SUCCESS_COUNT))
             echo "Average startup time: ${AVERAGE}ms (${SUCCESS_COUNT}/5 successful)"
@@ -83,7 +83,7 @@ jobs:
             echo "❌ All startup time tests failed"
             exit 1
           fi
-          
+
           echo "Measuring memory usage..."
           if timeout 30s node .github/scripts/check-memory.mjs; then
             echo "✅ Memory usage check completed"
@@ -98,10 +98,10 @@ jobs:
           npm pack
           PACKAGE_FILE=$(ls *.tgz | head -1)
           echo "Created package: $PACKAGE_FILE"
-          
+
           echo "Package contents:"
           tar -tzf "$PACKAGE_FILE" | head -20
-          
+
           echo "Final startup time test..."
           if time timeout 10s node dist/app/cli.js --version; then
             echo "✅ Final test passed"

@@ -10,7 +10,7 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -23,7 +23,7 @@ const DeleteListSchema = z.object({
 
 export async function handleDeleteList(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing delete_list request', {
@@ -34,7 +34,7 @@ export async function handleDeleteList(
     const args = DeleteListSchema.parse(request.params?.arguments);
 
     // Delete the todo list
-    const result = await todoListManager.deleteTodoList({
+    const result = await todoListManager.deleteTaskList({
       listId: args.listId,
       permanent: args.permanent,
     });

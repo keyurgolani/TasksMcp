@@ -1,7 +1,7 @@
 {
   "name": "task-list-mcp",
   "version": "2.5.0",
-  "description": "An intelligent Model Context Protocol (MCP) server for task management with AI-powered complexity analysis and multi-agent orchestration support",
+  "description": "A Model Context Protocol (MCP) server for task management with multi-agent orchestration support",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -36,6 +36,8 @@
     "prepublishOnly": "npm run build:prod",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:ui": "vitest --coverage --ui",
     "clean": "./scripts/clean.sh",
     "clean:deep": "./scripts/clean.sh --deep",
     "clean:build": "./scripts/clean.sh --build",

@@ -12,9 +12,9 @@ import {
 import { logger } from '../../shared/utils/logger.js';
 
 import type {
-  TodoListManager,
-  CreateTodoListInput,
-} from '../../domain/lists/todo-list-manager.js';
+  TaskListManager,
+  CreateTaskListInput,
+} from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -41,7 +41,7 @@ const CreateListSchema = z.object({
  */
 export async function handleCreateList(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing create_list request', {
@@ -49,7 +49,7 @@ export async function handleCreateList(
     });
 
     const args = CreateListSchema.parse(request.params?.arguments);
-    const createInput: CreateTodoListInput = {
+    const createInput: CreateTaskListInput = {
       title: args.title,
     };
 
@@ -62,7 +62,7 @@ export async function handleCreateList(
       createInput.context = args.projectTag;
     }
 
-    const result = await todoListManager.createTodoList(createInput);
+    const result = await todoListManager.createTaskList(createInput);
 
     // Format response
     const response: ListResponse = {

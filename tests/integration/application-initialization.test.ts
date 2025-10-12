@@ -4,7 +4,7 @@
  * Tests the complete initialization flow including:
  * - DataSourceRouter setup
  * - MultiSourceAggregator creation
- * - TodoListRepository instantiation
+ * - TaskListRepository instantiation
  * - Health checks for configured sources
  */
 

@@ -31,7 +31,7 @@ export const developmentConfig = {
   },
   logging: {
     level: 'debug',
-    format: 'simple',
+    format: 'json',
     fileEnabled: false,
     filePath: './logs/dev.log',
   },

@@ -5,10 +5,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { ProjectManager } from '../../../../src/domain/lists/project-manager.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/task.js';
 
 import type { StorageBackend } from '../../../../src/shared/types/storage.js';
-import type { TodoList } from '../../../../src/shared/types/todo.js';
+import type { TaskList } from '../../../../src/shared/types/task.js';
 
 // Mock storage backend
 const createMockStorage = (): StorageBackend => ({
@@ -19,12 +19,12 @@ const createMockStorage = (): StorageBackend => ({
   list: vi.fn().mockResolvedValue([]),
   healthCheck: vi.fn().mockResolvedValue(true),
   shutdown: vi.fn().mockResolvedValue(undefined),
-  loadAllData: vi.fn().mockResolvedValue({ version: '2.0', todoLists: [] }),
+  loadAllData: vi.fn().mockResolvedValue({ version: '2.0', taskLists: [] }),
   saveAllData: vi.fn().mockResolvedValue(undefined),
   needsMigration: vi.fn().mockResolvedValue(false),
 });
 
-// Helper to create test todo lists
+// Helper to create test task lists
 const createTestList = (
   id: string,
   projectTag: string,
@@ -32,7 +32,7 @@ const createTestList = (
   totalTasks = 5,
   completedTasks = 2,
   isArchived = false
-): TodoList => ({
+): TaskList => ({
   id,
   title: `Test List ${id}`,
   description: 'Test description',
@@ -156,7 +156,7 @@ describe('ProjectManager', () => {
       const projects = await projectManager.listProjects();
 
       expect(projects).toEqual([]);
-      expect(mockStorage.list).toHaveBeenCalledWith({ includeArchived: true });
+      expect(mockStorage.list).toHaveBeenCalledWith({});
     });
 
     it('should group lists by project tag', async () => {

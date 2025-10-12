@@ -2,7 +2,7 @@
  * Notes search indexing for fast text search
  */
 
-import type { ImplementationNote } from '../../shared/types/todo.js';
+import type { ImplementationNote } from '../../shared/types/task.js';
 
 export interface SearchResult {
   noteId: string;
@@ -194,26 +194,6 @@ export class NotesSearchIndex {
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
       .filter(word => word.length > 2);
-  }
-
-  /**
-   * Get search suggestions based on partial query
-   */
-  getSuggestions(partialQuery: string, limit = 5): string[] {
-    const suggestions = new Set<string>();
-    const partial = partialQuery.toLowerCase();
-
-    for (const entry of this.index.values()) {
-      for (const word of entry.words) {
-        if (word.startsWith(partial) && word !== partial) {
-          suggestions.add(word);
-          if (suggestions.size >= limit) break;
-        }
-      }
-      if (suggestions.size >= limit) break;
-    }
-
-    return Array.from(suggestions).slice(0, limit);
   }
 
   /**

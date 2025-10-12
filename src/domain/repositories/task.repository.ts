@@ -1,8 +1,8 @@
 /**
- * Repository interface for Task (TodoItem) operations
+ * Repository interface for Task (Task) operations
  *
  * Provides task-specific query and manipulation operations that work
- * across TodoLists. This interface complements ITodoListRepository by
+ * across TaskLists. This interface complements ITaskListRepository by
  * focusing on individual task operations rather than list-level operations.
  *
  * Use cases:
@@ -17,15 +17,15 @@ import type {
   SortOptions,
   PaginationOptions,
   SearchResult,
-} from './todo-list.repository.js';
+} from './task-list.repository.js';
 import type {
-  TodoItem,
+  Task,
   TaskStatus,
   Priority,
   ExitCriteria,
   ActionPlan,
   ImplementationNote,
-} from '../../shared/types/todo.js';
+} from '../../shared/types/task.js';
 
 /**
  * Query parameters for searching tasks across lists
@@ -52,7 +52,7 @@ export interface TaskSearchQuery {
  */
 export interface TaskWithContext {
   /** The task itself */
-  task: TodoItem;
+  task: Task;
   /** ID of the list containing this task */
   listId: string;
   /** Title of the list containing this task */
@@ -81,6 +81,7 @@ export interface UpdateTaskOptions {
     actionPlan: ActionPlan;
     exitCriteria: ExitCriteria[];
     implementationNotes: ImplementationNote[];
+    agentPromptTemplate: string;
   }>;
 }
 
@@ -111,6 +112,8 @@ export interface CreateTaskOptions {
     content: string;
     type: 'general' | 'technical' | 'decision' | 'learning';
   }>;
+  /** Agent prompt template (max 10,000 chars) */
+  agentPromptTemplate?: string;
 }
 
 /**
@@ -132,14 +135,14 @@ export interface BulkOperationResult {
  * Repository interface for Task operations
  *
  * This interface provides task-centric operations that may span
- * multiple TodoLists. It complements ITodoListRepository by focusing
+ * multiple TaskLists. It complements ITaskListRepository by focusing
  * on individual task queries and operations.
  *
  * Expected behaviors:
  * - Operations should maintain referential integrity with parent lists
  * - Dependency validation should be enforced
  * - All operations should be atomic where possible
- * - Search operations should be optimized for performance
+ * - Search operations should be performant
  */
 export interface ITaskRepository {
   /**
@@ -276,4 +279,19 @@ export interface ITaskRepository {
   bulkDelete(
     taskIds: Array<{ listId: string; taskId: string }>
   ): Promise<BulkOperationResult>;
+
+  /**
+   * Gets the rendered agent prompt for a task
+   *
+   * @param listId - The list ID containing the task
+   * @param taskId - The task ID to get the prompt for
+   * @param useDefault - Whether to use a default template if none is set
+   * @returns The rendered agent prompt
+   * @throws Error if the operation fails or task doesn't exist
+   */
+  getAgentPrompt(
+    listId: string,
+    taskId: string,
+    useDefault?: boolean
+  ): Promise<string>;
 }

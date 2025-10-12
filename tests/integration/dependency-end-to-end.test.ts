@@ -13,32 +13,32 @@ import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { logger } from '../../src/shared/utils/logger.js';
 import { TestCleanup } from '../setup.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
-import type { TodoList } from '../../src/shared/types/todo.js';
+import type { TaskList } from '../../src/shared/types/task.js';
 
 describe('Dependency Management End-to-End Integration Tests', () => {
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let storage: MemoryStorageBackend;
-  let testList: TodoList;
+  let testList: TaskList;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = createTodoListManager(storage);
-    await todoListManager.initialize();
+    taskListManager = createTaskListManager(storage);
+    await taskListManager.initialize();
 
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
-    TestCleanup.registerManager(todoListManager);
+    TestCleanup.registerManager(taskListManager);
 
     // Create a test list for integration tests
-    testList = await todoListManager.createTodoList({
+    testList = await taskListManager.createTaskList({
       title: 'Integration Test Project',
       description: 'End-to-end testing of dependency management features',
       projectTag: 'integration-test',
@@ -65,21 +65,21 @@ describe('Dependency Management End-to-End Integration Tests', () => {
 
     switch (toolName) {
       case 'add_task':
-        return await handleAddTask(request, todoListManager);
+        return await handleAddTask(request, taskListManager);
       case 'set_task_dependencies':
-        return await handleSetTaskDependencies(request, todoListManager);
+        return await handleSetTaskDependencies(request, taskListManager);
       case 'get_ready_tasks':
-        return await handleGetReadyTasks(request, todoListManager);
+        return await handleGetReadyTasks(request, taskListManager);
       case 'analyze_task_dependencies':
-        return await handleAnalyzeTaskDependencies(request, todoListManager);
+        return await handleAnalyzeTaskDependencies(request, taskListManager);
       case 'get_list':
-        return await handleGetList(request, todoListManager);
+        return await handleGetList(request, taskListManager);
       case 'search_tool':
-        return await handleSearchTool(request, todoListManager);
+        return await handleSearchTool(request, taskListManager);
       case 'show_tasks':
-        return await handleShowTasks(request, todoListManager);
+        return await handleShowTasks(request, taskListManager);
       case 'complete_task':
-        return await handleCompleteTask(request, todoListManager);
+        return await handleCompleteTask(request, taskListManager);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }

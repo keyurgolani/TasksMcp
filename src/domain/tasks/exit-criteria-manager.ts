@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { logger } from '../../shared/utils/logger.js';
 
-import type { ExitCriteria } from '../../shared/types/todo.js';
-import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
+import type { ExitCriteria } from '../../shared/types/task.js';
+import type { ITaskListRepository } from '../repositories/task-list.repository.js';
 
 export interface CreateExitCriteriaInput {
   taskId: string;
@@ -48,9 +48,9 @@ export interface ExitCriteriaValidationResult {
 export class ExitCriteriaManager {
   // Repository for future direct exit criteria persistence
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITodoListRepository | undefined;
+  private readonly repository: ITaskListRepository | undefined;
 
-  constructor(repository?: ITodoListRepository) {
+  constructor(repository?: ITaskListRepository) {
     this.repository = repository;
 
     logger.debug('ExitCriteriaManager initialized', {
@@ -62,7 +62,7 @@ export class ExitCriteriaManager {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITodoListRepository | undefined {
+  getRepository(): ITaskListRepository | undefined {
     return this.repository;
   }
 
@@ -87,7 +87,6 @@ export class ExitCriteriaManager {
         id: criteriaId,
         description: input.description.trim(),
         isMet: false,
-        order: input.order || 0,
       };
 
       logger.info('Exit criteria created successfully', {

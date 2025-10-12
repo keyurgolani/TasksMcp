@@ -4,27 +4,27 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../setup.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
 describe('Core Dependency Tools Performance', () => {
-  let manager: TodoListManager;
+  let manager: TaskListManager;
   let storage: MemoryStorageBackend;
   let _listId: string;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    manager = createTodoListManager(storage);
+    manager = createTaskListManager(storage);
     await manager.initialize();
 
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
     TestCleanup.registerManager(manager);
 
-    const list = await manager.createTodoList({
+    const list = await manager.createTaskList({
       title: 'Performance Test List',
       description: 'Testing performance',
       projectTag: 'performance-test',
@@ -37,7 +37,7 @@ describe('Core Dependency Tools Performance', () => {
     const startTime = Date.now();
 
     // Create a list with multiple tasks
-    const list = await manager.createTodoList({
+    const list = await manager.createTaskList({
       title: 'Performance Test List with Tasks',
       description: 'Testing performance with tasks',
       projectTag: 'performance-test',
@@ -69,7 +69,7 @@ describe('Core Dependency Tools Performance', () => {
     const startTime = Date.now();
 
     // Create a larger dataset
-    const list = await manager.createTodoList({
+    const list = await manager.createTaskList({
       title: 'Large Performance Test List',
       description: 'Testing performance with large dataset',
       projectTag: 'performance-test',

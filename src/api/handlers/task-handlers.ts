@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { ApiError } from '../../shared/errors/api-error.js';
-import { TaskStatus } from '../../shared/types/todo.js';
+import { TaskStatus } from '../../shared/types/task.js';
 import { logger } from '../../shared/utils/logger.js';
 
 import type {
@@ -14,12 +14,12 @@ import type {
   HandlerContext,
 } from '../../shared/types/api.js';
 import type {
-  TodoItem,
+  Task,
   Priority,
   ActionPlan,
   ExitCriteria,
   ImplementationNote,
-} from '../../shared/types/todo.js';
+} from '../../shared/types/task.js';
 import type { Response } from 'express';
 
 /**
@@ -59,7 +59,7 @@ const searchTasksQuerySchema = z.object({
     .optional(),
   tags: z
     .string()
-    .transform(val => val.split(',').map(t => t.trim()))
+    .transform(val => val.split(',').map((t: string) => t.trim()))
     .optional(),
   search: z.string().optional(),
   includeCompleted: z
@@ -110,9 +110,8 @@ export async function createTaskHandler(
     });
 
     // Verify the list exists
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId: input.listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -125,7 +124,7 @@ export async function createTaskHandler(
 
     // Validate dependencies if provided
     if (input.dependencies && input.dependencies.length > 0) {
-      const existingTaskIds = new Set(list.items.map(item => item.id));
+      const existingTaskIds = new Set(list.items.map((item: Task) => item.id));
       const invalidDeps = input.dependencies.filter(
         depId => !existingTaskIds.has(depId)
       );
@@ -142,7 +141,7 @@ export async function createTaskHandler(
       // This will be validated by the dependency manager when we add the task
     }
 
-    // Create the task using TodoListManager
+    // Create the task using TaskListManager
     const itemData: {
       title?: string;
       description?: string;
@@ -190,7 +189,7 @@ export async function createTaskHandler(
       itemData.exitCriteria = input.exitCriteria;
     }
 
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId: input.listId,
       action: 'add_item',
       itemData,
@@ -210,7 +209,7 @@ export async function createTaskHandler(
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoItem> = {
+    const response: ApiResponse<Task> = {
       success: true,
       data: task,
       meta: {
@@ -261,14 +260,13 @@ export async function searchTasksHandler(
       search: query.search,
     });
 
-    let tasks: TodoItem[] = [];
+    let tasks: Task[] = [];
 
     if (query.listId) {
       // Search within a specific list
-      const list = await context.todoListManager.getTodoList({
+      const list = await context.todoListManager.getTaskList({
         listId: query.listId,
         includeCompleted: query.includeCompleted,
-        includeArchived: false,
       });
 
       if (!list) {
@@ -278,17 +276,15 @@ export async function searchTasksHandler(
       tasks = list.items;
     } else {
       // Search across all lists
-      const lists = await context.todoListManager.listTodoLists({
+      const lists = await context.todoListManager.listTaskLists({
         status: 'all',
-        includeArchived: false,
       });
 
       // Collect all tasks from all lists
       for (const listSummary of lists) {
-        const list = await context.todoListManager.getTodoList({
+        const list = await context.todoListManager.getTaskList({
           listId: listSummary.id,
           includeCompleted: query.includeCompleted,
-          includeArchived: false,
         });
 
         if (list) {
@@ -313,7 +309,7 @@ export async function searchTasksHandler(
     }
 
     if (query.tags && query.tags.length > 0) {
-      filteredTasks = filteredTasks.filter(task =>
+      filteredTasks = filteredTasks.filter((task: Task) =>
         query.tags!.some(tag => task.tags.includes(tag))
       );
     }
@@ -335,7 +331,7 @@ export async function searchTasksHandler(
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoItem[]> = {
+    const response: ApiResponse<Task[]> = {
       success: true,
       data: paginatedTasks,
       meta: {
@@ -400,9 +396,8 @@ export async function getTaskHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -410,7 +405,7 @@ export async function getTaskHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -418,7 +413,7 @@ export async function getTaskHandler(
 
   const duration = Date.now() - startTime;
 
-  const response: ApiResponse<TodoItem> = {
+  const response: ApiResponse<Task> = {
     success: true,
     data: task,
     meta: {
@@ -473,9 +468,8 @@ export async function updateTaskHandler(
     });
 
     // Get the list to verify task exists
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -491,7 +485,7 @@ export async function updateTaskHandler(
     }
 
     // Find the task
-    const task = list.items.find(item => item.id === taskId);
+    const task = list.items.find((item: Task) => item.id === taskId);
 
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -499,7 +493,7 @@ export async function updateTaskHandler(
 
     // Validate dependencies if provided
     if (updates.dependencies && updates.dependencies.length > 0) {
-      const existingTaskIds = new Set(list.items.map(item => item.id));
+      const existingTaskIds = new Set(list.items.map((item: Task) => item.id));
       const invalidDeps = updates.dependencies.filter(
         depId => !existingTaskIds.has(depId)
       );
@@ -513,7 +507,7 @@ export async function updateTaskHandler(
       }
     }
 
-    // Update the task using TodoListManager
+    // Update the task using TaskListManager
     const itemData: {
       title?: string;
       description?: string;
@@ -550,7 +544,7 @@ export async function updateTaskHandler(
       itemData.dependencies = updates.dependencies;
     }
 
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -558,7 +552,9 @@ export async function updateTaskHandler(
     });
 
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === taskId);
+    const updatedTask = updatedList.items.find(
+      (item: Task) => item.id === taskId
+    );
 
     // This should never happen, but TypeScript needs the check
     if (!updatedTask) {
@@ -567,7 +563,7 @@ export async function updateTaskHandler(
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoItem> = {
+    const response: ApiResponse<Task> = {
       success: true,
       data: updatedTask,
       meta: {
@@ -625,9 +621,8 @@ export async function deleteTaskHandler(
   });
 
   // Get the list to verify task exists
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -643,14 +638,14 @@ export async function deleteTaskHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
   }
 
   // Check if any other tasks depend on this task
-  const dependentTasks = list.items.filter(item =>
+  const dependentTasks = list.items.filter((item: Task) =>
     item.dependencies.includes(taskId)
   );
 
@@ -660,7 +655,7 @@ export async function deleteTaskHandler(
       `Cannot delete task: ${dependentTasks.length} task(s) depend on it`,
       409,
       {
-        dependentTasks: dependentTasks.map(t => ({
+        dependentTasks: dependentTasks.map((t: Task) => ({
           id: t.id,
           title: t.title,
         })),
@@ -668,8 +663,8 @@ export async function deleteTaskHandler(
     );
   }
 
-  // Delete the task using TodoListManager
-  await context.todoListManager.updateTodoList({
+  // Delete the task using TaskListManager
+  await context.todoListManager.updateTaskList({
     listId,
     action: 'remove_item',
     itemId: taskId,
@@ -730,9 +725,8 @@ export async function completeTaskHandler(
   });
 
   // Get the list to verify task exists
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -748,7 +742,7 @@ export async function completeTaskHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -760,8 +754,8 @@ export async function completeTaskHandler(
 
   // Check if all dependencies are completed
   if (task.dependencies.length > 0) {
-    const incompleteDeps = task.dependencies.filter(depId => {
-      const depTask = list.items.find(item => item.id === depId);
+    const incompleteDeps = task.dependencies.filter((depId: string) => {
+      const depTask = list.items.find((item: Task) => item.id === depId);
       return depTask && depTask.status !== TaskStatus.COMPLETED;
     });
 
@@ -771,8 +765,8 @@ export async function completeTaskHandler(
         `Cannot complete task: ${incompleteDeps.length} dependency(ies) not completed`,
         409,
         {
-          incompleteDependencies: incompleteDeps.map(depId => {
-            const depTask = list.items.find(item => item.id === depId);
+          incompleteDependencies: incompleteDeps.map((depId: string) => {
+            const depTask = list.items.find((item: Task) => item.id === depId);
             return { id: depId, title: depTask?.title };
           }),
         }
@@ -782,7 +776,9 @@ export async function completeTaskHandler(
 
   // Check if all exit criteria are met (if any exist)
   if (task.exitCriteria && task.exitCriteria.length > 0) {
-    const unmetCriteria = task.exitCriteria.filter(criteria => !criteria.isMet);
+    const unmetCriteria = task.exitCriteria.filter(
+      (criteria: ExitCriteria) => !criteria.isMet
+    );
 
     if (unmetCriteria.length > 0) {
       throw new ApiError(
@@ -790,7 +786,7 @@ export async function completeTaskHandler(
         `Cannot complete task: ${unmetCriteria.length} exit criteria not met`,
         409,
         {
-          unmetCriteria: unmetCriteria.map(c => ({
+          unmetCriteria: unmetCriteria.map((c: ExitCriteria) => ({
             id: c.id,
             description: c.description,
           })),
@@ -799,8 +795,8 @@ export async function completeTaskHandler(
     }
   }
 
-  // Complete the task using TodoListManager
-  const updatedList = await context.todoListManager.updateTodoList({
+  // Complete the task using TaskListManager
+  const updatedList = await context.todoListManager.updateTaskList({
     listId,
     action: 'update_status',
     itemId: taskId,
@@ -810,7 +806,9 @@ export async function completeTaskHandler(
   });
 
   // Find the updated task
-  const updatedTask = updatedList.items.find(item => item.id === taskId);
+  const updatedTask = updatedList.items.find(
+    (item: Task) => item.id === taskId
+  );
 
   if (!updatedTask) {
     throw new ApiError(
@@ -822,7 +820,7 @@ export async function completeTaskHandler(
 
   const duration = Date.now() - startTime;
 
-  const response: ApiResponse<TodoItem> = {
+  const response: ApiResponse<Task> = {
     success: true,
     data: updatedTask,
     meta: {

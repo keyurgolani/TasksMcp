@@ -9,19 +9,19 @@
 import { z } from 'zod';
 
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
-import { TaskStatus, Priority } from '../../shared/types/todo.js';
+import { TaskStatus, Priority } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
-import type { TodoList, TodoItem } from '../../shared/types/todo.js';
+import type { TaskList, Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for show tasks request parameters
@@ -50,7 +50,7 @@ const ShowTasksSchema = z.object({
  */
 export async function handleShowTasks(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing show_tasks request', {
@@ -58,20 +58,20 @@ export async function handleShowTasks(
     });
 
     const args = ShowTasksSchema.parse(request.params?.arguments);
-    const list = await todoListManager.getTodoList({
+    const list = await todoListManager.getTaskList({
       listId: args.listId,
       includeCompleted: args.includeCompleted,
     });
 
     if (!list) {
-      logger.debug('Todo list not found for show_tasks', {
+      logger.debug('Task list not found for show_tasks', {
         listId: args.listId,
       });
       return {
         content: [
           {
             type: 'text',
-            text: `Todo list not found: ${args.listId}`,
+            text: `Task list not found: ${args.listId}`,
           },
         ],
         isError: true,
@@ -81,7 +81,7 @@ export async function handleShowTasks(
     // Calculate dependency information
     const dependencyResolver = new DependencyResolver();
     const readyItems = dependencyResolver.getReadyItems(list.items);
-    const readyItemIds = new Set(readyItems.map(item => item.id));
+    const readyItemIds = new Set(readyItems.map((item: Task) => item.id));
 
     const formattedOutput = formatTasks(
       list,
@@ -131,7 +131,7 @@ export async function handleShowTasks(
  * @returns string - Formatted task display text
  */
 function formatTasks(
-  list: TodoList,
+  list: TaskList,
   format: 'compact' | 'detailed' | 'summary',
   groupBy: 'status' | 'priority' | 'none',
   includeCompleted: boolean,
@@ -154,9 +154,7 @@ function formatTasks(
   // Filter tasks based on completion status
   let tasks = list.items;
   if (!includeCompleted) {
-    tasks = tasks.filter(
-      (task: TodoItem) => task.status !== TaskStatus.COMPLETED
-    );
+    tasks = tasks.filter((task: Task) => task.status !== TaskStatus.COMPLETED);
   }
 
   // Handle empty task list
@@ -185,7 +183,7 @@ function formatTasks(
  * @param list - The todo list to summarize
  * @returns string - Formatted summary text
  */
-function formatSummary(list: TodoList): string {
+function formatSummary(list: TaskList): string {
   const lines: string[] = [];
 
   lines.push(`# ${list.title} - Summary`);
@@ -238,7 +236,7 @@ function formatSummary(list: TodoList): string {
  * @param format - Display format (compact or detailed)
  */
 function formatTasksByStatus(
-  tasks: TodoItem[],
+  tasks: Task[],
   lines: string[],
   format: 'compact' | 'detailed',
   readyItemIds: Set<string>
@@ -278,7 +276,7 @@ function formatTasksByStatus(
  * @param format - Display format (compact or detailed)
  */
 function formatTasksByPriority(
-  tasks: TodoItem[],
+  tasks: Task[],
   lines: string[],
   format: 'compact' | 'detailed',
   readyItemIds: Set<string>
@@ -320,7 +318,7 @@ function formatTasksByPriority(
  * @param format - Display format (compact or detailed)
  */
 function formatTasksUngrouped(
-  tasks: TodoItem[],
+  tasks: Task[],
   lines: string[],
   format: 'compact' | 'detailed',
   readyItemIds: Set<string>
@@ -345,7 +343,7 @@ function formatTasksUngrouped(
  * @param format - Display format (compact or detailed)
  */
 function formatSingleTask(
-  task: TodoItem,
+  task: Task,
   lines: string[],
   format: 'compact' | 'detailed',
   readyItemIds: Set<string>
@@ -403,8 +401,8 @@ function formatSingleTask(
 /**
  * Group tasks by status
  */
-function groupTasksByStatus(tasks: TodoItem[]): Map<TaskStatus, TodoItem[]> {
-  const groups = new Map<TaskStatus, TodoItem[]>();
+function groupTasksByStatus(tasks: Task[]): Map<TaskStatus, Task[]> {
+  const groups = new Map<TaskStatus, Task[]>();
 
   tasks.forEach(task => {
     if (!groups.has(task.status)) {
@@ -419,8 +417,8 @@ function groupTasksByStatus(tasks: TodoItem[]): Map<TaskStatus, TodoItem[]> {
 /**
  * Group tasks by priority
  */
-function groupTasksByPriority(tasks: TodoItem[]): Map<Priority, TodoItem[]> {
-  const groups = new Map<Priority, TodoItem[]>();
+function groupTasksByPriority(tasks: Task[]): Map<Priority, Task[]> {
+  const groups = new Map<Priority, Task[]>();
 
   tasks.forEach(task => {
     if (!groups.has(task.priority)) {
@@ -435,7 +433,7 @@ function groupTasksByPriority(tasks: TodoItem[]): Map<Priority, TodoItem[]> {
 /**
  * Get status counts for summary
  */
-function getStatusCounts(tasks: TodoItem[]): Record<string, number> {
+function getStatusCounts(tasks: Task[]): Record<string, number> {
   const counts: Record<string, number> = {};
 
   tasks.forEach(task => {
@@ -448,7 +446,7 @@ function getStatusCounts(tasks: TodoItem[]): Record<string, number> {
 /**
  * Get priority counts for summary
  */
-function getPriorityCounts(tasks: TodoItem[]): Record<number, number> {
+function getPriorityCounts(tasks: Task[]): Record<number, number> {
   const counts: Record<number, number> = {};
 
   tasks.forEach(task => {
@@ -541,7 +539,7 @@ function getPriorityIcon(priority: number): string {
 /**
  * Get dependency status icon
  */
-function getDependencyIcon(task: TodoItem, readyItemIds: Set<string>): string {
+function getDependencyIcon(task: Task, readyItemIds: Set<string>): string {
   if (task.dependencies.length === 0) {
     return '🆓'; // No dependencies
   }

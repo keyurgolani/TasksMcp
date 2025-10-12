@@ -1,13 +1,13 @@
 /**
- * Core todo types and interfaces for the MCP Task Manager
+ * Core task types and interfaces for the MCP Task Manager
  *
- * Defines the complete data model for todo lists, tasks, and related entities.
+ * Defines the complete data model for task lists, tasks, and related entities.
  * Includes features like action plans, implementation notes, and analytics.
  */
 
 /**
  * Task status enumeration
- * Represents the current state of a todo item
+ * Represents the current state of a task item
  */
 export enum TaskStatus {
   PENDING = 'pending',
@@ -39,7 +39,6 @@ export interface ActionStep {
   status: 'pending' | 'in_progress' | 'completed';
   completedAt?: Date;
   notes?: string;
-  order: number;
 }
 
 /**
@@ -78,14 +77,44 @@ export interface ExitCriteria {
   isMet: boolean;
   metAt?: Date;
   notes?: string;
-  order: number;
 }
 
 /**
- * Individual todo item/task
+ * Template variable for agent prompt rendering
+ * Represents a variable that can be substituted in templates
+ */
+export interface TemplateVariable {
+  name: string;
+  namespace: 'task' | 'list';
+  value: unknown;
+}
+
+/**
+ * Context for template rendering
+ * Contains all data available for variable substitution
+ */
+export interface TemplateContext {
+  task: Task;
+  list: TaskList;
+  variables: TemplateVariable[];
+}
+
+/**
+ * Result of template rendering operation
+ * Includes rendered content and metadata about the operation
+ */
+export interface TemplateResult {
+  rendered: string;
+  renderTime: number;
+  variablesUsed: string[];
+  errors?: string[];
+}
+
+/**
+ * Individual task item
  * Core entity representing a single task with all its properties and metadata
  */
-export interface TodoItem {
+export interface Task {
   id: string;
   title: string;
   description?: string;
@@ -103,17 +132,18 @@ export interface TodoItem {
   actionPlan?: ActionPlan; // Structured breakdown for complex tasks
   implementationNotes: ImplementationNote[]; // Contextual notes and decisions
   exitCriteria: ExitCriteria[]; // Completion criteria that must be met
+  agentPromptTemplate?: string; // Agent prompt template (max 10,000 chars)
 }
 
 /**
- * Todo list container
+ * Task list container
  * Groups related tasks with comprehensive analytics and project management features
  */
-export interface TodoList {
+export interface TaskList {
   id: string;
   title: string;
   description?: string;
-  items: TodoItem[]; // All tasks in this list
+  items: Task[]; // All tasks in this list
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date; // When all tasks were completed
@@ -132,7 +162,7 @@ export interface TodoList {
   cleanupDeclined?: Date; // When cleanup was last declined
 }
 
-export interface TodoListSummary {
+export interface TaskListSummary {
   id: string;
   title: string;
   progress: number;
@@ -171,7 +201,7 @@ export interface DependencyNode {
   isBlocked: boolean;
 }
 
-export interface GetTodoListFilters {
+export interface GetTaskListFilters {
   status?: TaskStatus | TaskStatus[] | undefined;
   priority?: Priority | Priority[] | undefined;
   tags?: string[] | undefined;
@@ -187,19 +217,7 @@ export interface GetTodoListFilters {
   searchText?: string | undefined;
 }
 
-export interface GetTodoListSorting {
-  field:
-    | 'title'
-    | 'status'
-    | 'priority'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'completedAt'
-    | 'estimatedDuration';
-  direction: 'asc' | 'desc';
-}
-
-export interface GetTodoListPagination {
+export interface GetTaskListPagination {
   limit?: number | undefined;
   offset?: number | undefined;
 }

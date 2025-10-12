@@ -18,9 +18,9 @@ import type {
   SearchResult,
   SortOptions,
   PaginationOptions,
-} from '../../domain/repositories/todo-list.repository.js';
+} from '../../domain/repositories/task-list.repository.js';
 import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
 import type { ConflictResolutionStrategy } from '../config/data-source-config.js';
 
 /**
@@ -46,9 +46,9 @@ export interface SourceMetadata {
 }
 
 /**
- * TodoList with source metadata
+ * TaskList with source metadata
  */
-export interface TodoListWithMetadata extends TodoList {
+export interface TodoListWithMetadata extends TaskList {
   _sourceMetadata?: SourceMetadata;
 }
 
@@ -95,7 +95,7 @@ export class MultiSourceAggregator {
       priority: number;
     }>,
     query: SearchQuery
-  ): Promise<SearchResult<TodoList>> {
+  ): Promise<SearchResult<TaskList>> {
     logger.debug('Aggregating lists from multiple sources', {
       sourceCount: sources.length,
       query,
@@ -144,7 +144,7 @@ export class MultiSourceAggregator {
       hasMore,
     });
 
-    const result: SearchResult<TodoList> = {
+    const result: SearchResult<TaskList> = {
       items: paginatedLists,
       totalCount,
       hasMore,
@@ -175,7 +175,7 @@ export class MultiSourceAggregator {
       priority: number;
     }>,
     query: SearchQuery
-  ): Promise<SearchResult<TodoListSummary>> {
+  ): Promise<SearchResult<TaskListSummary>> {
     logger.debug('Aggregating summaries from multiple sources', {
       sourceCount: sources.length,
       query,
@@ -225,7 +225,7 @@ export class MultiSourceAggregator {
       hasMore,
     });
 
-    const result: SearchResult<TodoListSummary> = {
+    const result: SearchResult<TaskListSummary> = {
       items: paginatedSummaries,
       totalCount,
       hasMore,
@@ -310,12 +310,10 @@ export class MultiSourceAggregator {
       priority: number;
     }>,
     query: SearchQuery
-  ): Promise<Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>> {
+  ): Promise<Array<TaskListSummary & { _sourceMetadata: SourceMetadata }>> {
     const queryPromises = sources.map(async source => {
       try {
-        const listOptions: { projectTag?: string; includeArchived: boolean } = {
-          includeArchived: query.includeArchived ?? false,
-        };
+        const listOptions: { projectTag?: string } = {};
 
         if (query.projectTag) {
           listOptions.projectTag = query.projectTag;
@@ -353,13 +351,13 @@ export class MultiSourceAggregator {
           r =>
             (
               r as PromiseFulfilledResult<
-                Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>
+                Array<TaskListSummary & { _sourceMetadata: SourceMetadata }>
               >
             ).value
         );
     } else {
       const results: Array<
-        TodoListSummary & { _sourceMetadata: SourceMetadata }
+        TaskListSummary & { _sourceMetadata: SourceMetadata }
       > = [];
       for (const promise of queryPromises) {
         try {
@@ -379,12 +377,10 @@ export class MultiSourceAggregator {
   private async querySourceWithTimeout(
     backend: StorageBackend,
     query: SearchQuery
-  ): Promise<TodoList[]> {
+  ): Promise<TaskList[]> {
     return this.executeWithTimeout(async () => {
       // Get all list summaries first
-      const listOptions: { projectTag?: string; includeArchived: boolean } = {
-        includeArchived: query.includeArchived ?? false,
-      };
+      const listOptions: { projectTag?: string } = {};
 
       if (query.projectTag) {
         listOptions.projectTag = query.projectTag;
@@ -393,12 +389,10 @@ export class MultiSourceAggregator {
       const summaries = await backend.list(listOptions);
 
       // Load full lists
-      const lists: TodoList[] = [];
+      const lists: TaskList[] = [];
       for (const summary of summaries) {
         try {
-          const list = await backend.load(summary.id, {
-            includeArchived: query.includeArchived ?? false,
-          });
+          const list = await backend.load(summary.id, {});
 
           if (list) {
             lists.push(list);
@@ -420,7 +414,7 @@ export class MultiSourceAggregator {
    */
   private async deduplicateAndResolve(
     lists: TodoListWithMetadata[]
-  ): Promise<TodoList[]> {
+  ): Promise<TaskList[]> {
     // Group lists by ID
     const grouped = new Map<string, TodoListWithMetadata[]>();
 
@@ -432,7 +426,7 @@ export class MultiSourceAggregator {
     }
 
     // Resolve conflicts for each group
-    const resolved: TodoList[] = [];
+    const resolved: TaskList[] = [];
 
     for (const [listId, versions] of grouped.entries()) {
       if (versions.length === 1) {
@@ -466,12 +460,12 @@ export class MultiSourceAggregator {
    * Deduplicate summaries (simpler than full lists)
    */
   private deduplicateSummaries(
-    summaries: Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>
-  ): TodoListSummary[] {
+    summaries: Array<TaskListSummary & { _sourceMetadata: SourceMetadata }>
+  ): TaskListSummary[] {
     // Group by ID
     const grouped = new Map<
       string,
-      Array<TodoListSummary & { _sourceMetadata: SourceMetadata }>
+      Array<TaskListSummary & { _sourceMetadata: SourceMetadata }>
     >();
 
     for (const summary of summaries) {
@@ -482,7 +476,7 @@ export class MultiSourceAggregator {
     }
 
     // For summaries, always use highest priority source
-    const deduplicated: TodoListSummary[] = [];
+    const deduplicated: TaskListSummary[] = [];
 
     for (const versions of grouped.values()) {
       if (versions.length === 1) {
@@ -510,7 +504,7 @@ export class MultiSourceAggregator {
   /**
    * Resolve conflict between multiple versions of a list
    */
-  private async resolveConflict(context: ConflictContext): Promise<TodoList> {
+  private async resolveConflict(context: ConflictContext): Promise<TaskList> {
     const { listId, versions, strategy } = context;
 
     logger.debug('Resolving conflict', {
@@ -558,7 +552,7 @@ export class MultiSourceAggregator {
   /**
    * Resolve conflict by using the most recently updated version
    */
-  private resolveByLatest(versions: TodoListWithMetadata[]): TodoList {
+  private resolveByLatest(versions: TodoListWithMetadata[]): TaskList {
     const sorted = [...versions].sort((a, b) => {
       const aTime = a.updatedAt.getTime();
       const bTime = b.updatedAt.getTime();
@@ -584,7 +578,7 @@ export class MultiSourceAggregator {
   /**
    * Resolve conflict by using the version from highest priority source
    */
-  private resolveByPriority(versions: TodoListWithMetadata[]): TodoList {
+  private resolveByPriority(versions: TodoListWithMetadata[]): TaskList {
     const sorted = [...versions].sort((a, b) => {
       const aPriority = a._sourceMetadata?.priority ?? 0;
       const bPriority = b._sourceMetadata?.priority ?? 0;
@@ -610,7 +604,7 @@ export class MultiSourceAggregator {
   /**
    * Apply filters to lists
    */
-  private applyFilters(lists: TodoList[], query: SearchQuery): TodoList[] {
+  private applyFilters(lists: TaskList[], query: SearchQuery): TaskList[] {
     return lists.filter(list => {
       // Text search
       if (query.text) {
@@ -687,9 +681,9 @@ export class MultiSourceAggregator {
    * Apply filters to summaries
    */
   private applySummaryFilters(
-    summaries: TodoListSummary[],
+    summaries: TaskListSummary[],
     query: SearchQuery
-  ): TodoListSummary[] {
+  ): TaskListSummary[] {
     return summaries.filter(summary => {
       // Text search
       if (query.text) {
@@ -716,7 +710,7 @@ export class MultiSourceAggregator {
   /**
    * Apply sorting to lists
    */
-  private applySorting(lists: TodoList[], sorting: SortOptions): TodoList[] {
+  private applySorting(lists: TaskList[], sorting: SortOptions): TaskList[] {
     return [...lists].sort((a, b) => {
       let aVal: string | number | Date;
       let bVal: string | number | Date;
@@ -761,9 +755,9 @@ export class MultiSourceAggregator {
    * Apply sorting to summaries
    */
   private applySummarySorting(
-    summaries: TodoListSummary[],
+    summaries: TaskListSummary[],
     sorting: SortOptions
-  ): TodoListSummary[] {
+  ): TaskListSummary[] {
     return [...summaries].sort((a, b) => {
       let aVal: string | number | Date;
       let bVal: string | number | Date;

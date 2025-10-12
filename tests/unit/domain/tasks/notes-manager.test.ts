@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 import { NotesManager } from '../../../../src/domain/tasks/notes-manager.js';
 
-import type { ImplementationNote } from '../../../../src/shared/types/todo.js';
+import type { ImplementationNote } from '../../../../src/shared/types/task.js';
 
 describe('NotesManager', () => {
   let notesManager: NotesManager;
@@ -478,55 +478,6 @@ describe('NotesManager', () => {
 
       expect(result.content).toContain(' (more)');
       expect(result.isTruncated).toBe(true);
-    });
-  });
-
-  describe('getNoteStatistics', () => {
-    let notes: ImplementationNote[];
-
-    beforeEach(async () => {
-      notes = [
-        await notesManager.createNote({
-          entityId: 'task-1',
-          entityType: 'task',
-          content: 'Short',
-          type: 'general',
-        }),
-        await notesManager.createNote({
-          entityId: 'task-2',
-          entityType: 'task',
-          content: 'Medium length note',
-          type: 'technical',
-        }),
-        await notesManager.createNote({
-          entityId: 'task-3',
-          entityType: 'task',
-          content: 'This is a much longer note with more content',
-          type: 'technical',
-        }),
-      ];
-    });
-
-    it('should calculate correct statistics', () => {
-      const stats = notesManager.getNoteStatistics(notes);
-
-      expect(stats.total).toBe(3);
-      expect(stats.byType.general).toBe(1);
-      expect(stats.byType.technical).toBe(2);
-      expect(stats.byType.decision).toBe(0);
-      expect(stats.byType.learning).toBe(0);
-      expect(stats.averageLength).toBeGreaterThan(0);
-      expect(stats.mostRecentDate).toBeInstanceOf(Date);
-      expect(stats.oldestDate).toBeInstanceOf(Date);
-    });
-
-    it('should handle empty notes array', () => {
-      const stats = notesManager.getNoteStatistics([]);
-
-      expect(stats.total).toBe(0);
-      expect(stats.averageLength).toBe(0);
-      expect(stats.createdToday).toBe(0);
-      expect(stats.createdThisWeek).toBe(0);
     });
   });
 

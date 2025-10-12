@@ -50,7 +50,7 @@ export class UserFriendlyErrorMessages {
         'Failed to parse action plan content due to invalid format or structure.',
       user: 'The action plan could not be understood. Please check the format and try again.',
       suggestion:
-        'Try using a simple numbered list format like:\n1. First step\n2. Second step\n3. Third step',
+        'Try using a numbered list format like:\n1. First step\n2. Second step\n3. Third step',
       documentation:
         'Action plans should follow a structured format with clear steps.',
     },
@@ -114,7 +114,7 @@ export class UserFriendlyErrorMessages {
       technical:
         'Pretty print formatting engine encountered an error processing the data.',
       user: 'There was a problem formatting the display.',
-      suggestion: 'The information is still available in a simpler format.',
+      suggestion: 'The information is still available in text format.',
     },
     [ERROR_CODES.INVALID_FORMAT_OPTIONS]: {
       technical:
@@ -311,9 +311,7 @@ export class UserFriendlyErrorMessages {
       } else if (isNotesManagementError(error)) {
         parts.push('Suggestion: Check your note content and format.');
       } else if (isFormattingError(error)) {
-        parts.push(
-          'Suggestion: The information is available in a simpler format.'
-        );
+        parts.push('Suggestion: The information is available in text format.');
       } else if (isCleanupError(error)) {
         parts.push('Suggestion: Your data remains safe and unchanged.');
       }

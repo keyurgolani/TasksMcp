@@ -10,7 +10,7 @@ import { ConfigManager } from '../config/index.js';
 import { StorageFactory } from '../storage/storage-factory.js';
 
 import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList } from '../../shared/types/todo.js';
+import type { TaskList } from '../../shared/types/task.js';
 
 export interface BackupMetadata {
   id: string;
@@ -63,7 +63,7 @@ export class BackupManager {
 
       // Get all todo lists
       const lists = await storage.list();
-      const allLists: TodoList[] = [];
+      const allLists: TaskList[] = [];
 
       for (const summary of lists) {
         const list = await storage.load(summary.id);
@@ -204,7 +204,7 @@ export class BackupManager {
       }
 
       // Restore lists
-      const lists = (backupData['lists'] as TodoList[]) ?? [];
+      const lists = (backupData['lists'] as TaskList[]) ?? [];
       let restoredLists = 0;
       let restoredItems = 0;
 

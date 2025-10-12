@@ -5,9 +5,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { handleShowTasks } from '../../../../src/api/handlers/show-tasks.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/task.js';
 
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
@@ -32,15 +32,15 @@ vi.mock('../../../../src/domain/tasks/dependency-manager.js', () => ({
 }));
 
 describe('handleShowTasks with dependency status display', () => {
-  let mockTodoListManager: TodoListManager;
+  let mockTaskListManager: TaskListManager;
 
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
 
-    // Mock TodoListManager
-    mockTodoListManager = {
-      getTodoList: vi.fn(),
+    // Mock TaskListManager
+    mockTaskListManager = {
+      getTaskList: vi.fn(),
     } as any;
   });
 
@@ -133,14 +133,14 @@ describe('handleShowTasks with dependency status display', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]); // Tasks 1, 2, 5 are ready
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -185,14 +185,14 @@ describe('handleShowTasks with dependency status display', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]); // Tasks 1, 2, 5 are ready
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -239,14 +239,14 @@ describe('handleShowTasks with dependency status display', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]);
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -286,14 +286,14 @@ describe('handleShowTasks with dependency status display', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]);
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -335,14 +335,14 @@ describe('handleShowTasks with dependency status display', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]);
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -378,10 +378,10 @@ describe('handleShowTasks with dependency status display', () => {
       items: [],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([]);
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -400,12 +400,12 @@ describe('handleShowTasks with dependency status display', () => {
       },
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(null);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(null);
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Todo list not found');
+    expect(result.content[0].text).toContain('Task list not found');
   });
 
   it('should handle validation errors', async () => {
@@ -419,7 +419,7 @@ describe('handleShowTasks with dependency status display', () => {
       },
     };
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('❌');
@@ -446,10 +446,10 @@ describe('handleShowTasks with dependency status display', () => {
       items: [],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([]);
 
-    await handleShowTasks(request, mockTodoListManager);
+    await handleShowTasks(request, mockTaskListManager);
 
     expect(mockCleanup).toHaveBeenCalled();
   });
@@ -478,14 +478,14 @@ describe('handleShowTasks with dependency status display', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]);
 
-    const result = await handleShowTasks(request, mockTodoListManager);
+    const result = await handleShowTasks(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 

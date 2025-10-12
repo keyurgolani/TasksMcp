@@ -10,35 +10,35 @@ import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
 import { handleGetList } from '../../src/api/handlers/get-list.js';
 import { handleSetTaskExitCriteria } from '../../src/api/handlers/set-task-exit-criteria.js';
 import { handleUpdateExitCriteria } from '../../src/api/handlers/update-exit-criteria.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../setup.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
-import type { TodoList } from '../../src/shared/types/todo.js';
+import type { TaskList } from '../../src/shared/types/task.js';
 
 describe('Exit Criteria Integration Tests', () => {
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let storage: MemoryStorageBackend;
-  let testList: TodoList;
+  let testList: TaskList;
   let exitCriteriaManager: ExitCriteriaManager;
 
   beforeEach(async () => {
     // Setup clean test environment
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = createTodoListManager(storage);
-    await todoListManager.initialize();
+    taskListManager = createTaskListManager(storage);
+    await taskListManager.initialize();
     exitCriteriaManager = new ExitCriteriaManager();
 
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
-    TestCleanup.registerManager(todoListManager);
+    TestCleanup.registerManager(taskListManager);
 
     // Create a test list
-    testList = await todoListManager.createTodoList({
+    testList = await taskListManager.createTaskList({
       title: 'Exit Criteria Test Project',
       description: 'Testing exit criteria functionality',
       projectTag: 'exit-criteria-test',
@@ -65,15 +65,15 @@ describe('Exit Criteria Integration Tests', () => {
 
     switch (toolName) {
       case 'add_task':
-        return await handleAddTask(request, todoListManager);
+        return await handleAddTask(request, taskListManager);
       case 'set_task_exit_criteria':
-        return await handleSetTaskExitCriteria(request, todoListManager);
+        return await handleSetTaskExitCriteria(request, taskListManager);
       case 'update_exit_criteria':
-        return await handleUpdateExitCriteria(request, todoListManager);
+        return await handleUpdateExitCriteria(request, taskListManager);
       case 'complete_task':
-        return await handleCompleteTask(request, todoListManager);
+        return await handleCompleteTask(request, taskListManager);
       case 'get_list':
-        return await handleGetList(request, todoListManager);
+        return await handleGetList(request, taskListManager);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -164,7 +164,7 @@ describe('Exit Criteria Integration Tests', () => {
 
     it('should update individual exit criteria status', async () => {
       // Get the current task to find criteria IDs
-      const fullList = await todoListManager.getTodoList({
+      const fullList = await taskListManager.getTaskList({
         listId: testList.id,
       });
       const fullTask = fullList?.items.find(item => item.id === taskId);
@@ -208,7 +208,7 @@ describe('Exit Criteria Integration Tests', () => {
 
     it('should allow task completion when all criteria are met', async () => {
       // Get the current task to find criteria IDs
-      const fullList = await todoListManager.getTodoList({
+      const fullList = await taskListManager.getTaskList({
         listId: testList.id,
       });
       const task = fullList?.items.find(item => item.id === taskId);

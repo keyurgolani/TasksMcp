@@ -59,7 +59,7 @@ describe('ESLint no-explicit-any rule compliance', () => {
     try {
       // Run ESLint with --print-config to check rule configuration
       const configResult = execSync(
-        'npx eslint --print-config src/shared/types/todo.ts',
+        'npx eslint --print-config src/shared/types/task.ts',
         {
           encoding: 'utf8',
           timeout: 15000,

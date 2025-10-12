@@ -7,15 +7,15 @@ import request from 'supertest';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { RestApiServer } from '../../../src/app/rest-api-server.js';
-import { TodoListManager } from '../../../src/domain/lists/todo-list-manager.js';
-import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
+import { TaskListManager } from '../../../src/domain/lists/task-list-manager.js';
+import { TaskListRepositoryAdapter } from '../../../src/domain/repositories/task-list-repository.adapter.js';
 import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../../src/domain/tasks/exit-criteria-manager.js';
 import { NotesManager } from '../../../src/domain/tasks/notes-manager.js';
 import { MemoryStorageBackend } from '../../../src/infrastructure/storage/memory-storage.js';
 
-import type { TodoList, TodoItem } from '../../../src/shared/types/todo.js';
+import type { TaskList, Task } from '../../../src/shared/types/task.js';
 import type { Express } from 'express';
 import type { Server as _Server } from 'http';
 
@@ -23,9 +23,9 @@ describe('Advanced Feature API Endpoints', () => {
   let server: RestApiServer;
   let app: Express;
   let storage: MemoryStorageBackend;
-  let todoListManager: TodoListManager;
-  let testList: TodoList;
-  let testTask: TodoItem;
+  let taskListManager: TaskListManager;
+  let testList: TaskList;
+  let testTask: Task;
 
   beforeEach(async () => {
     // Initialize storage and managers
@@ -33,9 +33,9 @@ describe('Advanced Feature API Endpoints', () => {
     await storage.initialize();
 
     // Create repository adapter
-    const repository = new TodoListRepositoryAdapter(storage);
+    const repository = new TaskListRepositoryAdapter(storage);
 
-    todoListManager = new TodoListManager(repository, storage);
+    taskListManager = new TaskListManager(repository, storage);
     const dependencyManager = new DependencyResolver(repository);
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
@@ -48,7 +48,7 @@ describe('Advanced Feature API Endpoints', () => {
         corsOrigins: ['*'],
         authEnabled: false,
       },
-      todoListManager,
+      taskListManager,
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,
@@ -60,12 +60,12 @@ describe('Advanced Feature API Endpoints', () => {
     await server.start();
 
     // Create test list and task
-    testList = await todoListManager.createTodoList({
+    testList = await taskListManager.createTaskList({
       title: 'Test List for Advanced Features',
       description: 'Testing exit criteria, action plans, and notes',
     });
 
-    const updatedList = await todoListManager.updateTodoList({
+    const updatedList = await taskListManager.updateTaskList({
       listId: testList.id,
       action: 'add_item',
       itemData: {
@@ -159,7 +159,6 @@ describe('Advanced Feature API Endpoints', () => {
           .query({ listId: testList.id })
           .send({
             description: 'All tests pass',
-            order: 0,
           })
           .expect(201);
 
@@ -167,7 +166,6 @@ describe('Advanced Feature API Endpoints', () => {
         expect(response.body.data.id).toBeDefined();
         expect(response.body.data.description).toBe('All tests pass');
         expect(response.body.data.isMet).toBe(false);
-        expect(response.body.data.order).toBe(0);
       });
 
       it('should validate description length', async () => {
@@ -597,7 +595,7 @@ describe('Advanced Feature API Endpoints', () => {
   describe('Error Handling', () => {
     it('should handle archived list for exit criteria', async () => {
       // Archive the list
-      await todoListManager.deleteTodoList({
+      await taskListManager.deleteTaskList({
         listId: testList.id,
         permanent: false,
       });
@@ -617,7 +615,7 @@ describe('Advanced Feature API Endpoints', () => {
 
     it('should handle archived list for action plans', async () => {
       // Archive the list
-      await todoListManager.deleteTodoList({
+      await taskListManager.deleteTaskList({
         listId: testList.id,
         permanent: false,
       });
@@ -637,7 +635,7 @@ describe('Advanced Feature API Endpoints', () => {
 
     it('should handle archived list for notes', async () => {
       // Archive the list
-      await todoListManager.deleteTodoList({
+      await taskListManager.deleteTaskList({
         listId: testList.id,
         permanent: false,
       });

@@ -1,12 +1,12 @@
 /**
- * Comprehensive error handling with retry logic and circuit breaker
+ * Error handling with retry logic and circuit breaker
  *
  * Provides enterprise-grade error management for the MCP Task Manager including:
  * - Automatic error categorization and severity assessment
  * - Circuit breaker pattern for fault tolerance and system protection
  * - Exponential backoff retry logic with jitter for resilience
  * - Error recovery mechanisms and automatic resolution attempts
- * - Comprehensive error reporting and analytics
+ * - Error reporting and analytics
  * - Integration with error reporting systems
  */
 
@@ -94,7 +94,7 @@ export class ErrorHandler extends EventEmitter {
 
   constructor() {
     super();
-    this.setMaxListeners(100); // Increase max listeners for comprehensive testing and resilience
+    this.setMaxListeners(100); // Increase max listeners for testing and resilience
     this.setupGlobalErrorHandlers();
     this.setupErrorReporting();
   }
@@ -107,7 +107,7 @@ export class ErrorHandler extends EventEmitter {
    *
    * @param error - The error instance to handle
    * @param context - Contextual information about where/when the error occurred
-   * @returns ErrorReport - Comprehensive error report with categorization and metadata
+   * @returns ErrorReport - Error report with categorization and metadata
    */
   handleError(error: Error, context: ErrorContext): ErrorReport {
     const errorReport: ErrorReport = {
@@ -287,7 +287,7 @@ export class ErrorHandler extends EventEmitter {
   }
 
   /**
-   * Get comprehensive error statistics for analysis
+   * Get error statistics for analysis
    *
    * Analyzes error reports within a specified time window to provide insights
    * into error patterns, recovery rates, and system health metrics.
@@ -423,11 +423,7 @@ export class ErrorHandler extends EventEmitter {
     ) {
       return 'formatting';
     }
-    if (
-      message.includes('cleanup') ||
-      message.includes('cleanup suggestion') ||
-      message.includes('cleanup operation')
-    ) {
+    if (message.includes('cleanup') || message.includes('cleanup operation')) {
       return 'cleanup';
     }
     if (

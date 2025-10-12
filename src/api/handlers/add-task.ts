@@ -7,14 +7,14 @@ import { z } from 'zod';
 
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
-import { Priority } from '../../shared/types/todo.js';
+import { Priority } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   TaskWithDependencies,
   ExitCriteriaResponse,
@@ -23,10 +23,11 @@ import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for add task request parameters
- * Validates list ID, task title, and optional fields like priority, tags, duration, and dependencies
+ * Validates list ID, task title, and optional fields like priority, tags, duration, dependencies, and agent prompt template
  */
 const AddTaskSchema = z.object({
   listId: z.string().uuid(),
@@ -41,6 +42,7 @@ const AddTaskSchema = z.object({
     .max(20)
     .optional()
     .default([]),
+  agentPromptTemplate: z.string().max(10000).optional(),
 });
 
 /**
@@ -53,7 +55,7 @@ const AddTaskSchema = z.object({
  */
 export async function handleAddTask(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing add_task request', {
@@ -65,13 +67,13 @@ export async function handleAddTask(
 
     // Validate dependencies if provided
     if (args.dependencies.length > 0) {
-      const existingList = await todoListManager.getTodoList({
+      const existingList = await todoListManager.getTaskList({
         listId: args.listId,
         includeCompleted: true,
       });
 
       if (!existingList) {
-        throw new Error(`Todo list not found: ${args.listId}`);
+        throw new Error(`Task list not found: ${args.listId}`);
       }
 
       const dependencyResolver = new DependencyResolver();
@@ -114,7 +116,7 @@ export async function handleAddTask(
       dependencyResolver.cleanup();
     }
 
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'add_item',
       itemData: {
@@ -131,6 +133,9 @@ export async function handleAddTask(
         ...(args.exitCriteria.length > 0 && {
           exitCriteria: args.exitCriteria,
         }),
+        ...(args.agentPromptTemplate && {
+          agentPromptTemplate: args.agentPromptTemplate,
+        }),
       },
     });
 
@@ -142,12 +147,12 @@ export async function handleAddTask(
     // Calculate dependency information for response
     const dependencyResolver = new DependencyResolver();
     const readyItems = dependencyResolver.getReadyItems(result.items);
-    const isReady = readyItems.some(item => item.id === newTask.id);
+    const isReady = readyItems.some((item: Task) => item.id === newTask.id);
 
     const blockedBy: string[] = [];
     if (!isReady && newTask.dependencies.length > 0) {
       for (const depId of newTask.dependencies) {
-        const depTask = result.items.find(item => item.id === depId);
+        const depTask = result.items.find((item: Task) => item.id === depId);
         if (depTask && depTask.status !== 'completed') {
           blockedBy.push(depId);
         }
@@ -176,7 +181,6 @@ export async function handleAddTask(
               : new Date(criteria.metAt).toISOString(),
         }),
         ...(criteria.notes && { notes: criteria.notes }),
-        order: criteria.order,
       }));
 
     const response: TaskWithDependencies = {

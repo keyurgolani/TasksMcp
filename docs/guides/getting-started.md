@@ -328,9 +328,7 @@ As your projects grow, you'll need to find specific tasks quickly:
     "listId": "123e4567-e89b-12d3-a456-426614174000",
     "status": ["pending", "in_progress"],
     "priority": [4, 5],
-    "tags": ["learning"],
-    "sortBy": "priority",
-    "sortOrder": "desc"
+    "tags": ["learning"]
   }
 }
 ```
@@ -342,9 +340,7 @@ As your projects grow, you'll need to find specific tasks quickly:
   "tool": "search_tool",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "isReady": true,
-    "sortBy": "priority",
-    "sortOrder": "desc"
+    "isReady": true
   }
 }
 ```

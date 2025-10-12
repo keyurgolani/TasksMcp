@@ -23,7 +23,6 @@ export interface GetListParams {
 
 export interface ListAllListsParams {
   projectTag?: string;
-  includeArchived?: boolean;
   limit?: number;
 }
 
@@ -41,6 +40,7 @@ export interface AddTaskParams {
   estimatedDuration?: number;
   dependencies?: string[];
   exitCriteria?: string[];
+  agentPromptTemplate?: string;
 }
 
 export interface UpdateTaskParams {
@@ -50,6 +50,13 @@ export interface UpdateTaskParams {
   description?: string;
   estimatedDuration?: number;
   exitCriteria?: string[];
+  agentPromptTemplate?: string;
+}
+
+export interface GetAgentPromptParams {
+  listId: string;
+  taskId: string;
+  useDefault?: boolean;
 }
 
 export interface RemoveTaskParams {
@@ -210,12 +217,6 @@ export const MCP_TOOLS: Tool[] = [
           description: 'Filter by project tag (provide as string)',
           maxLength: 250,
         },
-        includeArchived: {
-          type: 'boolean',
-          description:
-            'Whether to include archived lists (provide as boolean: true or false, default: false)',
-          default: false,
-        },
         limit: {
           type: 'number',
           description:
@@ -331,6 +332,12 @@ export const MCP_TOOLS: Tool[] = [
           },
           maxItems: 20,
         },
+        agentPromptTemplate: {
+          type: 'string',
+          description:
+            'Agent prompt template with variable substitution support (max 10,000 chars). Use {{task.*}} and {{list.*}} variables for dynamic content.',
+          maxLength: 10000,
+        },
       },
       required: ['listId', 'title'],
     },
@@ -381,6 +388,42 @@ export const MCP_TOOLS: Tool[] = [
             maxLength: 500,
           },
           maxItems: 20,
+        },
+        agentPromptTemplate: {
+          type: 'string',
+          description:
+            'Agent prompt template with variable substitution support (max 10,000 chars)',
+          maxLength: 10000,
+        },
+      },
+      required: ['listId', 'taskId'],
+    },
+  },
+
+  {
+    name: 'get_agent_prompt',
+    description:
+      'Get the rendered agent prompt for a task with variable substitution. 🤖 MULTI-AGENT: Use this to retrieve customized prompts for different AI agents based on task context and requirements.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        taskId: {
+          type: 'string',
+          description:
+            'UUID of the task to get prompt for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        useDefault: {
+          type: 'boolean',
+          description:
+            'Whether to use a default template if no custom template is set (provide as boolean: true or false)',
+          default: false,
         },
       },
       required: ['listId', 'taskId'],
@@ -508,7 +551,7 @@ export const MCP_TOOLS: Tool[] = [
   {
     name: 'search_tool',
     description:
-      "Unified search, filter, and query tool for tasks with flexible criteria and sorting options. 🔍 ESSENTIAL: Use this to research existing work before starting tasks (Use Tools, Don't Guess). Search completed tasks for context and learnings.",
+      "Unified search, filter, and query tool for tasks with flexible criteria. 🔍 ESSENTIAL: Use this to research existing work before starting tasks (Use Tools, Don't Guess). Search completed tasks for context and learnings.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -633,18 +676,7 @@ export const MCP_TOOLS: Tool[] = [
             },
           },
         },
-        sortBy: {
-          type: 'string',
-          description: 'Field to sort results by',
-          enum: ['relevance', 'priority', 'createdAt', 'updatedAt', 'title'],
-          default: 'relevance',
-        },
-        sortOrder: {
-          type: 'string',
-          description: 'Sort order: "asc" (ascending) or "desc" (descending)',
-          enum: ['asc', 'desc'],
-          default: 'desc',
-        },
+
         includeCompleted: {
           type: 'boolean',
           description:
@@ -961,7 +993,7 @@ export function validateToolParameters(
 }
 
 /**
- * Simple UUID validation with error messaging
+ * UUID validation with error messaging
  */
 function isValidUUID(str: string): boolean {
   const uuidRegex =

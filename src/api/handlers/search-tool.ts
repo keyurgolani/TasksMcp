@@ -6,14 +6,14 @@
 import { z } from 'zod';
 
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
-import { TaskStatus, Priority } from '../../shared/types/todo.js';
+import { TaskStatus, Priority } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -22,6 +22,9 @@ import type {
   SearchResponse,
   TaskWithDependencies,
 } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
+
+type TaskWithListInfo = Task & { listId: string; listTitle: string };
 
 const SearchToolSchema = z.object({
   // Basic search parameters
@@ -63,12 +66,6 @@ const SearchToolSchema = z.object({
     })
     .optional(),
 
-  // Sorting options
-  sortBy: z
-    .enum(['relevance', 'priority', 'createdAt', 'updatedAt', 'title'])
-    .default('relevance'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-
   // Output options
   includeCompleted: z.boolean().default(true),
   includeDependencyInfo: z.boolean().default(false),
@@ -76,7 +73,7 @@ const SearchToolSchema = z.object({
 
 export async function handleSearchTool(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing search_tool request', {
@@ -86,38 +83,38 @@ export async function handleSearchTool(
     const args = SearchToolSchema.parse(request.params?.arguments);
 
     // Get tasks from specified list or all lists
-    let allTasks: Record<string, unknown>[] = [];
+    let allTasks: TaskWithListInfo[] = [];
     let listsSearched: string[] = [];
 
     if (args.listId) {
-      const list = await todoListManager.getTodoList({
+      const list = await todoListManager.getTaskList({
         listId: args.listId,
         includeCompleted: args.includeCompleted,
       });
 
       if (!list) {
-        throw new Error(`Todo list not found: ${args.listId}`);
+        throw new Error(`Task list not found: ${args.listId}`);
       }
 
-      allTasks = list.items.map(task => ({
-        ...task,
-        listId: list.id,
-        listTitle: list.title,
-      }));
+      allTasks = list.items.map(
+        (task: Task): TaskWithListInfo => ({
+          ...task,
+          listId: list.id,
+          listTitle: list.title,
+        })
+      );
       listsSearched = [args.listId];
     } else {
-      const allLists = await todoListManager.listTodoLists({
-        includeArchived: false,
-      });
+      const allLists = await todoListManager.listTaskLists({});
 
       for (const listSummary of allLists) {
-        const fullList = await todoListManager.getTodoList({
+        const fullList = await todoListManager.getTaskList({
           listId: listSummary.id,
           includeCompleted: args.includeCompleted,
         });
 
         if (fullList) {
-          const tasksWithListInfo = fullList.items.map(task => ({
+          const tasksWithListInfo = fullList.items.map((task: Task) => ({
             ...task,
             listId: fullList.id,
             listTitle: fullList.title,
@@ -138,22 +135,22 @@ export async function handleSearchTool(
 
     // Status filter
     if (args.status && args.status.length > 0) {
-      filteredTasks = filteredTasks.filter(task =>
-        args.status!.includes(task['status'] as TaskStatus)
+      filteredTasks = filteredTasks.filter((task: TaskWithListInfo) =>
+        args.status!.includes(task.status as TaskStatus)
       );
     }
 
     // Priority filter
     if (args.priority && args.priority.length > 0) {
-      filteredTasks = filteredTasks.filter(task =>
-        args.priority!.includes(task['priority'] as Priority)
+      filteredTasks = filteredTasks.filter((task: TaskWithListInfo) =>
+        args.priority!.includes(task.priority as Priority)
       );
     }
 
     // Tag filter
     if (args.tags && args.tags.length > 0) {
-      filteredTasks = filteredTasks.filter(task => {
-        const taskTags = (task['tags'] as string[]) || [];
+      filteredTasks = filteredTasks.filter((task: TaskWithListInfo) => {
+        const taskTags = task.tags || [];
         if (args.tagOperator === 'AND') {
           return args.tags!.every(tag =>
             taskTags.some((taskTag: string) =>
@@ -197,19 +194,19 @@ export async function handleSearchTool(
 
       // Calculate ready items for dependency filtering
       if (args.listId) {
-        const list = await todoListManager.getTodoList({
+        const list = await todoListManager.getTaskList({
           listId: args.listId,
           includeCompleted: true,
         });
         if (list) {
           const readyItems = dependencyResolver.getReadyItems(list.items);
-          readyItemIds = new Set(readyItems.map(item => item.id));
+          readyItemIds = new Set(readyItems.map((item: Task) => item.id));
         }
       } else {
         // For cross-list searches, we need to be more careful about dependencies
         readyItemIds = new Set();
         for (const listId of listsSearched) {
-          const list = await todoListManager.getTodoList({
+          const list = await todoListManager.getTaskList({
             listId,
             includeCompleted: true,
           });
@@ -222,65 +219,62 @@ export async function handleSearchTool(
 
       // Apply dependency filters
       if (args.hasDependencies !== undefined) {
-        filteredTasks = filteredTasks.filter(task => {
-          const deps = (task['dependencies'] as string[]) || [];
+        filteredTasks = filteredTasks.filter((task: TaskWithListInfo) => {
+          const deps = task.dependencies || [];
           return deps.length > 0 === args.hasDependencies;
         });
       }
 
       if (args.isReady !== undefined) {
         filteredTasks = filteredTasks.filter(
-          task => readyItemIds!.has(task['id'] as string) === args.isReady
+          (task: TaskWithListInfo) =>
+            readyItemIds!.has(task.id) === args.isReady
         );
       }
 
       if (args.isBlocked !== undefined) {
-        filteredTasks = filteredTasks.filter(task => {
-          const deps = (task['dependencies'] as string[]) || [];
-          const isBlocked =
-            deps.length > 0 && !readyItemIds!.has(task['id'] as string);
+        filteredTasks = filteredTasks.filter((task: TaskWithListInfo) => {
+          const deps = task.dependencies || [];
+          const isBlocked = deps.length > 0 && !readyItemIds!.has(task.id);
           return isBlocked === args.isBlocked;
         });
       }
     }
 
-    // Sort results
-    filteredTasks = applySorting(filteredTasks, args.sortBy, args.sortOrder);
-
     // Apply limit
     const limitedTasks = filteredTasks.slice(0, args.limit);
 
     // Format results
-    const results = limitedTasks.map(task => {
+    const results = limitedTasks.map((task: TaskWithListInfo) => {
       const baseTask = {
-        id: task['id'] as string,
-        title: task['title'] as string,
-        description: task['description'] as string,
-        status: task['status'] as string,
-        priority: task['priority'] as number,
-        tags: task['tags'] as string[],
-        createdAt: (task['createdAt'] as Date).toISOString(),
-        updatedAt: (task['updatedAt'] as Date).toISOString(),
-        estimatedDuration: task['estimatedDuration'] as number,
-        listId: task['listId'] as string,
-        listTitle: task['listTitle'] as string,
+        id: task.id,
+        title: task.title,
+        description: task.description || '',
+        status: task.status,
+        priority: task.priority,
+        tags: task.tags,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString(),
+        estimatedDuration: task.estimatedDuration || 0,
+        listId: task.listId,
+        listTitle: task.listTitle,
       };
 
       // Add dependency information if requested
       if (args.includeDependencyInfo && readyItemIds) {
-        const taskDeps = (task['dependencies'] as string[]) || [];
+        const taskDeps = task.dependencies || [];
         const taskWithDeps: TaskWithDependencies = {
           ...baseTask,
           dependencies: taskDeps,
-          isReady: readyItemIds.has(task['id'] as string),
+          isReady: readyItemIds.has(task.id),
         };
 
         // Calculate blocked by information
-        if (!readyItemIds.has(task['id'] as string) && taskDeps.length > 0) {
+        if (!readyItemIds.has(task.id) && taskDeps.length > 0) {
           const blockedBy: string[] = [];
           for (const depId of taskDeps) {
-            const depTask = allTasks.find(t => t['id'] === depId);
-            if (depTask && depTask['status'] !== 'completed') {
+            const depTask = allTasks.find(t => t.id === depId);
+            if (depTask && depTask.status !== 'completed') {
               blockedBy.push(depId);
             }
           }
@@ -314,13 +308,7 @@ export async function handleSearchTool(
       filtersApplied: Object.keys(args).filter(
         key =>
           args[key as keyof typeof args] !== undefined &&
-          ![
-            'limit',
-            'sortBy',
-            'sortOrder',
-            'includeCompleted',
-            'includeDependencyInfo',
-          ].includes(key)
+          !['limit', 'includeCompleted', 'includeDependencyInfo'].includes(key)
       ).length,
     });
 
@@ -345,46 +333,38 @@ export async function handleSearchTool(
  * Apply text search with relevance scoring
  */
 function applyTextSearch(
-  tasks: Record<string, unknown>[],
+  tasks: TaskWithListInfo[],
   query: string
-): Record<string, unknown>[] {
+): TaskWithListInfo[] {
   const queryLower = query.toLowerCase();
-  const results: (Record<string, unknown> & { relevanceScore: number })[] = [];
+  const results: TaskWithListInfo[] = [];
 
   for (const task of tasks) {
-    let relevanceScore = 0;
     let hasMatch = false;
 
-    const title = task['title'] as string;
-    const description = task['description'] as string;
-    const tags = (task['tags'] as string[]) || [];
+    const title = task.title;
+    const description = task.description || '';
+    const tags = task.tags || [];
 
     // Title search (highest weight)
     if (title && title.toLowerCase().includes(queryLower)) {
       hasMatch = true;
-      relevanceScore += calculateRelevanceScore(title, query, 'title');
     }
 
     // Description search
     if (description && description.toLowerCase().includes(queryLower)) {
       hasMatch = true;
-      relevanceScore += calculateRelevanceScore(
-        description,
-        query,
-        'description'
-      );
     }
 
     // Tag search
     for (const tag of tags) {
       if (tag.toLowerCase().includes(queryLower)) {
         hasMatch = true;
-        relevanceScore += calculateRelevanceScore(tag, query, 'tag');
       }
     }
 
     if (hasMatch) {
-      results.push({ ...task, relevanceScore });
+      results.push(task);
     }
   }
 
@@ -392,68 +372,27 @@ function applyTextSearch(
 }
 
 /**
- * Calculate relevance score for text matches
- */
-function calculateRelevanceScore(
-  text: string,
-  query: string,
-  type: 'title' | 'description' | 'tag'
-): number {
-  const textLower = text.toLowerCase();
-  const queryLower = query.toLowerCase();
-
-  let score = 0;
-
-  // Exact match bonus
-  if (textLower === queryLower) {
-    score += 100;
-  }
-
-  // Starts with bonus
-  if (textLower.startsWith(queryLower)) {
-    score += 50;
-  }
-
-  // Contains bonus
-  if (textLower.includes(queryLower)) {
-    score += 25;
-  }
-
-  // Apply field-specific multipliers
-  switch (type) {
-    case 'title':
-      score *= 2;
-      break;
-    case 'tag':
-      score *= 1.5;
-      break;
-    case 'description':
-      score *= 1;
-      break;
-  }
-
-  // Length penalty for very long matches
-  const lengthPenalty = Math.max(0, text.length - query.length) / 100;
-  score -= lengthPenalty;
-
-  return Math.max(0, score);
-}
-
-/**
  * Apply date range filtering
  */
 function applyDateRangeFilter(
-  tasks: Record<string, unknown>[],
+  tasks: TaskWithListInfo[],
   dateRange: {
     start?: string | undefined;
     end?: string | undefined;
     field: string;
   }
-): Record<string, unknown>[] {
+): TaskWithListInfo[] {
   const { start, end, field } = dateRange;
 
-  return tasks.filter(task => {
-    const taskDate = task[field];
+  return tasks.filter((task: TaskWithListInfo) => {
+    const taskDate =
+      field === 'createdAt'
+        ? task.createdAt
+        : field === 'updatedAt'
+          ? task.updatedAt
+          : field === 'completedAt'
+            ? task.completedAt
+            : null;
     if (!taskDate) return false;
 
     const date = new Date(taskDate as string | number | Date);
@@ -467,68 +406,16 @@ function applyDateRangeFilter(
  * Apply duration filtering
  */
 function applyDurationFilter(
-  tasks: Record<string, unknown>[],
+  tasks: TaskWithListInfo[],
   durationFilter: { min?: number | undefined; max?: number | undefined }
-): Record<string, unknown>[] {
+): TaskWithListInfo[] {
   const { min, max } = durationFilter;
 
-  return tasks.filter(task => {
-    const duration = task['estimatedDuration'] as number;
+  return tasks.filter((task: TaskWithListInfo) => {
+    const duration = task.estimatedDuration;
     if (!duration) return false;
     if (min && duration < min) return false;
     if (max && duration > max) return false;
     return true;
-  });
-}
-
-/**
- * Apply sorting to results
- */
-function applySorting(
-  tasks: Record<string, unknown>[],
-  sortBy: string,
-  sortOrder: string
-): Record<string, unknown>[] {
-  return tasks.sort((a, b) => {
-    let comparison = 0;
-
-    switch (sortBy) {
-      case 'relevance':
-        // Use relevance score if available (from text search), otherwise use priority + update time
-        if (
-          a['relevanceScore'] !== undefined &&
-          b['relevanceScore'] !== undefined
-        ) {
-          comparison =
-            (b['relevanceScore'] as number) - (a['relevanceScore'] as number);
-        } else {
-          comparison =
-            (b['priority'] as number) - (a['priority'] as number) ||
-            new Date(b['updatedAt'] as string | number | Date).getTime() -
-              new Date(a['updatedAt'] as string | number | Date).getTime();
-        }
-        break;
-      case 'priority':
-        comparison = (b['priority'] as number) - (a['priority'] as number); // Higher priority first
-        break;
-      case 'createdAt':
-        comparison =
-          new Date(a['createdAt'] as string | number | Date).getTime() -
-          new Date(b['createdAt'] as string | number | Date).getTime();
-        break;
-      case 'updatedAt':
-        comparison =
-          new Date(a['updatedAt'] as string | number | Date).getTime() -
-          new Date(b['updatedAt'] as string | number | Date).getTime();
-        break;
-      case 'title':
-        comparison = (a['title'] as string).localeCompare(b['title'] as string);
-        break;
-      default:
-        comparison = 0;
-        break;
-    }
-
-    return sortOrder === 'desc' ? -comparison : comparison;
   });
 }

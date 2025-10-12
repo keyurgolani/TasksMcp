@@ -6,8 +6,8 @@ import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 import { RestApiServer } from '../../../src/app/rest-api-server.js';
-import { TodoListManager } from '../../../src/domain/lists/todo-list-manager.js';
-import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
+import { TaskListManager } from '../../../src/domain/lists/task-list-manager.js';
+import { TaskListRepositoryAdapter } from '../../../src/domain/repositories/task-list-repository.adapter.js';
 import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../../src/domain/tasks/exit-criteria-manager.js';
@@ -28,10 +28,10 @@ describe('API Validation and Error Handling', () => {
     await storage.initialize();
 
     // Create repository
-    const repository = new TodoListRepositoryAdapter(storage);
+    const repository = new TaskListRepositoryAdapter(storage);
 
     // Create managers
-    const todoListManager = new TodoListManager(repository, storage);
+    const taskListManager = new TaskListManager(repository, storage);
     const dependencyManager = new DependencyResolver(repository);
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
@@ -40,7 +40,7 @@ describe('API Validation and Error Handling', () => {
     // Create and initialize server
     server = new RestApiServer(
       { port: 3098 }, // Use a different port for testing
-      todoListManager,
+      taskListManager,
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,

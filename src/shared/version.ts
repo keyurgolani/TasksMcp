@@ -49,7 +49,7 @@ export function getVersionInfo(): VersionInfo {
           version: '2.0.0',
           name: 'task-list-mcp',
           description:
-            'An intelligent Model Context Protocol (MCP) server for task management with AI-powered complexity analysis',
+            'A Model Context Protocol (MCP) server for task management',
         };
       }
     }

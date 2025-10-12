@@ -1,0 +1,152 @@
+/**
+ * List orchestrator implementation
+ * Centralized task list management with validation
+ */
+
+import { DataDelegationService } from '../../../data/delegation/data-delegation-service';
+import { TaskList } from '../../../domain/models/task-list';
+import {
+  OrchestrationError,
+  ValidationError,
+  ListNotFoundError,
+} from '../../../shared/errors/orchestration-error';
+import {
+  CreateListData,
+  UpdateListData,
+  ListFilters,
+} from '../../../shared/types/list-operations';
+import { ValidationResult } from '../../../shared/types/validation';
+import { DataOperation } from '../interfaces/base-orchestrator';
+import { ListOrchestrator } from '../interfaces/list-orchestrator';
+import { ListValidator } from '../validators/list-validator';
+
+export class ListOrchestratorImpl implements ListOrchestrator {
+  constructor(
+    private validator: ListValidator,
+    private dataDelegation: DataDelegationService
+  ) {}
+
+  async createList(data: CreateListData): Promise<TaskList> {
+    const validationResult = this.validate(data);
+    if (!validationResult.isValid) {
+      throw new ValidationError(
+        'List creation validation failed',
+        'List Creation',
+        data,
+        'Valid list data',
+        validationResult.errors.map(e => e.message).join('; ')
+      );
+    }
+
+    const operation: DataOperation = {
+      type: 'create',
+      entity: 'list',
+      data,
+    };
+
+    try {
+      const list = (await this.delegateData(operation)) as TaskList;
+      return list;
+    } catch (error) {
+      throw this.handleError(error as Error, 'List Creation');
+    }
+  }
+
+  async updateList(id: string, data: UpdateListData): Promise<TaskList> {
+    const validationResult = this.validate(data);
+    if (!validationResult.isValid) {
+      throw new ValidationError(
+        'List update validation failed',
+        'List Update',
+        data,
+        'Valid list update data',
+        validationResult.errors.map(e => e.message).join('; ')
+      );
+    }
+
+    const operation: DataOperation = {
+      type: 'update',
+      entity: 'list',
+      data: { id, ...data },
+    };
+
+    try {
+      const list = (await this.delegateData(operation)) as TaskList;
+      if (!list) {
+        throw new ListNotFoundError(id);
+      }
+      return list;
+    } catch (error) {
+      throw this.handleError(error as Error, 'List Update');
+    }
+  }
+
+  async getList(id: string, includeCompleted?: boolean): Promise<TaskList> {
+    const operation: DataOperation = {
+      type: 'read',
+      entity: 'list',
+      filters: { id, includeCompleted },
+    };
+
+    try {
+      const list = (await this.delegateData(operation)) as TaskList;
+      if (!list) {
+        throw new ListNotFoundError(id);
+      }
+      return list;
+    } catch (error) {
+      throw this.handleError(error as Error, 'List Retrieval');
+    }
+  }
+
+  async getAllLists(filters?: ListFilters): Promise<TaskList[]> {
+    const operation: DataOperation = {
+      type: 'search',
+      entity: 'list',
+      filters: filters as Record<string, unknown>,
+    };
+
+    try {
+      const lists = (await this.delegateData(operation)) as TaskList[];
+      return lists || [];
+    } catch (error) {
+      throw this.handleError(error as Error, 'List Search');
+    }
+  }
+
+  async deleteList(id: string): Promise<void> {
+    const operation: DataOperation = {
+      type: 'delete',
+      entity: 'list',
+      filters: { id },
+    };
+
+    try {
+      await this.delegateData(operation);
+    } catch (error) {
+      throw this.handleError(error as Error, 'List Deletion');
+    }
+  }
+
+  validate(data: unknown): ValidationResult {
+    return this.validator.validate(data);
+  }
+
+  handleError(error: Error, context: string): OrchestrationError {
+    if (error instanceof OrchestrationError) {
+      return error;
+    }
+
+    return new OrchestrationError(
+      error.message,
+      context,
+      undefined,
+      undefined,
+      'Check the error details and ensure all required fields are provided correctly'
+    );
+  }
+
+  async delegateData(operation: DataOperation): Promise<unknown> {
+    return this.dataDelegation.execute(operation);
+  }
+}

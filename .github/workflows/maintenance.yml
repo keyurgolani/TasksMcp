@@ -42,10 +42,10 @@ jobs:
         id: deps
         run: |
           echo "Checking for dependency updates..."
-          
+
           # Check for outdated packages
           npm outdated --json > outdated.json || true
-          
+
           if [[ -s outdated.json ]]; then
             echo "has-updates=true" >> $GITHUB_OUTPUT
             echo "Outdated dependencies found:"
@@ -59,10 +59,10 @@ jobs:
         if: steps.deps.outputs.has-updates == 'true'
         run: |
           echo "Updating dependencies..."
-          
+
           # Update patch and minor versions only
           npm update
-          
+
           # Check if package-lock.json changed
           if git diff --quiet package-lock.json; then
             echo "No dependency updates applied"
@@ -129,18 +129,18 @@ jobs:
         id: audit
         run: |
           echo "Running comprehensive security audit..."
-          
+
           # Run npm audit
           npm audit --json > audit-results.json || true
-          
+
           # Check audit results
           VULNERABILITIES=$(node -p "
             const audit = JSON.parse(require('fs').readFileSync('audit-results.json', 'utf8'));
             audit.metadata ? audit.metadata.vulnerabilities.total : 0
           ")
-          
+
           echo "vulnerabilities=$VULNERABILITIES" >> $GITHUB_OUTPUT
-          
+
           if [[ $VULNERABILITIES -gt 0 ]]; then
             echo "🚨 Security vulnerabilities found: $VULNERABILITIES"
             
@@ -163,28 +163,28 @@ jobs:
           script: |
             const fs = require('fs');
             const auditResults = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
-            
+
             const vulnerabilities = auditResults.vulnerabilities || {};
             const advisories = auditResults.advisories || {};
             const metadata = auditResults.metadata || {};
-            
+
             // Generate dynamic title with severity breakdown
             const severityCounts = metadata.vulnerabilities || {};
             const severityText = Object.entries(severityCounts)
               .filter(([key, value]) => key !== 'total' && value > 0)
               .map(([severity, count]) => `${count} ${severity}`)
               .join(', ');
-            
+
             const title = `🚨 Security Alert: ${metadata.vulnerabilities?.total || 0} vulnerabilities (${severityText})`;
-            
+
             let issueBody = `# 🔒 Security Vulnerability Report
-            
+
             **Scan Date:** ${new Date().toISOString().split('T')[0]}
             **Total Vulnerabilities:** ${metadata.vulnerabilities?.total || 0}
-            
+
             ## 📊 Severity Breakdown
             `;
-            
+
             // Add severity breakdown
             ['critical', 'high', 'moderate', 'low'].forEach(severity => {
               const count = severityCounts[severity] || 0;
@@ -196,9 +196,9 @@ jobs:
               }[severity];
               issueBody += `- ${emoji} **${severity.toUpperCase()}:** ${count}\n`;
             });
-            
+
             issueBody += `\n## 🔍 Vulnerability Details\n\n`;
-            
+
             // Group advisories by severity
             const advisoriesBySeverity = {};
             Object.entries(advisories).forEach(([id, advisory]) => {
@@ -208,7 +208,7 @@ jobs:
               }
               advisoriesBySeverity[severity].push({id, ...advisory});
             });
-            
+
             // Output vulnerabilities by severity
             ['critical', 'high', 'moderate', 'low'].forEach(severity => {
               const sevAdvisories = advisoriesBySeverity[severity] || [];
@@ -245,40 +245,40 @@ jobs:
                 });
               }
             });
-            
+
             issueBody += `## 🛠️ Remediation Steps
-            
+
             ### Immediate Actions
             1. **Review** all vulnerabilities listed above
             2. **Prioritize** critical and high severity issues
             3. **Update** packages to patched versions where available
             4. **Test** thoroughly after applying updates
-            
+
             ### Commands to Run
             \`\`\`bash
             # Check current vulnerabilities
             npm audit
-            
+
             # Attempt automatic fixes
             npm audit fix
-            
+
             # For manual fixes, update specific packages
             npm update [package-name]
             \`\`\`
-            
+
             ### Verification
             - [ ] Run \`npm audit\` to verify fixes
             - [ ] Run full test suite
             - [ ] Verify application functionality
             - [ ] Update this issue with results
-            
+
             ## 📈 Tracking
             - **Created:** ${new Date().toISOString()}
             - **Auto-fix Available:** ${auditResults.metadata?.vulnerabilities?.total > 0 ? 'Checking...' : 'No'}
             - **Status:** Open
-            
+
             ---
-            
+
             *This issue was automatically created by the maintenance workflow. It will be updated as vulnerabilities are resolved.*`;
 
             // Check if similar issue already exists
@@ -288,11 +288,11 @@ jobs:
               labels: 'security,maintenance',
               state: 'open'
             });
-            
+
             const hasOpenSecurityIssue = existingIssues.data.some(issue => 
               issue.title.includes('Security Alert') || issue.title.includes('Security Vulnerabilities')
             );
-            
+
             if (hasOpenSecurityIssue) {
               console.log('Open security issue already exists, updating instead of creating new one');
               // Could update existing issue here
@@ -328,17 +328,17 @@ jobs:
       - name: Performance benchmarks
         run: |
           echo "Running performance benchmarks..."
-          
+
           # Package size check
           PACKAGE_SIZE=$(npm pack --dry-run 2>&1 | grep "package size" | awk '{print $3}' || echo "unknown")
           echo "Package size: $PACKAGE_SIZE"
-          
+
           # Startup time check
           echo "Measuring startup time..."
           for i in {1..5}; do
             /usr/bin/time -f "%e" node dist/cli.js --version 2>&1 | tail -1
           done | awk '{sum+=$1} END {print "Average startup time:", sum/NR, "seconds"}'
-          
+
           # Memory usage check
           echo "Measuring memory usage..."
           node -e "
@@ -349,7 +349,7 @@ jobs:
             console.log('RSS:', Math.round((endMemory.rss - startMemory.rss) / 1024 / 1024));
             console.log('Heap Used:', Math.round((endMemory.heapUsed - startMemory.heapUsed) / 1024 / 1024));
           "
-          
+
           # Build time check
           echo "Measuring build time..."
           rm -rf dist/
@@ -372,16 +372,16 @@ jobs:
       - name: Cleanup old branches
         run: |
           echo "Cleaning up old branches..."
-          
+
           # Get merged branches older than 30 days
           git fetch --all
-          
+
           OLD_BRANCHES=$(git for-each-ref --format='%(refname:short) %(committerdate)' refs/remotes/origin | \
             awk '$2 < "'$(date -d '30 days ago' '+%Y-%m-%d')'"' | \
             grep -v 'origin/main\|origin/develop' | \
             awk '{print $1}' | \
             sed 's/origin\///' || true)
-          
+
           if [[ -n "$OLD_BRANCHES" ]]; then
             echo "Found old branches to clean up:"
             echo "$OLD_BRANCHES"
@@ -395,7 +395,7 @@ jobs:
       - name: Check for large files
         run: |
           echo "Checking for large files..."
-          
+
           # Find files larger than 1MB
           find . -type f -size +1M -not -path "./node_modules/*" -not -path "./.git/*" | while read file; do
             size=$(du -h "$file" | cut -f1)
@@ -414,10 +414,10 @@ jobs:
           echo "Security Audit: ${{ needs.security-audit.result }}"
           echo "Performance Check: ${{ needs.performance-check.result }}"
           echo "Cleanup: ${{ needs.cleanup.result }}"
-          
+
           echo ""
           echo "Maintenance completed at $(date)"
-          
+
           if [[ "${{ needs.security-audit.result }}" == "failure" ]]; then
             echo "⚠️ Security issues detected - please review"
           fi

@@ -1,7 +1,7 @@
 /**
- * TodoListRepository Implementation
+ * TaskListRepository Implementation
  *
- * Concrete implementation of ITodoListRepository that uses DataSourceRouter
+ * Concrete implementation of ITaskListRepository that uses DataSourceRouter
  * and MultiSourceAggregator to provide multi-source data access with
  * conflict resolution and aggregation capabilities.
  *
@@ -23,22 +23,22 @@
 import { logger } from '../../shared/utils/logger.js';
 
 import type {
-  ITodoListRepository,
+  ITaskListRepository,
   FindOptions,
   SearchQuery,
   SearchResult,
-} from './todo-list.repository.js';
+} from './task-list.repository.js';
 import type {
   DataSourceRouter,
   OperationContext,
 } from '../../infrastructure/storage/data-source-router.js';
 import type { MultiSourceAggregator } from '../../infrastructure/storage/multi-source-aggregator.js';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
 
 /**
- * TodoList with source metadata
+ * TaskList with source metadata
  */
-export interface TodoListWithSource extends TodoList {
+export interface TaskListWithSource extends TaskList {
   _source?: {
     id: string;
     name?: string;
@@ -47,7 +47,7 @@ export interface TodoListWithSource extends TodoList {
 }
 
 /**
- * TodoListRepository implementation using DataSourceRouter and MultiSourceAggregator
+ * TaskListRepository implementation using DataSourceRouter and MultiSourceAggregator
  *
  * This implementation provides:
  * - Multi-source data access with automatic routing
@@ -56,28 +56,28 @@ export interface TodoListWithSource extends TodoList {
  * - Fallback and error recovery
  * - Consistent query interface across all sources
  */
-export class TodoListRepository implements ITodoListRepository {
+export class TaskListRepository implements ITaskListRepository {
   constructor(
     private readonly router: DataSourceRouter,
     private readonly aggregator: MultiSourceAggregator
   ) {
-    logger.info('TodoListRepository initialized with multi-source support');
+    logger.info('TaskListRepository initialized with multi-source support');
   }
 
   /**
-   * Saves a TodoList to the appropriate data source
+   * Saves a TaskList to the appropriate data source
    *
    * The router will select the appropriate writable source based on:
    * - Project tag matching
    * - Source priority
    * - Source health status
    *
-   * @param list - The TodoList to save
+   * @param list - The TaskList to save
    * @throws Error if save operation fails
    */
-  async save(list: TodoList): Promise<void> {
+  async save(list: TaskList): Promise<void> {
     try {
-      logger.debug('Saving TodoList via router', {
+      logger.debug('Saving TaskList via router', {
         listId: list.id,
         title: list.title,
         projectTag: list.projectTag,
@@ -102,19 +102,19 @@ export class TodoListRepository implements ITodoListRepository {
         context
       );
 
-      logger.info('TodoList saved successfully', {
+      logger.info('TaskList saved successfully', {
         listId: list.id,
         title: list.title,
         itemCount: list.items.length,
       });
     } catch (error) {
-      logger.error('Failed to save TodoList', {
+      logger.error('Failed to save TaskList', {
         listId: list.id,
         title: list.title,
         error,
       });
       throw new Error(
-        `Failed to save TodoList ${list.id}: ${
+        `Failed to save TaskList ${list.id}: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -122,19 +122,19 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Finds a TodoList by its unique identifier
+   * Finds a TaskList by its unique identifier
    *
    * The router will attempt to find the list from sources in priority order,
    * with automatic fallback if a source fails.
    *
    * @param id - The unique identifier of the list
    * @param options - Optional parameters for the find operation
-   * @returns The TodoList if found, null otherwise
+   * @returns The TaskList if found, null otherwise
    * @throws Error if the find operation fails (but not if list doesn't exist)
    */
-  async findById(id: string, options?: FindOptions): Promise<TodoList | null> {
+  async findById(id: string, options?: FindOptions): Promise<TaskList | null> {
     try {
-      logger.debug('Finding TodoList by ID via router', {
+      logger.debug('Finding TaskList by ID via router', {
         listId: id,
         options,
       });
@@ -143,23 +143,21 @@ export class TodoListRepository implements ITodoListRepository {
         listId: id,
       };
 
-      const list = await this.router.routeOperation<TodoList | null>(
+      const list = await this.router.routeOperation<TaskList | null>(
         {
           type: 'read',
           key: id,
-          options: {
-            includeArchived: options?.includeArchived ?? false,
-          },
+          options: {},
         },
         context
       );
 
       if (!list) {
-        logger.debug('TodoList not found', { listId: id });
+        logger.debug('TaskList not found', { listId: id });
         return null;
       }
 
-      logger.debug('TodoList found', {
+      logger.debug('TaskList found', {
         listId: id,
         title: list.title,
         itemCount: list.items.length,
@@ -167,9 +165,9 @@ export class TodoListRepository implements ITodoListRepository {
 
       return list;
     } catch (error) {
-      logger.error('Failed to find TodoList by ID', { listId: id, error });
+      logger.error('Failed to find TaskList by ID', { listId: id, error });
       throw new Error(
-        `Failed to find TodoList ${id}: ${
+        `Failed to find TaskList ${id}: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -177,7 +175,7 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Finds all TodoLists from all available sources
+   * Finds all TaskLists from all available sources
    *
    * Uses the aggregator to:
    * - Query all sources in parallel
@@ -186,16 +184,15 @@ export class TodoListRepository implements ITodoListRepository {
    * - Apply filters and sorting
    *
    * @param options - Optional parameters for filtering and pagination
-   * @returns Array of TodoLists matching the criteria
+   * @returns Array of TaskLists matching the criteria
    * @throws Error if the find operation fails
    */
-  async findAll(options?: FindOptions): Promise<TodoList[]> {
+  async findAll(options?: FindOptions): Promise<TaskList[]> {
     try {
-      logger.debug('Finding all TodoLists via aggregator', { options });
+      logger.debug('Finding all TaskLists via aggregator', { options });
 
       // Build search query from find options
       const query: SearchQuery = {
-        includeArchived: options?.includeArchived ?? false,
         ...(options?.sorting && { sorting: options.sorting }),
         ...(options?.pagination && { pagination: options.pagination }),
       };
@@ -211,16 +208,16 @@ export class TodoListRepository implements ITodoListRepository {
       // Use aggregator to get all lists
       const result = await this.aggregator.aggregateLists(sources, query);
 
-      logger.info('Found TodoLists via aggregator', {
+      logger.info('Found TaskLists via aggregator', {
         count: result.items.length,
         totalCount: result.totalCount,
       });
 
       return result.items;
     } catch (error) {
-      logger.error('Failed to find all TodoLists', { error });
+      logger.error('Failed to find all TaskLists', { error });
       throw new Error(
-        `Failed to find all TodoLists: ${
+        `Failed to find all TaskLists: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -228,12 +225,12 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Searches for TodoLists using complex query criteria
+   * Searches for TaskLists using complex query criteria
    *
    * Leverages the aggregator to:
    * - Query multiple sources in parallel
    * - Deduplicate and resolve conflicts
-   * - Apply comprehensive filtering
+   * - Apply filtering
    * - Sort and paginate results
    * - Track source metadata
    *
@@ -241,9 +238,9 @@ export class TodoListRepository implements ITodoListRepository {
    * @returns Search result with items and metadata
    * @throws Error if the search operation fails
    */
-  async search(query: SearchQuery): Promise<SearchResult<TodoList>> {
+  async search(query: SearchQuery): Promise<SearchResult<TaskList>> {
     try {
-      logger.debug('Searching TodoLists via aggregator', { query });
+      logger.debug('Searching TaskLists via aggregator', { query });
 
       // Get all sources from router with metadata
       const backends = this.router.getAllSources();
@@ -285,9 +282,9 @@ export class TodoListRepository implements ITodoListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TodoLists', { query, error });
+      logger.error('Failed to search TaskLists', { query, error });
       throw new Error(
-        `Failed to search TodoLists: ${
+        `Failed to search TaskLists: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -295,7 +292,7 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Searches for TodoList summaries (lightweight version)
+   * Searches for TaskList summaries (lightweight version)
    *
    * Uses the aggregator to query summaries from all sources,
    * providing faster results for list views and dashboards.
@@ -306,9 +303,9 @@ export class TodoListRepository implements ITodoListRepository {
    */
   async searchSummaries(
     query: SearchQuery
-  ): Promise<SearchResult<TodoListSummary>> {
+  ): Promise<SearchResult<TaskListSummary>> {
     try {
-      logger.debug('Searching TodoList summaries via aggregator', { query });
+      logger.debug('Searching TaskList summaries via aggregator', { query });
 
       // Get all sources from router with metadata
       const backends = this.router.getAllSources();
@@ -343,9 +340,9 @@ export class TodoListRepository implements ITodoListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TodoList summaries', { query, error });
+      logger.error('Failed to search TaskList summaries', { query, error });
       throw new Error(
-        `Failed to search TodoList summaries: ${
+        `Failed to search TaskList summaries: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -353,7 +350,7 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Deletes a TodoList from the appropriate data source
+   * Deletes a TaskList from the appropriate data source
    *
    * The router will select the appropriate writable source.
    * Note: This only deletes from one source. If the list exists in
@@ -363,9 +360,9 @@ export class TodoListRepository implements ITodoListRepository {
    * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
    */
-  async delete(id: string, permanent: boolean): Promise<void> {
+  async delete(id: string, permanent?: boolean): Promise<void> {
     try {
-      logger.debug('Deleting TodoList via router', { listId: id, permanent });
+      logger.debug('Deleting TaskList via router', { listId: id, permanent });
 
       const context: OperationContext = {
         listId: id,
@@ -376,20 +373,19 @@ export class TodoListRepository implements ITodoListRepository {
         {
           type: 'delete',
           key: id,
-          permanent,
+          permanent: permanent ?? false,
         },
         context
       );
 
-      logger.info('TodoList deleted successfully', { listId: id, permanent });
+      logger.info('TaskList deleted successfully', { listId: id });
     } catch (error) {
-      logger.error('Failed to delete TodoList', {
+      logger.error('Failed to delete TaskList', {
         listId: id,
-        permanent,
         error,
       });
       throw new Error(
-        `Failed to delete TodoList ${id}: ${
+        `Failed to delete TaskList ${id}: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -397,7 +393,7 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Checks if a TodoList exists in any data source
+   * Checks if a TaskList exists in any data source
    *
    * Queries all sources to determine if the list exists anywhere.
    *
@@ -407,18 +403,18 @@ export class TodoListRepository implements ITodoListRepository {
    */
   async exists(id: string): Promise<boolean> {
     try {
-      logger.debug('Checking if TodoList exists', { listId: id });
+      logger.debug('Checking if TaskList exists', { listId: id });
 
-      const list = await this.findById(id, { includeArchived: true });
+      const list = await this.findById(id);
       const exists = list !== null;
 
-      logger.debug('TodoList existence check', { listId: id, exists });
+      logger.debug('TaskList existence check', { listId: id, exists });
 
       return exists;
     } catch (error) {
-      logger.error('Failed to check TodoList existence', { listId: id, error });
+      logger.error('Failed to check TaskList existence', { listId: id, error });
       throw new Error(
-        `Failed to check if TodoList ${id} exists: ${
+        `Failed to check if TaskList ${id} exists: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -426,7 +422,7 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Counts TodoLists matching the given query across all sources
+   * Counts TaskLists matching the given query across all sources
    *
    * Uses the aggregator to count deduplicated lists.
    *
@@ -436,23 +432,23 @@ export class TodoListRepository implements ITodoListRepository {
    */
   async count(query?: SearchQuery): Promise<number> {
     try {
-      logger.debug('Counting TodoLists', { query });
+      logger.debug('Counting TaskLists', { query });
 
       if (!query) {
-        // Simple count of all lists
-        query = { includeArchived: false };
+        // Count of all lists
+        query = {};
       }
 
       // Use searchSummaries to get count (more efficient than full search)
       const result = await this.searchSummaries(query);
 
-      logger.debug('TodoList count', { count: result.totalCount });
+      logger.debug('TaskList count', { count: result.totalCount });
 
       return result.totalCount;
     } catch (error) {
-      logger.error('Failed to count TodoLists', { query, error });
+      logger.error('Failed to count TaskLists', { query, error });
       throw new Error(
-        `Failed to count TodoLists: ${
+        `Failed to count TaskLists: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -500,11 +496,11 @@ export class TodoListRepository implements ITodoListRepository {
    */
   async shutdown(): Promise<void> {
     try {
-      logger.info('Shutting down TodoListRepository');
+      logger.info('Shutting down TaskListRepository');
       await this.router.shutdown();
-      logger.info('TodoListRepository shutdown complete');
+      logger.info('TaskListRepository shutdown complete');
     } catch (error) {
-      logger.error('Failed to shutdown TodoListRepository', { error });
+      logger.error('Failed to shutdown TaskListRepository', { error });
       throw error;
     }
   }

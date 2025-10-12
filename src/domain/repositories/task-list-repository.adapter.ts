@@ -1,7 +1,7 @@
 /**
- * TodoListRepositoryAdapter
+ * TaskListRepositoryAdapter
  *
- * Adapter that wraps the existing StorageBackend to implement ITodoListRepository.
+ * Adapter that wraps the existing StorageBackend to implement ITaskListRepository.
  * This adapter provides backward compatibility while enabling the repository pattern.
  *
  * Key responsibilities:
@@ -12,86 +12,84 @@
  *
  * Design decisions:
  * - Uses composition over inheritance (wraps StorageBackend)
- * - Implements all ITodoListRepository methods
+ * - Implements all ITaskListRepository methods
  * - Preserves existing storage behavior and data format
- * - Adds comprehensive error handling and logging
+ * - Adds error handling and logging
  */
 
 import { logger } from '../../shared/utils/logger.js';
 
 import type {
-  ITodoListRepository,
+  ITaskListRepository,
   FindOptions,
   SearchQuery,
   SearchResult,
   TaskFilters,
   SortOptions,
   PaginationOptions,
-} from './todo-list.repository.js';
+} from './task-list.repository.js';
 import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
 
 /**
- * Adapter that implements ITodoListRepository using an existing StorageBackend
+ * Adapter that implements ITaskListRepository using an existing StorageBackend
  *
  * This adapter enables the repository pattern while maintaining backward
  * compatibility with the existing file-based storage system.
  */
-export class TodoListRepositoryAdapter implements ITodoListRepository {
+export class TaskListRepositoryAdapter implements ITaskListRepository {
   constructor(private readonly storage: StorageBackend) {
-    logger.debug('TodoListRepositoryAdapter initialized');
+    logger.debug('TaskListRepositoryAdapter initialized');
   }
 
   /**
-   * Saves a TodoList to storage
+   * Saves a TaskList to storage
    *
-   * @param list - The TodoList to save
+   * @param list - The TaskList to save
    * @throws Error if save operation fails
    */
-  async save(list: TodoList): Promise<void> {
+  async save(list: TaskList): Promise<void> {
     try {
-      logger.debug('Saving TodoList', { listId: list.id, title: list.title });
+      logger.debug('Saving TaskList', { listId: list.id, title: list.title });
 
       await this.storage.save(list.id, list, {
         backup: true,
         validate: true,
       });
 
-      logger.info('TodoList saved successfully', {
+      logger.info('TaskList saved successfully', {
         listId: list.id,
         title: list.title,
         itemCount: list.items.length,
       });
     } catch (error) {
-      logger.error('Failed to save TodoList', {
+      logger.error('Failed to save TaskList', {
         listId: list.id,
         title: list.title,
         error,
       });
       throw new Error(
-        `Failed to save TodoList ${list.id}: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to save TaskList ${list.id}: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Finds a TodoList by its unique identifier
+   * Finds a TaskList by its unique identifier
    *
    * @param id - The unique identifier of the list
    * @param options - Optional parameters for the find operation
-   * @returns The TodoList if found, null otherwise
+   * @returns The TaskList if found, null otherwise
    * @throws Error if the find operation fails (but not if list doesn't exist)
    */
-  async findById(id: string, options?: FindOptions): Promise<TodoList | null> {
+  async findById(id: string, options?: FindOptions): Promise<TaskList | null> {
     try {
-      logger.debug('Finding TodoList by ID', { listId: id, options });
+      logger.debug('Finding TaskList by ID', { listId: id, options });
 
-      const list = await this.storage.load(id, {
-        includeArchived: options?.includeArchived ?? false,
-      });
+      const list = await this.storage.load(id, {});
 
       if (!list) {
-        logger.debug('TodoList not found', { listId: id });
+        logger.debug('TaskList not found', { listId: id });
         return null;
       }
 
@@ -114,7 +112,7 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
         );
       }
 
-      logger.debug('TodoList found', {
+      logger.debug('TaskList found', {
         listId: id,
         title: filteredList.title,
         itemCount: filteredList.items.length,
@@ -122,67 +120,61 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
 
       return filteredList;
     } catch (error) {
-      logger.error('Failed to find TodoList by ID', { listId: id, error });
+      logger.error('Failed to find TaskList by ID', { listId: id, error });
       throw new Error(
-        `Failed to find TodoList ${id}: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to find TaskList ${id}: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Finds all TodoLists matching the given options
+   * Finds all TaskLists matching the given options
    *
    * @param options - Optional parameters for filtering and pagination
-   * @returns Array of TodoLists matching the criteria
+   * @returns Array of TaskLists matching the criteria
    * @throws Error if the find operation fails
    */
-  async findAll(options?: FindOptions): Promise<TodoList[]> {
+  async findAll(options?: FindOptions): Promise<TaskList[]> {
     try {
-      logger.debug('Finding all TodoLists', { options });
+      logger.debug('Finding all TaskLists', { options });
 
       // Get all list summaries first
-      const summaries = await this.storage.list({
-        includeArchived: options?.includeArchived ?? false,
-      });
+      const summaries = await this.storage.list({});
 
       // Load full lists
-      const lists: TodoList[] = [];
+      const lists: TaskList[] = [];
       for (const summary of summaries) {
-        const list = await this.storage.load(summary.id, {
-          includeArchived: options?.includeArchived ?? false,
-        });
+        const list = await this.storage.load(summary.id, {});
 
         if (list) {
           lists.push(list);
         }
       }
 
-      logger.info('Found TodoLists', { count: lists.length });
+      logger.info('Found TaskLists', { count: lists.length });
 
       return lists;
     } catch (error) {
-      logger.error('Failed to find all TodoLists', { error });
+      logger.error('Failed to find all TaskLists', { error });
       throw new Error(
-        `Failed to find all TodoLists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to find all TaskLists: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Searches for TodoLists using complex query criteria
+   * Searches for TaskLists using complex query criteria
    *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with items and metadata
    * @throws Error if the search operation fails
    */
-  async search(query: SearchQuery): Promise<SearchResult<TodoList>> {
+  async search(query: SearchQuery): Promise<SearchResult<TaskList>> {
     try {
-      logger.debug('Searching TodoLists', { query });
+      logger.debug('Searching TaskLists', { query });
 
       // Get all lists first
-      const allLists = await this.findAll({
-        includeArchived: query.includeArchived ?? false,
-      });
+      const allLists = await this.findAll({});
 
       // Apply filters
       let filteredLists = this.applyListFilters(allLists, query);
@@ -209,7 +201,7 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
         hasMore,
       });
 
-      const result: SearchResult<TodoList> = {
+      const result: SearchResult<TaskList> = {
         items: paginatedLists,
         totalCount,
         hasMore,
@@ -221,15 +213,15 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TodoLists', { query, error });
+      logger.error('Failed to search TaskLists', { query, error });
       throw new Error(
-        `Failed to search TodoLists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to search TaskLists: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Searches for TodoList summaries (lightweight version)
+   * Searches for TaskList summaries (lightweight version)
    *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with summaries and metadata
@@ -237,14 +229,12 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
    */
   async searchSummaries(
     query: SearchQuery
-  ): Promise<SearchResult<TodoListSummary>> {
+  ): Promise<SearchResult<TaskListSummary>> {
     try {
-      logger.debug('Searching TodoList summaries', { query });
+      logger.debug('Searching TaskList summaries', { query });
 
       // Get all summaries from storage
-      const listOptions: { projectTag?: string; includeArchived: boolean } = {
-        includeArchived: query.includeArchived ?? false,
-      };
+      const listOptions: { projectTag?: string } = {};
 
       if (query.projectTag) {
         listOptions.projectTag = query.projectTag;
@@ -294,7 +284,7 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
         hasMore,
       });
 
-      const result: SearchResult<TodoListSummary> = {
+      const result: SearchResult<TaskListSummary> = {
         items: paginatedSummaries,
         totalCount,
         hasMore,
@@ -306,41 +296,41 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TodoList summaries', { query, error });
+      logger.error('Failed to search TaskList summaries', { query, error });
       throw new Error(
-        `Failed to search TodoList summaries: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to search TaskList summaries: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Deletes a TodoList from storage
+   * Deletes a TaskList from storage
    *
    * @param id - The unique identifier of the list to delete
    * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
    */
-  async delete(id: string, permanent: boolean): Promise<void> {
+  async delete(id: string, permanent?: boolean): Promise<void> {
     try {
-      logger.debug('Deleting TodoList', { listId: id, permanent });
+      logger.debug('Deleting TaskList', { listId: id, permanent });
 
       await this.storage.delete(id, permanent);
 
-      logger.info('TodoList deleted successfully', { listId: id, permanent });
+      logger.info('TaskList deleted successfully', { listId: id, permanent });
     } catch (error) {
-      logger.error('Failed to delete TodoList', {
+      logger.error('Failed to delete TaskList', {
         listId: id,
         permanent,
         error,
       });
       throw new Error(
-        `Failed to delete TodoList ${id}: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to delete TaskList ${id}: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Checks if a TodoList exists in storage
+   * Checks if a TaskList exists in storage
    *
    * @param id - The unique identifier to check
    * @returns true if the list exists, false otherwise
@@ -348,24 +338,24 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
    */
   async exists(id: string): Promise<boolean> {
     try {
-      logger.debug('Checking if TodoList exists', { listId: id });
+      logger.debug('Checking if TaskList exists', { listId: id });
 
-      const list = await this.storage.load(id, { includeArchived: true });
+      const list = await this.storage.load(id, {});
       const exists = list !== null;
 
-      logger.debug('TodoList existence check', { listId: id, exists });
+      logger.debug('TaskList existence check', { listId: id, exists });
 
       return exists;
     } catch (error) {
-      logger.error('Failed to check TodoList existence', { listId: id, error });
+      logger.error('Failed to check TaskList existence', { listId: id, error });
       throw new Error(
-        `Failed to check if TodoList ${id} exists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to check if TaskList ${id} exists: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   /**
-   * Counts TodoLists matching the given query
+   * Counts TaskLists matching the given query
    *
    * @param query - Optional query to filter which lists to count
    * @returns The number of lists matching the query
@@ -373,18 +363,18 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
    */
   async count(query?: SearchQuery): Promise<number> {
     try {
-      logger.debug('Counting TodoLists', { query });
+      logger.debug('Counting TaskLists', { query });
 
       if (!query) {
-        // Simple count of all lists
-        const summaries = await this.storage.list({ includeArchived: false });
+        // Count of all lists
+        const summaries = await this.storage.list({});
         return summaries.length;
       }
 
       // Use search to get filtered count
       const result = await this.searchSummaries(query);
 
-      logger.debug('TodoList count', { count: result.totalCount });
+      logger.debug('TaskList count', { count: result.totalCount });
 
       return result.totalCount;
     } catch (error) {
@@ -418,9 +408,9 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
   // Private helper methods for filtering, sorting, and pagination
 
   /**
-   * Applies task filters to a TodoList
+   * Applies task filters to a TaskList
    */
-  private applyTaskFilters(list: TodoList, filters: TaskFilters): TodoList {
+  private applyTaskFilters(list: TaskList, filters: TaskFilters): TaskList {
     const filteredItems = list.items.filter(item => {
       // Status filter
       if (filters.status) {
@@ -521,9 +511,9 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
   }
 
   /**
-   * Applies sorting to tasks within a TodoList
+   * Applies sorting to tasks within a TaskList
    */
-  private applyTaskSorting(list: TodoList, sorting: SortOptions): TodoList {
+  private applyTaskSorting(list: TaskList, sorting: SortOptions): TaskList {
     const sortedItems = [...list.items].sort((a, b) => {
       let aVal: string | number | Date;
       let bVal: string | number | Date;
@@ -572,12 +562,12 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
   }
 
   /**
-   * Applies pagination to tasks within a TodoList
+   * Applies pagination to tasks within a TaskList
    */
   private applyTaskPagination(
-    list: TodoList,
+    list: TaskList,
     pagination: PaginationOptions
-  ): TodoList {
+  ): TaskList {
     const offset = pagination.offset ?? 0;
     const limit = pagination.limit ?? list.items.length;
 
@@ -592,7 +582,7 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
   /**
    * Applies filters to a list of TodoLists
    */
-  private applyListFilters(lists: TodoList[], query: SearchQuery): TodoList[] {
+  private applyListFilters(lists: TaskList[], query: SearchQuery): TaskList[] {
     return lists.filter(list => {
       // Text search
       if (query.text) {
@@ -669,9 +659,9 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
    * Applies sorting to a list of TodoLists
    */
   private applyListSorting(
-    lists: TodoList[],
+    lists: TaskList[],
     sorting: SortOptions
-  ): TodoList[] {
+  ): TaskList[] {
     return [...lists].sort((a, b) => {
       let aVal: string | number | Date;
       let bVal: string | number | Date;
@@ -716,9 +706,9 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
    * Applies sorting to a list of TodoListSummaries
    */
   private applySummarySorting(
-    summaries: TodoListSummary[],
+    summaries: TaskListSummary[],
     sorting: SortOptions
-  ): TodoListSummary[] {
+  ): TaskListSummary[] {
     return [...summaries].sort((a, b) => {
       let aVal: string | number | Date;
       let bVal: string | number | Date;

@@ -9,7 +9,7 @@ import { ActionPlanManager } from '../../../../src/domain/tasks/action-plan-mana
 import type {
   ActionPlan,
   ActionStep as _ActionStep,
-} from '../../../../src/shared/types/todo.js';
+} from '../../../../src/shared/types/task.js';
 
 describe('ActionPlanManager', () => {
   let manager: ActionPlanManager;
@@ -68,8 +68,6 @@ describe('ActionPlanManager', () => {
       expect(steps[1]?.content).toBe('Second step');
       expect(steps[2]?.content).toBe('Third step');
       expect(steps[0]?.status).toBe('pending');
-      expect(steps[0]?.order).toBe(0);
-      expect(steps[1]?.order).toBe(1);
     });
 
     test('parses numbered lists', () => {
@@ -166,14 +164,12 @@ describe('ActionPlanManager', () => {
             id: 'step-1',
             content: 'Old step 1',
             status: 'pending',
-            order: 0,
           },
           {
             id: 'step-2',
             content: 'Old step 2',
             status: 'completed',
             completedAt: new Date(),
-            order: 1,
           },
         ],
         createdAt: new Date(),
@@ -205,13 +201,11 @@ describe('ActionPlanManager', () => {
             content: 'Step 1',
             status: 'completed',
             completedAt: new Date(),
-            order: 0,
           },
           {
             id: 'step-2',
             content: 'Step 2',
             status: 'in_progress',
-            order: 1,
           },
         ],
         createdAt: new Date(),
@@ -242,20 +236,17 @@ describe('ActionPlanManager', () => {
             id: 'step-1',
             content: 'Step 1',
             status: 'pending',
-            order: 0,
           },
           {
             id: 'step-2',
             content: 'Step 2',
             status: 'in_progress',
-            order: 1,
           },
           {
             id: 'step-3',
             content: 'Step 3',
             status: 'completed',
             completedAt: new Date(),
-            order: 2,
           },
         ],
         createdAt: new Date(),
@@ -326,10 +317,10 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', order: 1 },
-          { id: '3', content: 'Step 3', status: 'in_progress', order: 2 },
-          { id: '4', content: 'Step 4', status: 'pending', order: 3 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'completed' },
+          { id: '3', content: 'Step 3', status: 'in_progress' },
+          { id: '4', content: 'Step 4', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -359,8 +350,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', order: 1 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'completed' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -378,8 +369,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', order: 1 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'completed' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -395,8 +386,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'pending', order: 1 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -412,8 +403,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'in_progress', order: 0 },
-          { id: '2', content: 'Step 2', status: 'pending', order: 1 },
+          { id: '1', content: 'Step 1', status: 'in_progress' },
+          { id: '2', content: 'Step 2', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -429,8 +420,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'pending', order: 0 },
-          { id: '2', content: 'Step 2', status: 'pending', order: 1 },
+          { id: '1', content: 'Step 1', status: 'pending' },
+          { id: '2', content: 'Step 2', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -448,11 +439,11 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', order: 1 },
-          { id: '3', content: 'Step 3', status: 'in_progress', order: 2 },
-          { id: '4', content: 'Step 4', status: 'pending', order: 3 },
-          { id: '5', content: 'Step 5', status: 'pending', order: 4 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'completed' },
+          { id: '3', content: 'Step 3', status: 'in_progress' },
+          { id: '4', content: 'Step 4', status: 'pending' },
+          { id: '5', content: 'Step 5', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -475,10 +466,10 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'pending', order: 1 },
-          { id: '3', content: 'Step 3', status: 'in_progress', order: 2 },
-          { id: '4', content: 'Step 4', status: 'pending', order: 3 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'pending' },
+          { id: '3', content: 'Step 3', status: 'in_progress' },
+          { id: '4', content: 'Step 4', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -503,10 +494,10 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'pending', order: 3 },
-          { id: '3', content: 'Step 3', status: 'in_progress', order: 2 },
-          { id: '4', content: 'Step 4', status: 'pending', order: 1 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'pending' },
+          { id: '3', content: 'Step 3', status: 'in_progress' },
+          { id: '4', content: 'Step 4', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -515,8 +506,7 @@ describe('ActionPlanManager', () => {
 
       const nextStep = manager.getNextPendingStep(plan);
 
-      expect(nextStep?.content).toBe('Step 4'); // order: 1 is first
-      expect(nextStep?.order).toBe(1);
+      expect(nextStep?.content).toBe('Step 2'); // First pending step in array order
     });
 
     test('returns null when no pending steps', () => {
@@ -524,8 +514,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', order: 1 },
+          { id: '1', content: 'Step 1', status: 'completed' },
+          { id: '2', content: 'Step 2', status: 'completed' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -552,22 +542,19 @@ describe('ActionPlanManager', () => {
             content: 'Step 1',
             status: 'completed',
             completedAt: date1,
-            order: 0,
           },
-          { id: '2', content: 'Step 2', status: 'pending', order: 1 },
+          { id: '2', content: 'Step 2', status: 'pending' },
           {
             id: '3',
             content: 'Step 3',
             status: 'completed',
             completedAt: date2,
-            order: 2,
           },
           {
             id: '4',
             content: 'Step 4',
             status: 'completed',
             completedAt: date3,
-            order: 3,
           },
         ],
         createdAt: new Date(),
@@ -599,21 +586,18 @@ describe('ActionPlanManager', () => {
             content: 'Step 1',
             status: 'completed',
             completedAt: date1,
-            order: 0,
           },
           {
             id: '2',
             content: 'Step 2',
             status: 'completed',
             completedAt: date2,
-            order: 1,
           },
           {
             id: '3',
             content: 'Step 3',
             status: 'completed',
             completedAt: date3,
-            order: 2,
           },
         ],
         createdAt: new Date(),
@@ -635,7 +619,6 @@ describe('ActionPlanManager', () => {
             content: 'Step 1',
             status: 'completed',
             completedAt: new Date(),
-            order: 0,
           },
         ],
         createdAt: new Date(),
@@ -663,24 +646,21 @@ describe('ActionPlanManager', () => {
             content: 'Step 1',
             status: 'completed',
             completedAt: date1,
-            order: 0,
           },
           {
             id: '2',
             content: 'Step 2',
             status: 'completed',
             completedAt: date2,
-            order: 1,
           },
           {
             id: '3',
             content: 'Step 3',
             status: 'completed',
             completedAt: date3,
-            order: 2,
           },
-          { id: '4', content: 'Step 4', status: 'pending', order: 3 },
-          { id: '5', content: 'Step 5', status: 'pending', order: 4 },
+          { id: '4', content: 'Step 4', status: 'pending' },
+          { id: '5', content: 'Step 5', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -699,8 +679,8 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'pending', order: 0 },
-          { id: '2', content: 'Step 2', status: 'pending', order: 1 },
+          { id: '1', content: 'Step 1', status: 'pending' },
+          { id: '2', content: 'Step 2', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -721,9 +701,9 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: 'step-1', content: 'Step 1', status: 'pending', order: 0 },
-          { id: 'step-2', content: 'Step 2', status: 'pending', order: 1 },
-          { id: 'step-3', content: 'Step 3', status: 'pending', order: 2 },
+          { id: 'step-1', content: 'Step 1', status: 'pending' },
+          { id: 'step-2', content: 'Step 2', status: 'pending' },
+          { id: 'step-3', content: 'Step 3', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -799,18 +779,16 @@ describe('ActionPlanManager', () => {
             content: 'Step 1',
             status: 'completed',
             completedAt: today,
-            order: 0,
           },
           {
             id: '2',
             content: 'Step 2',
             status: 'completed',
             completedAt: new Date(today.getTime() - 86400000),
-            order: 1,
           }, // yesterday
-          { id: '3', content: 'Step 3', status: 'in_progress', order: 2 },
-          { id: '4', content: 'Step 4', status: 'pending', order: 3 },
-          { id: '5', content: 'Step 5', status: 'pending', order: 4 },
+          { id: '3', content: 'Step 3', status: 'in_progress' },
+          { id: '4', content: 'Step 4', status: 'pending' },
+          { id: '5', content: 'Step 5', status: 'pending' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),

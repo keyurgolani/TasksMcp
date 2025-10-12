@@ -13,17 +13,17 @@ console.log('Testing CLI executable...');
 
 const child = spawn('node', [cliPath, '--version'], {
   stdio: 'pipe',
-  cwd: projectRoot
+  cwd: projectRoot,
 });
 
 let output = '';
 let error = '';
 
-child.stdout.on('data', (data) => {
+child.stdout.on('data', data => {
   output += data.toString();
 });
 
-child.stderr.on('data', (data) => {
+child.stderr.on('data', data => {
   error += data.toString();
 });
 
@@ -34,7 +34,7 @@ const timeout = setTimeout(() => {
   process.exit(1);
 }, 10000);
 
-child.on('close', (code) => {
+child.on('close', code => {
   clearTimeout(timeout);
   if (code === 0) {
     console.log('✅ CLI test passed');
@@ -48,7 +48,7 @@ child.on('close', (code) => {
   }
 });
 
-child.on('error', (err) => {
+child.on('error', err => {
   clearTimeout(timeout);
   console.error('❌ Failed to start CLI process:', err.message);
   process.exit(1);

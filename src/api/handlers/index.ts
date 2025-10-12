@@ -14,8 +14,8 @@
  * Search and Display:
  * - Search tasks by text, filter by criteria, and format for display
  *
- * AI-Powered Features:
- * - Analyze task complexity and generate suggestions
+ * Core Features:
+ * - Task and list management operations
  */
 
 // List management handlers
@@ -27,6 +27,7 @@ export { handleDeleteList } from './delete-list.js';
 // Task management handlers
 export { handleAddTask } from './add-task.js';
 export { handleUpdateTask } from './update-task.js';
+export { handleGetAgentPrompt } from './get-agent-prompt.js';
 export { handleRemoveTask } from './remove-task.js';
 export { handleCompleteTask } from './complete-task.js';
 export { handleSetTaskPriority } from './set-task-priority.js';

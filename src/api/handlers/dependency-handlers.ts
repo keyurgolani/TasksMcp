@@ -13,7 +13,7 @@ import type {
   ApiResponse,
   HandlerContext,
 } from '../../shared/types/api.js';
-import type { TodoItem } from '../../shared/types/todo.js';
+import type { Task } from '../../shared/types/task.js';
 import type { Response } from 'express';
 
 /**
@@ -54,9 +54,8 @@ export async function getDependencyGraphHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -130,9 +129,8 @@ export async function validateDependenciesHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId: input.listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -140,7 +138,7 @@ export async function validateDependenciesHandler(
     }
 
     // Verify task exists
-    const task = list.items.find(item => item.id === input.taskId);
+    const task = list.items.find((item: Task) => item.id === input.taskId);
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${input.taskId}`, 404);
     }
@@ -205,9 +203,8 @@ export async function getReadyTasksHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -219,7 +216,7 @@ export async function getReadyTasksHandler(
 
   const duration = Date.now() - startTime;
 
-  const response: ApiResponse<TodoItem[]> = {
+  const response: ApiResponse<Task[]> = {
     success: true,
     data: readyTasks,
     meta: {
@@ -262,9 +259,8 @@ export async function setDependenciesHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId: input.listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -280,7 +276,7 @@ export async function setDependenciesHandler(
     }
 
     // Verify task exists
-    const task = list.items.find(item => item.id === input.taskId);
+    const task = list.items.find((item: Task) => item.id === input.taskId);
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${input.taskId}`, 404);
     }
@@ -301,7 +297,7 @@ export async function setDependenciesHandler(
     }
 
     // Update task with new dependencies
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId: input.listId,
       action: 'update_item',
       itemId: input.taskId,
@@ -321,7 +317,7 @@ export async function setDependenciesHandler(
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoItem> = {
+    const response: ApiResponse<Task> = {
       success: true,
       data: updatedTask,
       meta: {

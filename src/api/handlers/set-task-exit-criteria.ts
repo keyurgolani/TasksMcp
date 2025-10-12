@@ -12,7 +12,7 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -21,6 +21,7 @@ import type {
   TaskResponse,
   ExitCriteriaResponse,
 } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for set task exit criteria request parameters
@@ -49,7 +50,7 @@ const SetTaskExitCriteriaSchema = z.object({
  */
 export async function handleSetTaskExitCriteria(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing set_task_exit_criteria request', {
@@ -59,7 +60,7 @@ export async function handleSetTaskExitCriteria(
     const args = SetTaskExitCriteriaSchema.parse(request.params?.arguments);
 
     // Update the task with new exit criteria
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -68,7 +69,9 @@ export async function handleSetTaskExitCriteria(
       },
     });
 
-    const updatedTask = result.items.find(item => item.id === args.taskId);
+    const updatedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!updatedTask) {
       throw new Error('Task not found after updating exit criteria');
     }
@@ -90,7 +93,6 @@ export async function handleSetTaskExitCriteria(
         isMet: criteria.isMet,
         ...(criteria.metAt && { metAt: criteria.metAt.toISOString() }),
         ...(criteria.notes && { notes: criteria.notes }),
-        order: criteria.order,
       }));
 
     const response: TaskResponse & {

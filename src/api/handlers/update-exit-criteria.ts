@@ -12,12 +12,13 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
 import type { ExitCriteriaUpdateResponse } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for update exit criteria request parameters
@@ -41,7 +42,7 @@ const UpdateExitCriteriaSchema = z.object({
  */
 export async function handleUpdateExitCriteria(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing update_exit_criteria request', {
@@ -58,16 +59,18 @@ export async function handleUpdateExitCriteria(
     }
 
     // Get the current task to find the exit criteria
-    const currentList = await todoListManager.getTodoList({
+    const currentList = await todoListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
 
     if (!currentList) {
-      throw new Error(`Todo list not found: ${args.listId}`);
+      throw new Error(`Task list not found: ${args.listId}`);
     }
 
-    const task = currentList.items.find(item => item.id === args.taskId);
+    const task = currentList.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!task) {
       throw new Error(`Task not found: ${args.taskId}`);
     }
@@ -98,7 +101,7 @@ export async function handleUpdateExitCriteria(
     const updatedExitCriteria = [...task.exitCriteria];
     updatedExitCriteria[criteriaIndex] = updatedCriteria;
 
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -107,7 +110,9 @@ export async function handleUpdateExitCriteria(
       },
     });
 
-    const updatedTask = result.items.find(item => item.id === args.taskId);
+    const updatedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!updatedTask) {
       throw new Error('Task not found after updating exit criteria');
     }

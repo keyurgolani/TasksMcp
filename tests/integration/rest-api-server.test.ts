@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import { RestApiServer } from '../../src/app/rest-api-server.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { ActionPlanManager } from '../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
@@ -17,7 +17,7 @@ import type { StorageBackend } from '../../src/shared/types/storage.js';
 describe('REST API Server', () => {
   let server: RestApiServer;
   let storage: StorageBackend;
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let dependencyManager: DependencyResolver;
   let exitCriteriaManager: ExitCriteriaManager;
   let actionPlanManager: ActionPlanManager;
@@ -31,7 +31,7 @@ describe('REST API Server', () => {
     await storage.initialize();
 
     // Initialize managers
-    todoListManager = new TodoListManager(storage);
+    taskListManager = new TaskListManager(storage);
     dependencyManager = new DependencyResolver();
     exitCriteriaManager = new ExitCriteriaManager(storage);
     actionPlanManager = new ActionPlanManager(storage);
@@ -43,7 +43,7 @@ describe('REST API Server', () => {
         port: 3099, // Use different port for testing
         corsOrigins: ['*'],
       },
-      todoListManager,
+      taskListManager,
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,

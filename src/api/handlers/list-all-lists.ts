@@ -10,7 +10,7 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -19,13 +19,12 @@ import type { ListResponse } from '../../shared/types/mcp-types.js';
 
 const ListAllListsSchema = z.object({
   projectTag: z.string().max(50).optional(),
-  includeArchived: z.boolean().optional().default(false),
   limit: z.number().min(1).max(100).optional().default(50),
 });
 
 export async function handleListAllLists(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing list_all_lists request', {
@@ -34,13 +33,12 @@ export async function handleListAllLists(
 
     const args = ListAllListsSchema.parse(request.params?.arguments || {});
     const listInput = {
-      includeArchived: args.includeArchived,
       limit: args.limit,
       projectTag: args.projectTag,
       context: args.projectTag,
     };
 
-    const result = await todoListManager.listTodoLists(listInput);
+    const result = await todoListManager.listTaskLists(listInput);
 
     const response: ListResponse[] = result.map(list => {
       const listResponse: ListResponse = {
@@ -62,7 +60,6 @@ export async function handleListAllLists(
     logger.info('Todo lists retrieved successfully', {
       count: response.length,
       projectTag: args.projectTag,
-      includeArchived: args.includeArchived,
     });
 
     return {

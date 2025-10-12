@@ -12,16 +12,16 @@
  * - They support multiple storage backend implementations
  */
 
-// TodoList repository
+// TaskList repository
 export type {
-  ITodoListRepository,
+  ITaskListRepository,
   FindOptions,
   TaskFilters,
   SortOptions,
   PaginationOptions,
   SearchQuery,
   SearchResult,
-} from './todo-list.repository.js';
+} from './task-list.repository.js';
 
 // Task repository
 export type {
@@ -34,6 +34,6 @@ export type {
 } from './task.repository.js';
 
 // Repository implementations
-export { TodoListRepositoryAdapter } from './todo-list-repository.adapter.js';
-export { TodoListRepository } from './todo-list-repository-impl.js';
-export type { TodoListWithSource } from './todo-list-repository-impl.js';
+export { TaskListRepositoryAdapter } from './task-list-repository.adapter.js';
+export { TaskListRepository } from './task-list-repository-impl.js';
+export type { TaskListWithSource } from './task-list-repository-impl.js';

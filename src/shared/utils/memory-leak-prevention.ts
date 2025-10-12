@@ -1,5 +1,5 @@
 /**
- * Comprehensive memory leak prevention system
+ * Memory leak prevention system
  */
 
 import { EventEmitter } from 'events';
@@ -170,7 +170,7 @@ export class MemoryLeakPrevention extends EventEmitter {
         if (pool.length < maxSize) {
           // Reset object properties if it's an object
           if (typeof obj === 'object' && obj !== null) {
-            // Basic object reset - in production you might want more sophisticated reset
+            // Object reset - in production you might want more sophisticated reset
             Object.keys(obj).forEach(key => {
               delete (obj as Record<string, unknown>)[key];
             });
@@ -185,7 +185,7 @@ export class MemoryLeakPrevention extends EventEmitter {
   }
 
   /**
-   * Get comprehensive memory health report
+   * Get memory health report
    */
   getHealthReport(): MemoryHealthReport {
     const memoryUsage = process.memoryUsage();
@@ -229,7 +229,7 @@ export class MemoryLeakPrevention extends EventEmitter {
       }
     }
 
-    // Simple memory check
+    // Memory check
     const memUsage = process.memoryUsage();
     const isLeaking =
       memUsage.heapUsed > this.config.memoryThresholdMB * 1024 * 1024;

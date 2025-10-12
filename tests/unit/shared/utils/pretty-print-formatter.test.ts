@@ -5,14 +5,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
 import {
-  type TodoList,
-  type TodoItem,
+  type TaskList,
+  type Task,
   type ActionPlan,
   type ActionStep,
   type ImplementationNote,
   TaskStatus,
   Priority,
-} from '../../../../src/shared/types/todo.js';
+} from '../../../../src/shared/types/task.js';
 import {
   PrettyPrintFormatter,
   type FormatOptions,
@@ -20,8 +20,8 @@ import {
 
 describe('PrettyPrintFormatter', () => {
   let formatter: PrettyPrintFormatter;
-  let mockTodoList: TodoList;
-  let mockTodoItem: TodoItem;
+  let mockTaskList: TaskList;
+  let mockTask: Task;
   let mockActionPlan: ActionPlan;
 
   beforeEach(() => {
@@ -78,8 +78,8 @@ describe('PrettyPrintFormatter', () => {
       },
     ];
 
-    // Create mock todo item
-    mockTodoItem = {
+    // Create mock task
+    mockTask = {
       id: 'task-1',
       title: 'Test Task',
       description: 'This is a test task description',
@@ -95,13 +95,13 @@ describe('PrettyPrintFormatter', () => {
       implementationNotes: mockNotes,
     };
 
-    // Create mock todo list
-    mockTodoList = {
+    // Create mock task list
+    mockTaskList = {
       id: 'list-1',
       title: 'Test Project',
       description: 'A test project for unit testing',
       items: [
-        mockTodoItem,
+        mockTask,
         {
           id: 'task-2',
           title: 'Completed Task',
@@ -167,7 +167,7 @@ describe('PrettyPrintFormatter', () => {
 
   describe('formatTaskList', () => {
     it('should format a complete task list with default options', () => {
-      const result = formatter.formatTaskList(mockTodoList);
+      const result = formatter.formatTaskList(mockTaskList);
 
       expect(result.content).toContain('Test Project [test-project]');
       expect(result.content).toContain('Tasks: 1/3 completed');
@@ -180,7 +180,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format task list with compact mode', () => {
       const options: Partial<FormatOptions> = { compactMode: true };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).toContain('Test Task');
       expect(result.content).toContain('60min, #frontend #urgent');
@@ -189,7 +189,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format task list without notes', () => {
       const options: Partial<FormatOptions> = { includeNotes: false };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).not.toContain('List Notes:');
       expect(result.content).not.toContain('This is a list-level note');
@@ -197,7 +197,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format task list without action plans', () => {
       const options: Partial<FormatOptions> = { includeActionPlans: false };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).not.toContain('Action Plan:');
       expect(result.content).not.toContain('First step');
@@ -205,7 +205,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format task list without progress bars', () => {
       const options: Partial<FormatOptions> = { includeProgress: false };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).not.toContain('[█');
       expect(result.content).not.toContain('%]');
@@ -213,14 +213,14 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format task list with colorized output', () => {
       const options: Partial<FormatOptions> = { colorize: true };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).toContain('\u001b['); // ANSI color codes
     });
 
     it('should group tasks by status', () => {
       const options: Partial<FormatOptions> = { groupBy: 'status' };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).toContain('In Progress (1)');
       expect(result.content).toContain('Completed (1)');
@@ -229,7 +229,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should group tasks by priority', () => {
       const options: Partial<FormatOptions> = { groupBy: 'priority' };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).toContain('Critical (1)');
       expect(result.content).toContain('High (1)');
@@ -238,7 +238,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should handle empty task list', () => {
       const emptyList = {
-        ...mockTodoList,
+        ...mockTaskList,
         items: [],
         totalItems: 0,
         completedItems: 0,
@@ -251,7 +251,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should show task IDs when requested', () => {
       const options: Partial<FormatOptions> = { showIds: true };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       expect(result.content).toContain('(list-1)');
       expect(result.content).toContain('(task-1)');
@@ -259,7 +259,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should respect maxWidth setting', () => {
       const options: Partial<FormatOptions> = { maxWidth: 40 };
-      const result = formatter.formatTaskList(mockTodoList, options);
+      const result = formatter.formatTaskList(mockTaskList, options);
 
       const lines = result.content.split('\n');
       // Most lines should respect the width limit (allowing some flexibility for formatting)
@@ -276,7 +276,7 @@ describe('PrettyPrintFormatter', () => {
 
   describe('formatTask', () => {
     it('should format a single task with all details', () => {
-      const result = formatter.formatTask(mockTodoItem);
+      const result = formatter.formatTask(mockTask);
 
       expect(result.content).toContain('◐ Test Task ⬆');
       expect(result.content).toContain('This is a test task description');
@@ -289,7 +289,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format task in compact mode', () => {
       const options: Partial<FormatOptions> = { compactMode: true };
-      const result = formatter.formatTask(mockTodoItem, options);
+      const result = formatter.formatTask(mockTask, options);
 
       expect(result.content).toContain('◐ Test Task ⬆');
       expect(result.content).not.toContain('This is a test task description');
@@ -297,7 +297,7 @@ describe('PrettyPrintFormatter', () => {
     });
 
     it('should handle task without optional fields', () => {
-      const minimalTask: TodoItem = {
+      const minimalTask: Task = {
         id: 'minimal-task',
         title: 'Minimal Task',
         status: TaskStatus.PENDING,
@@ -319,8 +319,8 @@ describe('PrettyPrintFormatter', () => {
     });
 
     it('should format completed task with completion date', () => {
-      const completedTask: TodoItem = {
-        ...mockTodoItem,
+      const completedTask: Task = {
+        ...mockTask,
         status: TaskStatus.COMPLETED,
         completedAt: new Date('2024-01-15'),
       };
@@ -336,7 +336,7 @@ describe('PrettyPrintFormatter', () => {
 
   describe('formatTaskSummary', () => {
     it('should format summary statistics', () => {
-      const result = formatter.formatTaskSummary(mockTodoList.items);
+      const result = formatter.formatTaskSummary(mockTaskList.items);
 
       expect(result.content).toContain('Task Summary:');
       expect(result.content).toContain('Total Tasks: 3');
@@ -360,7 +360,7 @@ describe('PrettyPrintFormatter', () => {
 
     it('should format summary without progress bars', () => {
       const options: Partial<FormatOptions> = { includeProgress: false };
-      const result = formatter.formatTaskSummary(mockTodoList.items, options);
+      const result = formatter.formatTaskSummary(mockTaskList.items, options);
 
       expect(result.content).not.toContain('[█');
       expect(result.content).toContain('Total Tasks: 3');
@@ -440,7 +440,7 @@ describe('PrettyPrintFormatter', () => {
   describe('edge cases and error handling', () => {
     it('should handle malformed task data gracefully', () => {
       const malformedTask = {
-        ...mockTodoItem,
+        ...mockTask,
         status: 'invalid-status' as TaskStatus,
         priority: 999 as Priority,
       };
@@ -453,8 +453,8 @@ describe('PrettyPrintFormatter', () => {
 
     it('should handle very long text content', () => {
       const longText = 'A'.repeat(1000);
-      const taskWithLongContent: TodoItem = {
-        ...mockTodoItem,
+      const taskWithLongContent: Task = {
+        ...mockTask,
         title: longText,
         description: longText,
       };
@@ -470,8 +470,8 @@ describe('PrettyPrintFormatter', () => {
     });
 
     it('should handle null/undefined values gracefully', () => {
-      const taskWithNulls: TodoItem = {
-        ...mockTodoItem,
+      const taskWithNulls: Task = {
+        ...mockTask,
         description: undefined,
         estimatedDuration: undefined,
         completedAt: undefined,
@@ -486,8 +486,8 @@ describe('PrettyPrintFormatter', () => {
     });
 
     it('should handle empty strings and arrays', () => {
-      const emptyTask: TodoItem = {
-        ...mockTodoItem,
+      const emptyTask: Task = {
+        ...mockTask,
         title: '',
         description: '',
         tags: [],
@@ -501,9 +501,9 @@ describe('PrettyPrintFormatter', () => {
     });
 
     it('should maintain consistent metadata', () => {
-      const result = formatter.formatTaskList(mockTodoList);
+      const result = formatter.formatTaskList(mockTaskList);
 
-      expect(result.metadata.itemCount).toBe(mockTodoList.items.length);
+      expect(result.metadata.itemCount).toBe(mockTaskList.items.length);
       expect(result.metadata.totalLines).toBeGreaterThan(0);
       expect(result.metadata.totalCharacters).toBe(result.content.length);
       expect(result.metadata.groupCount).toBeGreaterThan(0);
@@ -512,8 +512,8 @@ describe('PrettyPrintFormatter', () => {
 
   describe('formatting consistency', () => {
     it('should produce consistent output for same input', () => {
-      const result1 = formatter.formatTask(mockTodoItem);
-      const result2 = formatter.formatTask(mockTodoItem);
+      const result1 = formatter.formatTask(mockTask);
+      const result2 = formatter.formatTask(mockTask);
 
       expect(result1.content).toBe(result2.content);
       expect(result1.metadata).toEqual(result2.metadata);
@@ -532,8 +532,8 @@ describe('PrettyPrintFormatter', () => {
         includeActionPlans: false,
       };
 
-      const result1 = formatter.formatTaskList(mockTodoList, options1);
-      const result2 = formatter.formatTaskList(mockTodoList, options2);
+      const result1 = formatter.formatTaskList(mockTaskList, options1);
+      const result2 = formatter.formatTaskList(mockTaskList, options2);
 
       expect(result1.content).not.toBe(result2.content);
       expect(result1.metadata.itemCount).toBe(result2.metadata.itemCount);

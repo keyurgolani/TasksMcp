@@ -1,5 +1,5 @@
 /**
- * Simple cache manager for optimizing performance
+ * Cache manager for performance
  */
 
 import { logger } from '../../shared/utils/logger.js';
@@ -125,12 +125,12 @@ export class CacheManager {
     };
   }
 
-  // TodoList-specific cache methods
+  // TaskList-specific cache methods
   setTodoList(listId: string, todoList: unknown): void {
     this.set(`todolist:${listId}`, todoList);
   }
 
-  getTodoList(listId: string): unknown | null {
+  getTaskList(listId: string): unknown | null {
     return this.get(`todolist:${listId}`);
   }
 
@@ -146,7 +146,6 @@ export class CacheManager {
   // Summary list cache methods
   generateSummaryKey(options: Record<string, unknown>): string {
     const keyParts = ['summary'];
-    if (options['includeArchived']) keyParts.push('archived');
     if (options['context']) keyParts.push(`context:${options['context']}`);
     if (options['limit']) keyParts.push(`limit:${options['limit']}`);
     if (options['offset']) keyParts.push(`offset:${options['offset']}`);

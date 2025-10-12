@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { logger } from '../../shared/utils/logger.js';
 
-import type { ImplementationNote } from '../../shared/types/todo.js';
-import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
+import type { ImplementationNote } from '../../shared/types/task.js';
+import type { ITaskListRepository } from '../repositories/task-list.repository.js';
 
 export interface CreateNoteInput {
   entityId: string; // Task ID or List ID
@@ -48,9 +48,9 @@ export interface NoteValidationResult {
 export class NotesManager {
   // Repository for future direct notes persistence
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITodoListRepository | undefined;
+  private readonly repository: ITaskListRepository | undefined;
 
-  constructor(repository?: ITodoListRepository) {
+  constructor(repository?: ITaskListRepository) {
     this.repository = repository;
 
     logger.debug('NotesManager initialized', {
@@ -62,7 +62,7 @@ export class NotesManager {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITodoListRepository | undefined {
+  getRepository(): ITaskListRepository | undefined {
     return this.repository;
   }
 
@@ -466,75 +466,6 @@ export class NotesManager {
         : truncated + suffix;
 
     return { content: finalContent, isTruncated: true };
-  }
-
-  /**
-   * Gets note statistics
-   */
-  getNoteStatistics(notes: ImplementationNote[]): {
-    total: number;
-    byType: Record<ImplementationNote['type'], number>;
-    averageLength: number;
-    createdToday: number;
-    createdThisWeek: number;
-    mostRecentDate?: Date;
-    oldestDate?: Date;
-  } {
-    const total = notes.length;
-
-    if (total === 0) {
-      return {
-        total: 0,
-        byType: { general: 0, technical: 0, decision: 0, learning: 0 },
-        averageLength: 0,
-        createdToday: 0,
-        createdThisWeek: 0,
-      };
-    }
-
-    // Count by type
-    const byType: Record<ImplementationNote['type'], number> = {
-      general: 0,
-      technical: 0,
-      decision: 0,
-      learning: 0,
-    };
-
-    let totalLength = 0;
-    let mostRecentDate: Date | undefined;
-    let oldestDate: Date | undefined;
-
-    for (const note of notes) {
-      byType[note.type]++;
-      totalLength += note.content.length;
-
-      const noteDate =
-        note.createdAt instanceof Date
-          ? note.createdAt
-          : new Date(note.createdAt);
-
-      if (!mostRecentDate || noteDate > mostRecentDate) {
-        mostRecentDate = noteDate;
-      }
-
-      if (!oldestDate || noteDate < oldestDate) {
-        oldestDate = noteDate;
-      }
-    }
-
-    const averageLength = Math.round(totalLength / total);
-    const createdToday = this.getNotesToday(notes).length;
-    const createdThisWeek = this.getNotesThisWeek(notes).length;
-
-    return {
-      total,
-      byType,
-      averageLength,
-      createdToday,
-      createdThisWeek,
-      ...(mostRecentDate && { mostRecentDate }),
-      ...(oldestDate && { oldestDate }),
-    };
   }
 
   /**

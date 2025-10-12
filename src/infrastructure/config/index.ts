@@ -72,7 +72,7 @@ const EnvironmentSchema = z.object({
   LOG_LEVEL: z
     .enum(['error', 'warn', 'info', 'debug', 'silent'])
     .default('info'),
-  LOG_FORMAT: z.enum(['json', 'simple']).default('json'),
+  LOG_FORMAT: z.enum(['json', 'text']).default('json'),
   LOG_FILE_ENABLED: booleanFromString.default(true),
   LOG_FILE_PATH: z.string().default('./logs/combined.log'),
 

@@ -1,23 +1,23 @@
 /**
- * Integration tests for TodoListManager action plan functionality
+ * Integration tests for TaskListManager action plan functionality
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
 
-import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/task.js';
 import { TestCleanup } from '../../../setup.js';
-import { createTodoListManager } from '../../../utils/test-helpers.js';
+import { createTaskListManager } from '../../../utils/test-helpers.js';
 
-describe('TodoListManager Action Plan Integration', () => {
-  let manager: TodoListManager;
+describe('TaskListManager Action Plan Integration', () => {
+  let manager: TaskListManager;
   let storage: MemoryStorageBackend;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    manager = createTodoListManager(storage);
+    manager = createTaskListManager(storage);
     await manager.initialize();
 
     // Register for automatic cleanup
@@ -25,8 +25,8 @@ describe('TodoListManager Action Plan Integration', () => {
     TestCleanup.registerManager(manager);
   });
 
-  describe('createTodoList with action plans', () => {
-    test('creates todo list with tasks that have action plans', async () => {
+  describe('createTaskList with action plans', () => {
+    test('creates task list with tasks that have action plans', async () => {
       const input = {
         title: 'Test Project',
         description: 'A test project with action plans',
@@ -47,12 +47,12 @@ describe('TodoListManager Action Plan Integration', () => {
         context: 'test-project',
       };
 
-      const todoList = await manager.createTodoList(input);
+      const taskList = await manager.createTaskList(input);
 
-      expect(todoList.items).toHaveLength(2);
+      expect(taskList.items).toHaveLength(2);
 
-      const taskWithPlan = todoList.items[0];
-      const taskWithoutPlan = todoList.items[1];
+      const taskWithPlan = taskList.items[0];
+      const taskWithoutPlan = taskList.items[1];
 
       expect(taskWithPlan?.actionPlan).toBeDefined();
       expect(taskWithPlan?.actionPlan?.steps).toHaveLength(4);
@@ -76,19 +76,19 @@ describe('TodoListManager Action Plan Integration', () => {
         context: 'test-project',
       };
 
-      const todoList = await manager.createTodoList(input);
+      const taskList = await manager.createTaskList(input);
 
-      expect(todoList.items).toHaveLength(1);
-      expect(todoList.items[0]?.actionPlan).toBeUndefined(); // Should not have action plan due to validation failure
+      expect(taskList.items).toHaveLength(1);
+      expect(taskList.items[0]?.actionPlan).toBeUndefined(); // Should not have action plan due to validation failure
     });
   });
 
-  describe('updateTodoList with action plan operations', () => {
+  describe('updateTaskList with action plan operations', () => {
     let listId: string;
     let itemId: string;
 
     beforeEach(async () => {
-      const todoList = await manager.createTodoList({
+      const taskList = await manager.createTaskList({
         title: 'Test List',
         tasks: [
           {
@@ -98,12 +98,12 @@ describe('TodoListManager Action Plan Integration', () => {
         ],
         context: 'test',
       });
-      listId = todoList.id;
-      itemId = todoList.items[0]!.id;
+      listId = taskList.id;
+      itemId = taskList.items[0]!.id;
     });
 
     test('updates action plan content', async () => {
-      const updatedList = await manager.updateTodoList({
+      const updatedList = await manager.updateTaskList({
         listId,
         action: 'update_action_plan',
         itemId,
@@ -120,13 +120,13 @@ describe('TodoListManager Action Plan Integration', () => {
 
     test('updates step progress', async () => {
       // First get the step ID
-      const list = await manager.getTodoList({ listId });
+      const list = await manager.getTaskList({ listId });
       const item = list?.items.find(item => item.id === itemId);
       const stepId = item?.actionPlan?.steps[0]?.id;
 
       expect(stepId).toBeDefined();
 
-      const updatedList = await manager.updateTodoList({
+      const updatedList = await manager.updateTaskList({
         listId,
         action: 'update_step_progress',
         itemId,
@@ -147,14 +147,14 @@ describe('TodoListManager Action Plan Integration', () => {
 
     test('auto-updates task status based on action plan progress', async () => {
       // Get all step IDs
-      const list = await manager.getTodoList({ listId });
+      const list = await manager.getTaskList({ listId });
       const item = list?.items.find(item => item.id === itemId);
       const stepIds = item?.actionPlan?.steps.map(step => step.id) || [];
 
       expect(stepIds).toHaveLength(3);
 
       // Complete first step - should change task to in_progress
-      let updatedList = await manager.updateTodoList({
+      let updatedList = await manager.updateTaskList({
         listId,
         action: 'update_step_progress',
         itemId,
@@ -167,7 +167,7 @@ describe('TodoListManager Action Plan Integration', () => {
 
       // Complete all remaining steps - should change task to completed
       for (let i = 1; i < stepIds.length; i++) {
-        updatedList = await manager.updateTodoList({
+        updatedList = await manager.updateTaskList({
           listId,
           action: 'update_step_progress',
           itemId,
@@ -182,7 +182,7 @@ describe('TodoListManager Action Plan Integration', () => {
     });
 
     test('adds new item with action plan', async () => {
-      const updatedList = await manager.updateTodoList({
+      const updatedList = await manager.updateTaskList({
         listId,
         action: 'add_item',
         itemData: {
@@ -204,7 +204,7 @@ describe('TodoListManager Action Plan Integration', () => {
     });
 
     test('updates existing item with new action plan', async () => {
-      const updatedList = await manager.updateTodoList({
+      const updatedList = await manager.updateTaskList({
         listId,
         action: 'update_item',
         itemId,
@@ -227,7 +227,7 @@ describe('TodoListManager Action Plan Integration', () => {
     let itemId: string;
 
     beforeEach(async () => {
-      const todoList = await manager.createTodoList({
+      const taskList = await manager.createTaskList({
         title: 'Progress Test List',
         tasks: [
           {
@@ -237,8 +237,8 @@ describe('TodoListManager Action Plan Integration', () => {
         ],
         context: 'progress-test',
       });
-      listId = todoList.id;
-      itemId = todoList.items[0]!.id;
+      listId = taskList.id;
+      itemId = taskList.items[0]!.id;
     });
 
     test('gets action plan progress', async () => {
@@ -252,12 +252,12 @@ describe('TodoListManager Action Plan Integration', () => {
 
     test('tracks progress as steps are completed', async () => {
       // Get step IDs
-      const list = await manager.getTodoList({ listId });
+      const list = await manager.getTaskList({ listId });
       const item = list?.items.find(item => item.id === itemId);
       const stepIds = item?.actionPlan?.steps.map(step => step.id) || [];
 
       // Complete first two steps
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId,
         action: 'update_step_progress',
         itemId,
@@ -265,7 +265,7 @@ describe('TodoListManager Action Plan Integration', () => {
         stepStatus: 'completed',
       });
 
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId,
         action: 'update_step_progress',
         itemId,
@@ -282,7 +282,7 @@ describe('TodoListManager Action Plan Integration', () => {
 
     test('gets tasks with action plans', async () => {
       // Add another task without action plan
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId,
         action: 'add_item',
         itemData: {
@@ -300,14 +300,14 @@ describe('TodoListManager Action Plan Integration', () => {
 
   describe('error handling', () => {
     test('handles missing item for action plan update', async () => {
-      const todoList = await manager.createTodoList({
+      const taskList = await manager.createTaskList({
         title: 'Test List',
         context: 'test',
       });
 
       await expect(
-        manager.updateTodoList({
-          listId: todoList.id,
+        manager.updateTaskList({
+          listId: taskList.id,
           action: 'update_action_plan',
           itemId: 'non-existent-id',
           itemData: {
@@ -318,7 +318,7 @@ describe('TodoListManager Action Plan Integration', () => {
     });
 
     test('handles missing action plan for step progress update', async () => {
-      const todoList = await manager.createTodoList({
+      const taskList = await manager.createTaskList({
         title: 'Test List',
         tasks: [
           {
@@ -328,11 +328,11 @@ describe('TodoListManager Action Plan Integration', () => {
         context: 'test',
       });
 
-      const itemId = todoList.items[0]!.id;
+      const itemId = taskList.items[0]!.id;
 
       await expect(
-        manager.updateTodoList({
-          listId: todoList.id,
+        manager.updateTaskList({
+          listId: taskList.id,
           action: 'update_step_progress',
           itemId,
           stepId: 'some-step-id',
@@ -342,7 +342,7 @@ describe('TodoListManager Action Plan Integration', () => {
     });
 
     test('handles invalid step ID for progress update', async () => {
-      const todoList = await manager.createTodoList({
+      const taskList = await manager.createTaskList({
         title: 'Test List',
         tasks: [
           {
@@ -353,11 +353,11 @@ describe('TodoListManager Action Plan Integration', () => {
         context: 'test',
       });
 
-      const itemId = todoList.items[0]!.id;
+      const itemId = taskList.items[0]!.id;
 
       await expect(
-        manager.updateTodoList({
-          listId: todoList.id,
+        manager.updateTaskList({
+          listId: taskList.id,
           action: 'update_step_progress',
           itemId,
           stepId: 'invalid-step-id',

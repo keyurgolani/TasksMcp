@@ -2,7 +2,7 @@
  * API types and interfaces for REST API server
  */
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type { ActionPlanManager } from '../../domain/tasks/action-plan-manager.js';
 import type { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import type { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
@@ -36,7 +36,7 @@ export interface AuthConfig {
  * Handler context containing all managers
  */
 export interface HandlerContext {
-  todoListManager: TodoListManager;
+  todoListManager: TaskListManager;
   dependencyManager: DependencyResolver;
   exitCriteriaManager: ExitCriteriaManager;
   actionPlanManager: ActionPlanManager;

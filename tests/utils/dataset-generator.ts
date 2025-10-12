@@ -4,14 +4,14 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { TaskStatus } from '../../src/shared/types/todo.js';
+import { TaskStatus } from '../../src/shared/types/task.js';
 
 import type {
-  TodoList,
-  TodoItem,
+  TaskList,
+  Task,
   Priority,
   ImplementationNote,
-} from '../../src/shared/types/todo.js';
+} from '../../src/shared/types/task.js';
 
 export interface DatasetOptions {
   listCount?: number;
@@ -70,9 +70,9 @@ export class DefaultDatasetGenerator {
   ];
 
   /**
-   * Generate a dataset of todo lists
+   * Generate a dataset of task lists
    */
-  generateDataset(options: DatasetOptions = {}): TodoList[] {
+  generateDataset(options: DatasetOptions = {}): TaskList[] {
     const {
       listCount = 10,
       tasksPerList = 5,
@@ -80,10 +80,10 @@ export class DefaultDatasetGenerator {
       projectTags = ['default', 'frontend', 'backend', 'mobile', 'devops'],
     } = options;
 
-    const lists: TodoList[] = [];
+    const lists: TaskList[] = [];
 
     for (let i = 0; i < listCount; i++) {
-      const list = this.generateTodoList(
+      const list = this.generateTaskList(
         i,
         tasksPerList,
         notesPerTask,
@@ -96,14 +96,14 @@ export class DefaultDatasetGenerator {
   }
 
   /**
-   * Generate a single todo list
+   * Generate a single task list
    */
-  generateTodoList(
+  generateTaskList(
     index: number,
     taskCount: number,
     notesPerTask: number,
     projectTags: string[]
-  ): TodoList {
+  ): TaskList {
     const listId = uuidv4();
     const now = new Date();
     const createdAt = new Date(
@@ -160,8 +160,8 @@ export class DefaultDatasetGenerator {
   /**
    * Generate tasks for a list
    */
-  generateTasks(count: number, notesPerTask: number): TodoItem[] {
-    const tasks: TodoItem[] = [];
+  generateTasks(count: number, notesPerTask: number): Task[] {
+    const tasks: Task[] = [];
 
     for (let i = 0; i < count; i++) {
       const task = this.generateTask(i, notesPerTask);
@@ -174,7 +174,7 @@ export class DefaultDatasetGenerator {
   /**
    * Generate a single task
    */
-  generateTask(index: number, notesCount: number): TodoItem {
+  generateTask(index: number, notesCount: number): Task {
     const taskId = uuidv4();
     const now = new Date();
     const createdAt = new Date(
@@ -276,7 +276,7 @@ export class DefaultDatasetGenerator {
   /**
    * Generate large dataset for performance testing
    */
-  generateLargeDataset(): TodoList[] {
+  generateLargeDataset(): TaskList[] {
     return this.generateDataset({
       listCount: 100,
       tasksPerList: 20,
@@ -297,7 +297,7 @@ export class DefaultDatasetGenerator {
   /**
    * Generate small dataset for unit testing
    */
-  generateSmallDataset(): TodoList[] {
+  generateSmallDataset(): TaskList[] {
     return this.generateDataset({
       listCount: 3,
       tasksPerList: 2,

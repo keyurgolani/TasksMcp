@@ -4,7 +4,7 @@
 
 import { logger } from '../../shared/utils/logger.js';
 
-import type { ImplementationNote } from '../../shared/types/todo.js';
+import type { ImplementationNote } from '../../shared/types/task.js';
 
 export interface SearchIndex {
   // Term -> Set of note IDs
@@ -311,25 +311,6 @@ export class NotesSearchIndexManager {
     this.index.dateIndex.clear();
 
     logger.debug('Notes search index cleared');
-  }
-
-  /**
-   * Get search suggestions based on partial term
-   */
-  getSuggestions(partialTerm: string, limit: number = 10): string[] {
-    const normalizedPartial = this.normalizeText(partialTerm);
-    const suggestions: string[] = [];
-
-    for (const term of this.index.termIndex.keys()) {
-      if (term.startsWith(normalizedPartial) && term !== normalizedPartial) {
-        suggestions.push(term);
-        if (suggestions.length >= limit) {
-          break;
-        }
-      }
-    }
-
-    return suggestions.sort();
   }
 
   // Private helper methods

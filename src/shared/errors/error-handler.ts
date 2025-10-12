@@ -1,5 +1,5 @@
 /**
- * Comprehensive error handling with retry logic and circuit breaker
+ * Error handling with retry logic and circuit breaker
  */
 
 import { EventEmitter } from 'events';
@@ -86,7 +86,7 @@ export class ErrorHandler extends EventEmitter {
 
   constructor() {
     super();
-    this.setMaxListeners(100); // Increase max listeners for comprehensive testing and resilience
+    this.setMaxListeners(100); // Increase max listeners for testing and resilience
     this.setupGlobalErrorHandlers();
     this.setupErrorReporting();
   }

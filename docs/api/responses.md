@@ -116,7 +116,7 @@ Some tools (like `show_tasks`) return formatted text:
       "id": "criteria-uuid-1",
       "description": "Unit tests pass with >90% coverage",
       "isMet": false,
-      "order": 1,
+
       "metAt": null,
       "notes": ""
     }
@@ -254,23 +254,9 @@ Some tools (like `show_tasks`) return formatted text:
 | `4`      | High     | Important, time-sensitive       |
 | `5`      | Critical | Urgent, blocking other work     |
 
-### Sort Options
+### Task Ordering
 
-| Sort By       | Description                                 |
-| ------------- | ------------------------------------------- |
-| `relevance`   | Search relevance score (default for search) |
-| `priority`    | Task priority level                         |
-| `createdAt`   | Creation timestamp                          |
-| `updatedAt`   | Last modification timestamp                 |
-| `completedAt` | Completion timestamp                        |
-| `title`       | Alphabetical by title                       |
-
-### Sort Order
-
-| Order  | Description                    |
-| ------ | ------------------------------ |
-| `asc`  | Ascending (lowest to highest)  |
-| `desc` | Descending (highest to lowest) |
+Tasks are returned based on dependency completion status. The `get_ready_tasks` tool returns tasks that have no incomplete dependencies and are ready to work on.
 
 ## Response Examples by Tool Category
 

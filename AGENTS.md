@@ -139,7 +139,7 @@ The MCP Task Manager provides a comprehensive set of tools for task and list man
 - `complete_task` - Mark tasks as completed
 - `remove_task` - Remove tasks from lists
 - `update_task` - Update task properties and metadata
-- `show_tasks` - Display tasks with filtering and sorting options
+- `show_tasks` - Display tasks with filtering options
 - `search_tool` - Search across tasks and lists with advanced filtering
 
 ### List Management Tools

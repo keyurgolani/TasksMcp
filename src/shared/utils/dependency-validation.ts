@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import { logger } from './logger.js';
 
-import type { TodoItem } from '../types/todo.js';
+import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for dependency IDs array
@@ -50,7 +50,7 @@ export interface DependencyValidationResult {
 export function validateDependencyIds(
   taskId: string,
   dependencyIds: string[],
-  allTasks: TodoItem[]
+  allTasks: Task[]
 ): DependencyValidationResult {
   const result: DependencyValidationResult = {
     isValid: true,
@@ -203,7 +203,7 @@ export function formatDependencyValidationError(
 export function detectCircularDependencies(
   taskId: string,
   newDependencies: string[],
-  allTasks: TodoItem[]
+  allTasks: Task[]
 ): string[][] {
   const cycles: string[][] = [];
 
@@ -286,7 +286,7 @@ export function detectCircularDependencies(
 export function validateTaskDependencies(
   taskId: string,
   dependencyIds: string[],
-  allTasks: TodoItem[]
+  allTasks: Task[]
 ): DependencyValidationResult {
   try {
     // Validate input parameters first

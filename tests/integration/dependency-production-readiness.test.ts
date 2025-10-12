@@ -12,29 +12,29 @@ import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { TaskStatus as _TaskStatus } from '../../src/shared/types/todo.js';
+import { TaskStatus as _TaskStatus } from '../../src/shared/types/task.js';
 import { logger } from '../../src/shared/utils/logger.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
-import type { TodoList } from '../../src/shared/types/todo.js';
+import type { TaskList } from '../../src/shared/types/task.js';
 
 describe('Dependency Management Production Readiness Tests', () => {
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let storage: MemoryStorageBackend;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = createTodoListManager(storage);
-    await todoListManager.initialize();
+    taskListManager = createTaskListManager(storage);
+    await taskListManager.initialize();
   });
 
   afterEach(async () => {
-    await todoListManager.shutdown();
+    await taskListManager.shutdown();
     await storage.cleanup?.();
   });
 
@@ -53,19 +53,19 @@ describe('Dependency Management Production Readiness Tests', () => {
 
     switch (toolName) {
       case 'add_task':
-        return await handleAddTask(request, todoListManager);
+        return await handleAddTask(request, taskListManager);
       case 'set_task_dependencies':
-        return await handleSetTaskDependencies(request, todoListManager);
+        return await handleSetTaskDependencies(request, taskListManager);
       case 'get_ready_tasks':
-        return await handleGetReadyTasks(request, todoListManager);
+        return await handleGetReadyTasks(request, taskListManager);
       case 'analyze_task_dependencies':
-        return await handleAnalyzeTaskDependencies(request, todoListManager);
+        return await handleAnalyzeTaskDependencies(request, taskListManager);
       case 'get_list':
-        return await handleGetList(request, todoListManager);
+        return await handleGetList(request, taskListManager);
       case 'search_tool':
-        return await handleSearchTool(request, todoListManager);
+        return await handleSearchTool(request, taskListManager);
       case 'show_tasks':
-        return await handleShowTasks(request, todoListManager);
+        return await handleShowTasks(request, taskListManager);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -85,7 +85,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
       for (const toolTest of toolTests) {
         // Create a test list
-        const testList = await todoListManager.createTodoList({
+        const testList = await taskListManager.createTaskList({
           title: `Test List for ${toolTest.name}`,
           projectTag: 'schema-test',
           tasks: [{ title: 'Test Task', priority: 3 }],
@@ -111,7 +111,7 @@ describe('Dependency Management Production Readiness Tests', () => {
     });
 
     it('should validate input parameters correctly', async () => {
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Parameter Validation Test',
         projectTag: 'validation-test',
         tasks: [{ title: 'Test Task', priority: 3 }],
@@ -143,7 +143,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
   describe('Backward Compatibility', () => {
     it('should maintain compatibility with existing MCP tools', async () => {
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Backward Compatibility Test',
         projectTag: 'compatibility-test',
         tasks: [],
@@ -176,7 +176,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
     it('should handle existing data without dependency information', async () => {
       // Create a list with tasks that don't have dependency information
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Legacy Data Test',
         projectTag: 'legacy-test',
         tasks: [
@@ -206,7 +206,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
   describe('Error Handling and Resilience', () => {
     it('should handle all error scenarios gracefully', async () => {
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Error Handling Test',
         projectTag: 'error-test',
         tasks: [{ title: 'Test Task', priority: 3 }],
@@ -252,7 +252,7 @@ describe('Dependency Management Production Readiness Tests', () => {
     });
 
     it('should maintain data consistency under concurrent access', async () => {
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Concurrency Test',
         projectTag: 'concurrency-test',
         tasks: Array.from({ length: 10 }, (_, i) => ({
@@ -299,7 +299,7 @@ describe('Dependency Management Production Readiness Tests', () => {
   describe('Performance and Scalability', () => {
     it('should meet performance requirements under production load', async () => {
       // Create a production-sized project (100 tasks with realistic dependencies)
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Production Scale Test',
         projectTag: 'production-scale',
         tasks: Array.from({ length: 100 }, (_, i) => ({
@@ -374,9 +374,9 @@ describe('Dependency Management Production Readiness Tests', () => {
       const initialMemory = process.memoryUsage();
 
       // Create multiple large lists
-      const lists: TodoList[] = [];
+      const lists: TaskList[] = [];
       for (let listIndex = 0; listIndex < 5; listIndex++) {
-        const list = await todoListManager.createTodoList({
+        const list = await taskListManager.createTaskList({
           title: `Memory Test List ${listIndex + 1}`,
           projectTag: `memory-test-${listIndex}`,
           tasks: Array.from({ length: 50 }, (_, i) => ({
@@ -419,7 +419,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
   describe('Data Integrity and Validation', () => {
     it('should maintain data integrity across all operations', async () => {
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Data Integrity Test',
         projectTag: 'integrity-test',
         tasks: Array.from({ length: 20 }, (_, i) => ({
@@ -487,7 +487,7 @@ describe('Dependency Management Production Readiness Tests', () => {
 
   describe('User Experience and Usability', () => {
     it('should provide clear and helpful user feedback', async () => {
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'UX Test Project',
         projectTag: 'ux-test',
         tasks: [
@@ -558,7 +558,7 @@ describe('Dependency Management Production Readiness Tests', () => {
   describe('Production Deployment Readiness', () => {
     it('should be ready for production deployment', async () => {
       // Final comprehensive test that validates all aspects
-      const testList = await todoListManager.createTodoList({
+      const testList = await taskListManager.createTaskList({
         title: 'Production Readiness Validation',
         projectTag: 'production-ready',
         tasks: Array.from({ length: 30 }, (_, i) => ({

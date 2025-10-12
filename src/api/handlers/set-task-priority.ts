@@ -4,19 +4,20 @@
 
 import { z } from 'zod';
 
-import { Priority } from '../../shared/types/todo.js';
+import { Priority } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
 import type { TaskResponse } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 const SetTaskPrioritySchema = z.object({
   listId: z.string().uuid(),
@@ -26,7 +27,7 @@ const SetTaskPrioritySchema = z.object({
 
 export async function handleSetTaskPriority(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing set_task_priority request', {
@@ -39,8 +40,8 @@ export async function handleSetTaskPriority(
     // Convert priority number to Priority enum
     const priority = args.priority as Priority;
 
-    // Update the task priority using the TodoListManager's updateTodoList method
-    const result = await todoListManager.updateTodoList({
+    // Update the task priority using the TaskListManager's updateTodoList method
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -50,7 +51,9 @@ export async function handleSetTaskPriority(
     });
 
     // Find the updated task
-    const updatedTask = result.items.find(item => item.id === args.taskId);
+    const updatedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!updatedTask) {
       throw new Error('Task not found after priority update');
     }

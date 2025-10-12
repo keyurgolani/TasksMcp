@@ -19,14 +19,14 @@
  */
 
 import {
-  type TodoList,
-  type TodoItem,
+  type TaskList,
+  type Task,
   type ActionPlan,
   type ActionStep,
   type ImplementationNote,
   TaskStatus,
   Priority,
-} from '../types/todo.js';
+} from '../../shared/types/task.js';
 
 import { logger } from './logger.js';
 
@@ -111,7 +111,7 @@ export class PrettyPrintFormatter {
    * @returns FormattedOutput - The formatted content with metadata
    */
   formatTaskList(
-    list: TodoList,
+    list: TaskList,
     options: Partial<FormatOptions> = {}
   ): FormattedOutput {
     const startTime = performance.now();
@@ -215,7 +215,7 @@ export class PrettyPrintFormatter {
    * Format a single task item
    */
   formatTask(
-    task: TodoItem,
+    task: Task,
     options: Partial<FormatOptions> = {}
   ): FormattedOutput {
     try {
@@ -274,7 +274,7 @@ export class PrettyPrintFormatter {
    * Format a summary of multiple tasks
    */
   formatTaskSummary(
-    tasks: TodoItem[],
+    tasks: Task[],
     options: Partial<FormatOptions> = {}
   ): FormattedOutput {
     try {
@@ -409,11 +409,9 @@ export class PrettyPrintFormatter {
 
       // Format steps
       if (plan.steps.length > 0) {
-        plan.steps
-          .sort((a, b) => a.order - b.order)
-          .forEach((step, index) => {
-            lines.push(this.formatActionStep(step, index + 1, opts));
-          });
+        plan.steps.forEach((step, index) => {
+          lines.push(this.formatActionStep(step, index + 1, opts));
+        });
       } else if (plan.content) {
         // Fallback to content if no structured steps
         const contentLines = plan.content.split('\n');
@@ -431,7 +429,7 @@ export class PrettyPrintFormatter {
 
   // Private helper methods
 
-  private formatListHeader(list: TodoList, opts: FormatOptions): string {
+  private formatListHeader(list: TaskList, opts: FormatOptions): string {
     const title = opts.colorize ? `\x1b[1m${list.title}\x1b[0m` : list.title;
     const projectTag = list.projectTag || list.context || 'default';
     const project = opts.colorize
@@ -448,7 +446,7 @@ export class PrettyPrintFormatter {
     return header;
   }
 
-  private formatListSummary(list: TodoList, opts: FormatOptions): string {
+  private formatListSummary(list: TaskList, opts: FormatOptions): string {
     const lines: string[] = [];
 
     if (opts.includeProgress) {
@@ -467,7 +465,7 @@ export class PrettyPrintFormatter {
   }
 
   private formatTasksWithGrouping(
-    tasks: TodoItem[],
+    tasks: Task[],
     opts: FormatOptions
   ): string[] {
     const lines: string[] = [];
@@ -519,7 +517,7 @@ export class PrettyPrintFormatter {
     return lines;
   }
 
-  private formatTaskHeader(task: TodoItem, opts: FormatOptions): string {
+  private formatTaskHeader(task: Task, opts: FormatOptions): string {
     const statusIcon = this.getStatusIcon(task.status, opts);
     const priorityIcon = this.getPriorityIcon(task.priority, opts);
 
@@ -537,7 +535,7 @@ export class PrettyPrintFormatter {
     return header;
   }
 
-  private formatTaskLine(task: TodoItem, opts: FormatOptions): string {
+  private formatTaskLine(task: Task, opts: FormatOptions): string {
     const lines: string[] = [];
 
     // Main task line
@@ -611,10 +609,7 @@ export class PrettyPrintFormatter {
     return `  ${color}${truncated}${reset}`;
   }
 
-  private formatTaskMetadata(
-    task: TodoItem,
-    opts: FormatOptions
-  ): string | null {
+  private formatTaskMetadata(task: Task, opts: FormatOptions): string | null {
     const metadata: string[] = [];
 
     if (task.estimatedDuration) {
@@ -856,10 +851,10 @@ export class PrettyPrintFormatter {
   // Utility methods
 
   private groupTasks(
-    tasks: TodoItem[],
+    tasks: Task[],
     groupBy: FormatOptions['groupBy']
-  ): Record<string, TodoItem[]> {
-    const groups: Record<string, TodoItem[]> = {};
+  ): Record<string, Task[]> {
+    const groups: Record<string, Task[]> = {};
 
     tasks.forEach(task => {
       let groupKey: string;
@@ -888,7 +883,7 @@ export class PrettyPrintFormatter {
     return groups;
   }
 
-  private calculateTaskStatistics(tasks: TodoItem[]) {
+  private calculateTaskStatistics(tasks: Task[]) {
     const stats = {
       total: tasks.length,
       completed: 0,
@@ -922,7 +917,7 @@ export class PrettyPrintFormatter {
   }
 
   private calculateGroupCount(
-    tasks: TodoItem[],
+    tasks: Task[],
     groupBy: FormatOptions['groupBy']
   ): number {
     if (groupBy === 'none') {
@@ -979,7 +974,7 @@ export class PrettyPrintFormatter {
    * Generate cache key for a list and options
    */
   private generateCacheKey(
-    list: TodoList,
+    list: TaskList,
     options: Partial<FormatOptions>
   ): string {
     const optionsStr = JSON.stringify(options);
@@ -1020,7 +1015,7 @@ export class PrettyPrintFormatter {
    * Format tasks in chunks for lazy loading
    */
   private formatTasksInChunks(
-    items: TodoItem[],
+    items: Task[],
     options: FormatOptions
   ): Array<{
     content: string;

@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../shared/utils/logger.js';
 
 import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList } from '../../shared/types/todo.js';
+import type { TaskList } from '../../shared/types/task.js';
 
 export interface Transaction {
   id: string;
@@ -20,8 +20,8 @@ export interface Transaction {
 export interface TransactionOperation {
   type: 'save' | 'delete';
   key: string;
-  data?: TodoList;
-  backup?: TodoList;
+  data?: TaskList;
+  backup?: TaskList;
   permanent?: boolean;
 }
 
@@ -73,15 +73,14 @@ export class TransactionManager {
   async addSaveOperation(
     transactionId: string,
     key: string,
-    data: TodoList
+    data: TaskList
   ): Promise<void> {
     const transaction = this.getActiveTransaction(transactionId);
 
     // Create backup of existing data if it exists
-    let backup: TodoList | undefined;
+    let backup: TaskList | undefined;
     try {
-      backup =
-        (await this.storage.load(key, { includeArchived: true })) ?? undefined;
+      backup = (await this.storage.load(key, {})) ?? undefined;
     } catch (_error) {
       // Ignore errors when loading backup - item might not exist
       logger.debug('No existing data to backup', { key, transactionId });
@@ -117,7 +116,7 @@ export class TransactionManager {
     const transaction = this.getActiveTransaction(transactionId);
 
     // Create backup of existing data
-    const backup = await this.storage.load(key, { includeArchived: true });
+    const backup = await this.storage.load(key, {});
     if (!backup) {
       throw new Error(`Cannot delete non-existent item: ${key}`);
     }
@@ -293,7 +292,7 @@ export class TransactionManager {
     operations: Array<{
       type: 'save' | 'delete';
       key: string;
-      data?: TodoList;
+      data?: TaskList;
       permanent?: boolean;
     }>
   ): Promise<TransactionResult> {

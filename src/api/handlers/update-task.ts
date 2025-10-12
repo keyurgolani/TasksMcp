@@ -14,7 +14,7 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -23,6 +23,7 @@ import type {
   TaskResponse,
   ExitCriteriaResponse,
 } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for update task request parameters
@@ -39,6 +40,10 @@ const UpdateTaskSchema = z.object({
   description: z.string().max(1000, 'Description too long').optional(),
   estimatedDuration: z.number().min(1, 'Duration must be positive').optional(),
   exitCriteria: z.array(z.string().min(1).max(500)).max(20).optional(),
+  agentPromptTemplate: z
+    .string()
+    .max(10000, 'Agent prompt template too long')
+    .optional(),
 });
 
 /**
@@ -53,7 +58,7 @@ const UpdateTaskSchema = z.object({
  */
 export async function handleUpdateTask(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing update_task request', {
@@ -67,15 +72,16 @@ export async function handleUpdateTask(
       !args.title &&
       !args.description &&
       !args.estimatedDuration &&
-      !args.exitCriteria
+      !args.exitCriteria &&
+      !args.agentPromptTemplate
     ) {
       throw new Error(
-        'At least one field to update must be provided (title, description, estimatedDuration, or exitCriteria)'
+        'At least one field to update must be provided (title, description, estimatedDuration, exitCriteria, or agentPromptTemplate)'
       );
     }
 
     // Update the task with provided fields
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -86,10 +92,15 @@ export async function handleUpdateTask(
           estimatedDuration: args.estimatedDuration,
         }),
         ...(args.exitCriteria && { exitCriteria: args.exitCriteria }),
+        ...(args.agentPromptTemplate !== undefined && {
+          agentPromptTemplate: args.agentPromptTemplate,
+        }),
       },
     });
 
-    const updatedTask = result.items.find(item => item.id === args.taskId);
+    const updatedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!updatedTask) {
       throw new Error('Task not found after update');
     }
@@ -107,7 +118,6 @@ export async function handleUpdateTask(
               : new Date(criteria.metAt).toISOString(),
         }),
         ...(criteria.notes && { notes: criteria.notes }),
-        order: criteria.order,
       }));
 
     const response: TaskResponse = {

@@ -2,7 +2,7 @@ name: Auto Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'src/**'
       - 'package.json'
@@ -50,14 +50,14 @@ jobs:
             echo "Manual release triggered: ${{ github.event.inputs.release-type }}"
             exit 0
           fi
-          
+
           echo "🔍 Analyzing changes to determine release necessity..."
-          
+
           # Get changed files
           CHANGED_FILES=$(git diff HEAD~1 HEAD --name-only)
           echo "Changed files:"
           echo "$CHANGED_FILES"
-          
+
           # Check for version changes in package.json
           if echo "$CHANGED_FILES" | grep -q "package.json"; then
             echo "📦 package.json changed, checking version..."
@@ -73,20 +73,20 @@ jobs:
               exit 0
             fi
           fi
-          
+
           # Analyze types of changes
           CORE_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/core/" || echo "0")
           HANDLER_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/handlers/" || echo "0")
           TYPE_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/types/" || echo "0")
           CONFIG_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^src/config/" || echo "0")
-          
+
           # Check for breaking changes in commit messages
           BREAKING_COMMITS=$(git log HEAD~1..HEAD --pretty=format:"%s" | grep -c "!" || echo "0")
-          
+
           # Check commit types for semantic versioning
           FEAT_COMMITS=$(git log HEAD~1..HEAD --pretty=format:"%s" | grep -c "^feat" || echo "0")
           FIX_COMMITS=$(git log HEAD~1..HEAD --pretty=format:"%s" | grep -c "^fix" || echo "0")
-          
+
           echo "📊 Change Analysis:"
           echo "- Core changes: $CORE_CHANGES"
           echo "- Handler changes: $HANDLER_CHANGES"
@@ -95,7 +95,7 @@ jobs:
           echo "- Breaking commits: $BREAKING_COMMITS"
           echo "- Feature commits: $FEAT_COMMITS"
           echo "- Fix commits: $FIX_COMMITS"
-          
+
           # Determine release type based on changes
           if [[ $BREAKING_COMMITS -gt 0 ]]; then
             echo "🚨 Breaking changes detected - major release needed"
@@ -160,7 +160,7 @@ jobs:
         id: version
         run: |
           RELEASE_TYPE="${{ needs.check-changes.outputs.release-type }}"
-          
+
           if [[ "$RELEASE_TYPE" == "manual" ]]; then
             # Version already changed manually, just get current version
             CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -186,18 +186,18 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           echo "Generating changelog for version ${VERSION}"
           echo "Previous tag: ${LAST_TAG}"
-          
+
           # Create changelog file
           cat > changelog.md << EOF
           ## [${VERSION}] - $(date +%Y-%m-%d)
-          
+
           ### 🔄 Auto-Release Summary
           This version was automatically generated based on detected changes.
           EOF
-          
+
           if [[ -n "$LAST_TAG" ]]; then
             COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s (%h)" --no-merges)
             
@@ -217,7 +217,7 @@ jobs:
           - **Documentation:** ${DOCS_COUNT}
           - **Maintenance:** ${CHORE_COUNT}
           - **Other changes:** ${OTHER_COUNT}
-          
+
           ### 📝 Detailed Changes" >> changelog.md
               
               # Add commit details
@@ -243,15 +243,15 @@ jobs:
           - **MCP tools implemented:** 7
           - **Production ready:** ✅" >> changelog.md
           fi
-          
+
           echo "
           ### 📦 Installation
           \`\`\`bash
           npx task-list-mcp@${VERSION}
           \`\`\`" >> changelog.md
-          
+
           CHANGELOG_ENTRY=$(cat changelog.md)
-          
+
           echo "changelog-entry<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -261,7 +261,7 @@ jobs:
         run: |
           # Get dynamic commit summary
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           if [[ -n "$LAST_TAG" ]]; then
             COMMITS_COUNT=$(git rev-list ${LAST_TAG}..HEAD --count)
             FILES_CHANGED=$(git diff --name-only ${LAST_TAG}..HEAD | wc -l)
@@ -275,17 +275,17 @@ jobs:
             FILES_CHANGED=$(find src -type f -name "*.ts" | wc -l)
             CHANGE_TYPES="initial release"
           fi
-          
+
           git commit -m "chore: bump version to ${{ steps.version.outputs.version }}
 
           Auto-generated version bump for release.
-          
+
           📊 Release Summary:
           - Commits: ${COMMITS_COUNT}
           - Files changed: ${FILES_CHANGED}
           - Primary changes: ${CHANGE_TYPES}
           - Release type: ${{ needs.check-changes.outputs.release-type }}
-          
+
           This version bump was automatically generated based on detected
           source code changes and follows semantic versioning principles."
 
@@ -293,7 +293,7 @@ jobs:
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           echo "Creating tag: $TAG"
-          
+
           # Check if tag already exists
           if git tag -l | grep -q "^${TAG}$"; then
             echo "⚠️ Tag $TAG already exists, skipping tag creation"
@@ -303,7 +303,7 @@ jobs:
             git tag $TAG
             echo "✅ Created tag: $TAG"
           fi
-          
+
           # Push changes and tags
           git push origin main --tags
         env:

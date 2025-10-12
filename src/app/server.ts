@@ -19,6 +19,7 @@ import {
   handleDeleteList,
   handleAddTask,
   handleUpdateTask,
+  handleGetAgentPrompt,
   handleRemoveTask,
   handleCompleteTask,
   handleSetTaskPriority,
@@ -32,7 +33,7 @@ import {
   handleUpdateExitCriteria,
 } from '../api/handlers/index.js';
 import { MCP_TOOLS } from '../api/tools/definitions.js';
-import { TodoListManager } from '../domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../domain/lists/task-list-manager.js';
 import {
   ConfigManager,
   type ServerConfig,
@@ -54,7 +55,7 @@ import { getVersionInfo } from '../shared/version.js';
 
 class McpTaskManagerServer {
   private readonly server: Server;
-  private todoListManager: TodoListManager | null = null;
+  private todoListManager: TaskListManager | null = null;
 
   private readonly config: ServerConfig;
 
@@ -79,9 +80,9 @@ class McpTaskManagerServer {
     this.setupErrorHandling();
   }
 
-  private ensureTodoListManager(): TodoListManager {
+  private ensureTaskListManager(): TaskListManager {
     if (!this.todoListManager) {
-      throw new Error('TodoListManager not initialized. Call start() first.');
+      throw new Error('TaskListManager not initialized. Call start() first.');
     }
     return this.todoListManager;
   }
@@ -224,7 +225,7 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTodoListManager();
+    const todoListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'create_list':
@@ -260,7 +261,7 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTodoListManager();
+    const todoListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'add_task':
@@ -268,6 +269,12 @@ class McpTaskManagerServer {
 
       case 'update_task':
         return await handleUpdateTask(
+          request as CallToolRequest,
+          todoListManager
+        );
+
+      case 'get_agent_prompt':
+        return await handleGetAgentPrompt(
           request as CallToolRequest,
           todoListManager
         );
@@ -308,7 +315,7 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTodoListManager();
+    const todoListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'search_tool':
@@ -335,7 +342,7 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTodoListManager();
+    const todoListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'set_task_dependencies':
@@ -368,7 +375,7 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTodoListManager();
+    const todoListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'set_task_exit_criteria':
@@ -481,6 +488,7 @@ class McpTaskManagerServer {
     return [
       'add_task',
       'update_task',
+      'get_agent_prompt',
       'remove_task',
       'complete_task',
       'set_task_priority',
@@ -527,8 +535,8 @@ class McpTaskManagerServer {
       });
 
       // Create repository adapter for backward compatibility
-      const { TodoListRepositoryAdapter } = await import(
-        '../domain/repositories/todo-list-repository.adapter.js'
+      const { TaskListRepositoryAdapter } = await import(
+        '../domain/repositories/task-list-repository.adapter.js'
       );
 
       // Get the first healthy backend for backward compatibility with ProjectManager
@@ -538,10 +546,10 @@ class McpTaskManagerServer {
       }
 
       // Create adapter that uses the multi-source repository
-      const repository = new TodoListRepositoryAdapter(storageBackend);
+      const repository = new TaskListRepositoryAdapter(storageBackend);
 
-      // Create TodoListManager with repository
-      this.todoListManager = new TodoListManager(repository, storageBackend);
+      // Create TaskListManager with repository
+      this.todoListManager = new TaskListManager(repository, storageBackend);
       await this.todoListManager.initialize();
 
       // Log health status of all sources
@@ -579,7 +587,7 @@ class McpTaskManagerServer {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      return await this.ensureTodoListManager().healthCheck();
+      return await this.ensureTaskListManager().healthCheck();
     } catch (error) {
       logger.error('Server health check failed', { error });
       return false;

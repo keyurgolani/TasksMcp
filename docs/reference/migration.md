@@ -156,7 +156,7 @@ npx task-list-mcp@latest --health
   "parameters": {
     "query": "urgent",
     "priority": [4, 5],
-    "sortBy": "priority"
+
   }
 }
 ```
@@ -314,8 +314,7 @@ npx task-list-mcp@latest --health
     {
       "id": "uuid",
       "description": "string",
-      "isMet": false,
-      "order": 1
+      "isMet": false
     }
   ],
   "dependencies": ["task-uuid-1", "task-uuid-2"],

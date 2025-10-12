@@ -11,6 +11,7 @@
 import { z, ZodSchema, ZodError } from 'zod';
 
 import { logger } from './logger.js';
+import { TemplateEngine } from './template-engine.js';
 
 /**
  * Standard validation result interface
@@ -441,6 +442,31 @@ export class Validator {
     return {
       isValid: true,
       data: validatedData as T,
+    };
+  }
+
+  /**
+   * Validate agent prompt template
+   */
+  validateAgentPromptTemplate(template: string): ValidationResult<string> {
+    // First validate length
+    const lengthResult = this.validateStringLength(template, 0, 10000);
+    if (!lengthResult.isValid) {
+      return lengthResult;
+    }
+
+    // Then validate template syntax
+    const templateValidation = TemplateEngine.validateTemplate(template);
+    if (!templateValidation.isValid) {
+      return {
+        isValid: false,
+        errors: templateValidation.errors,
+      };
+    }
+
+    return {
+      isValid: true,
+      data: template,
     };
   }
 

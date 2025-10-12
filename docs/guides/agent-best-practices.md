@@ -185,8 +185,7 @@ Before beginning work, thoroughly research the current state:
   "name": "search_tool",
   "arguments": {
     "query": "authentication security",
-    "includeCompleted": true,
-    "sortBy": "updatedAt"
+    "includeCompleted": true
   }
 }
 ```
@@ -352,8 +351,7 @@ Before marking a task complete, ensure every exit criterion is satisfied:
   "name": "search_tool",
   "arguments": {
     "tags": ["frontend", "ui"],
-    "status": ["completed"],
-    "sortBy": "updatedAt"
+    "status": ["completed"]
   }
 }
 

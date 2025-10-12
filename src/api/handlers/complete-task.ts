@@ -5,14 +5,14 @@
 import { z } from 'zod';
 
 import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
-import { TaskStatus } from '../../shared/types/todo.js';
+import { TaskStatus, type ExitCriteria } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
@@ -21,6 +21,7 @@ import type {
   TaskResponse,
   ExitCriteriaResponse,
 } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 const CompleteTaskSchema = z.object({
   listId: z.string().uuid(),
@@ -29,7 +30,7 @@ const CompleteTaskSchema = z.object({
 
 export async function handleCompleteTask(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing complete_task request', {
@@ -39,16 +40,18 @@ export async function handleCompleteTask(
     const args = CompleteTaskSchema.parse(request.params?.arguments);
 
     // First, get the current task to check exit criteria
-    const currentList = await todoListManager.getTodoList({
+    const currentList = await todoListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
 
     if (!currentList) {
-      throw new Error(`Todo list not found: ${args.listId}`);
+      throw new Error(`Task list not found: ${args.listId}`);
     }
 
-    const task = currentList.items.find(item => item.id === args.taskId);
+    const task = currentList.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!task) {
       throw new Error(`Task not found: ${args.taskId}`);
     }
@@ -74,10 +77,12 @@ export async function handleCompleteTask(
                 error: 'Cannot complete task',
                 reason: completionReadiness.reason,
                 recommendation: completionReadiness.recommendation,
-                unmetCriteria: completionReadiness.unmetCriteria.map(c => ({
-                  id: c.id,
-                  description: c.description,
-                })),
+                unmetCriteria: completionReadiness.unmetCriteria.map(
+                  (c: ExitCriteria) => ({
+                    id: c.id,
+                    description: c.description,
+                  })
+                ),
               },
               null,
               2
@@ -88,7 +93,7 @@ export async function handleCompleteTask(
       };
     }
 
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_status',
       itemId: args.taskId,
@@ -97,7 +102,9 @@ export async function handleCompleteTask(
       },
     });
 
-    const completedTask = result.items.find(item => item.id === args.taskId);
+    const completedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!completedTask) {
       throw new Error('Task not found after completion');
     }
@@ -108,7 +115,7 @@ export async function handleCompleteTask(
 
     // Format exit criteria for response
     const exitCriteriaResponse: ExitCriteriaResponse[] =
-      completedTask.exitCriteria.map(criteria => ({
+      completedTask.exitCriteria.map((criteria: ExitCriteria) => ({
         id: criteria.id,
         description: criteria.description,
         isMet: criteria.isMet,
@@ -119,7 +126,6 @@ export async function handleCompleteTask(
               : new Date(criteria.metAt).toISOString(),
         }),
         ...(criteria.notes && { notes: criteria.notes }),
-        order: criteria.order,
       }));
 
     const response = {

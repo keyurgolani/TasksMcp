@@ -33,11 +33,11 @@ describe('Dependency Tool Registration', () => {
   });
 
   describe('Tool Discovery', () => {
-    it('should include all 17 MCP tools in the registry', () => {
-      expect(MCP_TOOLS).toHaveLength(17);
+    it('should include all 18 MCP tools in the registry', () => {
+      expect(MCP_TOOLS).toHaveLength(18);
 
       const toolNames = getToolNames();
-      expect(toolNames).toHaveLength(17);
+      expect(toolNames).toHaveLength(18);
     });
 
     it('should include the 3 new dependency management tools', () => {
@@ -58,9 +58,10 @@ describe('Dependency Tool Registration', () => {
       expect(toolNames).toContain('list_all_lists');
       expect(toolNames).toContain('delete_list');
 
-      // Task management tools (6 tools)
+      // Task management tools (7 tools)
       expect(toolNames).toContain('add_task');
       expect(toolNames).toContain('update_task');
+      expect(toolNames).toContain('get_agent_prompt');
       expect(toolNames).toContain('remove_task');
       expect(toolNames).toContain('complete_task');
       expect(toolNames).toContain('set_task_priority');
@@ -163,10 +164,11 @@ describe('Dependency Tool Registration', () => {
       ];
       listTools.forEach(tool => expect(toolNames).toContain(tool));
 
-      // Task Management Tools (6 tools)
+      // Task Management Tools (7 tools)
       const taskTools = [
         'add_task',
         'update_task',
+        'get_agent_prompt',
         'remove_task',
         'complete_task',
         'set_task_priority',

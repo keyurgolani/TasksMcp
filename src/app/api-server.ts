@@ -11,7 +11,7 @@
  * - Error handling and recovery
  */
 
-import { TodoListManager } from '../domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../domain/lists/task-list-manager.js';
 import { ActionPlanManager } from '../domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../domain/tasks/exit-criteria-manager.js';
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
     // Create domain managers
     logger.info('Creating domain managers...');
 
-    const todoListManager = new TodoListManager(initResult.repository);
+    const todoListManager = new TaskListManager(initResult.repository);
 
     const dependencyManager = new DependencyResolver(initResult.repository);
 

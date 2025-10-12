@@ -5,34 +5,34 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 
 import { handleSetTaskDependencies } from '../../../../src/api/handlers/set-task-dependencies.js';
-import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
 import {
   TaskStatus,
   Priority,
-  type TodoList,
-  type TodoItem,
-} from '../../../../src/shared/types/todo.js';
-import { createTodoListManager } from '../../../utils/test-helpers.js';
+  type TaskList,
+  type Task,
+} from '../../../../src/shared/types/task.js';
+import { createTaskListManager } from '../../../utils/test-helpers.js';
 
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 describe('SetTaskDependenciesHandler', () => {
-  let manager: TodoListManager;
+  let manager: TaskListManager;
   let storage: MemoryStorageBackend;
-  let testList: TodoList;
-  let task1: TodoItem;
-  let task2: TodoItem;
-  let task3: TodoItem;
+  let testList: TaskList;
+  let task1: Task;
+  let task2: Task;
+  let task3: Task;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize(); // Initialize storage before creating manager
-    manager = createTodoListManager(storage);
+    manager = createTaskListManager(storage);
     await manager.initialize();
 
     // Create a test list with multiple tasks
-    testList = await manager.createTodoList({
+    testList = await manager.createTaskList({
       title: 'Test Dependencies List',
       description: 'A list for testing dependencies',
       tasks: [
@@ -200,7 +200,7 @@ describe('SetTaskDependenciesHandler', () => {
       const result = await handleSetTaskDependencies(request, manager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0]?.text).toContain('Todo list with ID');
+      expect(result.content[0]?.text).toContain('Task list with ID');
       expect(result.content[0]?.text).toContain('not found');
     });
 
@@ -307,7 +307,7 @@ describe('SetTaskDependenciesHandler', () => {
       // Create more tasks to exceed the limit
       const extraTasks = [];
       for (let i = 0; i < 52; i++) {
-        const extraList = await manager.createTodoList({
+        const extraList = await manager.createTaskList({
           title: `Extra List ${i}`,
           tasks: [{ title: `Extra Task ${i}` }],
         });
@@ -413,7 +413,7 @@ describe('SetTaskDependenciesHandler', () => {
   describe('Edge cases', () => {
     test('handles completed task dependencies with warnings', async () => {
       // Complete task1
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task1.id,
@@ -479,8 +479,8 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('handles storage errors gracefully', async () => {
       // Mock storage to throw an error
-      const _originalGetTodoList = manager.getTodoList;
-      vi.spyOn(manager, 'getTodoList').mockRejectedValueOnce(
+      const _originalGetTaskList = manager.getTaskList;
+      vi.spyOn(manager, 'getTaskList').mockRejectedValueOnce(
         new Error('Storage error')
       );
 
@@ -545,7 +545,7 @@ describe('SetTaskDependenciesHandler', () => {
 
     test('includes warnings in response when present', async () => {
       // Complete task1 to generate warnings
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task1.id,

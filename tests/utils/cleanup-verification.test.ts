@@ -4,10 +4,9 @@
 
 import { describe, it, expect, beforeEach as _beforeEach } from 'vitest';
 
-import { TodoListManager as _TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../setup.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
 describe('Test Cleanup System Verification', () => {
   it('should automatically clean up storage instances', async () => {
@@ -50,7 +49,7 @@ describe('Test Cleanup System Verification', () => {
     const storage = new MemoryStorageBackend();
     await storage.initialize();
 
-    const manager = createTodoListManager(storage);
+    const manager = createTaskListManager(storage);
     await manager.initialize();
 
     // Register for cleanup
@@ -58,13 +57,13 @@ describe('Test Cleanup System Verification', () => {
     TestCleanup.registerManager(manager);
 
     // Create a test list
-    const todoList = await manager.createTodoList({
+    const taskList = await manager.createTaskList({
       title: 'Cleanup Test List',
       description: 'Testing cleanup functionality',
       context: 'cleanup-test',
     });
 
-    expect(todoList.title).toBe('Cleanup Test List');
+    expect(taskList.title).toBe('Cleanup Test List');
 
     // Cleanup will be called automatically by afterEach in setup.ts
     // The test passes if no errors occur during cleanup
@@ -151,8 +150,8 @@ describe('Test Cleanup System Verification', () => {
     await storage1.initialize();
     await storage2.initialize();
 
-    const manager1 = createTodoListManager(storage1);
-    const manager2 = createTodoListManager(storage2);
+    const manager1 = createTaskListManager(storage1);
+    const manager2 = createTaskListManager(storage2);
 
     await manager1.initialize();
     await manager2.initialize();
@@ -169,12 +168,12 @@ describe('Test Cleanup System Verification', () => {
     await TestCleanup.registerEnvVar('MULTI_TEST_3', 'value3');
 
     // Create some data in both storages
-    const testList1 = await manager1.createTodoList({
+    const testList1 = await manager1.createTaskList({
       title: 'Multi Test List 1',
       context: 'multi-test-1',
     });
 
-    const testList2 = await manager2.createTodoList({
+    const testList2 = await manager2.createTaskList({
       title: 'Multi Test List 2',
       context: 'multi-test-2',
     });

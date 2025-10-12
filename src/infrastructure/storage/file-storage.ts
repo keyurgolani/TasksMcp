@@ -21,7 +21,7 @@ import {
 import { memoryLeakPrevention } from '../../shared/utils/memory-leak-prevention.js';
 import { RetryLogic } from '../../shared/utils/retry-logic.js';
 
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
 
 export interface FileStorageConfig {
   dataDirectory: string;
@@ -34,7 +34,7 @@ export class FileStorageBackend extends StorageBackend {
   private initialized = false;
   private readonly indexCache = new Map<string, unknown>();
   private readonly contextIndex = new Map<string, Set<string>>(); // context -> set of list IDs
-  private readonly listMetadataCache = new Map<string, TodoListSummary>(); // listId -> summary
+  private readonly listMetadataCache = new Map<string, TaskListSummary>(); // listId -> summary
   private cleanupInterval: NodeJS.Timeout | undefined;
   private isShuttingDown = false;
   private readonly MAX_INDEX_CACHE_SIZE = 5; // Further reduced cache size
@@ -97,7 +97,7 @@ export class FileStorageBackend extends StorageBackend {
 
   async save(
     key: string,
-    data: TodoList,
+    data: TaskList,
     options?: SaveOptions
   ): Promise<void> {
     if (!this.initialized) {
@@ -126,7 +126,7 @@ export class FileStorageBackend extends StorageBackend {
       // Ensure parent directory exists
       await this.ensureDirectoryExists(dirname(filePath));
 
-      // Write to temporary file first (atomic operation) with optimized serialization
+      // Write to temporary file first (atomic operation) with serialization
       const jsonData = JsonOptimizer.serializeTodoList(data, {
         prettyPrint: false, // Skip pretty printing for performance
         includeMetadata: true,
@@ -174,7 +174,7 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  async load(key: string, options?: LoadOptions): Promise<TodoList | null> {
+  async load(key: string, _options?: LoadOptions): Promise<TaskList | null> {
     if (!this.initialized) {
       throw new Error('Storage backend not initialized');
     }
@@ -194,11 +194,6 @@ export class FileStorageBackend extends StorageBackend {
         validateSchema: false, // Skip validation for performance
         convertDates: true,
       });
-
-      // Filter archived lists if requested
-      if (options?.includeArchived !== true && data.isArchived) {
-        return null;
-      }
 
       logger.debug('Todo list loaded from file storage', {
         key,
@@ -225,7 +220,7 @@ export class FileStorageBackend extends StorageBackend {
 
     try {
       if (!(await this.fileExists(filePath))) {
-        throw new Error(`Todo list not found: ${key}`);
+        throw new Error(`Task list not found: ${key}`);
       }
 
       if (permanent) {
@@ -248,7 +243,7 @@ export class FileStorageBackend extends StorageBackend {
         });
       } else {
         // Archive instead of delete
-        const data = await this.load(key, { includeArchived: true });
+        const data = await this.load(key, {});
         if (data) {
           data.isArchived = true;
           data.updatedAt = new Date();
@@ -265,7 +260,7 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  async list(options?: ListOptions): Promise<TodoListSummary[]> {
+  async list(options?: ListOptions): Promise<TaskListSummary[]> {
     if (!this.initialized) {
       throw new Error('Storage backend not initialized');
     }
@@ -294,7 +289,7 @@ export class FileStorageBackend extends StorageBackend {
           .map(file => file.replace('.json', ''));
       }
 
-      const summaries: TodoListSummary[] = [];
+      const summaries: TaskListSummary[] = [];
 
       // Process lists in batches for better performance
       const batchSize = 50;
@@ -307,9 +302,7 @@ export class FileStorageBackend extends StorageBackend {
 
             if (!summary) {
               // Load from disk if not in cache
-              const data = await this.load(key, {
-                includeArchived: options?.includeArchived ?? false,
-              });
+              const data = await this.load(key, {});
 
               if (!data) {
                 return null;
@@ -329,14 +322,6 @@ export class FileStorageBackend extends StorageBackend {
               };
 
               this.updateMetadataCache(key, data);
-            }
-
-            // Apply archived filter for cached summaries
-            if (
-              options?.includeArchived !== true &&
-              summary.isArchived === true
-            ) {
-              return null;
             }
 
             return summary;
@@ -440,7 +425,7 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  private validateTodoList(data: TodoList): void {
+  private validateTodoList(data: TaskList): void {
     if (!data.id || typeof data.id !== 'string') {
       throw new Error('Invalid todo list: missing or invalid id');
     }
@@ -469,7 +454,7 @@ export class FileStorageBackend extends StorageBackend {
    */
   private async updateIndexesSafely(
     key: string,
-    data: TodoList
+    data: TaskList
   ): Promise<void> {
     try {
       await RetryLogic.execute(
@@ -488,7 +473,7 @@ export class FileStorageBackend extends StorageBackend {
    */
   private async updateIndexesWithLock(
     key: string,
-    data: TodoList
+    data: TaskList
   ): Promise<void> {
     const contextIndexPath = join(
       this.getIndexesDirectory(),
@@ -509,7 +494,7 @@ export class FileStorageBackend extends StorageBackend {
    */
   private async doUpdateIndexes(
     key: string,
-    data: TodoList,
+    data: TaskList,
     contextIndexPath: string
   ): Promise<void> {
     // Load current index (don't use cache during locked operation for consistency)
@@ -743,13 +728,13 @@ export class FileStorageBackend extends StorageBackend {
     diskUsage: number;
   }> {
     try {
-      const summaries = await this.list({ includeArchived: true });
+      const summaries = await this.list({});
       let totalItems = 0;
       let archivedLists = 0;
 
       for (const summary of summaries) {
         totalItems += summary.totalItems;
-        const data = await this.load(summary.id, { includeArchived: true });
+        const data = await this.load(summary.id, {});
         if (data?.isArchived === true) {
           archivedLists++;
         }
@@ -1112,7 +1097,7 @@ export class FileStorageBackend extends StorageBackend {
         // If that fails, create a minimal valid file
         const filePath = this.getFilePath(key);
         if (!(await this.fileExists(filePath))) {
-          const minimalList: TodoList = {
+          const minimalList: TaskList = {
             id: key,
             title: 'Recovered List',
             description: 'This list was recovered from corruption',
@@ -1186,8 +1171,8 @@ export class FileStorageBackend extends StorageBackend {
   /**
    * Update metadata cache for fast list operations
    */
-  private updateMetadataCache(key: string, data: TodoList): void {
-    const summary: TodoListSummary = {
+  private updateMetadataCache(key: string, data: TaskList): void {
+    const summary: TaskListSummary = {
       id: data.id,
       title: data.title,
       progress: data.progress,
@@ -1249,8 +1234,8 @@ export class FileStorageBackend extends StorageBackend {
   async loadAllData(): Promise<
     import('../../shared/types/storage.js').StorageData
   > {
-    const lists = await this.list({ includeArchived: true });
-    const todoLists: TodoList[] = [];
+    const lists = await this.list({});
+    const todoLists: TaskList[] = [];
 
     for (const summary of lists) {
       const list = await this.load(summary.id);

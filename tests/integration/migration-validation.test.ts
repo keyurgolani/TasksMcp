@@ -3,14 +3,14 @@ import path from 'path';
 
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
-import { TodoListRepositoryAdapter } from '../../src/domain/repositories/todo-list-repository.adapter.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
+import { TaskListRepositoryAdapter } from '../../src/domain/repositories/task-list-repository.adapter.js';
 import { FileStorageBackend } from '../../src/infrastructure/storage/file-storage-backend.js';
 import { StorageFactory } from '../../src/infrastructure/storage/storage-factory.js';
 
 describe('Backward Compatibility Tests', () => {
-  let todoListManager: TodoListManager;
-  let repository: TodoListRepositoryAdapter;
+  let taskListManager: TaskListManager;
+  let repository: TaskListRepositoryAdapter;
   let storage: FileStorageBackend;
 
   beforeEach(async () => {
@@ -22,16 +22,16 @@ describe('Backward Compatibility Tests', () => {
       },
     })) as FileStorageBackend;
 
-    repository = new TodoListRepositoryAdapter(storage);
+    repository = new TaskListRepositoryAdapter(storage);
 
-    // TodoListManager creates its own managers internally
-    todoListManager = new TodoListManager(repository, storage);
-    await todoListManager.initialize();
+    // TaskListManager creates its own managers internally
+    taskListManager = new TaskListManager(repository, storage);
+    await taskListManager.initialize();
   });
 
   it('should read existing data files', async () => {
     // Get all lists
-    const lists = await todoListManager.listTodoLists({});
+    const lists = await taskListManager.listTaskLists({});
 
     // Should be able to get lists (may be empty in CI)
     expect(Array.isArray(lists)).toBe(true);
@@ -41,7 +41,7 @@ describe('Backward Compatibility Tests', () => {
       // Test first 10
       expect(list).toHaveProperty('id');
       expect(list).toHaveProperty('title');
-      // TodoListSummary has different properties than full TodoList
+      // TaskListSummary has different properties than full TaskList
       expect(list).toHaveProperty('totalItems');
     }
   });
@@ -63,7 +63,7 @@ describe('Backward Compatibility Tests', () => {
     const firstListId = jsonFiles[0].replace('.json', '');
 
     // Load the list
-    const list = await todoListManager.getTodoList({ listId: firstListId });
+    const list = await taskListManager.getTaskList({ listId: firstListId });
 
     expect(list).toBeDefined();
     expect(list?.id).toBe(firstListId);
@@ -71,7 +71,7 @@ describe('Backward Compatibility Tests', () => {
   });
 
   it('should handle lists with tasks', async () => {
-    const lists = await todoListManager.listTodoLists({});
+    const lists = await taskListManager.listTaskLists({});
 
     // Find a list with tasks
     const listWithTasks = lists.find(l => l.totalItems > 0);
@@ -80,7 +80,7 @@ describe('Backward Compatibility Tests', () => {
       expect(listWithTasks.totalItems).toBeGreaterThan(0);
 
       // Load the full list to check tasks
-      const fullList = await todoListManager.getTodoList({
+      const fullList = await taskListManager.getTaskList({
         listId: listWithTasks.id,
       });
       expect(fullList).toBeDefined();
@@ -94,11 +94,11 @@ describe('Backward Compatibility Tests', () => {
   });
 
   it('should handle lists with dependencies', async () => {
-    const lists = await todoListManager.listTodoLists({});
+    const lists = await taskListManager.listTaskLists({});
 
     // Check a few lists for dependencies
     for (const summary of lists.slice(0, 10)) {
-      const list = await todoListManager.getTodoList({ listId: summary.id });
+      const list = await taskListManager.getTaskList({ listId: summary.id });
       if (
         list &&
         list.items.some(
@@ -119,27 +119,27 @@ describe('Backward Compatibility Tests', () => {
 
   it('should maintain data format compatibility', async () => {
     // Create a new list
-    const newList = await todoListManager.createTodoList({
+    const newList = await taskListManager.createTaskList({
       title: 'Backward Compatibility Test List',
       description: 'Testing data format compatibility',
     });
 
     // Read it back
-    const retrieved = await todoListManager.getTodoList({ listId: newList.id });
+    const retrieved = await taskListManager.getTaskList({ listId: newList.id });
 
     expect(retrieved).toBeDefined();
     expect(retrieved?.id).toBe(newList.id);
     expect(retrieved?.title).toBe(newList.title);
 
     // Clean up
-    await todoListManager.deleteTodoList({
+    await taskListManager.deleteTaskList({
       listId: newList.id,
       permanent: true,
     });
   });
 
   it('should handle archived lists', async () => {
-    const lists = await todoListManager.listTodoLists({
+    const lists = await taskListManager.listTaskLists({
       includeArchived: true,
     });
 
@@ -148,7 +148,7 @@ describe('Backward Compatibility Tests', () => {
   });
 
   it('should search across existing lists', async () => {
-    const results = await todoListManager.listTodoLists({ limit: 10 });
+    const results = await taskListManager.listTaskLists({ limit: 10 });
 
     expect(Array.isArray(results)).toBe(true);
     expect(results.length).toBeLessThanOrEqual(10);

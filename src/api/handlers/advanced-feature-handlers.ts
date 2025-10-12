@@ -16,8 +16,10 @@ import type {
 import type {
   ExitCriteria,
   ActionPlan,
+  ActionStep,
   ImplementationNote,
-} from '../../shared/types/todo.js';
+} from '../../shared/types/task.js';
+import type { Task } from '../../shared/types/task.js';
 import type { Response } from 'express';
 
 /**
@@ -28,7 +30,6 @@ import type { Response } from 'express';
 const addExitCriteriaSchema = z.object({
   listId: z.string().uuid().optional(), // Optional in body, can come from query
   description: z.string().min(1).max(500),
-  order: z.number().min(0).optional(),
 });
 
 // Schema for updating exit criteria
@@ -92,9 +93,8 @@ export async function getTaskExitCriteriaHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -102,7 +102,7 @@ export async function getTaskExitCriteriaHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -173,9 +173,8 @@ export async function addExitCriteriaHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -191,7 +190,7 @@ export async function addExitCriteriaHandler(
     }
 
     // Find the task
-    const task = list.items.find(item => item.id === taskId);
+    const task = list.items.find((item: Task) => item.id === taskId);
 
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -202,9 +201,6 @@ export async function addExitCriteriaHandler(
       taskId,
       description: input.description,
     };
-    if (input.order !== undefined) {
-      createInput.order = input.order;
-    }
     const newCriteria =
       await context.exitCriteriaManager.createExitCriteria(createInput);
 
@@ -212,7 +208,7 @@ export async function addExitCriteriaHandler(
     const updatedExitCriteria = [...(task.exitCriteria || []), newCriteria];
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -222,7 +218,9 @@ export async function addExitCriteriaHandler(
     });
 
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === taskId);
+    const updatedTask = updatedList.items.find(
+      (item: Task) => item.id === taskId
+    );
 
     if (!updatedTask) {
       throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
@@ -302,9 +300,8 @@ export async function updateExitCriteriaHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -320,7 +317,7 @@ export async function updateExitCriteriaHandler(
     }
 
     // Find the task
-    const task = list.items.find(item => item.id === taskId);
+    const task = list.items.find((item: Task) => item.id === taskId);
 
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -364,7 +361,7 @@ export async function updateExitCriteriaHandler(
     updatedExitCriteria[criteriaIndex] = updatedCriteria;
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -374,7 +371,9 @@ export async function updateExitCriteriaHandler(
     });
 
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === taskId);
+    const updatedTask = updatedList.items.find(
+      (item: Task) => item.id === taskId
+    );
 
     if (!updatedTask) {
       throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
@@ -441,9 +440,8 @@ export async function getActionPlanHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -451,7 +449,7 @@ export async function getActionPlanHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -536,9 +534,8 @@ export async function createActionPlanHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -554,7 +551,7 @@ export async function createActionPlanHandler(
     }
 
     // Find the task
-    const task = list.items.find(item => item.id === taskId);
+    const task = list.items.find((item: Task) => item.id === taskId);
 
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -576,7 +573,7 @@ export async function createActionPlanHandler(
     });
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -586,7 +583,9 @@ export async function createActionPlanHandler(
     });
 
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === taskId);
+    const updatedTask = updatedList.items.find(
+      (item: Task) => item.id === taskId
+    );
 
     if (!updatedTask) {
       throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
@@ -667,9 +666,8 @@ export async function updateActionPlanHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -685,7 +683,7 @@ export async function updateActionPlanHandler(
     }
 
     // Find the task
-    const task = list.items.find(item => item.id === taskId);
+    const task = list.items.find((item: Task) => item.id === taskId);
 
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -720,7 +718,7 @@ export async function updateActionPlanHandler(
     );
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -730,7 +728,9 @@ export async function updateActionPlanHandler(
     });
 
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === taskId);
+    const updatedTask = updatedList.items.find(
+      (item: Task) => item.id === taskId
+    );
 
     if (!updatedTask) {
       throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
@@ -804,9 +804,8 @@ export async function getTaskNotesHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -814,7 +813,7 @@ export async function getTaskNotesHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -894,9 +893,8 @@ export async function addTaskNoteHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTodoList({
+    const list = await context.todoListManager.getTaskList({
       listId,
-      includeArchived: false,
     });
 
     if (!list) {
@@ -912,7 +910,7 @@ export async function addTaskNoteHandler(
     }
 
     // Find the task
-    const task = list.items.find(item => item.id === taskId);
+    const task = list.items.find((item: Task) => item.id === taskId);
 
     if (!task) {
       throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -930,7 +928,7 @@ export async function addTaskNoteHandler(
     const updatedNotes = [...(task.implementationNotes || []), newNote];
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTodoList({
+    const updatedList = await context.todoListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -940,7 +938,9 @@ export async function addTaskNoteHandler(
     });
 
     // Find the updated task
-    const updatedTask = updatedList.items.find(item => item.id === taskId);
+    const updatedTask = updatedList.items.find(
+      (item: Task) => item.id === taskId
+    );
 
     if (!updatedTask) {
       throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
@@ -1027,9 +1027,8 @@ export async function completeStepHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTodoList({
+  const list = await context.todoListManager.getTaskList({
     listId,
-    includeArchived: false,
   });
 
   if (!list) {
@@ -1045,7 +1044,7 @@ export async function completeStepHandler(
   }
 
   // Find the task
-  const task = list.items.find(item => item.id === taskId);
+  const task = list.items.find((item: Task) => item.id === taskId);
 
   if (!task) {
     throw new ApiError('NOT_FOUND', `Task not found: ${taskId}`, 404);
@@ -1069,7 +1068,7 @@ export async function completeStepHandler(
   }
 
   // Find the step
-  const step = task.actionPlan.steps.find(s => s.id === stepId);
+  const step = task.actionPlan.steps.find((s: ActionStep) => s.id === stepId);
 
   if (!step) {
     throw new ApiError(
@@ -1091,7 +1090,7 @@ export async function completeStepHandler(
   );
 
   // Update the task
-  const updatedList = await context.todoListManager.updateTodoList({
+  const updatedList = await context.todoListManager.updateTaskList({
     listId,
     action: 'update_item',
     itemId: taskId,
@@ -1101,14 +1100,18 @@ export async function completeStepHandler(
   });
 
   // Find the updated task
-  const updatedTask = updatedList.items.find(item => item.id === taskId);
+  const updatedTask = updatedList.items.find(
+    (item: Task) => item.id === taskId
+  );
 
   if (!updatedTask) {
     throw new ApiError('INTERNAL_ERROR', 'Task not found after update', 500);
   }
 
   // Find the updated step
-  const updatedStep = updatedActionPlan.steps.find(s => s.id === stepId);
+  const updatedStep = updatedActionPlan.steps.find(
+    (s: ActionStep) => s.id === stepId
+  );
 
   if (!updatedStep) {
     throw new ApiError('INTERNAL_ERROR', 'Step not found after update', 500);

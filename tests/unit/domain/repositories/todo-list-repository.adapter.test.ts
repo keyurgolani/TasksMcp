@@ -1,33 +1,33 @@
 /**
- * Tests for TodoListRepositoryAdapter
+ * Tests for TaskListRepositoryAdapter
  *
  * Verifies that the adapter correctly wraps StorageBackend and implements
- * all ITodoListRepository methods with proper error handling and logging.
+ * all ITaskListRepository methods with proper error handling and logging.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { TodoListRepositoryAdapter } from '../../../../src/domain/repositories/todo-list-repository.adapter.js';
+import { TaskListRepositoryAdapter } from '../../../../src/domain/repositories/task-list-repository.adapter.js';
 import { StorageBackend } from '../../../../src/shared/types/storage.js';
 import {
   TaskStatus as TaskStatusEnum,
   Priority as PriorityEnum,
-} from '../../../../src/shared/types/todo.js';
+} from '../../../../src/shared/types/task.js';
 
 import type {
-  TodoList,
-  TodoListSummary,
-} from '../../../../src/shared/types/todo.js';
+  TaskList,
+  TaskListSummary,
+} from '../../../../src/shared/types/task.js';
 
 // Mock storage backend
 class MockStorageBackend extends StorageBackend {
-  private data = new Map<string, TodoList>();
+  private data = new Map<string, TaskList>();
 
-  async save(key: string, data: TodoList): Promise<void> {
+  async save(key: string, data: TaskList): Promise<void> {
     this.data.set(key, data);
   }
 
-  async load(key: string): Promise<TodoList | null> {
+  async load(key: string): Promise<TaskList | null> {
     return this.data.get(key) ?? null;
   }
 
@@ -46,8 +46,8 @@ class MockStorageBackend extends StorageBackend {
   async list(options?: {
     projectTag?: string;
     includeArchived?: boolean;
-  }): Promise<TodoListSummary[]> {
-    const summaries: TodoListSummary[] = [];
+  }): Promise<TaskListSummary[]> {
+    const summaries: TaskListSummary[] = [];
     for (const [id, list] of this.data.entries()) {
       // Apply filters
       if (options?.projectTag && list.projectTag !== options.projectTag) {
@@ -84,19 +84,19 @@ class MockStorageBackend extends StorageBackend {
     this.data.clear();
   }
 
-  async loadAllData(): Promise<{ version: string; todoLists: TodoList[] }> {
+  async loadAllData(): Promise<{ version: string; taskLists: TaskList[] }> {
     return {
       version: '1.0.0',
-      todoLists: Array.from(this.data.values()),
+      taskLists: Array.from(this.data.values()),
     };
   }
 
   async saveAllData(data: {
     version: string;
-    todoLists: TodoList[];
+    taskLists: TaskList[];
   }): Promise<void> {
     this.data.clear();
-    for (const list of data.todoLists) {
+    for (const list of data.taskLists) {
       this.data.set(list.id, list);
     }
   }
@@ -107,8 +107,8 @@ class MockStorageBackend extends StorageBackend {
   }
 }
 
-// Helper function to create a test TodoList
-function createTestList(id: string, overrides?: Partial<TodoList>): TodoList {
+// Helper function to create a test TaskList
+function createTestList(id: string, overrides?: Partial<TaskList>): TaskList {
   const now = new Date();
   return {
     id,
@@ -145,17 +145,17 @@ function createTestList(id: string, overrides?: Partial<TodoList>): TodoList {
   };
 }
 
-describe('TodoListRepositoryAdapter', () => {
+describe('TaskListRepositoryAdapter', () => {
   let storage: MockStorageBackend;
-  let adapter: TodoListRepositoryAdapter;
+  let adapter: TaskListRepositoryAdapter;
 
   beforeEach(() => {
     storage = new MockStorageBackend();
-    adapter = new TodoListRepositoryAdapter(storage);
+    adapter = new TaskListRepositoryAdapter(storage);
   });
 
   describe('save', () => {
-    it('should save a TodoList to storage', async () => {
+    it('should save a TaskList to storage', async () => {
       const list = createTestList('list-1');
 
       await adapter.save(list);
@@ -169,13 +169,13 @@ describe('TodoListRepositoryAdapter', () => {
       vi.spyOn(storage, 'save').mockRejectedValue(new Error('Save failed'));
 
       await expect(adapter.save(list)).rejects.toThrow(
-        'Failed to save TodoList list-1'
+        'Failed to save TaskList list-1'
       );
     });
   });
 
   describe('findById', () => {
-    it('should find a TodoList by ID', async () => {
+    it('should find a TaskList by ID', async () => {
       const list = createTestList('list-1');
       await storage.save('list-1', list);
 
@@ -238,13 +238,13 @@ describe('TodoListRepositoryAdapter', () => {
       vi.spyOn(storage, 'load').mockRejectedValue(new Error('Load failed'));
 
       await expect(adapter.findById('list-1')).rejects.toThrow(
-        'Failed to find TodoList list-1'
+        'Failed to find TaskList list-1'
       );
     });
   });
 
   describe('findAll', () => {
-    it('should find all TodoLists', async () => {
+    it('should find all TaskLists', async () => {
       const list1 = createTestList('list-1');
       const list2 = createTestList('list-2');
       await storage.save('list-1', list1);
@@ -267,7 +267,7 @@ describe('TodoListRepositoryAdapter', () => {
       vi.spyOn(storage, 'list').mockRejectedValue(new Error('List failed'));
 
       await expect(adapter.findAll()).rejects.toThrow(
-        'Failed to find all TodoLists'
+        'Failed to find all TaskLists'
       );
     });
   });
@@ -400,7 +400,7 @@ describe('TodoListRepositoryAdapter', () => {
   });
 
   describe('delete', () => {
-    it('should archive a TodoList when permanent is false', async () => {
+    it('should archive a TaskList when permanent is false', async () => {
       const list = createTestList('list-1');
       await storage.save('list-1', list);
 
@@ -410,7 +410,7 @@ describe('TodoListRepositoryAdapter', () => {
       expect(loaded?.isArchived).toBe(true);
     });
 
-    it('should permanently delete a TodoList when permanent is true', async () => {
+    it('should permanently delete a TaskList', async () => {
       const list = createTestList('list-1');
       await storage.save('list-1', list);
 
@@ -424,7 +424,7 @@ describe('TodoListRepositoryAdapter', () => {
       vi.spyOn(storage, 'delete').mockRejectedValue(new Error('Delete failed'));
 
       await expect(adapter.delete('list-1', true)).rejects.toThrow(
-        'Failed to delete TodoList list-1'
+        'Failed to delete TaskList list-1'
       );
     });
   });
@@ -449,7 +449,7 @@ describe('TodoListRepositoryAdapter', () => {
       vi.spyOn(storage, 'load').mockRejectedValue(new Error('Check failed'));
 
       await expect(adapter.exists('list-1')).rejects.toThrow(
-        'Failed to check if TodoList list-1 exists'
+        'Failed to check if TaskList list-1 exists'
       );
     });
   });

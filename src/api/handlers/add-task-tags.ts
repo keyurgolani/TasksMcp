@@ -10,12 +10,13 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
+  TaskResponse,
 } from '../../shared/types/mcp-types.js';
-import type { TaskResponse } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 const AddTaskTagsSchema = z.object({
   listId: z.string().uuid(),
@@ -25,7 +26,7 @@ const AddTaskTagsSchema = z.object({
 
 export async function handleAddTaskTags(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing add_task_tags request', {
@@ -33,22 +34,24 @@ export async function handleAddTaskTags(
     });
 
     const args = AddTaskTagsSchema.parse(request.params?.arguments);
-    const currentList = await todoListManager.getTodoList({
+    const currentList = await todoListManager.getTaskList({
       listId: args.listId,
     });
 
     if (!currentList) {
-      throw new Error('Todo list not found');
+      throw new Error('Task list not found');
     }
 
-    const currentTask = currentList.items.find(item => item.id === args.taskId);
+    const currentTask = currentList.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!currentTask) {
       throw new Error('Task not found');
     }
 
     const existingTags = currentTask.tags || [];
     const newTags = [...new Set([...existingTags, ...args.tags])];
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -57,7 +60,9 @@ export async function handleAddTaskTags(
       },
     });
 
-    const updatedTask = result.items.find(item => item.id === args.taskId);
+    const updatedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!updatedTask) {
       throw new Error('Task not found after tag update');
     }

@@ -4,14 +4,14 @@
  * Handles initialization of the data delegation layer including:
  * - DataSourceRouter configuration and setup
  * - MultiSourceAggregator creation
- * - TodoListRepository instantiation
+ * - TaskListRepository instantiation
  * - Health checks for all configured sources
  *
  * This module provides a clean separation between configuration loading
  * and application startup, making it easier to test and maintain.
  */
 
-import { TodoListRepository } from '../domain/repositories/todo-list-repository-impl.js';
+import { TaskListRepository } from '../domain/repositories/task-list-repository-impl.js';
 import {
   getDefaultMultiSourceConfig,
   type MultiSourceConfig,
@@ -57,8 +57,8 @@ export interface InitializationResult {
   /** Multi-source aggregator for data aggregation */
   aggregator: MultiSourceAggregator;
 
-  /** TodoList repository implementation */
-  repository: TodoListRepository;
+  /** TaskList repository implementation */
+  repository: TaskListRepository;
 
   /** Configuration used for initialization */
   config: MultiSourceConfig;
@@ -87,7 +87,7 @@ export class ApplicationInitializer {
    * 1. Loads data source configuration from file or environment
    * 2. Creates and initializes DataSourceRouter
    * 3. Creates MultiSourceAggregator with conflict resolution
-   * 4. Creates TodoListRepository with router and aggregator
+   * 4. Creates TaskListRepository with router and aggregator
    * 5. Performs health checks on all configured sources
    *
    * @param options - Initialization options
@@ -123,10 +123,10 @@ export class ApplicationInitializer {
         conflictResolution: config.conflictResolution,
       });
 
-      // Step 4: Create TodoListRepository
-      const repository = new TodoListRepository(router, aggregator);
+      // Step 4: Create TaskListRepository
+      const repository = new TaskListRepository(router, aggregator);
 
-      logger.info('TodoListRepository created');
+      logger.info('TaskListRepository created');
 
       // Step 5: Perform health checks
       const healthStatus = await this.performHealthChecks(router);
@@ -479,7 +479,7 @@ export class ApplicationInitializer {
     }
 
     if (!result.repository) {
-      throw new Error('TodoListRepository not initialized');
+      throw new Error('TaskListRepository not initialized');
     }
 
     if (result.healthStatus.healthy === 0) {

@@ -11,34 +11,34 @@ import { handleGetList } from '../../src/api/handlers/get-list.js';
 import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { Priority } from '../../src/shared/types/todo.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { Priority } from '../../src/shared/types/task.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
-import type { TodoList, TodoItem } from '../../src/shared/types/todo.js';
+import type { TaskList, Task } from '../../src/shared/types/task.js';
 
 // Import all dependency handlers
 
 // Import enhanced existing handlers
 
 describe('Dependency Management Workflows Integration Tests', () => {
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let storage: MemoryStorageBackend;
-  let projectList: TodoList;
-  let setupTask: TodoItem;
-  let developTask: TodoItem;
-  let _testTask: TodoItem;
-  let deployTask: TodoItem;
+  let projectList: TaskList;
+  let setupTask: Task;
+  let developTask: Task;
+  let _testTask: Task;
+  let deployTask: Task;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = createTodoListManager(storage);
-    await todoListManager.initialize();
+    taskListManager = createTaskListManager(storage);
+    await taskListManager.initialize();
 
     // Create a realistic project scenario with 10-15 tasks
-    projectList = await todoListManager.createTodoList({
+    projectList = await taskListManager.createTaskList({
       title: 'Web Application Development Project',
       description:
         'Complete web application with authentication, API, and deployment',
@@ -161,7 +161,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
   });
 
   afterEach(async () => {
-    await todoListManager.shutdown();
+    await taskListManager.shutdown();
   });
 
   describe('End-to-End Dependency Workflow', () => {
@@ -214,7 +214,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -229,7 +229,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -244,7 +244,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -259,7 +259,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -274,7 +274,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -289,7 +289,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -304,7 +304,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -319,7 +319,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -334,7 +334,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -349,7 +349,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -364,7 +364,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Step 2: Analyze initial project state
@@ -378,7 +378,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(initialAnalysis.isError).toBeFalsy();
@@ -400,7 +400,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(initialReady.isError).toBeFalsy();
@@ -425,7 +425,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Step 5: Check that database schema is now ready
@@ -439,7 +439,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const afterSetupData = JSON.parse(
@@ -462,7 +462,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleCompleteTask(
@@ -476,7 +476,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Step 7: Verify API task is now ready
@@ -490,7 +490,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const afterAuthData = JSON.parse(
@@ -511,7 +511,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(enhancedList.isError).toBeFalsy();
@@ -540,7 +540,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(readyTasksFilter.isError).toBeFalsy();
@@ -565,7 +565,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const finalAnalysisData = JSON.parse(
@@ -601,7 +601,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
       expect(result1.isError).toBeFalsy();
 
@@ -617,7 +617,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
       expect(result2.isError).toBeFalsy();
 
@@ -633,7 +633,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
       expect(result3.isError).toBeFalsy();
 
@@ -648,7 +648,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(finalList.isError).toBeFalsy();
@@ -690,7 +690,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -705,7 +705,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Test consistency across different tools
@@ -719,7 +719,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const readyTasksResult = await handleGetReadyTasks(
@@ -732,7 +732,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const analysisResult = await handleAnalyzeTaskDependencies(
@@ -745,7 +745,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Parse results
@@ -786,7 +786,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
   describe('Realistic Project Scenarios', () => {
     it('should handle a 50-task software development project', async () => {
       // Create a large project with 50 tasks
-      const largeProject = await todoListManager.createTodoList({
+      const largeProject = await taskListManager.createTaskList({
         title: 'Large Software Development Project',
         description: 'Enterprise application with microservices architecture',
         tasks: Array.from({ length: 50 }, (_, i) => ({
@@ -827,7 +827,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
                 },
               },
             },
-            todoListManager
+            taskListManager
           );
         }
       }
@@ -857,7 +857,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
                 },
               },
             },
-            todoListManager
+            taskListManager
           );
         }
       }
@@ -875,7 +875,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const analysisTime = Date.now() - startTime;
@@ -904,7 +904,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const readyTime = Date.now() - readyStartTime;
@@ -919,7 +919,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
 
     it('should handle complex dependency chains with multiple completion paths', async () => {
       // Create a project with parallel development tracks
-      const parallelProject = await todoListManager.createTodoList({
+      const parallelProject = await taskListManager.createTaskList({
         title: 'Parallel Development Tracks Project',
         description: 'Project with frontend, backend, and DevOps tracks',
         tasks: [
@@ -1062,7 +1062,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -1077,7 +1077,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -1092,7 +1092,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Backend dependencies
@@ -1108,7 +1108,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -1123,7 +1123,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Integration dependencies (require both frontend and backend)
@@ -1146,7 +1146,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Final tasks depend on integration
@@ -1162,7 +1162,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -1177,7 +1177,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Test that multiple tracks can progress in parallel
@@ -1191,7 +1191,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const initialReadyData = JSON.parse(
@@ -1224,7 +1224,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleCompleteTask(
@@ -1238,7 +1238,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleCompleteTask(
@@ -1252,7 +1252,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Verify that dependent tasks are now ready
@@ -1266,7 +1266,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const afterFoundationData = JSON.parse(
@@ -1297,7 +1297,7 @@ describe('Dependency Management Workflows Integration Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const analysisData = JSON.parse(analysis.content[0]?.text as string);

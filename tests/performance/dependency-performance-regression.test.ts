@@ -4,19 +4,19 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TestCleanup } from '../setup.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
 describe('MCP Tool Performance Regression', () => {
-  let manager: TodoListManager;
+  let manager: TaskListManager;
   let storage: MemoryStorageBackend;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    manager = createTodoListManager(storage);
+    manager = createTaskListManager(storage);
     await manager.initialize();
 
     // Register for automatic cleanup
@@ -30,7 +30,7 @@ describe('MCP Tool Performance Regression', () => {
     // Create multiple lists to test scalability
     const lists = [];
     for (let i = 0; i < 10; i++) {
-      const list = await manager.createTodoList({
+      const list = await manager.createTaskList({
         title: `Regression Test List ${i}`,
         description: `Testing performance regression ${i}`,
         projectTag: 'regression-test',
@@ -62,7 +62,7 @@ describe('MCP Tool Performance Regression', () => {
     const startTime = Date.now();
 
     // Create a single list with many tasks
-    const list = await manager.createTodoList({
+    const list = await manager.createTaskList({
       title: 'Memory Efficiency Test',
       description: 'Testing memory usage during bulk operations',
       projectTag: 'memory-test',

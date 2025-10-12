@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { logger } from '../../shared/utils/logger.js';
 
-import type { ActionPlan, ActionStep } from '../../shared/types/todo.js';
-import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
+import type { ActionPlan, ActionStep } from '../../shared/types/task.js';
+import type { ITaskListRepository } from '../repositories/task-list.repository.js';
 
 export interface CreateActionPlanInput {
   taskId: string;
@@ -36,9 +36,9 @@ export interface ActionPlanValidationResult {
 export class ActionPlanManager {
   // Repository for future direct action plan persistence
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITodoListRepository | undefined;
+  private readonly repository: ITaskListRepository | undefined;
 
-  constructor(repository?: ITodoListRepository) {
+  constructor(repository?: ITaskListRepository) {
     this.repository = repository;
 
     logger.debug('ActionPlanManager initialized', {
@@ -50,7 +50,7 @@ export class ActionPlanManager {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITodoListRepository | undefined {
+  getRepository(): ITaskListRepository | undefined {
     return this.repository;
   }
 
@@ -202,7 +202,6 @@ export class ActionPlanManager {
             id: uuidv4(),
             content: stepContent,
             status: initialStatus,
-            order: steps.length,
           };
 
           // Set completedAt if initially completed
@@ -485,8 +484,8 @@ export class ActionPlanManager {
       return null;
     }
 
-    // Return the pending step with the lowest order
-    return pendingSteps.sort((a, b) => a.order - b.order)[0] || null;
+    // Return the first pending step (no ordering)
+    return pendingSteps[0] || null;
   }
 
   /**

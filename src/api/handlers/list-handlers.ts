@@ -8,16 +8,16 @@ import { ApiError } from '../../shared/errors/api-error.js';
 import { logger } from '../../shared/utils/logger.js';
 
 import type {
-  CreateTodoListInput,
-  GetTodoListInput,
-  DeleteTodoListInput,
-} from '../../domain/lists/todo-list-manager.js';
+  CreateTaskListInput,
+  GetTaskListInput,
+  DeleteTaskListInput,
+} from '../../domain/lists/task-list-manager.js';
 import type {
   ApiRequest,
   ApiResponse,
   HandlerContext,
 } from '../../shared/types/api.js';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
 import type { Response } from 'express';
 
 /**
@@ -64,10 +64,6 @@ const createListSchema = z.object({
 const listQuerySchema = z.object({
   projectTag: z.string().optional(),
   status: z.enum(['active', 'completed', 'all']).optional(),
-  includeArchived: z
-    .string()
-    .transform(val => val === 'true')
-    .optional(),
   limit: z
     .string()
     .transform(val => parseInt(val, 10))
@@ -81,10 +77,6 @@ const listQuerySchema = z.object({
 // Schema for get list query parameters
 const getListQuerySchema = z.object({
   includeCompleted: z
-    .string()
-    .transform(val => val === 'true')
-    .optional(),
-  includeArchived: z
     .string()
     .transform(val => val === 'true')
     .optional(),
@@ -126,9 +118,9 @@ export async function createListHandler(
       taskCount: input.tasks?.length ?? 0,
     });
 
-    // Create the list using TodoListManager
+    // Create the list using TaskListManager
     // Filter out undefined values to match exactOptionalPropertyTypes
-    const createInput: CreateTodoListInput = {
+    const createInput: CreateTaskListInput = {
       title: input.title,
     };
 
@@ -161,11 +153,13 @@ export async function createListHandler(
     if (input.implementationNotes !== undefined) {
       createInput.implementationNotes = input.implementationNotes;
     }
-    const list = await context.todoListManager.createTodoList(createInput);
+    logger.debug('About to create list with input', { createInput });
+    const list = await context.todoListManager.createTaskList(createInput);
+    logger.debug('Created list', { id: list.id, title: list.title });
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoList> = {
+    const response: ApiResponse<TaskList> = {
       success: true,
       data: list,
       meta: {
@@ -210,22 +204,22 @@ export async function listAllListsHandler(
       requestId: req.id,
       projectTag: query.projectTag,
       status: query.status,
-      includeArchived: query.includeArchived,
     });
 
-    // Get lists using TodoListManager
-    // Note: listTodoLists returns TodoListSummary[], not TodoList[]
-    const summaries = await context.todoListManager.listTodoLists({
+    // Get lists using TaskListManager
+    // Note: listTodoLists returns TaskListSummary[], not TaskList[]
+    logger.debug('About to call listTodoLists with query', { query });
+    const summaries = await context.todoListManager.listTaskLists({
       projectTag: query.projectTag,
       status: query.status,
-      includeArchived: query.includeArchived,
       limit: query.limit,
       offset: query.offset,
     });
+    logger.debug('listTodoLists returned items', { count: summaries.length });
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoListSummary[]> = {
+    const response: ApiResponse<TaskListSummary[]> = {
       success: true,
       data: summaries,
       meta: {
@@ -274,18 +268,14 @@ export async function getListHandler(
       requestId: req.id,
       listId: id,
       includeCompleted: query.includeCompleted,
-      includeArchived: query.includeArchived,
     });
 
-    // Get the list using TodoListManager
-    const getInput: GetTodoListInput = { listId: id };
+    // Get the list using TaskListManager
+    const getInput: GetTaskListInput = { listId: id };
     if (query.includeCompleted !== undefined) {
       getInput.includeCompleted = query.includeCompleted;
     }
-    if (query.includeArchived !== undefined) {
-      getInput.includeArchived = query.includeArchived;
-    }
-    const list = await context.todoListManager.getTodoList(getInput);
+    const list = await context.todoListManager.getTaskList(getInput);
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${id}`, 404);
@@ -293,7 +283,7 @@ export async function getListHandler(
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoList> = {
+    const response: ApiResponse<TaskList> = {
       success: true,
       data: list,
       meta: {
@@ -345,8 +335,8 @@ export async function updateListHandler(
     });
 
     // First, get the existing list to verify it exists (including archived)
-    const getInput: GetTodoListInput = { listId: id, includeArchived: true };
-    const existingList = await context.todoListManager.getTodoList(getInput);
+    const getInput: GetTaskListInput = { listId: id };
+    const existingList = await context.todoListManager.getTaskList(getInput);
 
     if (!existingList) {
       throw new ApiError('NOT_FOUND', `List not found: ${id}`, 404);
@@ -378,7 +368,7 @@ export async function updateListHandler(
 
     const duration = Date.now() - startTime;
 
-    const response: ApiResponse<TodoList> = {
+    const response: ApiResponse<TaskList> = {
       success: true,
       data: list!,
       meta: {
@@ -429,12 +419,12 @@ export async function deleteListHandler(
       permanent: query.permanent,
     });
 
-    // Delete the list using TodoListManager
-    const deleteInput: DeleteTodoListInput = { listId: id };
+    // Delete the list using TaskListManager
+    const deleteInput: DeleteTaskListInput = { listId: id };
     if (query.permanent !== undefined) {
       deleteInput.permanent = query.permanent;
     }
-    const result = await context.todoListManager.deleteTodoList(deleteInput);
+    const result = await context.todoListManager.deleteTaskList(deleteInput);
 
     const duration = Date.now() - startTime;
 

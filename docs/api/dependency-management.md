@@ -8,7 +8,7 @@ The MCP Task Manager includes 3 powerful dependency management tools that expose
 
 Task dependencies define relationships where one task must be completed before another can begin. This enables:
 
-- **Proper work sequencing** - Ensure tasks are done in the right order
+- **Proper work sequencing** - Ensure tasks are done based on dependencies
 - **Bottleneck identification** - Find tasks that block multiple others
 - **Work prioritization** - Focus on tasks that unblock the most work
 - **Project analysis** - Understand critical paths and complexity
@@ -173,7 +173,7 @@ Get tasks that are ready to work on (have no incomplete dependencies).
 
 #### Response Fields
 
-- **readyTasks** - Array of tasks ready to work on (sorted by priority, then creation date)
+- **readyTasks** - Array of tasks ready to work on (no incomplete dependencies)
 - **totalReady** - Total number of ready tasks (before limit applied)
 - **nextActions** - AI-generated suggestions for what to do next
 - **summary** - Overview of project status
@@ -261,7 +261,7 @@ Get a comprehensive analysis of task dependencies and project structure.
 
 - Array of task IDs representing the longest chain of dependent tasks
 - Completing critical path tasks has the highest impact on project completion
-- Tasks are ordered from start to finish
+- Tasks are returned based on dependency relationships
 
 **Issues:**
 

@@ -1,40 +1,40 @@
 /**
- * Integration tests for notes display in todo list retrieval operations
+ * Integration tests for notes display in task list retrieval operations
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
+import { Priority, TaskStatus } from '../../src/shared/types/task.js';
 import { TestCleanup } from '../setup.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
-import type { ImplementationNote as _ImplementationNote } from '../../src/shared/types/todo.js';
+import type { ImplementationNote as _ImplementationNote } from '../../src/shared/types/task.js';
 
 describe('Notes Integration Tests', () => {
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let storage: MemoryStorageBackend;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize();
-    todoListManager = createTodoListManager(storage);
-    await todoListManager.initialize();
+    taskListManager = createTaskListManager(storage);
+    await taskListManager.initialize();
 
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
-    TestCleanup.registerManager(todoListManager);
+    TestCleanup.registerManager(taskListManager);
   });
 
   afterEach(async () => {
     // Cleanup is handled automatically by test setup
   });
 
-  describe('getTodoList with notes', () => {
+  describe('getTaskList with notes', () => {
     it('should handle empty notes gracefully', async () => {
-      // Create a todo list
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List',
         description: 'A test list',
         tasks: [
@@ -47,7 +47,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve the list
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
       });
 
@@ -59,8 +59,8 @@ describe('Notes Integration Tests', () => {
     });
 
     it('should include formatted list-level notes in response', async () => {
-      // Create a todo list
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List with Notes',
         description: 'A test list',
         tasks: [
@@ -72,8 +72,8 @@ describe('Notes Integration Tests', () => {
         ],
       });
 
-      // Add implementation notes to the list using TodoListManager
-      await todoListManager.updateTodoList({
+      // Add implementation notes to the list using TaskListManager
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_list_note',
         noteContent:
@@ -81,7 +81,7 @@ describe('Notes Integration Tests', () => {
         noteType: 'technical',
       });
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_list_note',
         noteContent: 'Decision to use TypeScript for this project',
@@ -89,7 +89,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve the list
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
       });
 
@@ -122,8 +122,8 @@ describe('Notes Integration Tests', () => {
     });
 
     it('should include formatted task-level notes in response', async () => {
-      // Create a todo list
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List',
         description: 'A test list',
         tasks: [
@@ -135,11 +135,11 @@ describe('Notes Integration Tests', () => {
         ],
       });
 
-      // Add implementation notes to the task using TodoListManager
+      // Add implementation notes to the task using TaskListManager
       const taskId = createResult.items[0]?.id;
       expect(taskId).toBeDefined();
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_task_note',
         itemId: taskId,
@@ -148,7 +148,7 @@ describe('Notes Integration Tests', () => {
         noteType: 'technical',
       });
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_task_note',
         itemId: taskId,
@@ -158,7 +158,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve the list
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
       });
 
@@ -191,8 +191,8 @@ describe('Notes Integration Tests', () => {
     });
 
     it('should truncate long notes for display', async () => {
-      // Create a todo list
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List',
         description: 'A test list',
         tasks: [
@@ -204,13 +204,13 @@ describe('Notes Integration Tests', () => {
         ],
       });
 
-      // Add a very long note using TodoListManager
+      // Add a very long note using TaskListManager
       const longContent =
-        'This is a very long implementation note that should be truncated when displayed in the todo list response. '.repeat(
+        'This is a very long implementation note that should be truncated when displayed in the task list response. '.repeat(
           10
         );
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_list_note',
         noteContent: longContent,
@@ -218,7 +218,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve the list
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
       });
 
@@ -232,8 +232,8 @@ describe('Notes Integration Tests', () => {
     });
 
     it('should handle lists and tasks with no notes gracefully', async () => {
-      // Create a todo list without notes
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list without notes
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List Without Notes',
         description: 'A test list',
         tasks: [
@@ -246,7 +246,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve the list
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
       });
 
@@ -257,8 +257,8 @@ describe('Notes Integration Tests', () => {
     });
 
     it('should distinguish between task-level and list-level notes', async () => {
-      // Create a todo list
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List',
         description: 'A test list',
         tasks: [
@@ -275,14 +275,14 @@ describe('Notes Integration Tests', () => {
         ],
       });
 
-      // Add notes at both levels using TodoListManager
+      // Add notes at both levels using TaskListManager
       const task1Id = createResult.items[0]?.id;
       const task2Id = createResult.items[1]?.id;
       expect(task1Id).toBeDefined();
       expect(task2Id).toBeDefined();
 
       // Add list-level note
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_list_note',
         noteContent: 'This is a list-level note about the overall project',
@@ -290,7 +290,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Add task-level notes
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_task_note',
         itemId: task1Id,
@@ -298,7 +298,7 @@ describe('Notes Integration Tests', () => {
         noteType: 'technical',
       });
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_task_note',
         itemId: task2Id,
@@ -307,7 +307,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve the list
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
       });
 
@@ -336,8 +336,8 @@ describe('Notes Integration Tests', () => {
     });
 
     it('should maintain note formatting with filtering and pagination', async () => {
-      // Create a todo list with multiple tasks
-      const createResult = await todoListManager.createTodoList({
+      // Create a task list with multiple tasks
+      const createResult = await taskListManager.createTaskList({
         title: 'Test List',
         description: 'A test list',
         tasks: [
@@ -355,20 +355,20 @@ describe('Notes Integration Tests', () => {
       });
 
       // Update first task to completed and add notes
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'update_status',
         itemId: createResult.items[0]?.id,
         itemData: { status: TaskStatus.COMPLETED },
       });
 
-      // Add notes to both tasks using TodoListManager
+      // Add notes to both tasks using TaskListManager
       const completedTaskId = createResult.items[0]?.id;
       const pendingTaskId = createResult.items[1]?.id;
       expect(completedTaskId).toBeDefined();
       expect(pendingTaskId).toBeDefined();
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_task_note',
         itemId: completedTaskId,
@@ -376,7 +376,7 @@ describe('Notes Integration Tests', () => {
         noteType: 'general',
       });
 
-      await todoListManager.updateTodoList({
+      await taskListManager.updateTaskList({
         listId: createResult.id,
         action: 'add_task_note',
         itemId: pendingTaskId,
@@ -385,7 +385,7 @@ describe('Notes Integration Tests', () => {
       });
 
       // Retrieve with filtering (exclude completed)
-      const result = await todoListManager.getTodoList({
+      const result = await taskListManager.getTaskList({
         listId: createResult.id,
         includeCompleted: false,
       });

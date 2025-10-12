@@ -5,7 +5,7 @@
  * Provides consistent interface for data persistence with options for backup, validation, and filtering.
  */
 
-import type { TodoList, TodoListSummary } from './todo.js';
+import type { TaskList, TaskListSummary } from './task.js';
 
 /**
  * Options for save operations
@@ -20,9 +20,7 @@ export interface SaveOptions {
  * Options for load operations
  * Controls which data to include when loading
  */
-export interface LoadOptions {
-  includeArchived?: boolean; // Whether to include archived lists
-}
+export interface LoadOptions {}
 
 /**
  * Options for list operations
@@ -31,7 +29,6 @@ export interface LoadOptions {
 export interface ListOptions {
   context?: string; // Deprecated: filter by context
   projectTag?: string; // Filter by project tag
-  includeArchived?: boolean; // Include archived lists in results
   limit?: number; // Maximum number of results
   offset?: number; // Number of results to skip (pagination)
 }
@@ -42,7 +39,7 @@ export interface ListOptions {
  */
 export interface StorageData {
   version: string; // Data format version for migration compatibility
-  todoLists: TodoList[]; // All todo lists in storage
+  todoLists: TaskList[]; // All todo lists in storage
 }
 
 /**
@@ -63,7 +60,7 @@ export abstract class StorageBackend {
    */
   abstract save(
     key: string,
-    data: TodoList,
+    data: TaskList,
     options?: SaveOptions
   ): Promise<void>;
 
@@ -71,9 +68,9 @@ export abstract class StorageBackend {
    * Loads a todo list from storage
    * @param key - Unique identifier for the list
    * @param options - Load options (include archived)
-   * @returns Promise<TodoList | null> - The loaded list or null if not found
+   * @returns Promise<TaskList | null> - The loaded list or null if not found
    */
-  abstract load(key: string, options?: LoadOptions): Promise<TodoList | null>;
+  abstract load(key: string, options?: LoadOptions): Promise<TaskList | null>;
 
   /**
    * Deletes a todo list from storage
@@ -85,9 +82,9 @@ export abstract class StorageBackend {
   /**
    * Lists all todo lists with optional filtering
    * @param options - List options (filtering, pagination)
-   * @returns Promise<TodoListSummary[]> - Array of list summaries
+   * @returns Promise<TaskListSummary[]> - Array of list summaries
    */
-  abstract list(options?: ListOptions): Promise<TodoListSummary[]>;
+  abstract list(options?: ListOptions): Promise<TaskListSummary[]>;
 
   /**
    * Initializes the storage backend

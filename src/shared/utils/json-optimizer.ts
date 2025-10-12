@@ -4,7 +4,7 @@
 
 import { logger } from './logger.js';
 
-import type { TodoList, TodoItem } from '../types/todo.js';
+import type { TaskList, Task } from '../../shared/types/task.js';
 
 export interface SerializationOptions {
   compress?: boolean;
@@ -28,17 +28,17 @@ export class JsonOptimizer {
   ];
 
   /**
-   * Optimized serialization for TodoList objects
+   * Optimized serialization for TaskList objects
    */
   static serializeTodoList(
-    todoList: TodoList,
+    todoList: TaskList,
     options: SerializationOptions = {}
   ): string {
     const startTime = performance.now();
 
     try {
       // Create a copy to avoid modifying the original
-      const serializable: TodoList = this.prepareForSerialization(
+      const serializable: TaskList = this.prepareForSerialization(
         todoList,
         options
       );
@@ -72,12 +72,12 @@ export class JsonOptimizer {
   }
 
   /**
-   * Optimized deserialization for TodoList objects
+   * Optimized deserialization for TaskList objects
    */
   static deserializeTodoList(
     jsonString: string,
     options: DeserializationOptions = {}
-  ): TodoList {
+  ): TaskList {
     const startTime = performance.now();
 
     try {
@@ -87,7 +87,7 @@ export class JsonOptimizer {
         options.convertDates === undefined || options.convertDates === true
           ? this.createReviver()
           : undefined
-      ) as TodoList;
+      ) as TaskList;
 
       // Validate schema if requested
       if (options.validateSchema === true) {
@@ -140,7 +140,7 @@ export class JsonOptimizer {
    * Batch serialize multiple TodoLists efficiently
    */
   static serializeTodoLists(
-    todoLists: TodoList[],
+    todoLists: TaskList[],
     options: SerializationOptions = {}
   ): string {
     const startTime = performance.now();
@@ -183,7 +183,7 @@ export class JsonOptimizer {
   /**
    * Migrate data structure for backward compatibility
    */
-  private static migrateDataStructure(todoList: TodoList): void {
+  private static migrateDataStructure(todoList: TaskList): void {
     // Ensure list-level fields exist
     if (!todoList.implementationNotes) {
       todoList.implementationNotes = [];
@@ -208,7 +208,7 @@ export class JsonOptimizer {
   static deserializeTodoLists(
     jsonString: string,
     options: DeserializationOptions = {}
-  ): TodoList[] {
+  ): TaskList[] {
     const startTime = performance.now();
 
     try {
@@ -217,7 +217,7 @@ export class JsonOptimizer {
         options.convertDates === undefined || options.convertDates === true
           ? this.createReviver()
           : undefined
-      ) as TodoList[];
+      ) as TaskList[];
 
       if (!Array.isArray(parsed)) {
         throw new Error('Expected array of TodoLists');
@@ -265,14 +265,14 @@ export class JsonOptimizer {
    * Create a streaming serializer for very large datasets
    */
   static createStreamingSerializer(options: SerializationOptions = {}): {
-    serializeItems(items: TodoItem[]): Generator<string, void, unknown>;
+    serializeItems(items: Task[]): Generator<string, void, unknown>;
     serializeToStream(
-      items: TodoItem[],
+      items: Task[],
       writeStream: NodeJS.WritableStream
     ): Promise<void>;
   } {
     return {
-      *serializeItems(items: TodoItem[]): Generator<string, void, unknown> {
+      *serializeItems(items: Task[]): Generator<string, void, unknown> {
         yield '[';
 
         for (let i = 0; i < items.length; i++) {
@@ -295,7 +295,7 @@ export class JsonOptimizer {
       },
 
       async serializeToStream(
-        items: TodoItem[],
+        items: Task[],
         writeStream: NodeJS.WritableStream
       ): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -332,10 +332,10 @@ export class JsonOptimizer {
   // Private helper methods
 
   private static prepareForSerialization(
-    todoList: TodoList,
+    todoList: TaskList,
     options: SerializationOptions
-  ): TodoList {
-    const result: Partial<TodoList> = { ...todoList };
+  ): TaskList {
+    const result: Partial<TaskList> = { ...todoList };
 
     // Remove excluded fields
     if (options.excludeFields) {
@@ -346,7 +346,7 @@ export class JsonOptimizer {
 
     // Process items
     if (result.items) {
-      result.items = result.items.map((item: TodoItem) =>
+      result.items = result.items.map((item: Task) =>
         this.prepareItemForSerialization(item, options)
       );
     }
@@ -355,20 +355,20 @@ export class JsonOptimizer {
     if (options.includeMetadata !== true) {
       delete result.metadata;
       if (result.items) {
-        result.items.forEach((item: Partial<TodoItem>) => {
+        result.items.forEach((item: Partial<Task>) => {
           delete item.metadata;
         });
       }
     }
 
-    return result as TodoList;
+    return result as TaskList;
   }
 
   private static prepareItemForSerialization(
-    item: TodoItem,
+    item: Task,
     options: SerializationOptions
-  ): TodoItem {
-    const result: Partial<TodoItem> = { ...item };
+  ): Task {
+    const result: Partial<Task> = { ...item };
 
     // Remove excluded fields
     if (options.excludeFields) {
@@ -382,7 +382,7 @@ export class JsonOptimizer {
       delete result.metadata;
     }
 
-    return result as TodoItem;
+    return result as Task;
   }
 
   private static createReplacer(
@@ -447,7 +447,7 @@ export class JsonOptimizer {
     };
   }
 
-  private static convertDates(todoList: TodoList): void {
+  private static convertDates(todoList: TaskList): void {
     // Convert list-level dates
     const listRecord = todoList as unknown as Record<string, unknown>;
     for (const field of this.DATE_FIELDS) {
@@ -531,21 +531,21 @@ export class JsonOptimizer {
       todoList === undefined ||
       typeof todoList !== 'object'
     ) {
-      throw new Error('Invalid TodoList: not an object');
+      throw new Error('Invalid TaskList: not an object');
     }
 
     const list = todoList as Record<string, unknown>;
 
     if (typeof list['id'] !== 'string' || list['id'] === '') {
-      throw new Error('Invalid TodoList: missing or invalid id');
+      throw new Error('Invalid TaskList: missing or invalid id');
     }
 
     if (typeof list['title'] !== 'string' || list['title'] === '') {
-      throw new Error('Invalid TodoList: missing or invalid title');
+      throw new Error('Invalid TaskList: missing or invalid title');
     }
 
     if (!Array.isArray(list['items'])) {
-      throw new Error('Invalid TodoList: items must be an array');
+      throw new Error('Invalid TaskList: items must be an array');
     }
 
     // Validate a sample of items for performance
@@ -554,18 +554,14 @@ export class JsonOptimizer {
     for (let i = 0; i < sampleSize; i++) {
       const item = items[i];
       if (item === null || item === undefined || typeof item !== 'object') {
-        throw new Error(`Invalid TodoItem at index ${i}: not an object`);
+        throw new Error(`Invalid Task at index ${i}: not an object`);
       }
       const todoItem = item as Record<string, unknown>;
       if (typeof todoItem['id'] !== 'string' || todoItem['id'] === '') {
-        throw new Error(
-          `Invalid TodoItem at index ${i}: missing or invalid id`
-        );
+        throw new Error(`Invalid Task at index ${i}: missing or invalid id`);
       }
       if (typeof todoItem['title'] !== 'string' || todoItem['title'] === '') {
-        throw new Error(
-          `Invalid TodoItem at index ${i}: missing or invalid title`
-        );
+        throw new Error(`Invalid Task at index ${i}: missing or invalid title`);
       }
     }
   }

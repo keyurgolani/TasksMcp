@@ -5,35 +5,35 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 
 import { handleGetReadyTasks } from '../../../../src/api/handlers/get-ready-tasks.js';
-import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
 import {
   TaskStatus,
   Priority,
-  type TodoList,
-  type TodoItem,
-} from '../../../../src/shared/types/todo.js';
-import { createTodoListManager } from '../../../utils/test-helpers.js';
+  type TaskList,
+  type Task,
+} from '../../../../src/shared/types/task.js';
+import { createTaskListManager } from '../../../utils/test-helpers.js';
 
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 describe('GetReadyTasksHandler', () => {
-  let manager: TodoListManager;
+  let manager: TaskListManager;
   let storage: MemoryStorageBackend;
-  let testList: TodoList;
-  let task1: TodoItem;
-  let task2: TodoItem;
-  let task3: TodoItem;
-  let task4: TodoItem;
+  let testList: TaskList;
+  let task1: Task;
+  let task2: Task;
+  let task3: Task;
+  let task4: Task;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize(); // Initialize storage before creating manager
-    manager = createTodoListManager(storage);
+    manager = createTaskListManager(storage);
     await manager.initialize();
 
     // Create a test list with multiple tasks
-    testList = await manager.createTodoList({
+    testList = await manager.createTaskList({
       title: 'Test Ready Tasks List',
       description: 'A list for testing ready task identification',
       tasks: [
@@ -169,7 +169,7 @@ describe('GetReadyTasksHandler', () => {
   describe('Dependency handling', () => {
     test('excludes blocked tasks from ready list', async () => {
       // Set task3 to depend on task1
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task3.id,
@@ -204,7 +204,7 @@ describe('GetReadyTasksHandler', () => {
 
     test('includes tasks whose dependencies are completed', async () => {
       // Set task3 to depend on task1
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task3.id,
@@ -212,7 +212,7 @@ describe('GetReadyTasksHandler', () => {
       });
 
       // Complete task1
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task1.id,
@@ -246,7 +246,7 @@ describe('GetReadyTasksHandler', () => {
 
     test('excludes completed and cancelled tasks from ready list', async () => {
       // Complete task1
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task1.id,
@@ -254,7 +254,7 @@ describe('GetReadyTasksHandler', () => {
       });
 
       // Cancel task2
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task2.id,
@@ -341,26 +341,26 @@ describe('GetReadyTasksHandler', () => {
     test('provides helpful suggestions when no tasks are ready', async () => {
       // Block all tasks by creating a dependency chain (no circular dependencies)
       // task1 -> task2 -> task3 -> task4 (all blocked except task4, but we'll block task4 too)
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task1.id,
         itemData: { dependencies: [task2.id] },
       });
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task2.id,
         itemData: { dependencies: [task3.id] },
       });
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task3.id,
         itemData: { dependencies: [task4.id] },
       });
       // Block task4 by setting it to BLOCKED status
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task4.id,
@@ -392,7 +392,7 @@ describe('GetReadyTasksHandler', () => {
     test('suggests completion when all tasks are done', async () => {
       // Complete all tasks
       for (const task of testList.items) {
-        await manager.updateTodoList({
+        await manager.updateTaskList({
           listId: testList.id,
           action: 'update_status',
           itemId: task.id,
@@ -422,7 +422,7 @@ describe('GetReadyTasksHandler', () => {
 
     test('mentions in-progress tasks when present', async () => {
       // Set task1 to in progress
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_status',
         itemId: task1.id,
@@ -544,7 +544,7 @@ describe('GetReadyTasksHandler', () => {
       const result = await handleGetReadyTasks(request, manager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0]?.text).toContain('Todo list not found');
+      expect(result.content[0]?.text).toContain('Task list not found');
     });
 
     test('validates UUID format for listId', async () => {
@@ -619,7 +619,7 @@ describe('GetReadyTasksHandler', () => {
 
     test('handles storage errors gracefully', async () => {
       // Mock storage to throw an error
-      vi.spyOn(manager, 'getTodoList').mockRejectedValueOnce(
+      vi.spyOn(manager, 'getTaskList').mockRejectedValueOnce(
         new Error('Storage error')
       );
 
@@ -646,7 +646,7 @@ describe('GetReadyTasksHandler', () => {
   describe('Edge cases', () => {
     test('handles empty list', async () => {
       // Create an empty list
-      const emptyList = await manager.createTodoList({
+      const emptyList = await manager.createTaskList({
         title: 'Empty List',
         tasks: [],
       });
@@ -676,7 +676,7 @@ describe('GetReadyTasksHandler', () => {
     test('handles list with only completed tasks', async () => {
       // Complete all tasks
       for (const task of testList.items) {
-        await manager.updateTodoList({
+        await manager.updateTaskList({
           listId: testList.id,
           action: 'update_status',
           itemId: task.id,
@@ -708,7 +708,7 @@ describe('GetReadyTasksHandler', () => {
 
     test('handles tasks with same priority correctly', async () => {
       // Create tasks with same priority
-      const sameList = await manager.createTodoList({
+      const sameList = await manager.createTaskList({
         title: 'Same Priority List',
         tasks: [
           { title: 'Task A', priority: Priority.MEDIUM },
@@ -743,13 +743,13 @@ describe('GetReadyTasksHandler', () => {
       // Create a complex dependency scenario
       // task1 (ready) -> task2 (blocked) -> task3 (blocked)
       // task4 (ready, no dependencies)
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task2.id,
         itemData: { dependencies: [task1.id] },
       });
-      await manager.updateTodoList({
+      await manager.updateTaskList({
         listId: testList.id,
         action: 'update_item',
         itemId: task3.id,

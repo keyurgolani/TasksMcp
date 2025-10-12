@@ -35,7 +35,6 @@ These examples demonstrate the three core principles in complex scenarios:
   "parameters": {
     "query": "chat application websocket authentication",
     "includeCompleted": true,
-    "sortBy": "updatedAt",
     "limit": 10
   }
 }
@@ -93,7 +92,6 @@ These examples demonstrate the three core principles in complex scenarios:
     "query": "e-commerce platform microservices",
     "includeCompleted": true,
     "tags": ["enterprise", "platform", "microservices"],
-    "sortBy": "updatedAt",
     "limit": 15
   }
 }
@@ -591,8 +589,6 @@ get_ready_tasks → Identify articles ready for next stage
     "status": ["pending", "in_progress"],
     "tags": ["backend", "security"],
     "isReady": true,
-    "sortBy": "priority",
-    "sortOrder": "desc",
     "limit": 10
   }
 }
@@ -606,8 +602,7 @@ get_ready_tasks → Identify articles ready for next stage
   "parameters": {
     "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
     "estimatedDurationMin": 60,
-    "estimatedDurationMax": 240,
-    "sortBy": "estimatedDuration"
+    "estimatedDurationMax": 240
   }
 }
 ```

@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import { RestApiServer } from '../../src/app/rest-api-server.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { ActionPlanManager } from '../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
@@ -27,13 +27,13 @@ describe('Advanced Features API', () => {
     await storage.initialize();
 
     // Create repository
-    const { TodoListRepositoryAdapter } = await import(
-      '../../src/domain/repositories/todo-list-repository.adapter.js'
+    const { TaskListRepositoryAdapter } = await import(
+      '../../src/domain/repositories/task-list-repository.adapter.js'
     );
-    const repository = new TodoListRepositoryAdapter(storage);
+    const repository = new TaskListRepositoryAdapter(storage);
 
     // Create managers
-    const todoListManager = new TodoListManager(repository, storage);
+    const taskListManager = new TaskListManager(repository, storage);
     const dependencyResolver = new DependencyResolver(repository);
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
@@ -48,7 +48,7 @@ describe('Advanced Features API', () => {
 
     server = new RestApiServer(
       config,
-      todoListManager,
+      taskListManager,
       dependencyResolver,
       exitCriteriaManager,
       actionPlanManager,

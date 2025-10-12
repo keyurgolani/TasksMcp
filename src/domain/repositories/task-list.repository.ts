@@ -1,7 +1,7 @@
 /**
- * Repository interface for TodoList aggregate
+ * Repository interface for TaskList aggregate
  *
- * Defines the contract for data access operations on TodoLists.
+ * Defines the contract for data access operations on TaskLists.
  * This interface is part of the domain layer and should not depend on
  * infrastructure concerns like specific storage implementations.
  *
@@ -13,18 +13,16 @@
  */
 
 import type {
-  TodoList,
-  TodoListSummary,
+  TaskList,
+  TaskListSummary,
   TaskStatus,
   Priority,
-} from '../../shared/types/todo.js';
+} from '../../shared/types/task.js';
 
 /**
- * Options for finding a single TodoList
+ * Options for finding a single TaskList
  */
 export interface FindOptions {
-  /** Whether to include archived lists in results */
-  includeArchived?: boolean;
   /** Whether to include completed tasks in the list items */
   includeCompleted?: boolean;
   /** Optional filters to apply to the list's tasks */
@@ -97,7 +95,7 @@ export interface PaginationOptions {
 }
 
 /**
- * Query parameters for searching TodoLists
+ * Query parameters for searching TaskLists
  */
 export interface SearchQuery {
   /** Full-text search across list title and description */
@@ -106,8 +104,7 @@ export interface SearchQuery {
   projectTag?: string;
   /** Filter by list status */
   status?: 'active' | 'completed' | 'all';
-  /** Whether to include archived lists */
-  includeArchived?: boolean;
+
   /** Filter by task status within lists */
   taskStatus?: TaskStatus[];
   /** Filter by task priority within lists */
@@ -143,9 +140,9 @@ export interface SearchResult<T> {
 }
 
 /**
- * Repository interface for TodoList aggregate
+ * Repository interface for TaskList aggregate
  *
- * This interface defines all data access operations for TodoLists.
+ * This interface defines all data access operations for TaskLists.
  * Implementations must handle:
  * - Data persistence and retrieval
  * - Query optimization
@@ -156,44 +153,44 @@ export interface SearchResult<T> {
  * Expected behaviors:
  * - save() should be idempotent (can be called multiple times with same data)
  * - findById() returns null if not found (does not throw)
- * - delete() with permanent=false should archive, permanent=true should remove
+ * - delete() permanently removes the list
  * - search() should support complex queries with filtering, sorting, pagination
  * - All operations should be atomic where possible
  * - Implementations should handle concurrent access safely
  */
-export interface ITodoListRepository {
+export interface ITaskListRepository {
   /**
-   * Saves a TodoList to the repository
+   * Saves a TaskList to the repository
    *
    * This operation should be idempotent - calling it multiple times
    * with the same data should have the same effect as calling it once.
    *
-   * @param list - The TodoList to save
+   * @param list - The TaskList to save
    * @throws Error if save operation fails
    */
-  save(list: TodoList): Promise<void>;
+  save(list: TaskList): Promise<void>;
 
   /**
-   * Finds a TodoList by its unique identifier
+   * Finds a TaskList by its unique identifier
    *
    * @param id - The unique identifier of the list
    * @param options - Optional parameters for the find operation
-   * @returns The TodoList if found, null otherwise
+   * @returns The TaskList if found, null otherwise
    * @throws Error if the find operation fails (but not if list doesn't exist)
    */
-  findById(id: string, options?: FindOptions): Promise<TodoList | null>;
+  findById(id: string, options?: FindOptions): Promise<TaskList | null>;
 
   /**
-   * Finds all TodoLists matching the given options
+   * Finds all TaskLists matching the given options
    *
    * @param options - Optional parameters for filtering and pagination
-   * @returns Array of TodoLists matching the criteria
+   * @returns Array of TaskLists matching the criteria
    * @throws Error if the find operation fails
    */
-  findAll(options?: FindOptions): Promise<TodoList[]>;
+  findAll(options?: FindOptions): Promise<TaskList[]>;
 
   /**
-   * Searches for TodoLists using complex query criteria
+   * Searches for TaskLists using complex query criteria
    *
    * Supports:
    * - Full-text search
@@ -205,10 +202,10 @@ export interface ITodoListRepository {
    * @returns Search result with items and metadata
    * @throws Error if the search operation fails
    */
-  search(query: SearchQuery): Promise<SearchResult<TodoList>>;
+  search(query: SearchQuery): Promise<SearchResult<TaskList>>;
 
   /**
-   * Searches for TodoList summaries (lightweight version)
+   * Searches for TaskList summaries (lightweight version)
    *
    * Returns only summary information without full task details.
    * Useful for list views and dashboards.
@@ -217,19 +214,19 @@ export interface ITodoListRepository {
    * @returns Search result with summaries and metadata
    * @throws Error if the search operation fails
    */
-  searchSummaries(query: SearchQuery): Promise<SearchResult<TodoListSummary>>;
+  searchSummaries(query: SearchQuery): Promise<SearchResult<TaskListSummary>>;
 
   /**
-   * Deletes a TodoList from the repository
+   * Deletes a TaskList from the repository
    *
    * @param id - The unique identifier of the list to delete
    * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
    */
-  delete(id: string, permanent: boolean): Promise<void>;
+  delete(id: string, permanent?: boolean): Promise<void>;
 
   /**
-   * Checks if a TodoList exists in the repository
+   * Checks if a TaskList exists in the repository
    *
    * @param id - The unique identifier to check
    * @returns true if the list exists, false otherwise
@@ -238,7 +235,7 @@ export interface ITodoListRepository {
   exists(id: string): Promise<boolean>;
 
   /**
-   * Counts TodoLists matching the given query
+   * Counts TaskLists matching the given query
    *
    * @param query - Optional query to filter which lists to count
    * @returns The number of lists matching the query

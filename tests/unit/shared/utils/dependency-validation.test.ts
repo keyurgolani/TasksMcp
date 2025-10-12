@@ -7,8 +7,8 @@ import { describe, it, expect } from 'vitest';
 import {
   TaskStatus,
   Priority,
-  type TodoItem,
-} from '../../../../src/shared/types/todo.js';
+  type Task,
+} from '../../../../src/shared/types/task.js';
 import {
   validateDependencyIds,
   validateTaskDependencies,
@@ -22,7 +22,7 @@ import {
 } from '../../../../src/shared/utils/dependency-validation.js';
 
 describe('Dependency Validation Utilities', () => {
-  const mockTasks: TodoItem[] = [
+  const mockTasks: Task[] = [
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
       title: 'Task 1',
@@ -128,7 +128,7 @@ describe('Dependency Validation Utilities', () => {
 
     it('should detect circular dependencies', () => {
       // Create tasks with circular dependencies: task-1 -> task-2 -> task-1
-      const tasksWithCircular: TodoItem[] = [
+      const tasksWithCircular: Task[] = [
         {
           ...mockTasks[0],
           id: '550e8400-e29b-41d4-a716-446655440001',
@@ -158,7 +158,7 @@ describe('Dependency Validation Utilities', () => {
 
   describe('detectCircularDependencies', () => {
     it('should detect simple circular dependency', () => {
-      const tasksWithCircular: TodoItem[] = [
+      const tasksWithCircular: Task[] = [
         {
           ...mockTasks[0],
           id: '550e8400-e29b-41d4-a716-446655440001',
@@ -184,7 +184,7 @@ describe('Dependency Validation Utilities', () => {
     });
 
     it('should detect complex circular dependency chain', () => {
-      const tasksWithCircular: TodoItem[] = [
+      const tasksWithCircular: Task[] = [
         {
           ...mockTasks[0],
           id: '550e8400-e29b-41d4-a716-446655440001',

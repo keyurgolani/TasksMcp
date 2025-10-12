@@ -6,11 +6,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { handleAnalyzeTaskDependencies } from '../../../../src/api/handlers/analyze-task-dependencies.js';
-import { TaskStatus } from '../../../../src/shared/types/todo.js';
+import { TaskStatus } from '../../../../src/shared/types/task.js';
 
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
-import type { TodoList, TodoItem } from '../../../../src/shared/types/todo.js';
+import type { TaskList, Task } from '../../../../src/shared/types/task.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
@@ -23,13 +23,13 @@ vi.mock('../../../../src/shared/utils/logger.js', () => ({
 }));
 
 describe('handleAnalyzeTaskDependencies', () => {
-  let mockTodoListManager: TodoListManager;
+  let mockTaskListManager: TaskListManager;
   let mockRequest: CallToolRequest;
 
   beforeEach(() => {
-    mockTodoListManager = {
-      getTodoList: vi.fn(),
-    } as unknown as TodoListManager;
+    mockTaskListManager = {
+      getTaskList: vi.fn(),
+    } as unknown as TaskListManager;
 
     mockRequest = {
       method: 'tools/call',
@@ -54,7 +54,7 @@ describe('handleAnalyzeTaskDependencies', () => {
 
       const result = await handleAnalyzeTaskDependencies(
         invalidRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -75,7 +75,7 @@ describe('handleAnalyzeTaskDependencies', () => {
 
       const result = await handleAnalyzeTaskDependencies(
         invalidRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -83,22 +83,22 @@ describe('handleAnalyzeTaskDependencies', () => {
     });
 
     it('should return error when list not found', async () => {
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(null);
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(null);
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Todo list with ID');
+      expect(result.content[0].text).toContain('Task list with ID');
       expect(result.content[0].text).toContain('not found');
     });
   });
 
   describe('analysis functionality', () => {
     it('should analyze empty list correctly', async () => {
-      const emptyList: TodoList = {
+      const emptyList: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Empty List',
         description: 'Test list',
@@ -108,11 +108,11 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(emptyList);
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(emptyList);
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -130,7 +130,7 @@ describe('handleAnalyzeTaskDependencies', () => {
     });
 
     it('should analyze simple linear dependency chain', async () => {
-      const task1: TodoItem = {
+      const task1: Task = {
         id: 'task-1',
         title: 'Task 1',
         description: 'First task',
@@ -142,7 +142,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const task2: TodoItem = {
+      const task2: Task = {
         id: 'task-2',
         title: 'Task 2',
         description: 'Second task',
@@ -154,7 +154,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const task3: TodoItem = {
+      const task3: Task = {
         id: 'task-3',
         title: 'Task 3',
         description: 'Third task',
@@ -166,7 +166,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const listWithChain: TodoList = {
+      const listWithChain: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Chain List',
         description: 'Test list with dependency chain',
@@ -176,13 +176,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         listWithChain
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -198,7 +198,7 @@ describe('handleAnalyzeTaskDependencies', () => {
     });
 
     it('should detect circular dependencies', async () => {
-      const task1: TodoItem = {
+      const task1: Task = {
         id: 'task-1',
         title: 'Task 1',
         description: 'First task',
@@ -210,7 +210,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const task2: TodoItem = {
+      const task2: Task = {
         id: 'task-2',
         title: 'Task 2',
         description: 'Second task',
@@ -222,7 +222,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const listWithCycle: TodoList = {
+      const listWithCycle: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Cycle List',
         description: 'Test list with circular dependencies',
@@ -232,13 +232,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         listWithCycle
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -254,7 +254,7 @@ describe('handleAnalyzeTaskDependencies', () => {
 
     it('should identify bottlenecks', async () => {
       // Create a bottleneck scenario where one task blocks multiple others
-      const bottleneckTask: TodoItem = {
+      const bottleneckTask: Task = {
         id: 'bottleneck',
         title: 'Bottleneck Task',
         description: 'Task that blocks many others',
@@ -278,7 +278,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       }));
 
-      const listWithBottleneck: TodoList = {
+      const listWithBottleneck: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Bottleneck List',
         description: 'Test list with bottleneck',
@@ -288,13 +288,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         listWithBottleneck
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -309,7 +309,7 @@ describe('handleAnalyzeTaskDependencies', () => {
     });
 
     it('should provide progress insights', async () => {
-      const completedTask: TodoItem = {
+      const completedTask: Task = {
         id: 'completed',
         title: 'Completed Task',
         description: 'Already done',
@@ -321,7 +321,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const pendingTask: TodoItem = {
+      const pendingTask: Task = {
         id: 'pending',
         title: 'Pending Task',
         description: 'Still to do',
@@ -333,7 +333,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const listWithProgress: TodoList = {
+      const listWithProgress: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Progress List',
         description: 'Test list with mixed progress',
@@ -343,13 +343,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         listWithProgress
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -359,7 +359,7 @@ describe('handleAnalyzeTaskDependencies', () => {
     });
 
     it('should suggest starting with ready tasks', async () => {
-      const readyTask1: TodoItem = {
+      const readyTask1: Task = {
         id: 'ready-1',
         title: 'Ready Task 1',
         description: 'Can start immediately',
@@ -371,7 +371,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const readyTask2: TodoItem = {
+      const readyTask2: Task = {
         id: 'ready-2',
         title: 'Ready Task 2',
         description: 'Can start immediately',
@@ -383,7 +383,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const blockedTask: TodoItem = {
+      const blockedTask: Task = {
         id: 'blocked',
         title: 'Blocked Task',
         description: 'Waiting for ready-1',
@@ -395,7 +395,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const listWithReady: TodoList = {
+      const listWithReady: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Ready List',
         description: 'Test list with ready tasks',
@@ -405,13 +405,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         listWithReady
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -426,7 +426,7 @@ describe('handleAnalyzeTaskDependencies', () => {
     });
 
     it('should warn when no tasks are ready', async () => {
-      const task1: TodoItem = {
+      const task1: Task = {
         id: 'task-1',
         title: 'Task 1',
         description: 'Blocked by task 2',
@@ -438,7 +438,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const task2: TodoItem = {
+      const task2: Task = {
         id: 'task-2',
         title: 'Task 2',
         description: 'Blocked by task 1',
@@ -450,7 +450,7 @@ describe('handleAnalyzeTaskDependencies', () => {
         updatedAt: new Date(),
       };
 
-      const listAllBlocked: TodoList = {
+      const listAllBlocked: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'All Blocked List',
         description: 'Test list where all tasks are blocked',
@@ -460,13 +460,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         listAllBlocked
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -482,14 +482,14 @@ describe('handleAnalyzeTaskDependencies', () => {
   });
 
   describe('error handling', () => {
-    it('should handle TodoListManager errors gracefully', async () => {
-      vi.mocked(mockTodoListManager.getTodoList).mockRejectedValue(
+    it('should handle TaskListManager errors gracefully', async () => {
+      vi.mocked(mockTaskListManager.getTaskList).mockRejectedValue(
         new Error('Database error')
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -509,7 +509,7 @@ describe('handleAnalyzeTaskDependencies', () => {
 
       const result = await handleAnalyzeTaskDependencies(
         malformedRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -518,7 +518,7 @@ describe('handleAnalyzeTaskDependencies', () => {
 
     it('should handle unexpected errors during analysis', async () => {
       // Create a scenario that might cause analysis to fail
-      const corruptedList: TodoList = {
+      const corruptedList: TaskList = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         title: 'Corrupted List',
         description: 'Test list',
@@ -540,13 +540,13 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+      vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(
         corruptedList
       );
 
       const result = await handleAnalyzeTaskDependencies(
         mockRequest,
-        mockTodoListManager
+        mockTaskListManager
       );
 
       // Should not crash, should handle gracefully
@@ -595,7 +595,7 @@ describe('handleAnalyzeTaskDependencies', () => {
       ];
 
       for (const scenario of scenarios) {
-        const testList: TodoList = {
+        const testList: TaskList = {
           id: '123e4567-e89b-12d3-a456-426614174000',
           title: `${scenario.name} List`,
           description: `Test list for ${scenario.name}`,
@@ -605,11 +605,11 @@ describe('handleAnalyzeTaskDependencies', () => {
           projectTag: undefined,
         };
 
-        vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(testList);
+        vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(testList);
 
         const result = await handleAnalyzeTaskDependencies(
           mockRequest,
-          mockTodoListManager
+          mockTaskListManager
         );
 
         expect(result.isError).toBeFalsy();
@@ -640,7 +640,7 @@ describe('handleAnalyzeTaskDependencies', () => {
           updatedAt: new Date(),
         }));
 
-        const testList: TodoList = {
+        const testList: TaskList = {
           id: '123e4567-e89b-12d3-a456-426614174000',
           title: `${progressPercent}% Progress List`,
           description: `Test list with ${progressPercent}% progress`,
@@ -650,11 +650,11 @@ describe('handleAnalyzeTaskDependencies', () => {
           projectTag: undefined,
         };
 
-        vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(testList);
+        vi.mocked(mockTaskListManager.getTaskList).mockResolvedValue(testList);
 
         const result = await handleAnalyzeTaskDependencies(
           mockRequest,
-          mockTodoListManager
+          mockTaskListManager
         );
 
         expect(result.isError).toBeFalsy();

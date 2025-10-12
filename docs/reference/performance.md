@@ -503,7 +503,7 @@ NODE_ENV=production DATA_DIRECTORY=/prod/data npx task-list-mcp@latest
 2. **Limit result sets**: Use reasonable limits and pagination
 3. **Batch operations**: Use bulk operations when possible
 4. **Monitor performance**: Track response times and resource usage
-5. **Optimize queries**: Use specific filters and sorting
+5. **Optimize queries**: Use specific filters
 
 ### Production Best Practices
 

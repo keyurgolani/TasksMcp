@@ -14,7 +14,7 @@ import {
 } from './storage-factory.js';
 
 import type { StorageBackend } from '../../shared/types/storage.js';
-import type { TodoList } from '../../shared/types/todo.js';
+import type { TaskList } from '../../shared/types/task.js';
 
 /**
  * Configuration for a single data source
@@ -50,7 +50,7 @@ export type OperationType = 'read' | 'write' | 'delete';
 export interface DataOperation {
   type: OperationType;
   key?: string;
-  data?: TodoList;
+  data?: TaskList;
   permanent?: boolean;
   options?: Record<string, unknown>;
 }

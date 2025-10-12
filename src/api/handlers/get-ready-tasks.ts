@@ -5,18 +5,19 @@
 import { z } from 'zod';
 
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
-import { TaskStatus } from '../../shared/types/todo.js';
+import { TaskStatus } from '../../shared/types/task.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 const GetReadyTasksSchema = z.object({
   listId: z.string().uuid(),
@@ -25,7 +26,7 @@ const GetReadyTasksSchema = z.object({
 
 export async function handleGetReadyTasks(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing get_ready_tasks request', {
@@ -35,13 +36,13 @@ export async function handleGetReadyTasks(
     const args = GetReadyTasksSchema.parse(request.params?.arguments);
 
     // Get the todo list
-    const todoList = await todoListManager.getTodoList({
+    const todoList = await todoListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true, // We need all tasks to properly calculate dependencies
     });
 
     if (!todoList) {
-      throw new Error(`Todo list not found: ${args.listId}`);
+      throw new Error(`Task list not found: ${args.listId}`);
     }
 
     // Use DependencyResolver to get ready tasks
@@ -67,7 +68,7 @@ export async function handleGetReadyTasks(
 
     const response = {
       listId: args.listId,
-      readyTasks: sortedReadyTasks.map(task => ({
+      readyTasks: sortedReadyTasks.map((task: Task) => ({
         id: task.id,
         title: task.title,
         description: task.description,

@@ -28,7 +28,7 @@ export interface CreateTodoListParams {
   context?: string;
 }
 
-export interface GetTodoListParams {
+export interface GetTaskListParams {
   listId: string;
   includeCompleted?: boolean;
 }
@@ -84,7 +84,6 @@ export interface ExitCriteriaResponse {
   isMet: boolean;
   metAt?: string;
   notes?: string;
-  order: number;
 }
 
 export interface TaskResponse {

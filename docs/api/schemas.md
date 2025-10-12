@@ -398,14 +398,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
       "hasDependencies": {
         "type": "boolean"
       },
-      "sortBy": {
-        "type": "string",
-        "enum": ["relevance", "priority", "createdAt", "updatedAt", "title"],
-        "default": "relevance"
-      },
-      "sortOrder": {
-        "type": "string",
-        "enum": ["asc", "desc"],
+
         "default": "desc"
       },
       "limit": {
@@ -748,7 +741,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
       "id": "string (uuid)",
       "description": "string",
       "isMet": "boolean",
-      "order": "number",
+
       "metAt": "string (ISO date)",
       "notes": "string"
     }

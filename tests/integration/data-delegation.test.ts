@@ -1,7 +1,7 @@
 /**
  * Integration tests for Data Delegation Layer
  *
- * Tests the TodoListRepository implementation with DataSourceRouter
+ * Tests the TaskListRepository implementation with DataSourceRouter
  * and MultiSourceAggregator to verify:
  * - Multi-source data access
  * - Source failover and fallback
@@ -23,7 +23,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { TodoListRepository } from '../../src/domain/repositories/todo-list-repository-impl.js';
+import { TaskListRepository } from '../../src/domain/repositories/task-list-repository-impl.js';
 import {
   DataSourceRouter,
   type DataSourceConfig,
@@ -34,10 +34,10 @@ import {
   type AggregatorConfig,
 } from '../../src/infrastructure/storage/multi-source-aggregator.js';
 
-import type { TodoList } from '../../src/shared/types/todo.js';
+import type { TaskList } from '../../src/shared/types/task.js';
 
 describe('Data Delegation Layer Integration Tests', () => {
-  let repository: TodoListRepository;
+  let repository: TaskListRepository;
   let router: DataSourceRouter;
   let aggregator: MultiSourceAggregator;
   let source1: MemoryStorageBackend;
@@ -45,9 +45,9 @@ describe('Data Delegation Layer Integration Tests', () => {
   let source3: MemoryStorageBackend;
 
   /**
-   * Helper to create a test TodoList
+   * Helper to create a test TaskList
    */
-  function createTestList(overrides: Partial<TodoList> = {}): TodoList {
+  function createTestList(overrides: Partial<TaskList> = {}): TaskList {
     const id = overrides.id ?? uuidv4();
     const now = new Date();
 
@@ -166,7 +166,7 @@ describe('Data Delegation Layer Integration Tests', () => {
     aggregator = new MultiSourceAggregator(aggregatorConfig);
 
     // Create repository
-    repository = new TodoListRepository(router, aggregator);
+    repository = new TaskListRepository(router, aggregator);
   });
 
   afterEach(async () => {
@@ -484,7 +484,7 @@ describe('Data Delegation Layer Integration Tests', () => {
         queryTimeout: 5000,
       });
 
-      const latestRepository = new TodoListRepository(router, latestAggregator);
+      const latestRepository = new TaskListRepository(router, latestAggregator);
 
       const listId = uuidv4();
 

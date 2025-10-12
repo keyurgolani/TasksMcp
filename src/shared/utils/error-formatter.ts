@@ -47,9 +47,9 @@ interface ZodFormatIssue {
 }
 
 /**
- * Enhanced error message with detailed information and suggestions
+ * Error message with detailed information and suggestions
  */
-export interface EnhancedErrorMessage {
+export interface DetailedErrorMessage {
   /** Field name that caused the error */
   field: string;
   /** Human-readable error message */
@@ -315,7 +315,7 @@ export function createErrorContext(
 }
 
 /**
- * Enhanced Error Formatter class with comprehensive validation error handling
+ * Error Formatter class with validation error handling
  */
 export class ErrorFormatter {
   /**
@@ -325,7 +325,7 @@ export class ErrorFormatter {
     error: ZodError,
     context?: ErrorFormattingContext,
     originalInput?: unknown
-  ): EnhancedErrorMessage[] {
+  ): DetailedErrorMessage[] {
     if (!error || !error.issues) {
       return [];
     }
@@ -339,7 +339,7 @@ export class ErrorFormatter {
    * Format multiple errors for display with emojis and structure
    */
   static formatErrorsForDisplay(
-    errors: EnhancedErrorMessage[],
+    errors: DetailedErrorMessage[],
     options: DisplayOptions = {}
   ): string {
     if (errors.length === 0) {
@@ -399,7 +399,7 @@ export class ErrorFormatter {
     issue: ZodIssue,
     context?: ErrorFormattingContext,
     originalInput?: unknown
-  ): EnhancedErrorMessage {
+  ): DetailedErrorMessage {
     const field = issue.path.join('.') || 'parameter';
     const code = issue.code;
 
@@ -437,7 +437,7 @@ export class ErrorFormatter {
     );
     const example = this.createExample(issue, field, context?.toolName);
 
-    const result: EnhancedErrorMessage = {
+    const result: DetailedErrorMessage = {
       field,
       message,
       code,

@@ -14,26 +14,26 @@ import { handleGetReadyTasks } from '../../src/api/handlers/get-ready-tasks.js';
 import { handleSearchTool } from '../../src/api/handlers/search-tool.js';
 import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-dependencies.js';
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
-import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { Priority, TaskStatus } from '../../src/shared/types/task.js';
+import { createTaskListManager } from '../utils/test-helpers.js';
 
-import type { TodoList } from '../../src/shared/types/todo.js';
+import type { TaskList } from '../../src/shared/types/task.js';
 
 describe('Dependency Management User Experience Tests', () => {
-  let todoListManager: TodoListManager;
+  let taskListManager: TaskListManager;
   let storage: MemoryStorageBackend;
-  let testList: TodoList;
+  let testList: TaskList;
 
   beforeEach(async () => {
     storage = new MemoryStorageBackend();
     await storage.initialize(); // Initialize storage before creating manager
-    todoListManager = createTodoListManager(storage);
-    await todoListManager.initialize();
+    taskListManager = createTaskListManager(storage);
+    await taskListManager.initialize();
 
     // Create a simple test list for UX testing
-    testList = await todoListManager.createTodoList({
+    testList = await taskListManager.createTaskList({
       title: 'UX Test Project',
       description: 'Testing user experience of dependency features',
       tasks: [
@@ -67,7 +67,7 @@ describe('Dependency Management User Experience Tests', () => {
   });
 
   afterEach(async () => {
-    await todoListManager.shutdown();
+    await taskListManager.shutdown();
   });
 
   describe('Error Messages are Clear and Actionable', () => {
@@ -88,7 +88,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Try to create circular dependency (task1 depends on task2)
@@ -104,7 +104,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -135,7 +135,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -164,7 +164,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBe(true);
@@ -190,13 +190,13 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBe(true);
       const errorMessage = result.content[0]?.text as string;
 
-      expect(errorMessage).toContain('Todo list not found');
+      expect(errorMessage).toContain('Task list not found');
       expect(errorMessage).toMatch(/not found|does not exist/i);
 
       // Should be concise and clear (allowing for methodology tips)
@@ -222,7 +222,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const result = await handleGetList(
@@ -235,7 +235,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -278,7 +278,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -293,7 +293,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const result = await handleShowTasks(
@@ -306,7 +306,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -347,7 +347,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Filter for ready tasks
@@ -363,7 +363,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(readyResult.isError).toBeFalsy();
@@ -388,7 +388,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(blockedResult.isError).toBeFalsy();
@@ -422,7 +422,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -437,7 +437,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const result = await handleGetReadyTasks(
@@ -450,7 +450,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -494,7 +494,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -509,7 +509,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       await handleSetTaskDependencies(
@@ -524,7 +524,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const result = await handleAnalyzeTaskDependencies(
@@ -537,7 +537,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -588,7 +588,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -612,7 +612,7 @@ describe('Dependency Management User Experience Tests', () => {
   describe('Edge Cases are Handled Gracefully', () => {
     it('should handle empty lists gracefully', async () => {
       // Create an empty list
-      const emptyList = await todoListManager.createTodoList({
+      const emptyList = await taskListManager.createTaskList({
         title: 'Empty List',
         description: 'A list with no tasks',
         tasks: [],
@@ -628,7 +628,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(readyResult.isError).toBeFalsy();
@@ -657,7 +657,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -684,7 +684,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -716,7 +716,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -732,7 +732,7 @@ describe('Dependency Management User Experience Tests', () => {
     it('should provide clear guidance when all tasks are completed', async () => {
       // Complete all tasks
       for (const task of testList.items) {
-        await todoListManager.updateTodoList({
+        await taskListManager.updateTaskList({
           listId: testList.id,
           action: 'update_status',
           itemId: task.id,
@@ -750,7 +750,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       expect(result.isError).toBeFalsy();
@@ -782,7 +782,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Check get_list date format
@@ -796,7 +796,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const listData = JSON.parse(listResult.content[0]?.text as string);
@@ -821,7 +821,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const readyData = JSON.parse(readyResult.content[0]?.text as string);
@@ -852,7 +852,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Check field consistency across tools
@@ -863,7 +863,7 @@ describe('Dependency Management User Experience Tests', () => {
               method: 'tools/call',
               params: { name: 'get_list', arguments: { listId: testList.id } },
             },
-            todoListManager
+            taskListManager
           ),
         () =>
           handleSearchTool(
@@ -874,7 +874,7 @@ describe('Dependency Management User Experience Tests', () => {
                 arguments: { listId: testList.id, includeDependencyInfo: true },
               },
             },
-            todoListManager
+            taskListManager
           ),
         () =>
           handleGetReadyTasks(
@@ -885,7 +885,7 @@ describe('Dependency Management User Experience Tests', () => {
                 arguments: { listId: testList.id },
               },
             },
-            todoListManager
+            taskListManager
           ),
       ];
 
@@ -930,7 +930,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       // Test response sizes
@@ -944,7 +944,7 @@ describe('Dependency Management User Experience Tests', () => {
             },
           },
         },
-        todoListManager
+        taskListManager
       );
 
       const analysisText = analysisResult.content[0]?.text as string;

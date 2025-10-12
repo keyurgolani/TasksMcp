@@ -12,12 +12,13 @@ import {
 } from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
   CallToolRequest,
   CallToolResult,
 } from '../../shared/types/mcp-types.js';
 import type { TaskResponse } from '../../shared/types/mcp-types.js';
+import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for set task dependencies request parameters
@@ -39,7 +40,7 @@ const SetTaskDependenciesSchema = z.object({
  */
 export async function handleSetTaskDependencies(
   request: CallToolRequest,
-  todoListManager: TodoListManager
+  todoListManager: TaskListManager
 ): Promise<CallToolResult> {
   const dependencyResolver = new DependencyResolver();
 
@@ -51,7 +52,7 @@ export async function handleSetTaskDependencies(
     const args = SetTaskDependenciesSchema.parse(request.params?.arguments);
 
     // Get the current list to validate task and dependencies exist
-    const currentList = await todoListManager.getTodoList({
+    const currentList = await todoListManager.getTaskList({
       listId: args.listId,
     });
     if (!currentList) {
@@ -59,7 +60,7 @@ export async function handleSetTaskDependencies(
         content: [
           {
             type: 'text',
-            text: `Error: Todo list with ID ${args.listId} not found`,
+            text: `Error: Task list with ID ${args.listId} not found`,
           },
         ],
         isError: true,
@@ -67,7 +68,9 @@ export async function handleSetTaskDependencies(
     }
 
     // Find the target task
-    const targetTask = currentList.items.find(item => item.id === args.taskId);
+    const targetTask = currentList.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!targetTask) {
       return {
         content: [
@@ -115,7 +118,7 @@ export async function handleSetTaskDependencies(
     }
 
     // Update the task with new dependencies
-    const result = await todoListManager.updateTodoList({
+    const result = await todoListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -125,7 +128,9 @@ export async function handleSetTaskDependencies(
     });
 
     // Find the updated task
-    const updatedTask = result.items.find(item => item.id === args.taskId);
+    const updatedTask = result.items.find(
+      (item: Task) => item.id === args.taskId
+    );
     if (!updatedTask) {
       throw new Error(
         'Failed to update task dependencies - task not found in result'

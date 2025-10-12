@@ -1,11 +1,11 @@
 /**
- * Dependency resolution and validation for todo items
+ * Dependency resolution and validation for task items
  */
 
-import { TaskStatus, type TodoItem } from '../../shared/types/todo.js';
+import { TaskStatus, type Task } from '../../shared/types/task.js';
 import { logger } from '../../shared/utils/logger.js';
 
-import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
+import type { ITaskListRepository } from '../repositories/task-list.repository.js';
 
 export interface DependencyNode {
   id: string;
@@ -48,9 +48,9 @@ export class DependencyResolver {
   private cacheTimeout: NodeJS.Timeout | undefined;
   // Repository for future multi-source dependency resolution
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITodoListRepository | undefined;
+  private readonly repository: ITaskListRepository | undefined;
 
-  constructor(repository?: ITodoListRepository) {
+  constructor(repository?: ITaskListRepository) {
     this.repository = repository;
 
     // Setup periodic cache cleanup - more frequent to prevent memory buildup
@@ -67,16 +67,16 @@ export class DependencyResolver {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITodoListRepository | undefined {
+  getRepository(): ITaskListRepository | undefined {
     return this.repository;
   }
   /**
-   * Validates dependencies for a todo item
+   * Validates dependencies for a task item
    */
   validateDependencies(
     itemId: string,
     dependencies: string[],
-    allItems: TodoItem[]
+    allItems: Task[]
   ): DependencyValidationResult {
     const result: DependencyValidationResult = {
       isValid: true,
@@ -171,7 +171,7 @@ export class DependencyResolver {
   detectCircularDependencies(
     itemId: string,
     newDependencies: string[],
-    allItems: TodoItem[]
+    allItems: Task[]
   ): string[][] {
     const cycles: string[][] = [];
 
@@ -245,7 +245,7 @@ export class DependencyResolver {
   /**
    * Builds a complete dependency graph for all items
    */
-  buildDependencyGraph(items: TodoItem[]): DependencyGraph {
+  buildDependencyGraph(items: Task[]): DependencyGraph {
     try {
       logger.debug('Building dependency graph', { itemCount: items.length });
 
@@ -455,9 +455,9 @@ export class DependencyResolver {
   /**
    * Gets items that are ready to be worked on (no blocking dependencies)
    */
-  getReadyItems(items: TodoItem[]): TodoItem[] {
+  getReadyItems(items: Task[]): Task[] {
     try {
-      const readyItems: TodoItem[] = [];
+      const readyItems: Task[] = [];
 
       for (const item of items) {
         // Skip completed items
@@ -496,11 +496,9 @@ export class DependencyResolver {
   /**
    * Gets items that are blocked by dependencies
    */
-  getBlockedItems(
-    items: TodoItem[]
-  ): Array<{ item: TodoItem; blockedBy: TodoItem[] }> {
+  getBlockedItems(items: Task[]): Array<{ item: Task; blockedBy: Task[] }> {
     try {
-      const blockedItems: Array<{ item: TodoItem; blockedBy: TodoItem[] }> = [];
+      const blockedItems: Array<{ item: Task; blockedBy: Task[] }> = [];
 
       for (const item of items) {
         // Skip completed items
@@ -512,7 +510,7 @@ export class DependencyResolver {
         const incompleteDeps = item.dependencies
           .map(depId => items.find(i => i.id === depId))
           .filter(
-            (depItem): depItem is TodoItem =>
+            (depItem): depItem is Task =>
               depItem !== undefined && depItem.status !== TaskStatus.COMPLETED
           );
 
@@ -539,7 +537,7 @@ export class DependencyResolver {
   /**
    * Calculates the critical path through the dependency graph
    */
-  calculateCriticalPath(items: TodoItem[]): string[] {
+  calculateCriticalPath(items: Task[]): string[] {
     try {
       const graph = this.buildDependencyGraph(items);
 

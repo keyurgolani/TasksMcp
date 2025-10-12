@@ -5,9 +5,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { handleAddTask } from '../../../../src/api/handlers/add-task.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/task.js';
 
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
@@ -45,7 +45,7 @@ vi.mock('../../../../src/domain/tasks/exit-criteria-manager.js', () => ({
 }));
 
 describe('handleAddTask with dependencies', () => {
-  let mockTodoListManager: TodoListManager;
+  let mockTaskListManager: TaskListManager;
 
   beforeEach(() => {
     // Reset all mocks
@@ -55,10 +55,10 @@ describe('handleAddTask with dependencies', () => {
     mockCalculateCriteriaProgress.mockReturnValue(0);
     mockAreAllCriteriaMet.mockReturnValue(true);
 
-    // Mock TodoListManager
-    mockTodoListManager = {
-      getTodoList: vi.fn(),
-      updateTodoList: vi.fn(),
+    // Mock TaskListManager
+    mockTaskListManager = {
+      getTaskList: vi.fn(),
+      updateTaskList: vi.fn(),
     } as any;
   });
 
@@ -93,10 +93,10 @@ describe('handleAddTask with dependencies', () => {
       items: [mockTask],
     };
 
-    mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue(mockResult);
+    mockTaskListManager.updateTaskList = vi.fn().mockResolvedValue(mockResult);
     mockGetReadyItems.mockReturnValue([mockTask]);
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain(mockTask.id);
@@ -146,10 +146,10 @@ describe('handleAddTask with dependencies', () => {
       items: [mockDependencyTask, mockNewTask],
     };
 
-    mockTodoListManager.getTodoList = vi
+    mockTaskListManager.getTaskList = vi
       .fn()
       .mockResolvedValue(mockExistingList);
-    mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue(mockResult);
+    mockTaskListManager.updateTaskList = vi.fn().mockResolvedValue(mockResult);
     mockValidateDependencies.mockReturnValue({
       isValid: true,
       errors: [],
@@ -157,7 +157,7 @@ describe('handleAddTask with dependencies', () => {
     });
     mockGetReadyItems.mockReturnValue([mockNewTask]);
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain(mockNewTask.id);
@@ -183,7 +183,7 @@ describe('handleAddTask with dependencies', () => {
       items: [], // No existing tasks
     };
 
-    mockTodoListManager.getTodoList = vi
+    mockTaskListManager.getTaskList = vi
       .fn()
       .mockResolvedValue(mockExistingList);
     mockValidateDependencies.mockReturnValue({
@@ -194,7 +194,7 @@ describe('handleAddTask with dependencies', () => {
       warnings: [],
     });
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Invalid UUID format');
@@ -223,7 +223,7 @@ describe('handleAddTask with dependencies', () => {
       ],
     };
 
-    mockTodoListManager.getTodoList = vi
+    mockTaskListManager.getTaskList = vi
       .fn()
       .mockResolvedValue(mockExistingList);
     mockValidateDependencies.mockReturnValue({
@@ -237,7 +237,7 @@ describe('handleAddTask with dependencies', () => {
       ],
     });
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Dependency validation failed');
@@ -286,10 +286,10 @@ describe('handleAddTask with dependencies', () => {
       items: [mockDependencyTask, mockNewTask],
     };
 
-    mockTodoListManager.getTodoList = vi
+    mockTaskListManager.getTaskList = vi
       .fn()
       .mockResolvedValue(mockExistingList);
-    mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue(mockResult);
+    mockTaskListManager.updateTaskList = vi.fn().mockResolvedValue(mockResult);
     mockValidateDependencies.mockReturnValue({
       isValid: true,
       errors: [],
@@ -297,7 +297,7 @@ describe('handleAddTask with dependencies', () => {
     });
     mockGetReadyItems.mockReturnValue([]); // Task is not ready
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain(mockNewTask.id);
@@ -318,7 +318,7 @@ describe('handleAddTask with dependencies', () => {
       },
     };
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('❌');
@@ -337,12 +337,12 @@ describe('handleAddTask with dependencies', () => {
       },
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(null);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(null);
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Todo list not found');
+    expect(result.content[0].text).toContain('Task list not found');
   });
 
   it('should log warnings for dependencies on completed tasks', async () => {
@@ -383,10 +383,10 @@ describe('handleAddTask with dependencies', () => {
       updatedAt: new Date(),
     };
 
-    mockTodoListManager.getTodoList = vi
+    mockTaskListManager.getTaskList = vi
       .fn()
       .mockResolvedValue(mockExistingList);
-    mockTodoListManager.updateTodoList = vi.fn().mockResolvedValue({
+    mockTaskListManager.updateTaskList = vi.fn().mockResolvedValue({
       items: [mockDependencyTask, mockNewTask],
     });
     mockValidateDependencies.mockReturnValue({
@@ -396,7 +396,7 @@ describe('handleAddTask with dependencies', () => {
     });
     mockGetReadyItems.mockReturnValue([mockNewTask]);
 
-    const result = await handleAddTask(request, mockTodoListManager);
+    const result = await handleAddTask(request, mockTaskListManager);
 
     // Should still succeed but log warnings
     expect(result.isError).toBeFalsy();

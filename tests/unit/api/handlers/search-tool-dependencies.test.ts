@@ -5,9 +5,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { handleSearchTool } from '../../../../src/api/handlers/search-tool.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/task.js';
 
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { TaskListManager } from '../../../../src/domain/lists/task-list-manager.js';
 import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
@@ -32,15 +32,15 @@ vi.mock('../../../../src/domain/tasks/dependency-manager.js', () => ({
 }));
 
 describe('handleSearchTool with dependency filters', () => {
-  let mockTodoListManager: TodoListManager;
+  let mockTaskListManager: TaskListManager;
 
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
 
-    // Mock TodoListManager
-    mockTodoListManager = {
-      getTodoList: vi.fn(),
+    // Mock TaskListManager
+    mockTaskListManager = {
+      getTaskList: vi.fn(),
     } as any;
   });
 
@@ -123,14 +123,14 @@ describe('handleSearchTool with dependency filters', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]); // Tasks 1, 2, 5 are ready
 
-    const result = await handleSearchTool(request, mockTodoListManager);
+    const result = await handleSearchTool(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -161,14 +161,14 @@ describe('handleSearchTool with dependency filters', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]);
 
-    const result = await handleSearchTool(request, mockTodoListManager);
+    const result = await handleSearchTool(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -202,14 +202,14 @@ describe('handleSearchTool with dependency filters', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]); // Tasks 1, 2, 5 are ready
 
-    const result = await handleSearchTool(request, mockTodoListManager);
+    const result = await handleSearchTool(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -248,14 +248,14 @@ describe('handleSearchTool with dependency filters', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]); // Tasks 1, 2, 5 are ready
 
-    const result = await handleSearchTool(request, mockTodoListManager);
+    const result = await handleSearchTool(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -288,14 +288,14 @@ describe('handleSearchTool with dependency filters', () => {
       items: mockTasks,
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([
       mockTasks[0],
       mockTasks[1],
       mockTasks[4],
     ]); // Tasks 1, 2, 5 are ready
 
-    const result = await handleSearchTool(request, mockTodoListManager);
+    const result = await handleSearchTool(request, mockTaskListManager);
 
     expect(result.isError).toBeFalsy();
 
@@ -319,12 +319,12 @@ describe('handleSearchTool with dependency filters', () => {
       },
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(null);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(null);
 
-    const result = await handleSearchTool(request, mockTodoListManager);
+    const result = await handleSearchTool(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Todo list not found');
+    expect(result.content[0].text).toContain('Task list not found');
   });
 
   it('should call cleanup on dependency resolver', async () => {
@@ -345,10 +345,10 @@ describe('handleSearchTool with dependency filters', () => {
       items: [],
     };
 
-    mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
+    mockTaskListManager.getTaskList = vi.fn().mockResolvedValue(mockList);
     mockGetReadyItems.mockReturnValue([]);
 
-    await handleSearchTool(request, mockTodoListManager);
+    await handleSearchTool(request, mockTaskListManager);
 
     expect(mockCleanup).toHaveBeenCalled();
   });
