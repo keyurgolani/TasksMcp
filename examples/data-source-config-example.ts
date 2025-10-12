@@ -1,6 +1,6 @@
 /**
  * Example: Data Source Configuration System
- * 
+ *
  * This example demonstrates how to use the data source configuration system
  * to configure multiple storage backends with validation and environment support.
  */
@@ -110,16 +110,20 @@ const loader = new DataSourceConfigLoader();
       configPath: './config/data-sources.json',
       requireConfigFile: false,
     });
-    
+
     console.log('✅ Configuration loaded successfully');
     console.log(`   - ${config.sources.length} sources configured`);
-    console.log(`   - Enabled sources: ${config.sources.filter(s => s.enabled).length}`);
-    
+    console.log(
+      `   - Enabled sources: ${config.sources.filter(s => s.enabled).length}`
+    );
+
     // List all sources
     console.log('\n   Sources:');
     for (const source of config.sources) {
       console.log(`   - ${source.name} (${source.type})`);
-      console.log(`     Priority: ${source.priority}, Enabled: ${source.enabled}, Read-only: ${source.readonly}`);
+      console.log(
+        `     Priority: ${source.priority}, Enabled: ${source.enabled}, Read-only: ${source.readonly}`
+      );
       if (source.tags && source.tags.length > 0) {
         console.log(`     Tags: ${source.tags.join(', ')}`);
       }
@@ -143,7 +147,7 @@ const invalidConfig = {
 };
 
 try {
-  validateDataSourceConfig(invalidConfig as any);
+  validateDataSourceConfig(invalidConfig as unknown);
   console.log('❌ Should have thrown validation error');
 } catch (error) {
   console.log('✅ Validation correctly rejected invalid configuration');

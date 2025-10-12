@@ -1,6 +1,6 @@
 /**
  * Integration tests for Data Delegation Layer
- * 
+ *
  * Tests the TodoListRepository implementation with DataSourceRouter
  * and MultiSourceAggregator to verify:
  * - Multi-source data access
@@ -8,7 +8,7 @@
  * - Conflict resolution strategies
  * - Data aggregation and deduplication
  * - Source metadata tracking
- * 
+ *
  * Requirements tested:
  * - 2.1: Pluggable storage backends
  * - 2.3: Multi-source data aggregation
@@ -20,13 +20,21 @@
  * - 3.5: Handle unavailable sources
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { TodoListRepository } from '../../src/domain/repositories/todo-list-repository-impl.js';
-import { DataSourceRouter, type DataSourceConfig } from '../../src/infrastructure/storage/data-source-router.js';
-import { MultiSourceAggregator, type AggregatorConfig } from '../../src/infrastructure/storage/multi-source-aggregator.js';
-import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import type { TodoList } from '../../src/shared/types/todo.js';
 import { v4 as uuidv4 } from 'uuid';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { TodoListRepository } from '../../src/domain/repositories/todo-list-repository-impl.js';
+import {
+  DataSourceRouter,
+  type DataSourceConfig,
+} from '../../src/infrastructure/storage/data-source-router.js';
+import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
+import {
+  MultiSourceAggregator,
+  type AggregatorConfig,
+} from '../../src/infrastructure/storage/multi-source-aggregator.js';
+
+import type { TodoList } from '../../src/shared/types/todo.js';
 
 describe('Data Delegation Layer Integration Tests', () => {
   let repository: TodoListRepository;
@@ -141,8 +149,11 @@ describe('Data Delegation Layer Integration Tests', () => {
 
     // Replace backends with our test instances
     // This is a bit hacky but necessary for testing
+
     (router as any).connectionPool.get('source-1')!.backend = source1;
+
     (router as any).connectionPool.get('source-2')!.backend = source2;
+
     (router as any).connectionPool.get('source-3')!.backend = source3;
 
     // Create aggregator with priority-based conflict resolution
@@ -203,7 +214,7 @@ describe('Data Delegation Layer Integration Tests', () => {
 
       expect(result.items).toHaveLength(3);
       expect(result.totalCount).toBe(3);
-      
+
       const titles = result.items.map(l => l.title).sort();
       expect(titles).toEqual([
         'List in Source 1',
@@ -214,14 +225,14 @@ describe('Data Delegation Layer Integration Tests', () => {
 
     it('should deduplicate lists with same ID across sources', async () => {
       const listId = uuidv4();
-      
+
       // Add same list to multiple sources with different content
       const list1 = createTestList({
         id: listId,
         title: 'Version 1',
         updatedAt: new Date('2024-01-01'),
       });
-      
+
       const list2 = createTestList({
         id: listId,
         title: 'Version 2',
@@ -240,9 +251,18 @@ describe('Data Delegation Layer Integration Tests', () => {
 
     it('should support filtering across aggregated results', async () => {
       // Add lists with different project tags
-      const list1 = createTestList({ title: 'Project A', projectTag: 'project-a' });
-      const list2 = createTestList({ title: 'Project B', projectTag: 'project-b' });
-      const list3 = createTestList({ title: 'Project A 2', projectTag: 'project-a' });
+      const list1 = createTestList({
+        title: 'Project A',
+        projectTag: 'project-a',
+      });
+      const list2 = createTestList({
+        title: 'Project B',
+        projectTag: 'project-b',
+      });
+      const list3 = createTestList({
+        title: 'Project A 2',
+        projectTag: 'project-a',
+      });
 
       await source1.save(list1.id, list1);
       await source2.save(list2.id, list2);
@@ -325,6 +345,7 @@ describe('Data Delegation Layer Integration Tests', () => {
       await source2.save(list.id, list);
 
       // Mark source-1 as unhealthy
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
 
       // Should still be able to read from source-2
@@ -343,6 +364,7 @@ describe('Data Delegation Layer Integration Tests', () => {
       await source2.save(list2.id, list2);
 
       // Mark source-1 as unhealthy
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
 
       // Should still get list from source-2
@@ -354,8 +376,11 @@ describe('Data Delegation Layer Integration Tests', () => {
 
     it('should handle all sources being unavailable gracefully', async () => {
       // Mark all sources as unhealthy
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
+
       (router as any).connectionPool.get('source-2')!.healthy = false;
+
       (router as any).connectionPool.get('source-3')!.healthy = false;
 
       // Should return empty results when no sources available (graceful degradation)
@@ -387,7 +412,9 @@ describe('Data Delegation Layer Integration Tests', () => {
       await source3.save(list.id, list);
 
       // Mark source-1 and source-2 as unhealthy so it reads from source-3
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
+
       (router as any).connectionPool.get('source-2')!.healthy = false;
 
       // Should be able to read from readonly source
@@ -405,7 +432,7 @@ describe('Data Delegation Layer Integration Tests', () => {
         id: listId,
         title: 'From Source 1 (Priority 100)',
       });
-      
+
       const list2 = createTestList({
         id: listId,
         title: 'From Source 2 (Priority 50)',
@@ -432,7 +459,7 @@ describe('Data Delegation Layer Integration Tests', () => {
         title: 'Priority 100 Version',
         updatedAt: new Date('2024-01-01'),
       });
-      
+
       const list2 = createTestList({
         id: listId,
         title: 'Priority 50 Version',
@@ -467,7 +494,7 @@ describe('Data Delegation Layer Integration Tests', () => {
         title: 'Older Version',
         updatedAt: new Date('2024-01-01'),
       });
-      
+
       const list2 = createTestList({
         id: listId,
         title: 'Newer Version',
@@ -495,6 +522,7 @@ describe('Data Delegation Layer Integration Tests', () => {
       await source2.save(list2.id, list2);
 
       // Mark source-1 as unhealthy
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
 
       // Should still get results from source-2
@@ -510,7 +538,7 @@ describe('Data Delegation Layer Integration Tests', () => {
       expect(status.total).toBe(3);
       expect(status.healthy).toBeGreaterThan(0);
       expect(status.sources).toHaveLength(3);
-      
+
       status.sources.forEach(source => {
         expect(source).toHaveProperty('id');
         expect(source).toHaveProperty('healthy');
@@ -528,8 +556,11 @@ describe('Data Delegation Layer Integration Tests', () => {
 
     it('should report unhealthy when all sources are down', async () => {
       // Mark all sources as unhealthy
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
+
       (router as any).connectionPool.get('source-2')!.healthy = false;
+
       (router as any).connectionPool.get('source-3')!.healthy = false;
 
       const isHealthy = await repository.healthCheck();
@@ -545,6 +576,7 @@ describe('Data Delegation Layer Integration Tests', () => {
       await source2.save(list.id, list);
 
       // Mark source-1 as unhealthy so it checks source-2
+
       (router as any).connectionPool.get('source-1')!.healthy = false;
 
       // Should find it in source-2
@@ -578,7 +610,7 @@ describe('Data Delegation Layer Integration Tests', () => {
 
       expect(result.items).toHaveLength(2);
       expect(result.totalCount).toBe(2);
-      
+
       // Summaries should have basic info
       result.items.forEach(summary => {
         expect(summary).toHaveProperty('id');

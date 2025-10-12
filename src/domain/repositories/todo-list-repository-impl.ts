@@ -1,17 +1,17 @@
 /**
  * TodoListRepository Implementation
- * 
+ *
  * Concrete implementation of ITodoListRepository that uses DataSourceRouter
  * and MultiSourceAggregator to provide multi-source data access with
  * conflict resolution and aggregation capabilities.
- * 
+ *
  * Key responsibilities:
  * - Route operations to appropriate data sources via DataSourceRouter
  * - Aggregate results from multiple sources via MultiSourceAggregator
  * - Add source metadata to returned entities
  * - Handle multi-source search operations with deduplication
  * - Provide consistent interface regardless of underlying storage
- * 
+ *
  * Design decisions:
  * - Uses DataSourceRouter for single-entity operations (save, findById, delete)
  * - Uses MultiSourceAggregator for multi-entity operations (search, findAll)
@@ -20,6 +20,8 @@
  * - Maintains backward compatibility with existing repository interface
  */
 
+import { logger } from '../../shared/utils/logger.js';
+
 import type {
   ITodoListRepository,
   FindOptions,
@@ -27,12 +29,11 @@ import type {
   SearchResult,
 } from './todo-list.repository.js';
 import type {
-  TodoList,
-  TodoListSummary,
-} from '../../shared/types/todo.js';
-import type { DataSourceRouter, OperationContext } from '../../infrastructure/storage/data-source-router.js';
+  DataSourceRouter,
+  OperationContext,
+} from '../../infrastructure/storage/data-source-router.js';
 import type { MultiSourceAggregator } from '../../infrastructure/storage/multi-source-aggregator.js';
-import { logger } from '../../shared/utils/logger.js';
+import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
 
 /**
  * TodoList with source metadata
@@ -47,7 +48,7 @@ export interface TodoListWithSource extends TodoList {
 
 /**
  * TodoListRepository implementation using DataSourceRouter and MultiSourceAggregator
- * 
+ *
  * This implementation provides:
  * - Multi-source data access with automatic routing
  * - Conflict resolution for duplicate lists across sources
@@ -65,12 +66,12 @@ export class TodoListRepository implements ITodoListRepository {
 
   /**
    * Saves a TodoList to the appropriate data source
-   * 
+   *
    * The router will select the appropriate writable source based on:
    * - Project tag matching
    * - Source priority
    * - Source health status
-   * 
+   *
    * @param list - The TodoList to save
    * @throws Error if save operation fails
    */
@@ -113,17 +114,19 @@ export class TodoListRepository implements ITodoListRepository {
         error,
       });
       throw new Error(
-        `Failed to save TodoList ${list.id}: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to save TodoList ${list.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Finds a TodoList by its unique identifier
-   * 
+   *
    * The router will attempt to find the list from sources in priority order,
    * with automatic fallback if a source fails.
-   * 
+   *
    * @param id - The unique identifier of the list
    * @param options - Optional parameters for the find operation
    * @returns The TodoList if found, null otherwise
@@ -131,7 +134,10 @@ export class TodoListRepository implements ITodoListRepository {
    */
   async findById(id: string, options?: FindOptions): Promise<TodoList | null> {
     try {
-      logger.debug('Finding TodoList by ID via router', { listId: id, options });
+      logger.debug('Finding TodoList by ID via router', {
+        listId: id,
+        options,
+      });
 
       const context: OperationContext = {
         listId: id,
@@ -163,20 +169,22 @@ export class TodoListRepository implements ITodoListRepository {
     } catch (error) {
       logger.error('Failed to find TodoList by ID', { listId: id, error });
       throw new Error(
-        `Failed to find TodoList ${id}: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to find TodoList ${id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Finds all TodoLists from all available sources
-   * 
+   *
    * Uses the aggregator to:
    * - Query all sources in parallel
    * - Deduplicate lists with the same ID
    * - Resolve conflicts using configured strategy
    * - Apply filters and sorting
-   * 
+   *
    * @param options - Optional parameters for filtering and pagination
    * @returns Array of TodoLists matching the criteria
    * @throws Error if the find operation fails
@@ -212,21 +220,23 @@ export class TodoListRepository implements ITodoListRepository {
     } catch (error) {
       logger.error('Failed to find all TodoLists', { error });
       throw new Error(
-        `Failed to find all TodoLists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to find all TodoLists: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Searches for TodoLists using complex query criteria
-   * 
+   *
    * Leverages the aggregator to:
    * - Query multiple sources in parallel
    * - Deduplicate and resolve conflicts
    * - Apply comprehensive filtering
    * - Sort and paginate results
    * - Track source metadata
-   * 
+   *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with items and metadata
    * @throws Error if the search operation fails
@@ -238,8 +248,8 @@ export class TodoListRepository implements ITodoListRepository {
       // Get all sources from router with metadata
       const backends = this.router.getAllSources();
       const routerStatus = this.router.getStatus();
-      
-      const sources = backends.map((backend) => {
+
+      const sources = backends.map(backend => {
         // Find matching source info from router status
         const sourceInfo = routerStatus.sources.find(s => {
           // Match by checking if backend is the same instance
@@ -257,7 +267,11 @@ export class TodoListRepository implements ITodoListRepository {
 
       logger.debug('Querying sources for search', {
         sourceCount: sources.length,
-        sources: sources.map(s => ({ id: s.id, name: s.name, priority: s.priority })),
+        sources: sources.map(s => ({
+          id: s.id,
+          name: s.name,
+          priority: s.priority,
+        })),
       });
 
       // Use aggregator to search across all sources
@@ -273,30 +287,34 @@ export class TodoListRepository implements ITodoListRepository {
     } catch (error) {
       logger.error('Failed to search TodoLists', { query, error });
       throw new Error(
-        `Failed to search TodoLists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to search TodoLists: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Searches for TodoList summaries (lightweight version)
-   * 
+   *
    * Uses the aggregator to query summaries from all sources,
    * providing faster results for list views and dashboards.
-   * 
+   *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with summaries and metadata
    * @throws Error if the search operation fails
    */
-  async searchSummaries(query: SearchQuery): Promise<SearchResult<TodoListSummary>> {
+  async searchSummaries(
+    query: SearchQuery
+  ): Promise<SearchResult<TodoListSummary>> {
     try {
       logger.debug('Searching TodoList summaries via aggregator', { query });
 
       // Get all sources from router with metadata
       const backends = this.router.getAllSources();
       const routerStatus = this.router.getStatus();
-      
-      const sources = backends.map((backend) => {
+
+      const sources = backends.map(backend => {
         const sourceInfo = routerStatus.sources.find(s => {
           const routerBackend = this.router.getBackend(s.id);
           return routerBackend === backend;
@@ -327,18 +345,20 @@ export class TodoListRepository implements ITodoListRepository {
     } catch (error) {
       logger.error('Failed to search TodoList summaries', { query, error });
       throw new Error(
-        `Failed to search TodoList summaries: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to search TodoList summaries: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Deletes a TodoList from the appropriate data source
-   * 
+   *
    * The router will select the appropriate writable source.
    * Note: This only deletes from one source. If the list exists in
    * multiple sources, it will only be deleted from the primary source.
-   * 
+   *
    * @param id - The unique identifier of the list to delete
    * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
@@ -363,18 +383,24 @@ export class TodoListRepository implements ITodoListRepository {
 
       logger.info('TodoList deleted successfully', { listId: id, permanent });
     } catch (error) {
-      logger.error('Failed to delete TodoList', { listId: id, permanent, error });
+      logger.error('Failed to delete TodoList', {
+        listId: id,
+        permanent,
+        error,
+      });
       throw new Error(
-        `Failed to delete TodoList ${id}: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to delete TodoList ${id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Checks if a TodoList exists in any data source
-   * 
+   *
    * Queries all sources to determine if the list exists anywhere.
-   * 
+   *
    * @param id - The unique identifier to check
    * @returns true if the list exists in any source, false otherwise
    * @throws Error if the check operation fails
@@ -392,16 +418,18 @@ export class TodoListRepository implements ITodoListRepository {
     } catch (error) {
       logger.error('Failed to check TodoList existence', { listId: id, error });
       throw new Error(
-        `Failed to check if TodoList ${id} exists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to check if TodoList ${id} exists: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Counts TodoLists matching the given query across all sources
-   * 
+   *
    * Uses the aggregator to count deduplicated lists.
-   * 
+   *
    * @param query - Optional query to filter which lists to count
    * @returns The number of lists matching the query
    * @throws Error if the count operation fails
@@ -424,16 +452,18 @@ export class TodoListRepository implements ITodoListRepository {
     } catch (error) {
       logger.error('Failed to count TodoLists', { query, error });
       throw new Error(
-        `Failed to count TodoLists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to count TodoLists: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
 
   /**
    * Performs a health check on the repository
-   * 
+   *
    * Checks the health of the router and all configured sources.
-   * 
+   *
    * @returns true if at least one source is healthy, false otherwise
    */
   async healthCheck(): Promise<boolean> {
@@ -457,8 +487,8 @@ export class TodoListRepository implements ITodoListRepository {
   }
 
   /**
-   * Get router status for monitoring and debugging
-   * 
+   * Get router status for debugging
+   *
    * @returns Router status with source health information
    */
   getRouterStatus(): ReturnType<DataSourceRouter['getStatus']> {

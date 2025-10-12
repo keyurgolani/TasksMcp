@@ -3,12 +3,20 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskResponse } from '../../shared/types/mcp-types.js';
+
 import { Priority } from '../../shared/types/todo.js';
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type { TaskResponse } from '../../shared/types/mcp-types.js';
 
 const SetTaskPrioritySchema = z.object({
   listId: z.string().uuid(),
@@ -82,7 +90,10 @@ export async function handleSetTaskPriority(
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('set_task_priority', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'set_task_priority',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

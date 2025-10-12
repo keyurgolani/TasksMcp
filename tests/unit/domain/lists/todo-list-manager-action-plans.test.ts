@@ -3,10 +3,11 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
+
 import { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../../../src/infrastructure/storage/memory-storage.js';
-import { TestCleanup } from '../../../setup.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+import { TestCleanup } from '../../../setup.js';
 import { createTodoListManager } from '../../../utils/test-helpers.js';
 
 describe('TodoListManager Action Plan Integration', () => {
@@ -18,7 +19,7 @@ describe('TodoListManager Action Plan Integration', () => {
     await storage.initialize();
     manager = createTodoListManager(storage);
     await manager.initialize();
-    
+
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
     TestCleanup.registerManager(manager);
@@ -34,7 +35,8 @@ describe('TodoListManager Action Plan Integration', () => {
             title: 'Task with action plan',
             description: 'A task that has a detailed action plan',
             priority: Priority.HIGH,
-            actionPlan: '- Step 1: Research\n- Step 2: Design\n- Step 3: Implement\n- Step 4: Test',
+            actionPlan:
+              '- Step 1: Research\n- Step 2: Design\n- Step 3: Implement\n- Step 4: Test',
           },
           {
             title: 'Task without action plan',
@@ -48,13 +50,15 @@ describe('TodoListManager Action Plan Integration', () => {
       const todoList = await manager.createTodoList(input);
 
       expect(todoList.items).toHaveLength(2);
-      
+
       const taskWithPlan = todoList.items[0];
       const taskWithoutPlan = todoList.items[1];
 
       expect(taskWithPlan?.actionPlan).toBeDefined();
       expect(taskWithPlan?.actionPlan?.steps).toHaveLength(4);
-      expect(taskWithPlan?.actionPlan?.steps[0]?.content).toBe('Step 1: Research');
+      expect(taskWithPlan?.actionPlan?.steps[0]?.content).toBe(
+        'Step 1: Research'
+      );
       expect(taskWithPlan?.actionPlan?.steps[3]?.content).toBe('Step 4: Test');
 
       expect(taskWithoutPlan?.actionPlan).toBeUndefined();
@@ -132,8 +136,10 @@ describe('TodoListManager Action Plan Integration', () => {
       });
 
       const updatedItem = updatedList.items.find(item => item.id === itemId);
-      const updatedStep = updatedItem?.actionPlan?.steps.find(step => step.id === stepId);
-      
+      const updatedStep = updatedItem?.actionPlan?.steps.find(
+        step => step.id === stepId
+      );
+
       expect(updatedStep?.status).toBe('completed');
       expect(updatedStep?.notes).toBe('Completed this step successfully');
       expect(updatedStep?.completedAt).toBeInstanceOf(Date);
@@ -188,8 +194,10 @@ describe('TodoListManager Action Plan Integration', () => {
       });
 
       expect(updatedList.items).toHaveLength(2);
-      
-      const newItem = updatedList.items.find(item => item.title === 'New Task with Plan');
+
+      const newItem = updatedList.items.find(
+        item => item.title === 'New Task with Plan'
+      );
       expect(newItem?.actionPlan).toBeDefined();
       expect(newItem?.actionPlan?.steps).toHaveLength(3);
       expect(newItem?.actionPlan?.steps[0]?.content).toBe('Research phase');

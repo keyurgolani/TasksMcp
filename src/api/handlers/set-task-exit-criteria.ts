@@ -4,12 +4,23 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskResponse, ExitCriteriaResponse } from '../../shared/types/mcp-types.js';
+
 import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type {
+  TaskResponse,
+  ExitCriteriaResponse,
+} from '../../shared/types/mcp-types.js';
 
 /**
  * Validation schema for set task exit criteria request parameters
@@ -17,14 +28,21 @@ import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/h
 const SetTaskExitCriteriaSchema = z.object({
   listId: z.string().uuid('List ID must be a valid UUID'),
   taskId: z.string().uuid('Task ID must be a valid UUID'),
-  exitCriteria: z.array(z.string().min(1, 'Exit criteria cannot be empty').max(500, 'Exit criteria too long')).max(20, 'Too many exit criteria'),
+  exitCriteria: z
+    .array(
+      z
+        .string()
+        .min(1, 'Exit criteria cannot be empty')
+        .max(500, 'Exit criteria too long')
+    )
+    .max(20, 'Too many exit criteria'),
 });
 
 /**
  * Handles MCP set_task_exit_criteria tool requests
- * 
+ *
  * Sets exit criteria for a task, replacing any existing criteria.
- * 
+ *
  * @param request - The MCP call tool request containing exit criteria parameters
  * @param todoListManager - The todo list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated task details or error
@@ -57,22 +75,27 @@ export async function handleSetTaskExitCriteria(
 
     // Calculate exit criteria progress
     const exitCriteriaManager = new ExitCriteriaManager();
-    const progress = exitCriteriaManager.calculateCriteriaProgress(updatedTask.exitCriteria);
-    const canComplete = exitCriteriaManager.areAllCriteriaMet(updatedTask.exitCriteria);
+    const progress = exitCriteriaManager.calculateCriteriaProgress(
+      updatedTask.exitCriteria
+    );
+    const canComplete = exitCriteriaManager.areAllCriteriaMet(
+      updatedTask.exitCriteria
+    );
 
     // Format exit criteria for response
-    const exitCriteriaResponse: ExitCriteriaResponse[] = updatedTask.exitCriteria.map(criteria => ({
-      id: criteria.id,
-      description: criteria.description,
-      isMet: criteria.isMet,
-      ...(criteria.metAt && { metAt: criteria.metAt.toISOString() }),
-      ...(criteria.notes && { notes: criteria.notes }),
-      order: criteria.order,
-    }));
+    const exitCriteriaResponse: ExitCriteriaResponse[] =
+      updatedTask.exitCriteria.map(criteria => ({
+        id: criteria.id,
+        description: criteria.description,
+        isMet: criteria.isMet,
+        ...(criteria.metAt && { metAt: criteria.metAt.toISOString() }),
+        ...(criteria.notes && { notes: criteria.notes }),
+        order: criteria.order,
+      }));
 
-    const response: TaskResponse & { 
-      exitCriteriaProgress: number; 
-      canComplete: boolean; 
+    const response: TaskResponse & {
+      exitCriteriaProgress: number;
+      canComplete: boolean;
     } = {
       id: updatedTask.id,
       title: updatedTask.title,
@@ -106,7 +129,10 @@ export async function handleSetTaskExitCriteria(
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('set_task_exit_criteria', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'set_task_exit_criteria',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

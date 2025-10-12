@@ -43,7 +43,7 @@ NODE_ENV=production npm run start:api
 
 1. **Configuration Loading**: Loads configuration from environment variables
 2. **Data Layer Initialization**: Initializes data sources and repository
-3. **Domain Managers Creation**: Creates all domain managers (TodoList, Dependency, etc.)
+3. **Domain Managers Creation**: Creates all domain managers (TaskList, Dependency, etc.)
 4. **Route Initialization**: Sets up all API routes and middleware
 5. **Server Start**: Starts listening on configured port
 6. **Health Check**: Verifies all data sources are healthy

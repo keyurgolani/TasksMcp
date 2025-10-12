@@ -2,12 +2,20 @@
  * MCP handler for adding tags to tasks
  */
 
-import { z } from "zod";
-import type { CallToolRequest, CallToolResult } from "../../shared/types/mcp-types.js";
-import type { TodoListManager } from "../../domain/lists/todo-list-manager.js";
-import type { TaskResponse } from "../../shared/types/mcp-types.js";
-import { logger } from "../../shared/utils/logger.js";
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+import { z } from 'zod';
+
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
+import { logger } from '../../shared/utils/logger.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type { TaskResponse } from '../../shared/types/mcp-types.js';
 
 const AddTaskTagsSchema = z.object({
   listId: z.string().uuid(),
@@ -20,7 +28,7 @@ export async function handleAddTaskTags(
   todoListManager: TodoListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug("Processing add_task_tags request", {
+    logger.debug('Processing add_task_tags request', {
       params: request.params?.arguments,
     });
 
@@ -30,35 +38,33 @@ export async function handleAddTaskTags(
     });
 
     if (!currentList) {
-      throw new Error("Todo list not found");
+      throw new Error('Todo list not found');
     }
 
-    const currentTask = currentList.items.find(
-      (item) => item.id === args.taskId
-    );
+    const currentTask = currentList.items.find(item => item.id === args.taskId);
     if (!currentTask) {
-      throw new Error("Task not found");
+      throw new Error('Task not found');
     }
 
     const existingTags = currentTask.tags || [];
     const newTags = [...new Set([...existingTags, ...args.tags])];
     const result = await todoListManager.updateTodoList({
       listId: args.listId,
-      action: "update_item",
+      action: 'update_item',
       itemId: args.taskId,
       itemData: {
         tags: newTags,
       },
     });
 
-    const updatedTask = result.items.find((item) => item.id === args.taskId);
+    const updatedTask = result.items.find(item => item.id === args.taskId);
     if (!updatedTask) {
-      throw new Error("Task not found after tag update");
+      throw new Error('Task not found after tag update');
     }
 
-    const addedTags = args.tags.filter((tag) => updatedTask.tags.includes(tag));
+    const addedTags = args.tags.filter(tag => updatedTask.tags.includes(tag));
     if (addedTags.length !== args.tags.length) {
-      logger.warn("Not all tags were successfully added", {
+      logger.warn('Not all tags were successfully added', {
         requestedTags: args.tags,
         addedTags,
         finalTags: updatedTask.tags,
@@ -77,7 +83,7 @@ export async function handleAddTaskTags(
       estimatedDuration: updatedTask.estimatedDuration,
     };
 
-    logger.info("Task tags added successfully", {
+    logger.info('Task tags added successfully', {
       listId: args.listId,
       taskId: args.taskId,
       title: updatedTask.title,
@@ -88,14 +94,17 @@ export async function handleAddTaskTags(
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: JSON.stringify(response, null, 2),
         },
       ],
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('add_task_tags', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'add_task_tags',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

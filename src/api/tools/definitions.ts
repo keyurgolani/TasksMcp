@@ -1,6 +1,6 @@
 /**
  * MCP Tool Schema Definitions
- * 
+ *
  * This file contains schema definitions for the MCP tools.
  */
 
@@ -107,18 +107,6 @@ export interface ShowTasksParams {
   includeCompleted?: boolean;
 }
 
-export interface AnalyzeTaskParams {
-  taskDescription: string;
-  context?: string;
-  maxSuggestions?: number;
-}
-
-export interface GetTaskSuggestionsParams {
-  listId: string;
-  style?: 'detailed' | 'concise' | 'technical' | 'business';
-  maxSuggestions?: number;
-}
-
 export interface SetTaskDependenciesParams {
   listId: string;
   taskId: string;
@@ -156,24 +144,28 @@ export const MCP_TOOLS: Tool[] = [
   // List Management Tools (4 tools)
   {
     name: 'create_list',
-    description: 'Create a new todo list with simple parameters. 🎯 BEST PRACTICE: Before creating, use list_all_lists to check for similar existing projects and learn from their structure.',
+    description:
+      'Create a new todo list with required parameters. 🎯 BEST PRACTICE: Before creating, use list_all_lists to check for similar existing projects and learn from their structure.',
     inputSchema: {
       type: 'object',
       properties: {
         title: {
           type: 'string',
-          description: 'Title of the todo list (provide as a string, e.g., "My Project Tasks")',
+          description:
+            'Title of the todo list (provide as a string, e.g., "My Project Tasks")',
           minLength: 1,
           maxLength: 1000,
         },
         description: {
           type: 'string',
-          description: 'Optional description of the todo list (provide as a string)',
+          description:
+            'Optional description of the todo list (provide as a string)',
           maxLength: 5000,
         },
         projectTag: {
           type: 'string',
-          description: 'Optional project tag for organization (use lowercase with hyphens, e.g., "web-app" or "mobile-project")',
+          description:
+            'Optional project tag for organization (use lowercase with hyphens, e.g., "web-app" or "mobile-project")',
           maxLength: 250,
         },
       },
@@ -183,7 +175,8 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'get_list',
-    description: 'Retrieve a specific todo list by ID. 🔍 METHODOLOGY: Use this to research task context and understand project structure before starting work (Use Tools, Don\'t Guess principle).',
+    description:
+      "Retrieve a specific todo list by ID. 🔍 METHODOLOGY: Use this to research task context and understand project structure before starting work (Use Tools, Don't Guess principle).",
     inputSchema: {
       type: 'object',
       properties: {
@@ -191,12 +184,14 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'UUID of the todo list to retrieve',
           format: 'uuid',
-          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          pattern:
+            '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
           example: '123e4567-e89b-12d3-a456-426614174000',
         },
         includeCompleted: {
           type: 'boolean',
-          description: 'Whether to include completed tasks (provide as boolean: true or false, default: true)',
+          description:
+            'Whether to include completed tasks (provide as boolean: true or false, default: true)',
           default: true,
         },
       },
@@ -206,7 +201,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'list_all_lists',
-    description: 'Get all todo lists with basic information',
+    description: 'Get all todo lists with metadata information',
     inputSchema: {
       type: 'object',
       properties: {
@@ -217,12 +212,14 @@ export const MCP_TOOLS: Tool[] = [
         },
         includeArchived: {
           type: 'boolean',
-          description: 'Whether to include archived lists (provide as boolean: true or false, default: false)',
+          description:
+            'Whether to include archived lists (provide as boolean: true or false, default: false)',
           default: false,
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of lists to return (provide as number, e.g., 20)',
+          description:
+            'Maximum number of lists to return (provide as number, e.g., 20)',
           minimum: 1,
           maximum: 500,
           default: 50,
@@ -241,12 +238,14 @@ export const MCP_TOOLS: Tool[] = [
           type: 'string',
           description: 'UUID of the todo list to delete',
           format: 'uuid',
-          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          pattern:
+            '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
           example: '123e4567-e89b-12d3-a456-426614174000',
         },
         permanent: {
           type: 'boolean',
-          description: 'Whether to permanently delete (true) or archive (false) - provide as boolean',
+          description:
+            'Whether to permanently delete (true) or archive (false) - provide as boolean',
           default: false,
         },
       },
@@ -257,29 +256,34 @@ export const MCP_TOOLS: Tool[] = [
   // Task Management Tools (6 tools)
   {
     name: 'add_task',
-    description: 'Add a new task to a todo list with optional dependencies. 📋 BEST PRACTICE: First use analyze_task to understand complexity, then create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
+    description:
+      'Add a new task to a todo list with optional dependencies. 📋 BEST PRACTICE: Create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         title: {
           type: 'string',
-          description: 'Task title (provide as string, e.g., "Implement user authentication")',
+          description:
+            'Task title (provide as string, e.g., "Implement user authentication")',
           minLength: 1,
           maxLength: 1000,
         },
         description: {
           type: 'string',
-          description: 'Task description (provide as string). 🎯 BEST PRACTICE: Include detailed ACTION PLAN with specific steps, CONTEXT explaining why this task matters, and CONSIDERATIONS for technical constraints. This follows the Plan and Reflect methodology.',
+          description:
+            'Task description (provide as string). 🎯 BEST PRACTICE: Include detailed ACTION PLAN with specific steps, CONTEXT explaining why this task matters, and CONSIDERATIONS for technical constraints. This follows the Plan and Reflect methodology.',
           maxLength: 5000,
         },
         priority: {
           type: 'number',
-          description: 'Task priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)',
+          description:
+            'Task priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)',
           minimum: 1,
           maximum: 5,
           default: 3,
@@ -287,7 +291,8 @@ export const MCP_TOOLS: Tool[] = [
         },
         tags: {
           type: 'array',
-          description: 'Task tags (lowercase, alphanumeric, hyphens, underscores recommended)',
+          description:
+            'Task tags (lowercase, alphanumeric, hyphens, underscores recommended)',
           items: {
             type: 'string',
             maxLength: 50,
@@ -295,16 +300,21 @@ export const MCP_TOOLS: Tool[] = [
           },
           minItems: 0,
           maxItems: 10,
-          examples: [['urgent', 'frontend'], ['bug-fix', 'critical']],
+          examples: [
+            ['urgent', 'frontend'],
+            ['bug-fix', 'critical'],
+          ],
         },
         estimatedDuration: {
           type: 'number',
-          description: 'Estimated duration in minutes as a number, e.g., 120 for 2 hours',
+          description:
+            'Estimated duration in minutes as a number, e.g., 120 for 2 hours',
           minimum: 1,
         },
         dependencies: {
           type: 'array',
-          description: 'Array of task UUIDs that this task depends on (provide as array of strings)',
+          description:
+            'Array of task UUIDs that this task depends on (provide as array of strings)',
           items: {
             type: 'string',
             format: 'uuid',
@@ -313,7 +323,8 @@ export const MCP_TOOLS: Tool[] = [
         },
         exitCriteria: {
           type: 'array',
-          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings). 🎯 CRITICAL: Define specific, measurable completion requirements. This ensures Persist Until Complete methodology - only mark tasks done when ALL criteria are verified.',
+          description:
+            'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings). 🎯 CRITICAL: Define specific, measurable completion requirements. This ensures Persist Until Complete methodology - only mark tasks done when ALL criteria are verified.',
           items: {
             type: 'string',
             maxLength: 500,
@@ -327,18 +338,21 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'update_task',
-    description: 'Update basic task properties. 🔄 METHODOLOGY: Use this regularly during execution to track progress, update action plans based on discoveries, and document learnings. Essential for Plan and Reflect approach.',
+    description:
+      'Update task properties. 🔄 METHODOLOGY: Use this regularly during execution to track progress, update action plans based on discoveries, and document learnings. Essential for Plan and Reflect approach.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to update (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task to update (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         title: {
@@ -354,12 +368,14 @@ export const MCP_TOOLS: Tool[] = [
         },
         estimatedDuration: {
           type: 'number',
-          description: 'New estimated duration in minutes (provide as number, e.g., 90)',
+          description:
+            'New estimated duration in minutes (provide as number, e.g., 90)',
           minimum: 1,
         },
         exitCriteria: {
           type: 'array',
-          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings)',
+          description:
+            'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings)',
           items: {
             type: 'string',
             maxLength: 500,
@@ -379,12 +395,14 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to remove (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task to remove (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
       },
@@ -394,18 +412,21 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'complete_task',
-    description: 'Mark a task as completed. ⚠️ CRITICAL: Only use after verifying ALL exit criteria are met. This enforces Persist Until Complete methodology - never mark tasks done prematurely.',
+    description:
+      'Mark a task as completed. ⚠️ CRITICAL: Only use after verifying ALL exit criteria are met. This enforces Persist Until Complete methodology - never mark tasks done prematurely.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to complete (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task to complete (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
       },
@@ -421,17 +442,20 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         priority: {
           type: 'number',
-          description: 'New priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)',
+          description:
+            'New priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)',
           minimum: 1,
           maximum: 5,
           examples: [1, 3, 5],
@@ -449,17 +473,20 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         tags: {
           type: 'array',
-          description: 'Tags to add (lowercase, alphanumeric, hyphens, underscores recommended)',
+          description:
+            'Tags to add (lowercase, alphanumeric, hyphens, underscores recommended)',
           items: {
             type: 'string',
             maxLength: 50,
@@ -467,7 +494,10 @@ export const MCP_TOOLS: Tool[] = [
           },
           minItems: 1,
           maxItems: 10,
-          examples: [['urgent', 'frontend'], ['review-needed', 'critical']],
+          examples: [
+            ['urgent', 'frontend'],
+            ['review-needed', 'critical'],
+          ],
         },
       },
       required: ['listId', 'taskId', 'tags'],
@@ -477,24 +507,28 @@ export const MCP_TOOLS: Tool[] = [
   // Search & Display Tools (2 tools)
   {
     name: 'search_tool',
-    description: 'Unified search, filter, and query tool for tasks with flexible criteria and sorting options. 🔍 ESSENTIAL: Use this to research existing work before starting tasks (Use Tools, Don\'t Guess). Search completed tasks for context and learnings.',
+    description:
+      "Unified search, filter, and query tool for tasks with flexible criteria and sorting options. 🔍 ESSENTIAL: Use this to research existing work before starting tasks (Use Tools, Don't Guess). Search completed tasks for context and learnings.",
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Text to search for in task titles, descriptions, and tags (optional)',
+          description:
+            'Text to search for in task titles, descriptions, and tags (optional)',
           minLength: 1,
           maxLength: 1000,
         },
         listId: {
           type: 'string',
-          description: 'Optional: limit search to specific list (provide UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'Optional: limit search to specific list (provide UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of results to return (provide as number, e.g., 20)',
+          description:
+            'Maximum number of results to return (provide as number, e.g., 20)',
           minimum: 1,
           maximum: 500,
           default: 50,
@@ -504,21 +538,31 @@ export const MCP_TOOLS: Tool[] = [
           description: 'Filter by task statuses (provide as array of strings)',
           items: {
             type: 'string',
-            enum: ['pending', 'in_progress', 'completed', 'blocked', 'cancelled'],
+            enum: [
+              'pending',
+              'in_progress',
+              'completed',
+              'blocked',
+              'cancelled',
+            ],
           },
           maxItems: 5,
           examples: [['pending', 'in_progress'], ['completed']],
         },
         priority: {
           type: 'array',
-          description: 'Filter by priority levels (provide as array of numbers: 1=minimal, 2=low, 3=medium, 4=high, 5=critical)',
+          description:
+            'Filter by priority levels (provide as array of numbers: 1=minimal, 2=low, 3=medium, 4=high, 5=critical)',
           items: {
             type: 'number',
             minimum: 1,
             maximum: 5,
           },
           maxItems: 5,
-          examples: [[1, 2], [4, 5]],
+          examples: [
+            [1, 2],
+            [4, 5],
+          ],
         },
         tags: {
           type: 'array',
@@ -531,21 +575,25 @@ export const MCP_TOOLS: Tool[] = [
         },
         tagOperator: {
           type: 'string',
-          description: 'How to combine tag filters: "AND" (task must have ALL tags) or "OR" (task must have ANY tag)',
+          description:
+            'How to combine tag filters: "AND" (task must have ALL tags) or "OR" (task must have ANY tag)',
           enum: ['AND', 'OR'],
           default: 'AND',
         },
         hasDependencies: {
           type: 'boolean',
-          description: 'Filter by whether tasks have dependencies (provide as boolean: true or false)',
+          description:
+            'Filter by whether tasks have dependencies (provide as boolean: true or false)',
         },
         isReady: {
           type: 'boolean',
-          description: 'Filter by whether tasks are ready to work on (provide as boolean: true or false)',
+          description:
+            'Filter by whether tasks are ready to work on (provide as boolean: true or false)',
         },
         isBlocked: {
           type: 'boolean',
-          description: 'Filter by whether tasks are blocked by dependencies (provide as boolean: true or false)',
+          description:
+            'Filter by whether tasks are blocked by dependencies (provide as boolean: true or false)',
         },
         dateRange: {
           type: 'object',
@@ -599,12 +647,14 @@ export const MCP_TOOLS: Tool[] = [
         },
         includeCompleted: {
           type: 'boolean',
-          description: 'Whether to include completed tasks (provide as boolean: true or false)',
+          description:
+            'Whether to include completed tasks (provide as boolean: true or false)',
           default: true,
         },
         includeDependencyInfo: {
           type: 'boolean',
-          description: 'Whether to include dependency information in results (provide as boolean: true or false)',
+          description:
+            'Whether to include dependency information in results (provide as boolean: true or false)',
           default: false,
         },
       },
@@ -619,84 +669,29 @@ export const MCP_TOOLS: Tool[] = [
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to display (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the todo list to display (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         format: {
           type: 'string',
-          description: 'Display format style - use one of: "compact", "detailed", "summary"',
+          description:
+            'Display format style - use one of: "compact", "detailed", "summary"',
           enum: ['compact', 'detailed', 'summary'],
           default: 'detailed',
         },
         groupBy: {
           type: 'string',
-          description: 'How to group the tasks - use one of: "status", "priority", "none"',
+          description:
+            'How to group the tasks - use one of: "status", "priority", "none"',
           enum: ['status', 'priority', 'none'],
           default: 'status',
         },
         includeCompleted: {
           type: 'boolean',
-          description: 'Whether to include completed tasks - provide as boolean: true or false',
+          description:
+            'Whether to include completed tasks - provide as boolean: true or false',
           default: true,
-        },
-      },
-      required: ['listId'],
-    },
-  },
-
-  // Advanced Features Tools (2 tools)
-  {
-    name: 'analyze_task',
-    description: 'Analyze task complexity and get suggestions. 🎯 METHODOLOGY: ALWAYS use this before creating tasks to understand complexity and plan properly. Core part of Plan and Reflect approach - investigate before acting.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        taskDescription: {
-          type: 'string',
-          description: 'Description of the task to analyze (provide as string, e.g., "Build user authentication system")',
-          minLength: 1,
-          maxLength: 10000,
-        },
-        context: {
-          type: 'string',
-          description: 'Optional context or project information (provide as string)',
-          maxLength: 1000,
-        },
-        maxSuggestions: {
-          type: 'number',
-          description: 'Maximum number of suggestions to return (provide as number, e.g., 3)',
-          minimum: 1,
-          maximum: 50,
-          default: 5,
-        },
-      },
-      required: ['taskDescription'],
-    },
-  },
-
-  {
-    name: 'get_task_suggestions',
-    description: 'Get AI-generated task suggestions for a list',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        listId: {
-          type: 'string',
-          description: 'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
-          format: 'uuid',
-        },
-        style: {
-          type: 'string',
-          description: 'Style of suggestions to generate - use one of: "detailed", "concise", "technical", "business"',
-          enum: ['detailed', 'concise', 'technical', 'business'],
-          default: 'detailed',
-        },
-        maxSuggestions: {
-          type: 'number',
-          description: 'Maximum number of suggestions to return (provide as number, e.g., 5)',
-          minimum: 1,
-          maximum: 50,
-          default: 5,
         },
       },
       required: ['listId'],
@@ -706,23 +701,27 @@ export const MCP_TOOLS: Tool[] = [
   // Dependency Management Tools (3 tools)
   {
     name: 'set_task_dependencies',
-    description: 'Set which tasks this task depends on (replaces all existing dependencies). 🔗 WORKFLOW: Use with get_ready_tasks to enable proper task sequencing and parallel execution in multi-agent environments.',
+    description:
+      'Set which tasks this task depends on (replaces all existing dependencies). 🔗 WORKFLOW: Use with get_ready_tasks to enable proper task sequencing and parallel execution in multi-agent environments.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to set dependencies for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task to set dependencies for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         dependencyIds: {
           type: 'array',
-          description: 'Array of task UUIDs that this task depends on - provide as array of strings (empty array removes all dependencies)',
+          description:
+            'Array of task UUIDs that this task depends on - provide as array of strings (empty array removes all dependencies)',
           items: {
             type: 'string',
             format: 'uuid',
@@ -736,18 +735,21 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'get_ready_tasks',
-    description: 'Get tasks that are ready to work on (no incomplete dependencies). 🚀 DAILY WORKFLOW: Start each work session with this to find actionable tasks. Essential for Plan and Reflect methodology - plan your day based on what\'s actually ready.',
+    description:
+      "Get tasks that are ready to work on (no incomplete dependencies). 🚀 DAILY WORKFLOW: Start each work session with this to find actionable tasks. Essential for Plan and Reflect methodology - plan your day based on what's actually ready.",
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the list to get ready tasks from (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the list to get ready tasks from (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         limit: {
           type: 'number',
-          description: 'Maximum number of ready tasks to return (provide as number, e.g., 10)',
+          description:
+            'Maximum number of ready tasks to return (provide as number, e.g., 10)',
           minimum: 1,
           maximum: 50,
           default: 20,
@@ -759,25 +761,29 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'analyze_task_dependencies',
-    description: 'Get analysis of task dependencies and project structure with optional DAG visualization. 📊 PLANNING: Use this to understand project context and identify bottlenecks before starting work. Critical for Use Tools, Don\'t Guess methodology.',
+    description:
+      "Get analysis of task dependencies and project structure with optional DAG visualization. 📊 PLANNING: Use this to understand project context and identify bottlenecks before starting work. Critical for Use Tools, Don't Guess methodology.",
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the list to analyze (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the list to analyze (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         format: {
           type: 'string',
           enum: ['analysis', 'dag', 'both'],
-          description: 'Output format: "analysis" for dependency analysis, "dag" for visualization only, "both" for combined output',
+          description:
+            'Output format: "analysis" for dependency analysis, "dag" for visualization only, "both" for combined output',
           default: 'analysis',
         },
         dagStyle: {
           type: 'string',
           enum: ['ascii', 'dot', 'mermaid'],
-          description: 'DAG visualization style: "ascii" for text-based graph, "dot" for Graphviz format, "mermaid" for Mermaid diagram',
+          description:
+            'DAG visualization style: "ascii" for text-based graph, "dot" for Graphviz format, "mermaid" for Mermaid diagram',
           default: 'ascii',
         },
       },
@@ -785,104 +791,30 @@ export const MCP_TOOLS: Tool[] = [
     },
   },
 
-  // Bulk Operations Tool (1 tool)
-  {
-    name: 'bulk_task_operations',
-    description: 'Perform bulk operations on multiple tasks for improved efficiency',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        listId: {
-          type: 'string',
-          description: 'UUID of the todo list',
-          format: 'uuid',
-          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-          example: '123e4567-e89b-12d3-a456-426614174000',
-        },
-        operation: {
-          type: 'string',
-          description: 'Type of bulk operation to perform',
-          enum: ['create', 'update', 'delete', 'complete', 'set_priority'],
-          enumDescriptions: {
-            create: 'Create multiple new tasks',
-            update: 'Update multiple existing tasks',
-            delete: 'Delete multiple tasks',
-            complete: 'Mark multiple tasks as completed',
-            set_priority: 'Set priority for multiple tasks'
-          },
-        },
-        tasks: {
-          type: 'array',
-          description: 'Array of task data for bulk operation',
-          items: {
-            type: 'object',
-            properties: {
-              id: {
-                type: 'string',
-                format: 'uuid',
-                description: 'Task ID (required for update/delete/complete operations)',
-              },
-              title: {
-                type: 'string',
-                minLength: 1,
-                maxLength: 1000,
-                description: 'Task title (required for create operation)',
-              },
-              description: {
-                type: 'string',
-                maxLength: 5000,
-                description: 'Task description',
-              },
-              priority: {
-                type: 'number',
-                minimum: 1,
-                maximum: 5,
-                description: 'Task priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical)',
-              },
-              tags: {
-                type: 'array',
-                items: {
-                  type: 'string',
-                  maxLength: 50,
-                },
-                maxItems: 10,
-                description: 'Task tags',
-              },
-              estimatedDuration: {
-                type: 'number',
-                minimum: 1,
-                description: 'Estimated duration in minutes',
-              },
-            },
-          },
-          minItems: 1,
-          maxItems: 100,
-        },
-      },
-      required: ['listId', 'operation', 'tasks'],
-    },
-  },
-
   // Exit Criteria Management Tools (2 tools)
   {
     name: 'set_task_exit_criteria',
-    description: 'Set exit criteria for a task (replaces all existing exit criteria). 🎯 QUALITY: Define specific, measurable completion requirements. Essential for Persist Until Complete - ensures tasks are truly finished.',
+    description:
+      'Set exit criteria for a task (replaces all existing exit criteria). 🎯 QUALITY: Define specific, measurable completion requirements. Essential for Persist Until Complete - ensures tasks are truly finished.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task to set exit criteria for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task to set exit criteria for (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         exitCriteria: {
           type: 'array',
-          description: 'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings, empty array removes all criteria)',
+          description:
+            'Array of exit criteria descriptions that must be met to complete the task (provide as array of strings, empty array removes all criteria)',
           items: {
             type: 'string',
             maxLength: 500,
@@ -896,38 +828,46 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'update_exit_criteria',
-    description: 'Update the status of a specific exit criteria. 📝 PROGRESS TRACKING: Use this throughout task execution to track completion progress. Core part of Persist Until Complete methodology.',
+    description:
+      'Update the status of a specific exit criteria. 📝 PROGRESS TRACKING: Use this throughout task execution to track completion progress. Core part of Persist Until Complete methodology.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the list containing the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
           type: 'string',
-          description: 'UUID of the task containing the exit criteria (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the task containing the exit criteria (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         criteriaId: {
           type: 'string',
-          description: 'UUID of the exit criteria to update (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          description:
+            'UUID of the exit criteria to update (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         isMet: {
           type: 'boolean',
-          description: 'Whether the exit criteria has been met (provide as boolean: true or false)',
+          description:
+            'Whether the exit criteria has been met (provide as boolean: true or false)',
         },
         notes: {
           type: 'string',
-          description: 'Optional notes about the criteria status (provide as string)',
+          description:
+            'Optional notes about the criteria status (provide as string)',
           maxLength: 1000,
         },
       },
       required: ['listId', 'taskId', 'criteriaId'],
     },
   },
+
+  // Intelligence Tools removed - no longer supported
 ];
 
 // ============================================================================
@@ -943,17 +883,19 @@ export function validateToolParameters(
 ): { valid: boolean; errors: string[]; suggestions?: string[] } {
   const tool = MCP_TOOLS.find(t => t.name === toolName);
   if (!tool) {
-    return { 
-      valid: false, 
+    return {
+      valid: false,
       errors: [`Unknown tool: ${toolName}`],
-      suggestions: [`Available tools: ${MCP_TOOLS.map(t => t.name).join(', ')}`]
+      suggestions: [
+        `Available tools: ${MCP_TOOLS.map(t => t.name).join(', ')}`,
+      ],
     };
   }
 
   const errors: string[] = [];
   const suggestions: string[] = [];
   const schema = tool.inputSchema;
-  
+
   if (schema.type !== 'object' || !schema.properties) {
     return { valid: false, errors: ['Invalid schema structure'] };
   }
@@ -964,10 +906,20 @@ export function validateToolParameters(
       if (!(requiredParam in parameters)) {
         errors.push(`Missing required parameter: ${requiredParam}`);
         const paramSchema = schema.properties[requiredParam];
-        if (paramSchema && typeof paramSchema === 'object' && 'description' in paramSchema && paramSchema.description) {
+        if (
+          paramSchema &&
+          typeof paramSchema === 'object' &&
+          'description' in paramSchema &&
+          paramSchema.description
+        ) {
           suggestions.push(`${requiredParam}: ${paramSchema.description}`);
         }
-        if (paramSchema && typeof paramSchema === 'object' && 'example' in paramSchema && paramSchema.example) {
+        if (
+          paramSchema &&
+          typeof paramSchema === 'object' &&
+          'example' in paramSchema &&
+          paramSchema.example
+        ) {
           suggestions.push(`Example ${requiredParam}: ${paramSchema.example}`);
         }
       }
@@ -984,7 +936,21 @@ export function validateToolParameters(
       continue;
     }
 
-    const validationResult = validateParameter(paramName, paramValue, paramSchema);
+    // Ensure paramSchema has the required type property
+    if (
+      typeof paramSchema !== 'object' ||
+      paramSchema === null ||
+      !('type' in paramSchema)
+    ) {
+      errors.push(`Invalid schema for parameter: ${paramName}`);
+      continue;
+    }
+
+    const validationResult = validateParameter(
+      paramName,
+      paramValue,
+      paramSchema as ParameterSchema
+    );
     errors.push(...validationResult.errors);
     if (validationResult.suggestions) {
       suggestions.push(...validationResult.suggestions);
@@ -994,14 +960,30 @@ export function validateToolParameters(
   return { valid: errors.length === 0, errors, suggestions };
 }
 
-
-
 /**
  * Simple UUID validation with error messaging
  */
 function isValidUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
+}
+
+interface ParameterSchema {
+  type: string;
+  enum?: string[];
+  minimum?: number;
+  maximum?: number;
+  required?: boolean;
+  examples?: unknown[];
+  minLength?: number;
+  maxLength?: number;
+  enumDescriptions?: Record<string, string>;
+  format?: string;
+  example?: string;
+  minItems?: number;
+  maxItems?: number;
+  items?: ParameterSchema;
 }
 
 /**
@@ -1010,7 +992,7 @@ function isValidUUID(str: string): boolean {
 function validateParameter(
   name: string,
   value: unknown,
-  schema: any
+  schema: ParameterSchema
 ): { valid: boolean; errors: string[]; suggestions?: string[] } {
   const errors: string[] = [];
   const suggestions: string[] = [];
@@ -1021,21 +1003,23 @@ function validateParameter(
     suggestions.push(`Provide ${name} as a string value`);
     return { valid: false, errors, suggestions };
   }
-  
+
   if (schema.type === 'number' && typeof value !== 'number') {
     errors.push(`Parameter ${name} must be a number`);
     if (schema.minimum !== undefined && schema.maximum !== undefined) {
-      suggestions.push(`Provide ${name} as a number between ${schema.minimum} and ${schema.maximum}`);
+      suggestions.push(
+        `Provide ${name} as a number between ${schema.minimum} and ${schema.maximum}`
+      );
     }
     return { valid: false, errors, suggestions };
   }
-  
+
   if (schema.type === 'boolean' && typeof value !== 'boolean') {
     errors.push(`Parameter ${name} must be a boolean`);
     suggestions.push(`Use true or false for ${name}`);
     return { valid: false, errors, suggestions };
   }
-  
+
   if (schema.type === 'array' && !Array.isArray(value)) {
     errors.push(`Parameter ${name} must be an array`);
     if (schema.examples) {
@@ -1047,15 +1031,25 @@ function validateParameter(
   // String constraints with suggestions
   if (schema.type === 'string' && typeof value === 'string') {
     if (schema.minLength && value.length < schema.minLength) {
-      errors.push(`Parameter ${name} must be at least ${schema.minLength} characters`);
-      suggestions.push(`Current length: ${value.length}, required: ${schema.minLength}+`);
+      errors.push(
+        `Parameter ${name} must be at least ${schema.minLength} characters`
+      );
+      suggestions.push(
+        `Current length: ${value.length}, required: ${schema.minLength}+`
+      );
     }
     if (schema.maxLength && value.length > schema.maxLength) {
-      errors.push(`Parameter ${name} must be at most ${schema.maxLength} characters`);
-      suggestions.push(`Current length: ${value.length}, maximum: ${schema.maxLength}`);
+      errors.push(
+        `Parameter ${name} must be at most ${schema.maxLength} characters`
+      );
+      suggestions.push(
+        `Current length: ${value.length}, maximum: ${schema.maxLength}`
+      );
     }
     if (schema.enum && !schema.enum.includes(value)) {
-      errors.push(`Parameter ${name} must be one of: ${schema.enum.join(', ')}`);
+      errors.push(
+        `Parameter ${name} must be one of: ${schema.enum.join(', ')}`
+      );
       suggestions.push(`Valid options: ${schema.enum.join(', ')}`);
       if (schema.enumDescriptions) {
         const descriptions = Object.entries(schema.enumDescriptions)
@@ -1094,18 +1088,30 @@ function validateParameter(
   // Array constraints with suggestions
   if (schema.type === 'array' && Array.isArray(value)) {
     if (schema.minItems && value.length < schema.minItems) {
-      errors.push(`Parameter ${name} must have at least ${schema.minItems} items`);
-      suggestions.push(`Current count: ${value.length}, minimum: ${schema.minItems}`);
+      errors.push(
+        `Parameter ${name} must have at least ${schema.minItems} items`
+      );
+      suggestions.push(
+        `Current count: ${value.length}, minimum: ${schema.minItems}`
+      );
     }
     if (schema.maxItems && value.length > schema.maxItems) {
-      errors.push(`Parameter ${name} must have at most ${schema.maxItems} items`);
-      suggestions.push(`Current count: ${value.length}, maximum: ${schema.maxItems}`);
+      errors.push(
+        `Parameter ${name} must have at most ${schema.maxItems} items`
+      );
+      suggestions.push(
+        `Current count: ${value.length}, maximum: ${schema.maxItems}`
+      );
     }
-    
+
     // Validate array items with feedback
     if (schema.items) {
       value.forEach((item, index) => {
-        const itemValidation = validateParameter(`${name}[${index}]`, item, schema.items);
+        const itemValidation = validateParameter(
+          `${name}[${index}]`,
+          item,
+          schema.items!
+        );
         errors.push(...itemValidation.errors);
         if (itemValidation.suggestions) {
           suggestions.push(...itemValidation.suggestions);

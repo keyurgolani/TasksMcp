@@ -12,7 +12,7 @@ const colors = {
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
-  reset: '\x1b[0m'
+  reset: '\x1b[0m',
 };
 
 function log(message, color = colors.reset) {
@@ -52,9 +52,11 @@ try {
   }
 
   // Determine which version to use
-  const targetVersion = usePackageAsSource ? packageInfo.version : versionInfo.version;
+  const targetVersion = usePackageAsSource
+    ? packageInfo.version
+    : versionInfo.version;
   const sourceFile = usePackageAsSource ? 'package.json' : 'version.json';
-  
+
   logWarning(`Version mismatch detected:`);
   log(`  version.json: ${versionInfo.version}`);
   log(`  package.json: ${packageInfo.version}`);
@@ -79,22 +81,24 @@ try {
     const packageLockPath = join(process.cwd(), 'package-lock.json');
     const packageLockContent = readFileSync(packageLockPath, 'utf-8');
     const packageLockInfo = JSON.parse(packageLockContent);
-    
+
     if (packageLockInfo.version !== targetVersion) {
       packageLockInfo.version = targetVersion;
-      if (packageLockInfo.packages && packageLockInfo.packages[""]) {
-        packageLockInfo.packages[""].version = targetVersion;
+      if (packageLockInfo.packages && packageLockInfo.packages['']) {
+        packageLockInfo.packages[''].version = targetVersion;
       }
-      
-      writeFileSync(packageLockPath, JSON.stringify(packageLockInfo, null, 2) + '\n');
+
+      writeFileSync(
+        packageLockPath,
+        JSON.stringify(packageLockInfo, null, 2) + '\n'
+      );
       logSuccess(`Updated package-lock.json to version ${targetVersion}`);
     }
-  } catch (error) {
+  } catch (_error) {
     logWarning('package-lock.json not found or could not be updated');
   }
 
   logSuccess('Version synchronization completed!');
-
 } catch (error) {
   logError(`Failed to synchronize versions: ${error.message}`);
   process.exit(1);

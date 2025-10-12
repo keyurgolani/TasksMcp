@@ -99,7 +99,7 @@ test-results/
 playwright-report/
 test-results/
 
-# Kiro IDE (development tool)
+# Kiro IDE (development tool) - ignore entire directory
 .kiro/
 
 # MCP client configurations (user-specific)

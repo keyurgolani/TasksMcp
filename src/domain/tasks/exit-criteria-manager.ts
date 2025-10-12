@@ -3,9 +3,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
+import { logger } from '../../shared/utils/logger.js';
+
 import type { ExitCriteria } from '../../shared/types/todo.js';
 import type { ITodoListRepository } from '../repositories/todo-list.repository.js';
-import { logger } from '../../shared/utils/logger.js';
 
 export interface CreateExitCriteriaInput {
   taskId: string;
@@ -26,6 +28,23 @@ export interface ExitCriteriaValidationResult {
   warnings: string[];
 }
 
+/**
+ * Manages exit criteria for tasks - conditions that must be met for task completion
+ *
+ * Provides functionality for:
+ * - Creating and validating exit criteria
+ * - Updating criteria status and notes
+ * - Checking if all criteria are met for task completion
+ *
+ * @example
+ * ```typescript
+ * const manager = new ExitCriteriaManager(repository);
+ * const criteria = await manager.createExitCriteria({
+ *   taskId: 'task-123',
+ *   description: 'All tests must pass'
+ * });
+ * ```
+ */
 export class ExitCriteriaManager {
   // Repository for future direct exit criteria persistence
   // Currently unused but prepared for future enhancements
@@ -33,12 +52,12 @@ export class ExitCriteriaManager {
 
   constructor(repository?: ITodoListRepository) {
     this.repository = repository;
-    
+
     logger.debug('ExitCriteriaManager initialized', {
       hasRepository: !!repository,
     });
   }
-  
+
   /**
    * Gets the repository instance if available
    * @returns The repository instance or undefined
@@ -50,7 +69,9 @@ export class ExitCriteriaManager {
   /**
    * Creates a new exit criteria for a task
    */
-  async createExitCriteria(input: CreateExitCriteriaInput): Promise<ExitCriteria> {
+  async createExitCriteria(
+    input: CreateExitCriteriaInput
+  ): Promise<ExitCriteria> {
     try {
       logger.debug('Creating exit criteria', {
         taskId: input.taskId,
@@ -66,7 +87,7 @@ export class ExitCriteriaManager {
         id: criteriaId,
         description: input.description.trim(),
         isMet: false,
-        order: input.order ?? 0,
+        order: input.order || 0,
       };
 
       logger.info('Exit criteria created successfully', {
@@ -219,16 +240,11 @@ export class ExitCriteriaManager {
   }
 
   /**
-   * Sorts exit criteria by order
-   */
-  sortCriteriaByOrder(criteria: ExitCriteria[]): ExitCriteria[] {
-    return [...criteria].sort((a, b) => a.order - b.order);
-  }
-
-  /**
    * Validates exit criteria description
    */
-  private validateExitCriteriaDescription(description: string): ExitCriteriaValidationResult {
+  private validateExitCriteriaDescription(
+    description: string
+  ): ExitCriteriaValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -239,12 +255,16 @@ export class ExitCriteriaManager {
 
     // Check description length (reasonable limits)
     if (description.length > 500) {
-      errors.push('Exit criteria description is too long (maximum 500 characters)');
+      errors.push(
+        'Exit criteria description is too long (maximum 500 characters)'
+      );
     }
 
     // Check for minimum meaningful content
     if (description.trim().length < 5) {
-      warnings.push('Exit criteria description is very short and may not be meaningful');
+      warnings.push(
+        'Exit criteria description is very short and may not be meaningful'
+      );
     }
 
     // Check for potentially problematic content
@@ -273,9 +293,9 @@ export class ExitCriteriaManager {
   }
 
   /**
-   * Gets exit criteria statistics
+   * Gets exit criteria progress
    */
-  getExitCriteriaStats(criteria: ExitCriteria[]): {
+  getExitCriteriaProgress(criteria: ExitCriteria[]): {
     total: number;
     met: number;
     unmet: number;
@@ -337,7 +357,7 @@ export class ExitCriteriaManager {
       }
     }
 
-    const sortedCriteria = this.sortCriteriaByOrder(filteredCriteria);
+    const sortedCriteria = filteredCriteria;
 
     const formattedCriteria = sortedCriteria.map((criteria, index) => {
       const status = criteria.isMet ? '✅' : '❌';
@@ -348,15 +368,18 @@ export class ExitCriteriaManager {
       }
 
       if (includeTimestamps && criteria.metAt) {
-        const metAt = criteria.metAt instanceof Date ? criteria.metAt : new Date(criteria.metAt);
+        const metAt =
+          criteria.metAt instanceof Date
+            ? criteria.metAt
+            : new Date(criteria.metAt);
         formatted += `\n   Completed: ${metAt.toLocaleString()}`;
       }
 
       return formatted;
     });
 
-    const stats = this.getExitCriteriaStats(criteria);
-    const header = `Exit Criteria Progress: ${stats.met}/${stats.total} (${stats.progress}%)`;
+    const progress = this.getExitCriteriaProgress(criteria);
+    const header = `Exit Criteria Progress: ${progress.met}/${progress.total} (${progress.progress}%)`;
 
     return `${header}\n\n${formattedCriteria.join('\n\n')}`;
   }
@@ -383,9 +406,10 @@ export class ExitCriteriaManager {
     }
 
     const reason = `${unmetCriteria.length} exit criteria still need to be met`;
-    const recommendation = unmetCriteria.length === 1
-      ? 'Complete the remaining exit criteria before marking task as done'
-      : 'Complete all remaining exit criteria before marking task as done';
+    const recommendation =
+      unmetCriteria.length === 1
+        ? 'Complete the remaining exit criteria before marking task as done'
+        : 'Complete all remaining exit criteria before marking task as done';
 
     return {
       canComplete: false,
@@ -408,23 +432,36 @@ export class ExitCriteriaManager {
     const errors: string[] = [];
     const warnings: string[] = [];
     const validCriteria: ExitCriteria[] = [];
-    const invalidCriteria: Array<{ criteria: ExitCriteria; errors: string[] }> = [];
+    const invalidCriteria: Array<{ criteria: ExitCriteria; errors: string[] }> =
+      [];
 
     for (const criterion of criteria) {
       try {
         // Validate criteria structure
         if (!criterion.id || typeof criterion.id !== 'string') {
-          invalidCriteria.push({ criteria: criterion, errors: ['Missing or invalid criteria ID'] });
+          invalidCriteria.push({
+            criteria: criterion,
+            errors: ['Missing or invalid criteria ID'],
+          });
           continue;
         }
 
-        if (!criterion.description || typeof criterion.description !== 'string') {
-          invalidCriteria.push({ criteria: criterion, errors: ['Missing or invalid criteria description'] });
+        if (
+          !criterion.description ||
+          typeof criterion.description !== 'string'
+        ) {
+          invalidCriteria.push({
+            criteria: criterion,
+            errors: ['Missing or invalid criteria description'],
+          });
           continue;
         }
 
         if (typeof criterion.isMet !== 'boolean') {
-          invalidCriteria.push({ criteria: criterion, errors: ['Missing or invalid criteria status'] });
+          invalidCriteria.push({
+            criteria: criterion,
+            errors: ['Missing or invalid criteria status'],
+          });
           continue;
         }
 
@@ -433,7 +470,10 @@ export class ExitCriteriaManager {
 
         validCriteria.push(criterion);
       } catch (validationError) {
-        const errorMessage = validationError instanceof Error ? validationError.message : 'Unknown validation error';
+        const errorMessage =
+          validationError instanceof Error
+            ? validationError.message
+            : 'Unknown validation error';
         invalidCriteria.push({ criteria: criterion, errors: [errorMessage] });
       }
     }
@@ -448,7 +488,9 @@ export class ExitCriteriaManager {
 
     // Check for duplicate descriptions
     const descriptions = validCriteria.map(c => c.description.toLowerCase());
-    const duplicates = descriptions.filter((desc, index) => descriptions.indexOf(desc) !== index);
+    const duplicates = descriptions.filter(
+      (desc, index) => descriptions.indexOf(desc) !== index
+    );
     if (duplicates.length > 0) {
       warnings.push('Duplicate exit criteria descriptions found');
     }

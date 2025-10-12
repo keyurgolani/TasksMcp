@@ -16,6 +16,7 @@ npx task-list-mcp@latest --version
 ```
 
 This method:
+
 - ✅ Always uses the latest version
 - ✅ No local installation required
 - ✅ Works on all platforms
@@ -32,6 +33,7 @@ task-list-mcp --version
 ```
 
 This method:
+
 - ✅ Faster startup (no download)
 - ✅ Works offline after installation
 - ✅ Version control with npm
@@ -92,14 +94,13 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "add_task_tags",
         "search_tool",
         "show_tasks",
-        "analyze_task",
-        "get_task_suggestions",
+
         "set_task_exit_criteria",
         "update_exit_criteria",
         "set_task_dependencies",
         "get_ready_tasks",
         "analyze_task_dependencies",
-        "bulk_task_operations"
+        ""
       ]
     }
   }
@@ -191,16 +192,17 @@ export DATA_DIRECTORY=./dev-data
 
 ### Core Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NODE_ENV` | No | `development` | Environment mode: `development`, `production`, or `test` |
-| `MCP_LOG_LEVEL` | No | `info` | Logging verbosity: `error`, `warn`, `info`, or `debug` |
-| `DATA_DIRECTORY` | No | `./data` | Directory for persistent data storage |
-| `STORAGE_TYPE` | No | `file` | Storage backend: `file` or `memory` |
+| Variable         | Required | Default       | Description                                              |
+| ---------------- | -------- | ------------- | -------------------------------------------------------- |
+| `NODE_ENV`       | No       | `development` | Environment mode: `development`, `production`, or `test` |
+| `MCP_LOG_LEVEL`  | No       | `info`        | Logging verbosity: `error`, `warn`, `info`, or `debug`   |
+| `DATA_DIRECTORY` | No       | `./data`      | Directory for persistent data storage                    |
+| `STORAGE_TYPE`   | No       | `file`        | Storage backend: `file` or `memory`                      |
 
 ### Environment-Specific Configurations
 
 #### Production Environment
+
 ```bash
 export NODE_ENV=production
 export MCP_LOG_LEVEL=warn
@@ -210,12 +212,14 @@ export BACKUP_ENABLED=true
 ```
 
 **Features:**
+
 - Minimal logging for performance
 - Secure data directory with proper permissions
 - Optimized error handling
 - Automatic backup and recovery mechanisms
 
 #### Development Environment
+
 ```bash
 export NODE_ENV=development
 export MCP_LOG_LEVEL=debug
@@ -224,12 +228,14 @@ export STORAGE_TYPE=file
 ```
 
 **Features:**
+
 - Verbose debug logging for troubleshooting
 - Local data directory for easy access
 - Enhanced error messages and stack traces
 - Automatic data validation and consistency checks
 
 #### Testing Environment
+
 ```bash
 export NODE_ENV=test
 export MCP_LOG_LEVEL=error
@@ -238,6 +244,7 @@ export STORAGE_TYPE=memory
 ```
 
 **Features:**
+
 - Memory-only storage for fast test execution
 - Minimal logging to reduce test noise
 - Automatic cleanup between test runs
@@ -283,6 +290,7 @@ npx task-list-mcp@latest --health
 ```
 
 Expected output:
+
 ```
 ✅ MCP Task Manager Health Check
 ✅ Server: Running
@@ -297,6 +305,7 @@ Expected output:
 ### Common Issues
 
 #### npx Installation Problems
+
 ```bash
 # Check npm version (npm 7.0.0+ recommended)
 npm --version
@@ -312,6 +321,7 @@ node --version  # Must be 18.0.0+
 ```
 
 #### Server Won't Start
+
 ```bash
 # Test the server directly
 npx task-list-mcp@latest --version
@@ -324,6 +334,7 @@ npm run build && node dist/cli.js --version
 ```
 
 #### MCP Client Can't Connect
+
 1. **Check configuration syntax**: Ensure JSON is valid
 2. **Verify command paths**: `npx` must be in PATH
 3. **Test server manually**: Run the command from terminal first
@@ -331,6 +342,7 @@ npm run build && node dist/cli.js --version
 5. **Restart client**: Restart Claude Desktop or Kiro after config changes
 
 #### Permission Errors
+
 ```bash
 # For npx (may need to fix npm permissions)
 npm config get prefix
@@ -343,6 +355,7 @@ chmod +x dist/cli.js
 ### Configuration Issues
 
 #### Automatic Setup Fails
+
 ```bash
 # Check if config directories exist
 ls -la ~/Library/Application\ Support/Claude/  # macOS
@@ -354,6 +367,7 @@ mkdir -p ~/.kiro/settings/
 ```
 
 #### Server Not Found in MCP Client
+
 1. **Restart the MCP client** after configuration changes
 2. **Check server name** matches configuration (should be "task-manager")
 3. **Verify command accessibility**: Run `npx task-list-mcp@latest --version` in terminal
@@ -362,6 +376,7 @@ mkdir -p ~/.kiro/settings/
 ### Data Directory Issues
 
 #### Directory Creation
+
 ```bash
 # Create data directory with proper permissions
 mkdir -p ~/.local/share/task-manager
@@ -369,6 +384,7 @@ chmod 755 ~/.local/share/task-manager
 ```
 
 #### Permission Problems
+
 ```bash
 # Check directory permissions
 ls -la /path/to/data/directory
@@ -379,6 +395,7 @@ chown $USER /path/to/data/directory
 ```
 
 #### Disk Space
+
 ```bash
 # Check available disk space
 df -h /path/to/data/directory
@@ -430,18 +447,21 @@ npm test
 ## 📊 System Requirements
 
 ### Minimum Requirements
+
 - **Node.js**: 18.0.0 or higher
 - **Memory**: 512MB RAM
 - **Storage**: 100MB for application + data storage
 - **OS**: Windows, macOS, or Linux
 
 ### Recommended for Production
+
 - **Node.js**: 18.17.0 or higher
 - **Memory**: 2GB+ RAM
 - **Storage**: SSD with 1GB+ available space
 - **OS**: Linux (Ubuntu 20.04+ or CentOS 8+)
 
 ### Performance Expectations
+
 - **Response Time**: ~5ms for create operations, ~2ms for read operations
 - **Throughput**: ~900 operations per second sustained
 - **Memory Usage**: Stable under load, ~145MB typical usage
@@ -459,6 +479,7 @@ After successful installation:
 ## 📞 Getting Help
 
 ### Diagnostics
+
 ```bash
 # Run comprehensive health check
 npx task-list-mcp@latest --health
@@ -472,6 +493,7 @@ npm run validate  # For development installation
 ```
 
 ### Support Resources
+
 - **[Troubleshooting Guide](troubleshooting.md)** - Common issues and solutions
 - **[FAQ](../reference/faq.md)** - Frequently asked questions
 - **GitHub Issues** - Bug reports and feature requests

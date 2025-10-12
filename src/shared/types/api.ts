@@ -2,13 +2,12 @@
  * API types and interfaces for REST API server
  */
 
-import type { Request, Response, NextFunction } from 'express';
 import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type { ActionPlanManager } from '../../domain/tasks/action-plan-manager.js';
 import type { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import type { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
-import type { ActionPlanManager } from '../../domain/tasks/action-plan-manager.js';
 import type { NotesManager } from '../../domain/tasks/notes-manager.js';
-import type { IntelligenceManager } from '../../domain/intelligence/intelligence-manager.js';
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * API configuration
@@ -42,7 +41,6 @@ export interface HandlerContext {
   exitCriteriaManager: ExitCriteriaManager;
   actionPlanManager: ActionPlanManager;
   notesManager: NotesManager;
-  intelligenceManager: IntelligenceManager;
 }
 
 /**
@@ -89,13 +87,22 @@ export interface ApiRequest extends Request {
 }
 
 /**
- * API handler function type
+ * API handler function type for MCP handlers that return ApiResponse
  */
 export type ApiHandler<T = unknown> = (
   req: ApiRequest,
   res: Response,
   context: HandlerContext
 ) => Promise<ApiResponse<T>>;
+
+/**
+ * REST API handler function type for Express handlers that use res.json()
+ */
+export type RestApiHandler = (
+  req: ApiRequest,
+  res: Response,
+  context: HandlerContext
+) => Promise<void>;
 
 /**
  * Middleware function type

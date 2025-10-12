@@ -1,6 +1,6 @@
 /**
  * Integration tests for application initialization
- * 
+ *
  * Tests the complete initialization flow including:
  * - DataSourceRouter setup
  * - MultiSourceAggregator creation
@@ -8,11 +8,18 @@
  * - Health checks for configured sources
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ApplicationInitializer, initializeApplication, shutdownApplication } from '../../src/app/initialization.js';
-import type { StorageConfiguration } from '../../src/infrastructure/storage/storage-factory.js';
 import { existsSync } from 'fs';
 import { rm } from 'fs/promises';
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import {
+  ApplicationInitializer,
+  initializeApplication,
+  shutdownApplication,
+} from '../../src/app/initialization.js';
+
+import type { StorageConfiguration } from '../../src/infrastructure/storage/storage-factory.js';
 
 describe('Application Initialization', () => {
   const testDataDir = './test-data-init';
@@ -129,7 +136,7 @@ describe('Application Initialization', () => {
 
       expect(result.healthStatus.sources).toBeDefined();
       expect(result.healthStatus.sources.length).toBeGreaterThan(0);
-      
+
       const source = result.healthStatus.sources[0];
       expect(source).toBeDefined();
       expect(source?.id).toBeDefined();

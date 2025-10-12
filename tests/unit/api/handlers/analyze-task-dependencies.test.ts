@@ -4,11 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { handleAnalyzeTaskDependencies } from '../../../../src/api/handlers/analyze-task-dependencies.js';
-import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
-import type { TodoList, TodoItem } from '../../../../src/shared/types/todo.js';
 import { TaskStatus } from '../../../../src/shared/types/todo.js';
+
+import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
+import type { TodoList, TodoItem } from '../../../../src/shared/types/todo.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
@@ -50,7 +52,10 @@ describe('handleAnalyzeTaskDependencies', () => {
         },
       };
 
-      const result = await handleAnalyzeTaskDependencies(invalidRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        invalidRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('❌');
@@ -68,7 +73,10 @@ describe('handleAnalyzeTaskDependencies', () => {
         },
       };
 
-      const result = await handleAnalyzeTaskDependencies(invalidRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        invalidRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('❌');
@@ -77,7 +85,10 @@ describe('handleAnalyzeTaskDependencies', () => {
     it('should return error when list not found', async () => {
       vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(null);
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('Todo list with ID');
@@ -99,10 +110,13 @@ describe('handleAnalyzeTaskDependencies', () => {
 
       vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(emptyList);
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.listId).toBe(emptyList.id);
       expect(analysis.summary.totalTasks).toBe(0);
@@ -162,12 +176,17 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(listWithChain);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        listWithChain
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.summary.totalTasks).toBe(3);
       expect(analysis.summary.readyTasks).toBe(1); // Only task1 is ready
@@ -213,15 +232,24 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(listWithCycle);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        listWithCycle
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.issues.circularDependencies.length).toBeGreaterThan(0);
-      expect(analysis.recommendations.some((rec: string) => rec.includes('circular dependencies detected'))).toBe(true);
+      expect(
+        analysis.recommendations.some((rec: string) =>
+          rec.includes('circular dependencies detected')
+        )
+      ).toBe(true);
     });
 
     it('should identify bottlenecks', async () => {
@@ -260,15 +288,24 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(listWithBottleneck);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        listWithBottleneck
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.issues.bottlenecks).toContain('bottleneck');
-      expect(analysis.recommendations.some((rec: string) => rec.includes('Bottleneck alert'))).toBe(true);
+      expect(
+        analysis.recommendations.some((rec: string) =>
+          rec.includes('Bottleneck alert')
+        )
+      ).toBe(true);
     });
 
     it('should provide progress insights', async () => {
@@ -306,12 +343,17 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(listWithProgress);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        listWithProgress
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.recommendations.length).toBeGreaterThan(0);
     });
@@ -363,15 +405,24 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(listWithReady);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        listWithReady
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.summary.readyTasks).toBe(2);
-      expect(analysis.recommendations.some((rec: string) => rec.includes('2 tasks are ready'))).toBe(true);
+      expect(
+        analysis.recommendations.some((rec: string) =>
+          rec.includes('2 tasks are ready')
+        )
+      ).toBe(true);
     });
 
     it('should warn when no tasks are ready', async () => {
@@ -409,23 +460,37 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(listAllBlocked);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        listAllBlocked
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.summary.readyTasks).toBe(0);
-      expect(analysis.recommendations.some((rec: string) => rec.includes('No tasks are ready'))).toBe(true);
+      expect(
+        analysis.recommendations.some((rec: string) =>
+          rec.includes('No tasks are ready')
+        )
+      ).toBe(true);
     });
   });
 
   describe('error handling', () => {
     it('should handle TodoListManager errors gracefully', async () => {
-      vi.mocked(mockTodoListManager.getTodoList).mockRejectedValue(new Error('Database error'));
+      vi.mocked(mockTodoListManager.getTodoList).mockRejectedValue(
+        new Error('Database error')
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('Error: Database error');
@@ -442,7 +507,10 @@ describe('handleAnalyzeTaskDependencies', () => {
         },
       };
 
-      const result = await handleAnalyzeTaskDependencies(malformedRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        malformedRequest,
+        mockTodoListManager
+      );
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('❌');
@@ -472,13 +540,18 @@ describe('handleAnalyzeTaskDependencies', () => {
         projectTag: undefined,
       };
 
-      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(corruptedList);
+      vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(
+        corruptedList
+      );
 
-      const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+      const result = await handleAnalyzeTaskDependencies(
+        mockRequest,
+        mockTodoListManager
+      );
 
       // Should not crash, should handle gracefully
       expect(result.isError).toBeFalsy();
-      
+
       const analysis = JSON.parse(result.content[0].text);
       expect(analysis.summary.totalTasks).toBe(1);
       expect(analysis.summary.blockedTasks).toBe(0); // Task with invalid dependency is not counted as blocked
@@ -497,7 +570,8 @@ describe('handleAnalyzeTaskDependencies', () => {
             status: TaskStatus.PENDING,
             priority: 3,
             tags: [],
-            dependencies: i > 0 ? [`task-${i - 1}`, `task-${Math.max(0, i - 2)}`] : [],
+            dependencies:
+              i > 0 ? [`task-${i - 1}`, `task-${Math.max(0, i - 2)}`] : [],
             createdAt: new Date(),
             updatedAt: new Date(),
           })),
@@ -533,10 +607,13 @@ describe('handleAnalyzeTaskDependencies', () => {
 
         vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(testList);
 
-        const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+        const result = await handleAnalyzeTaskDependencies(
+          mockRequest,
+          mockTodoListManager
+        );
 
         expect(result.isError).toBeFalsy();
-        
+
         const analysis = JSON.parse(result.content[0].text);
         // Just check that we have recommendations for now
         expect(analysis.recommendations.length).toBeGreaterThan(0);
@@ -545,16 +622,17 @@ describe('handleAnalyzeTaskDependencies', () => {
 
     it('should provide different recommendations based on progress level', async () => {
       const progressLevels = [0, 25, 50, 75, 95];
-      
+
       for (const progressPercent of progressLevels) {
         const totalTasks = 10;
         const completedTasks = Math.floor((progressPercent / 100) * totalTasks);
-        
+
         const items = Array.from({ length: totalTasks }, (_, i) => ({
           id: `task-${i}`,
           title: `Task ${i}`,
           description: `Task ${i}`,
-          status: i < completedTasks ? TaskStatus.COMPLETED : TaskStatus.PENDING,
+          status:
+            i < completedTasks ? TaskStatus.COMPLETED : TaskStatus.PENDING,
           priority: 3,
           tags: [],
           dependencies: [],
@@ -574,16 +652,27 @@ describe('handleAnalyzeTaskDependencies', () => {
 
         vi.mocked(mockTodoListManager.getTodoList).mockResolvedValue(testList);
 
-        const result = await handleAnalyzeTaskDependencies(mockRequest, mockTodoListManager);
+        const result = await handleAnalyzeTaskDependencies(
+          mockRequest,
+          mockTodoListManager
+        );
 
         expect(result.isError).toBeFalsy();
-        
+
         const analysis = JSON.parse(result.content[0].text);
-        
+
         if (progressPercent === 0) {
-          expect(analysis.recommendations.some((rec: string) => rec.includes('early stages'))).toBe(true);
+          expect(
+            analysis.recommendations.some((rec: string) =>
+              rec.includes('early stages')
+            )
+          ).toBe(true);
         } else if (progressPercent >= 90) {
-          expect(analysis.recommendations.some((rec: string) => rec.includes('nearing completion'))).toBe(true);
+          expect(
+            analysis.recommendations.some((rec: string) =>
+              rec.includes('nearing completion')
+            )
+          ).toBe(true);
         } else {
           // For middle progress, just check that we have recommendations
           expect(analysis.recommendations.length).toBeGreaterThan(0);

@@ -1,16 +1,17 @@
 /**
  * Agent Validation Metrics Tests
- * 
+ *
  * Measures the effectiveness of agent-friendly improvements by comparing
  * before/after scenarios and collecting metrics on error reduction and
  * user experience improvements.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { z as _z } from 'zod';
+
 import { McpTaskManagerServer } from '../../src/app/server.js';
-import { ConfigManager } from '../../src/infrastructure/config/index.js';
+import { ConfigManager as _ConfigManager } from '../../src/infrastructure/config/index.js';
 import { TestCleanup } from '../setup.js';
-import { z } from 'zod';
 
 describe('Agent Validation Metrics', () => {
   let server: McpTaskManagerServer;
@@ -24,7 +25,7 @@ describe('Agent Validation Metrics', () => {
 
     server = new McpTaskManagerServer();
     await server.start();
-    
+
     // Register server for cleanup
     TestCleanup.registerServer(server);
 
@@ -46,16 +47,50 @@ describe('Agent Validation Metrics', () => {
     it('should measure preprocessing success rate', async () => {
       const testCases = [
         // Cases that should succeed with preprocessing
-        { params: { listId: testListId, title: 'Task 1', priority: '5' }, shouldSucceed: true },
-        { params: { listId: testListId, title: 'Task 2', tags: '["tag1", "tag2"]' }, shouldSucceed: true },
-        { params: { listId: testListId, title: 'Task 3', estimatedDuration: '120' }, shouldSucceed: true },
-        { params: { listId: testListId, status: ['pending'] }, tool: 'search_tool', shouldSucceed: true },
-        { params: { listId: testListId, priority: [3] }, tool: 'search_tool', shouldSucceed: true },
-        
+        {
+          params: { listId: testListId, title: 'Task 1', priority: '5' },
+          shouldSucceed: true,
+        },
+        {
+          params: {
+            listId: testListId,
+            title: 'Task 2',
+            tags: '["tag1", "tag2"]',
+          },
+          shouldSucceed: true,
+        },
+        {
+          params: {
+            listId: testListId,
+            title: 'Task 3',
+            estimatedDuration: '120',
+          },
+          shouldSucceed: true,
+        },
+        {
+          params: { listId: testListId, status: ['pending'] },
+          tool: 'search_tool',
+          shouldSucceed: true,
+        },
+        {
+          params: { listId: testListId, priority: [3] },
+          tool: 'search_tool',
+          shouldSucceed: true,
+        },
+
         // Cases that should still fail (invalid data)
-        { params: { listId: testListId, title: 'Task 4', priority: '10' }, shouldSucceed: false },
-        { params: { listId: testListId, title: '', priority: '3' }, shouldSucceed: false },
-        { params: { listId: 'invalid-uuid', title: 'Task 5' }, shouldSucceed: false },
+        {
+          params: { listId: testListId, title: 'Task 4', priority: '10' },
+          shouldSucceed: false,
+        },
+        {
+          params: { listId: testListId, title: '', priority: '3' },
+          shouldSucceed: false,
+        },
+        {
+          params: { listId: 'invalid-uuid', title: 'Task 5' },
+          shouldSucceed: false,
+        },
       ];
 
       let successCount = 0;
@@ -65,10 +100,12 @@ describe('Agent Validation Metrics', () => {
 
       for (const testCase of testCases) {
         const toolName = testCase.tool || 'add_task';
-        const result = await simulateToolCall(server, toolName, testCase.params);
+        const result = await simulateToolCall(
+          server,
+          toolName,
+          testCase.params
+        );
         const isSuccess = !result.content[0].text.includes('❌');
-
-
 
         if (testCase.shouldSucceed) {
           expectedSuccessCount++;
@@ -100,7 +137,11 @@ describe('Agent Validation Metrics', () => {
         {
           params: { listId: testListId, status: ['done'] },
           tool: 'search_tool',
-          expectedElements: ['❌', 'Did you mean "completed"?', 'pending, completed'],
+          expectedElements: [
+            '❌',
+            'Did you mean "completed"?',
+            'pending, completed',
+          ],
         },
       ];
 
@@ -109,7 +150,11 @@ describe('Agent Validation Metrics', () => {
 
       for (const scenario of errorScenarios) {
         const toolName = scenario.tool || 'add_task';
-        const result = await simulateToolCall(server, toolName, scenario.params);
+        const result = await simulateToolCall(
+          server,
+          toolName,
+          scenario.params
+        );
         const errorText = result.content[0].text;
 
         // Score based on presence of quality indicators
@@ -135,7 +180,7 @@ describe('Agent Validation Metrics', () => {
       });
 
       let errorText = result.content[0].text;
-      
+
       // Parse the JSON-wrapped error message to get the actual error text
       try {
         const parsed = JSON.parse(errorText);
@@ -147,13 +192,14 @@ describe('Agent Validation Metrics', () => {
       }
 
       // Readability metrics
-      const hasEmojis = /[❌💡📝🔧]/.test(errorText);
+      const hasEmojis = /[❌💡📝🔧]/u.test(errorText);
       const hasStructure = errorText.includes('\n');
-      const isReasonableLength = errorText.length > 100 && errorText.length < 1500;
-      const hasActionableLanguage = /use|provide|try|example|choose/i.test(errorText);
+      const isReasonableLength =
+        errorText.length > 100 && errorText.length < 1500;
+      const hasActionableLanguage = /use|provide|try|example|choose/i.test(
+        errorText
+      );
       const avoidsJargon = !/(zod|schema|parse)/i.test(errorText);
-
-
 
       expect(hasEmojis).toBe(true);
       expect(hasStructure).toBe(true);
@@ -164,19 +210,40 @@ describe('Agent Validation Metrics', () => {
 
     it('should measure suggestion accuracy for enum errors', async () => {
       const enumTestCases = [
-        { input: 'complet', expected: 'completed', tool: 'search_tool', param: 'status' },
-        { input: 'pend', expected: 'pending', tool: 'search_tool', param: 'status' },
-        { input: 'cancel', expected: 'cancelled', tool: 'search_tool', param: 'status' },
-        { input: 'PENDING', expected: 'pending', tool: 'search_tool', param: 'status' },
+        {
+          input: 'complet',
+          expected: 'completed',
+          tool: 'search_tool',
+          param: 'status',
+        },
+        {
+          input: 'pend',
+          expected: 'pending',
+          tool: 'search_tool',
+          param: 'status',
+        },
+        {
+          input: 'cancel',
+          expected: 'cancelled',
+          tool: 'search_tool',
+          param: 'status',
+        },
+        {
+          input: 'PENDING',
+          expected: 'pending',
+          tool: 'search_tool',
+          param: 'status',
+        },
       ];
 
       let accurateCount = 0;
 
       for (const testCase of enumTestCases) {
         // For search_tool, status parameter should be an array
-        const paramValue = testCase.tool === 'search_tool' && testCase.param === 'status' 
-          ? [testCase.input] 
-          : testCase.input;
+        const paramValue =
+          testCase.tool === 'search_tool' && testCase.param === 'status'
+            ? [testCase.input]
+            : testCase.input;
         const params = { listId: testListId, [testCase.param]: paramValue };
         const result = await simulateToolCall(server, testCase.tool, params);
         let errorText = result.content[0].text;
@@ -206,19 +273,20 @@ describe('Agent Validation Metrics', () => {
 
       for (let i = 0; i < iterations; i++) {
         const startTime = Date.now();
-        
+
         await simulateToolCall(server, 'add_task', {
           listId: testListId,
           title: `Performance Test ${i}`,
           priority: String(Math.floor(Math.random() * 5) + 1),
           tags: JSON.stringify([`tag${i}`]),
         });
-        
+
         const endTime = Date.now();
         times.push(endTime - startTime);
       }
 
-      const averageTime = times.reduce((sum, time) => sum + time, 0) / times.length;
+      const averageTime =
+        times.reduce((sum, time) => sum + time, 0) / times.length;
       const maxTime = Math.max(...times);
 
       // Performance should be reasonable
@@ -232,15 +300,37 @@ describe('Agent Validation Metrics', () => {
       const coercionTests = [
         // Number coercion (use valid priority values 1-5)
         { type: 'number', input: '4', expected: 4, param: 'priority' },
-        { type: 'number', input: '90', expected: 90, param: 'estimatedDuration' },
+        {
+          type: 'number',
+          input: '90',
+          expected: 90,
+          param: 'estimatedDuration',
+        },
         { type: 'number', input: '1', expected: 1, param: 'priority' },
-        
+
         // Boolean coercion (test with get_list which returns includeCompleted)
-        { type: 'boolean', input: 'true', expected: true, param: 'includeCompleted', tool: 'get_list' },
-        { type: 'boolean', input: 'false', expected: false, param: 'includeCompleted', tool: 'get_list' },
-        
+        {
+          type: 'boolean',
+          input: 'true',
+          expected: true,
+          param: 'includeCompleted',
+          tool: 'get_list',
+        },
+        {
+          type: 'boolean',
+          input: 'false',
+          expected: false,
+          param: 'includeCompleted',
+          tool: 'get_list',
+        },
+
         // JSON coercion
-        { type: 'json', input: '["tag1", "tag2"]', expected: ['tag1', 'tag2'], param: 'tags' },
+        {
+          type: 'json',
+          input: '["tag1", "tag2"]',
+          expected: ['tag1', 'tag2'],
+          param: 'tags',
+        },
         { type: 'json', input: '[]', expected: [], param: 'tags' },
       ];
 
@@ -252,7 +342,7 @@ describe('Agent Validation Metrics', () => {
 
       for (const test of coercionTests) {
         results[test.type].total++;
-        
+
         const toolName = test.tool || 'add_task';
         const params = {
           listId: testListId,
@@ -261,8 +351,8 @@ describe('Agent Validation Metrics', () => {
         };
 
         const result = await simulateToolCall(server, toolName, params);
-        let responseText = result.content[0].text;
-        
+        const responseText = result.content[0].text;
+
         if (!responseText.includes('❌')) {
           // For boolean tests with get_list, success is just not getting an error
           if (test.type === 'boolean' && test.tool === 'get_list') {
@@ -275,8 +365,11 @@ describe('Agent Validation Metrics', () => {
               if (data.content && data.content[0] && data.content[0].text) {
                 data = JSON.parse(data.content[0].text);
               }
-              
-              if (JSON.stringify(data[test.param]) === JSON.stringify(test.expected)) {
+
+              if (
+                JSON.stringify(data[test.param]) ===
+                JSON.stringify(test.expected)
+              ) {
                 results[test.type].success++;
               }
             } catch {
@@ -288,7 +381,7 @@ describe('Agent Validation Metrics', () => {
       }
 
       // Calculate success rates
-      for (const [type, stats] of Object.entries(results)) {
+      for (const [_type, stats] of Object.entries(results)) {
         const successRate = stats.success / stats.total;
         expect(successRate).toBeGreaterThan(0.8); // 80%+ success rate for each type
       }
@@ -312,14 +405,18 @@ describe('Agent Validation Metrics', () => {
         };
 
         const result = await simulateToolCall(server, 'add_task', params);
-        
+
         // Should return error but not crash
-        if (result.content[0].text.includes('❌') && result.content[0].text.includes('💡')) {
+        if (
+          result.content[0].text.includes('❌') &&
+          result.content[0].text.includes('💡')
+        ) {
           gracefulHandlingCount++;
         }
       }
 
-      const gracefulHandlingRate = gracefulHandlingCount / malformedInputs.length;
+      const gracefulHandlingRate =
+        gracefulHandlingCount / malformedInputs.length;
       expect(gracefulHandlingRate).toBe(1.0); // 100% graceful handling
     });
   });
@@ -357,14 +454,19 @@ describe('Agent Validation Metrics', () => {
       let compatibilityCount = 0;
 
       for (const request of existingValidRequests) {
-        const result = await simulateToolCall(server, request.tool, request.params);
-        
+        const result = await simulateToolCall(
+          server,
+          request.tool,
+          request.params
+        );
+
         if (!result.content[0].text.includes('❌')) {
           compatibilityCount++;
         }
       }
 
-      const compatibilityRate = compatibilityCount / existingValidRequests.length;
+      const compatibilityRate =
+        compatibilityCount / existingValidRequests.length;
       expect(compatibilityRate).toBe(1.0); // 100% backward compatibility
     });
   });
@@ -392,6 +494,7 @@ describe('Agent Validation Metrics', () => {
         // Remove the expectedConversion property before making the call
         const { expectedConversion, ...testParams } = pattern;
         const finalParams = { ...params, ...testParams };
+
         delete (finalParams as any).expectedConversion;
 
         const result = await simulateToolCall(server, 'add_task', finalParams);
@@ -411,8 +514,8 @@ describe('Agent Validation Metrics', () => {
       const errorFormats: string[] = [];
 
       for (const tool of tools) {
-        let params: any = { listId: testListId };
-        
+        const params: any = { listId: testListId };
+
         if (tool === 'add_task') {
           params.title = 'Test';
           params.priority = 'invalid';
@@ -425,7 +528,7 @@ describe('Agent Validation Metrics', () => {
 
         const result = await simulateToolCall(server, tool, params);
         let errorText = result.content[0].text;
-        
+
         // Parse the JSON-wrapped error message to get the actual error text
         try {
           const parsed = JSON.parse(errorText);
@@ -435,13 +538,15 @@ describe('Agent Validation Metrics', () => {
         } catch {
           // If parsing fails, use the original text
         }
-        
+
         errorFormats.push(errorText);
       }
 
       // Check consistency in error formatting
-      const allHaveEmojis = errorFormats.every(text => /[❌💡📝]/.test(text));
-      const allHaveSuggestions = errorFormats.every(text => text.includes('💡'));
+      const allHaveEmojis = errorFormats.every(text => /[❌💡📝]/u.test(text));
+      const allHaveSuggestions = errorFormats.every(text =>
+        text.includes('💡')
+      );
       const allAreStructured = errorFormats.every(text => text.includes('\n'));
 
       expect(allHaveEmojis).toBe(true);
@@ -467,9 +572,9 @@ async function simulateToolCall(
   };
 
   try {
-    const routeToolCall = (server as any).routeToolCall.bind(server);
+    const routeToolCall = server.routeToolCall.bind(server);
     const result = await routeToolCall(toolName, request);
-    
+
     return {
       content: [
         {

@@ -2,12 +2,23 @@
  * List management API handlers
  */
 
-import type { Response } from 'express';
 import { z } from 'zod';
-import type { ApiRequest, ApiResponse, HandlerContext } from '../../shared/types/api.js';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
-import { logger } from '../../shared/utils/logger.js';
+
 import { ApiError } from '../../shared/errors/api-error.js';
+import { logger } from '../../shared/utils/logger.js';
+
+import type {
+  CreateTodoListInput,
+  GetTodoListInput,
+  DeleteTodoListInput,
+} from '../../domain/lists/todo-list-manager.js';
+import type {
+  ApiRequest,
+  ApiResponse,
+  HandlerContext,
+} from '../../shared/types/api.js';
+import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+import type { Response } from 'express';
 
 /**
  * Zod schemas for request validation
@@ -18,38 +29,65 @@ const createListSchema = z.object({
   title: z.string().min(1).max(1000),
   description: z.string().optional(),
   projectTag: z.string().optional(),
-  tasks: z.array(z.object({
-    title: z.string().min(1).max(1000),
-    description: z.string().optional(),
-    priority: z.number().min(1).max(5).optional(),
-    estimatedDuration: z.number().min(1).optional(),
-    tags: z.array(z.string()).optional(),
-    actionPlan: z.string().optional(),
-    implementationNotes: z.array(z.object({
-      content: z.string(),
-      type: z.enum(['general', 'technical', 'decision', 'learning']),
-    })).optional(),
-    exitCriteria: z.array(z.string()).optional(),
-  })).optional(),
-  implementationNotes: z.array(z.object({
-    content: z.string(),
-    type: z.enum(['general', 'technical', 'decision', 'learning']),
-  })).optional(),
+  tasks: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(1000),
+        description: z.string().optional(),
+        priority: z.number().min(1).max(5).optional(),
+        estimatedDuration: z.number().min(1).optional(),
+        tags: z.array(z.string()).optional(),
+        actionPlan: z.string().optional(),
+        implementationNotes: z
+          .array(
+            z.object({
+              content: z.string(),
+              type: z.enum(['general', 'technical', 'decision', 'learning']),
+            })
+          )
+          .optional(),
+        exitCriteria: z.array(z.string()).optional(),
+      })
+    )
+    .optional(),
+  implementationNotes: z
+    .array(
+      z.object({
+        content: z.string(),
+        type: z.enum(['general', 'technical', 'decision', 'learning']),
+      })
+    )
+    .optional(),
 });
 
 // Schema for list query parameters
 const listQuerySchema = z.object({
   projectTag: z.string().optional(),
   status: z.enum(['active', 'completed', 'all']).optional(),
-  includeArchived: z.string().transform(val => val === 'true').optional(),
-  limit: z.string().transform(val => parseInt(val, 10)).optional(),
-  offset: z.string().transform(val => parseInt(val, 10)).optional(),
+  includeArchived: z
+    .string()
+    .transform(val => val === 'true')
+    .optional(),
+  limit: z
+    .string()
+    .transform(val => parseInt(val, 10))
+    .optional(),
+  offset: z
+    .string()
+    .transform(val => parseInt(val, 10))
+    .optional(),
 });
 
 // Schema for get list query parameters
 const getListQuerySchema = z.object({
-  includeCompleted: z.string().transform(val => val === 'true').optional(),
-  includeArchived: z.string().transform(val => val === 'true').optional(),
+  includeCompleted: z
+    .string()
+    .transform(val => val === 'true')
+    .optional(),
+  includeArchived: z
+    .string()
+    .transform(val => val === 'true')
+    .optional(),
 });
 
 // Schema for updating a list
@@ -61,7 +99,10 @@ const updateListSchema = z.object({
 
 // Schema for delete query parameters
 const deleteQuerySchema = z.object({
-  permanent: z.string().transform(val => val === 'true').optional(),
+  permanent: z
+    .string()
+    .transform(val => val === 'true')
+    .optional(),
 });
 
 /**
@@ -74,32 +115,56 @@ export async function createListHandler(
 ): Promise<void> {
   try {
     const startTime = Date.now();
-    
+
     // Validate request body
     const input = createListSchema.parse(req.body);
-    
+
     logger.info('Creating new list', {
       requestId: req.id,
       title: input.title,
       projectTag: input.projectTag,
       taskCount: input.tasks?.length ?? 0,
     });
-    
+
     // Create the list using TodoListManager
     // Filter out undefined values to match exactOptionalPropertyTypes
-    const createInput: any = {
+    const createInput: CreateTodoListInput = {
       title: input.title,
-      ...(input.projectTag && { projectTag: input.projectTag }),
-      ...(input.tasks && { tasks: input.tasks }),
-      ...(input.implementationNotes && { implementationNotes: input.implementationNotes }),
     };
+
     if (input.description !== undefined) {
       createInput.description = input.description;
     }
+    if (input.projectTag !== undefined) {
+      createInput.projectTag = input.projectTag;
+    }
+    if (input.tasks !== undefined) {
+      createInput.tasks = input.tasks.map(task => ({
+        title: task.title,
+        ...(task.description !== undefined && {
+          description: task.description,
+        }),
+        ...(task.priority !== undefined && { priority: task.priority }),
+        ...(task.estimatedDuration !== undefined && {
+          estimatedDuration: task.estimatedDuration,
+        }),
+        ...(task.tags !== undefined && { tags: task.tags }),
+        ...(task.actionPlan !== undefined && { actionPlan: task.actionPlan }),
+        ...(task.implementationNotes !== undefined && {
+          implementationNotes: task.implementationNotes,
+        }),
+        ...(task.exitCriteria !== undefined && {
+          exitCriteria: task.exitCriteria,
+        }),
+      }));
+    }
+    if (input.implementationNotes !== undefined) {
+      createInput.implementationNotes = input.implementationNotes;
+    }
     const list = await context.todoListManager.createTodoList(createInput);
-    
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<TodoList> = {
       success: true,
       data: list,
@@ -109,18 +174,18 @@ export async function createListHandler(
         duration,
       },
     };
-    
+
     logger.info('List created successfully', {
       requestId: req.id,
       listId: list.id,
       duration,
     });
-    
+
     res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid request body', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;
@@ -137,17 +202,17 @@ export async function listAllListsHandler(
 ): Promise<void> {
   try {
     const startTime = Date.now();
-    
+
     // Validate query parameters
     const query = listQuerySchema.parse(req.query);
-    
+
     logger.info('Listing all lists', {
       requestId: req.id,
       projectTag: query.projectTag,
       status: query.status,
       includeArchived: query.includeArchived,
     });
-    
+
     // Get lists using TodoListManager
     // Note: listTodoLists returns TodoListSummary[], not TodoList[]
     const summaries = await context.todoListManager.listTodoLists({
@@ -157,9 +222,9 @@ export async function listAllListsHandler(
       limit: query.limit,
       offset: query.offset,
     });
-    
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<TodoListSummary[]> = {
       success: true,
       data: summaries,
@@ -169,18 +234,18 @@ export async function listAllListsHandler(
         duration,
       },
     };
-    
+
     logger.info('Lists retrieved successfully', {
       requestId: req.id,
       count: summaries.length,
       duration,
     });
-    
+
     res.status(200).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid query parameters', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;
@@ -201,19 +266,19 @@ export async function getListHandler(
     if (!id) {
       throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
     }
-    
+
     // Validate query parameters
     const query = getListQuerySchema.parse(req.query);
-    
+
     logger.info('Getting list', {
       requestId: req.id,
       listId: id,
       includeCompleted: query.includeCompleted,
       includeArchived: query.includeArchived,
     });
-    
+
     // Get the list using TodoListManager
-    const getInput: any = { listId: id };
+    const getInput: GetTodoListInput = { listId: id };
     if (query.includeCompleted !== undefined) {
       getInput.includeCompleted = query.includeCompleted;
     }
@@ -221,13 +286,13 @@ export async function getListHandler(
       getInput.includeArchived = query.includeArchived;
     }
     const list = await context.todoListManager.getTodoList(getInput);
-    
+
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${id}`, 404);
     }
-    
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<TodoList> = {
       success: true,
       data: list,
@@ -237,18 +302,18 @@ export async function getListHandler(
         duration,
       },
     };
-    
+
     logger.info('List retrieved successfully', {
       requestId: req.id,
       listId: id,
       duration,
     });
-    
+
     res.status(200).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid query parameters', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;
@@ -269,30 +334,34 @@ export async function updateListHandler(
     if (!id) {
       throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
     }
-    
+
     // Validate request body
     const updates = updateListSchema.parse(req.body);
-    
+
     logger.info('Updating list', {
       requestId: req.id,
       listId: id,
       updates: Object.keys(updates),
     });
-    
+
     // First, get the existing list to verify it exists (including archived)
-    const getInput: any = { listId: id, includeArchived: true };
+    const getInput: GetTodoListInput = { listId: id, includeArchived: true };
     const existingList = await context.todoListManager.getTodoList(getInput);
-    
+
     if (!existingList) {
       throw new ApiError('NOT_FOUND', `List not found: ${id}`, 404);
     }
-    
+
     if (existingList.isArchived) {
       throw new ApiError('CONFLICT', 'Cannot update archived list', 409);
     }
-    
+
     // Update list metadata using the new updateListMetadata method
-    const updateInput: any = {};
+    const updateInput: {
+      title?: string;
+      description?: string;
+      projectTag?: string;
+    } = {};
     if (updates.title !== undefined) {
       updateInput.title = updates.title;
     }
@@ -302,10 +371,13 @@ export async function updateListHandler(
     if (updates.projectTag !== undefined) {
       updateInput.projectTag = updates.projectTag;
     }
-    const list = await context.todoListManager.updateListMetadata(id, updateInput);
-    
+    const list = await context.todoListManager.updateListMetadata(
+      id,
+      updateInput
+    );
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<TodoList> = {
       success: true,
       data: list!,
@@ -315,18 +387,18 @@ export async function updateListHandler(
         duration,
       },
     };
-    
+
     logger.info('List updated successfully', {
       requestId: req.id,
       listId: id,
       duration,
     });
-    
+
     res.status(200).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid request body', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;
@@ -347,25 +419,25 @@ export async function deleteListHandler(
     if (!id) {
       throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
     }
-    
+
     // Validate query parameters
     const query = deleteQuerySchema.parse(req.query);
-    
+
     logger.info('Deleting list', {
       requestId: req.id,
       listId: id,
       permanent: query.permanent,
     });
-    
+
     // Delete the list using TodoListManager
-    const deleteInput: any = { listId: id };
+    const deleteInput: DeleteTodoListInput = { listId: id };
     if (query.permanent !== undefined) {
       deleteInput.permanent = query.permanent;
     }
     const result = await context.todoListManager.deleteTodoList(deleteInput);
-    
+
     const duration = Date.now() - startTime;
-    
+
     const response: ApiResponse<typeof result> = {
       success: true,
       data: result,
@@ -375,19 +447,19 @@ export async function deleteListHandler(
         duration,
       },
     };
-    
+
     logger.info('List deleted successfully', {
       requestId: req.id,
       listId: id,
       operation: result.operation,
       duration,
     });
-    
+
     res.status(200).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ApiError('VALIDATION_ERROR', 'Invalid query parameters', 400, {
-        errors: error.errors,
+        errors: error.issues,
       });
     }
     throw error;

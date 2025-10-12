@@ -36,6 +36,7 @@ Set up task relationships and prerequisites for workflow management.
 **Purpose**: Define which tasks must be completed before others can begin, enabling proper sequencing across multiple agents.
 
 **Example**:
+
 ```json
 {
   "name": "set_task_dependencies",
@@ -54,6 +55,7 @@ Find tasks ready for execution (no incomplete dependencies).
 **Purpose**: Identify tasks that can be immediately assigned to available agents for parallel execution.
 
 **Example**:
+
 ```json
 {
   "name": "get_ready_tasks",
@@ -65,6 +67,7 @@ Find tasks ready for execution (no incomplete dependencies).
 ```
 
 **Response**:
+
 ```json
 {
   "readyTasks": [
@@ -76,7 +79,7 @@ Find tasks ready for execution (no incomplete dependencies).
     },
     {
       "id": "write-docs",
-      "title": "Write API documentation", 
+      "title": "Write API documentation",
       "priority": 3,
       "estimatedDuration": 120
     }
@@ -96,6 +99,7 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
 **Purpose**: Provide insights for optimizing multi-agent workflows, identifying coordination opportunities, and visualizing task relationships.
 
 **Basic Analysis**:
+
 ```json
 {
   "name": "analyze_task_dependencies",
@@ -106,6 +110,7 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
 ```
 
 **With DAG Visualization**:
+
 ```json
 {
   "name": "analyze_task_dependencies",
@@ -118,12 +123,14 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
 ```
 
 **DAG Visualization Benefits for Multi-Agent Orchestration**:
+
 - **Visual Work Assignment**: See which tasks are ready for immediate assignment
 - **Parallel Execution Planning**: Identify tasks that can run simultaneously
 - **Bottleneck Identification**: Spot tasks that block multiple agents
 - **Progress Visualization**: Track completion across distributed workflows
 
 **Response**:
+
 ```json
 {
   "summary": {
@@ -134,7 +141,7 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
   },
   "criticalPath": [
     "setup-database",
-    "create-user-model", 
+    "create-user-model",
     "implement-auth",
     "build-user-interface",
     "integration-testing",
@@ -172,7 +179,7 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
 {
   "name": "add_task",
   "arguments": {
-    "listId": "web-app", 
+    "listId": "web-app",
     "title": "Design user interface",
     "tags": ["frontend", "ui"],
     "dependencies": ["create-wireframes"]
@@ -203,7 +210,12 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
   "arguments": {
     "listId": "content-pipeline",
     "taskId": "publish-article",
-    "dependencyIds": ["write-draft", "edit-content", "create-graphics", "seo-review"]
+    "dependencyIds": [
+      "write-draft",
+      "edit-content",
+      "create-graphics",
+      "seo-review"
+    ]
   }
 }
 
@@ -226,7 +238,12 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
   "arguments": {
     "listId": "deployment",
     "taskId": "deploy-production",
-    "dependencyIds": ["code-review-1", "code-review-2", "security-scan", "performance-test"]
+    "dependencyIds": [
+      "code-review-1",
+      "code-review-2",
+      "security-scan",
+      "performance-test"
+    ]
   }
 }
 
@@ -255,6 +272,7 @@ Analyze project structure, critical paths, and bottlenecks with **DAG visualizat
 ```
 
 **Example DAG Output for Multi-Agent Coordination**:
+
 ```
 Task Dependency Graph (DAG):
 
@@ -277,6 +295,7 @@ DEPENDENCY RELATIONSHIPS:
 ```
 
 **Orchestration Benefits**:
+
 - **Immediate Assignment**: 3 tasks ready for parallel execution
 - **Agent Specialization**: Database Agent, Design Agent, Documentation Agent can work simultaneously
 - **Progress Tracking**: Visual representation of project completion status
@@ -292,31 +311,31 @@ class OrchestrationAgent:
     def __init__(self, mcp_client):
         self.mcp = mcp_client
         self.specialized_agents = {}
-    
+
     async def coordinate_project(self, project_id):
         while True:
             # 1. Analyze current state
             analysis = await self.mcp.call("analyze_task_dependencies", {
                 "listId": project_id
             })
-            
+
             # 2. Find ready tasks
             ready_tasks = await self.mcp.call("get_ready_tasks", {
                 "listId": project_id,
                 "limit": 10
             })
-            
+
             if not ready_tasks["readyTasks"]:
                 break  # Project complete or all tasks blocked
-            
+
             # 3. Assign tasks to specialized agents
             for task in ready_tasks["readyTasks"]:
                 agent = self.select_agent_for_task(task)
                 await self.assign_task(agent, task)
-            
+
             # 4. Wait for completions and repeat
             await self.wait_for_completions()
-    
+
     def select_agent_for_task(self, task):
         # Logic to select appropriate specialized agent
         if "frontend" in task.get("tags", []):
@@ -336,23 +355,23 @@ class SpecializedAgent:
     def __init__(self, mcp_client, specialty):
         self.mcp = mcp_client
         self.specialty = specialty
-    
+
     async def execute_task(self, task_id, list_id):
         try:
             # Perform specialized work
             result = await self.perform_work(task_id)
-            
+
             # Mark task as complete
             await self.mcp.call("complete_task", {
                 "listId": list_id,
                 "taskId": task_id
             })
-            
+
             return result
         except Exception as e:
             # Handle errors and potentially reassign
             await self.handle_task_failure(task_id, list_id, e)
-    
+
     async def perform_work(self, task_id):
         # Specialized implementation based on agent type
         pass
@@ -365,6 +384,7 @@ class SpecializedAgent:
 **Scenario**: Building a web application with multiple specialized teams.
 
 **Agents**:
+
 - **Frontend Agent**: React components, styling, user experience
 - **Backend Agent**: APIs, business logic, database integration
 - **Testing Agent**: Unit tests, integration tests, end-to-end tests
@@ -372,6 +392,7 @@ class SpecializedAgent:
 - **Documentation Agent**: API docs, user guides, technical documentation
 
 **Workflow**:
+
 1. Orchestration agent analyzes project requirements
 2. Sets up task dependencies based on technical prerequisites
 3. Continuously finds ready tasks and assigns to appropriate agents
@@ -383,6 +404,7 @@ class SpecializedAgent:
 **Scenario**: Publishing multiple articles with quality control.
 
 **Agents**:
+
 - **Research Agent**: Gather information, verify facts, collect sources
 - **Writing Agent**: Create initial drafts, structure content
 - **Editing Agent**: Review content, improve clarity, fix grammar
@@ -390,6 +412,7 @@ class SpecializedAgent:
 - **Publishing Agent**: Format content, schedule publication
 
 **Workflow**:
+
 1. Content manager agent creates article tasks with pipeline dependencies
 2. Research agents work on multiple articles simultaneously
 3. As research completes, writing agents begin drafts
@@ -401,6 +424,7 @@ class SpecializedAgent:
 **Scenario**: Processing customer orders with multiple validation steps.
 
 **Agents**:
+
 - **Validation Agent**: Check order details, verify customer information
 - **Inventory Agent**: Confirm product availability, reserve items
 - **Payment Agent**: Process payments, handle billing
@@ -408,6 +432,7 @@ class SpecializedAgent:
 - **Communication Agent**: Send updates, handle customer service
 
 **Workflow**:
+
 1. Order processing agent creates tasks for each new order
 2. Validation and inventory checks happen in parallel
 3. Payment processing begins after validation completes
@@ -419,16 +444,19 @@ class SpecializedAgent:
 ### Task Design for Multi-Agent Systems
 
 #### Atomic Tasks
+
 - Create tasks that can be completed independently by a single agent
 - Avoid tasks that require coordination between multiple agents during execution
 - Ensure each task has clear success criteria and deliverables
 
 #### Clear Dependencies
+
 - Only set dependencies that represent true prerequisites
 - Avoid unnecessary dependencies that limit parallelization opportunities
 - Document the reason for each dependency relationship
 
 #### Balanced Workload
+
 - Design tasks with similar complexity for even agent utilization
 - Break down large tasks into smaller, more manageable pieces
 - Consider agent capabilities when defining task scope
@@ -436,16 +464,19 @@ class SpecializedAgent:
 ### Dependency Management
 
 #### Minimize Bottlenecks
+
 - Identify tasks that block many others and prioritize them
 - Consider breaking bottleneck tasks into smaller parallel tasks
 - Use dependency analysis to regularly review and optimize workflows
 
 #### Maximize Parallelization
+
 - Structure work to create as many parallel execution opportunities as possible
 - Avoid creating unnecessary sequential dependencies
 - Look for opportunities to overlap work phases
 
 #### Regular Analysis
+
 - Use `analyze_task_dependencies` to identify workflow issues
 - Monitor critical path changes as project evolves
 - Adjust dependencies based on actual execution patterns
@@ -453,16 +484,19 @@ class SpecializedAgent:
 ### Agent Coordination
 
 #### Specialized Roles
+
 - Assign agents to tasks that match their capabilities and expertise
 - Maintain clear boundaries between agent responsibilities
 - Avoid overlapping responsibilities that could cause conflicts
 
 #### Dynamic Assignment
+
 - Reassign ready tasks based on agent availability and current workload
 - Consider agent performance history when making assignments
 - Have backup agents available for critical path tasks
 
 #### Progress Monitoring
+
 - Track completion rates and identify underperforming agents
 - Monitor for agents that are consistently blocked or idle
 - Adjust assignments and dependencies based on actual performance
@@ -470,16 +504,19 @@ class SpecializedAgent:
 ### Error Handling and Recovery
 
 #### Fault Tolerance
+
 - Design workflows so that failed tasks don't block unrelated work
 - Implement retry logic for transient failures
 - Have fallback agents available for critical tasks
 
 #### Progress Visibility
+
 - Maintain real-time visibility into task completion status
 - Provide clear feedback on blocking dependencies
 - Alert orchestration agents to critical path delays
 
 #### Adaptive Workflows
+
 - Allow for dynamic adjustment of dependencies based on changing requirements
 - Support task reassignment when agents become unavailable
 - Enable workflow optimization based on actual execution patterns
@@ -511,16 +548,19 @@ class SpecializedAgent:
 ### Common Issues
 
 #### No Ready Tasks Available
+
 - Check for circular dependencies using `analyze_task_dependencies`
 - Verify that prerequisite tasks are actually completable
 - Look for tasks stuck in "in_progress" status that need completion
 
 #### Bottlenecks Blocking Progress
+
 - Use dependency analysis to identify bottleneck tasks
 - Consider breaking down complex bottleneck tasks
 - Reassign high-priority agents to bottleneck resolution
 
 #### Agent Coordination Conflicts
+
 - Ensure task dependencies prevent conflicting work
 - Verify that task assignments don't overlap inappropriately
 - Use task tags to clearly indicate agent specialization requirements
@@ -528,22 +568,25 @@ class SpecializedAgent:
 ### Debugging Tools
 
 #### Dependency Visualization
+
 ```json
 {
   "name": "analyze_task_dependencies",
-  "arguments": {"listId": "project-id"}
+  "arguments": { "listId": "project-id" }
 }
 ```
 
 #### Ready Task Monitoring
+
 ```json
 {
-  "name": "get_ready_tasks", 
-  "arguments": {"listId": "project-id", "limit": 20}
+  "name": "get_ready_tasks",
+  "arguments": { "listId": "project-id", "limit": 20 }
 }
 ```
 
 #### Progress Tracking
+
 ```json
 {
   "name": "filter_tasks",

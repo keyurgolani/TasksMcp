@@ -3,8 +3,13 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
+
 import { ActionPlanManager } from '../../../../src/domain/tasks/action-plan-manager.js';
-import type { ActionPlan, ActionStep } from '../../../../src/shared/types/todo.js';
+
+import type {
+  ActionPlan,
+  ActionStep as _ActionStep,
+} from '../../../../src/shared/types/todo.js';
 
 describe('ActionPlanManager', () => {
   let manager: ActionPlanManager;
@@ -78,7 +83,8 @@ describe('ActionPlanManager', () => {
     });
 
     test('parses checkboxes', () => {
-      const content = '[ ] Pending step\n[x] Completed step\n[ ] Another pending';
+      const content =
+        '[ ] Pending step\n[x] Completed step\n[ ] Another pending';
       const steps = manager.parseStepsFromContent(content);
 
       expect(steps).toHaveLength(3);
@@ -129,11 +135,14 @@ describe('ActionPlanManager', () => {
     });
 
     test('returns empty array for content with no steps', () => {
-      const content = 'This is just plain text without any bullet points or structure.';
+      const content =
+        'This is just plain text without any bullet points or structure.';
       const steps = manager.parseStepsFromContent(content);
 
       expect(steps).toHaveLength(1);
-      expect(steps[0]?.content).toBe('This is just plain text without any bullet points or structure.');
+      expect(steps[0]?.content).toBe(
+        'This is just plain text without any bullet points or structure.'
+      );
     });
 
     test('handles roman numerals', () => {
@@ -305,9 +314,9 @@ describe('ActionPlanManager', () => {
         status: 'completed' as const,
       };
 
-      await expect(manager.updateStepProgress(samplePlan, input)).rejects.toThrow(
-        'Step not found: non-existent'
-      );
+      await expect(
+        manager.updateStepProgress(samplePlan, input)
+      ).rejects.toThrow('Step not found: non-existent');
     });
   });
 
@@ -538,10 +547,28 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', completedAt: date1, order: 0 },
+          {
+            id: '1',
+            content: 'Step 1',
+            status: 'completed',
+            completedAt: date1,
+            order: 0,
+          },
           { id: '2', content: 'Step 2', status: 'pending', order: 1 },
-          { id: '3', content: 'Step 3', status: 'completed', completedAt: date2, order: 2 },
-          { id: '4', content: 'Step 4', status: 'completed', completedAt: date3, order: 3 },
+          {
+            id: '3',
+            content: 'Step 3',
+            status: 'completed',
+            completedAt: date2,
+            order: 2,
+          },
+          {
+            id: '4',
+            content: 'Step 4',
+            status: 'completed',
+            completedAt: date3,
+            order: 3,
+          },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -567,9 +594,27 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', completedAt: date1, order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', completedAt: date2, order: 1 },
-          { id: '3', content: 'Step 3', status: 'completed', completedAt: date3, order: 2 },
+          {
+            id: '1',
+            content: 'Step 1',
+            status: 'completed',
+            completedAt: date1,
+            order: 0,
+          },
+          {
+            id: '2',
+            content: 'Step 2',
+            status: 'completed',
+            completedAt: date2,
+            order: 1,
+          },
+          {
+            id: '3',
+            content: 'Step 3',
+            status: 'completed',
+            completedAt: date3,
+            order: 2,
+          },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -585,7 +630,13 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', completedAt: new Date(), order: 0 },
+          {
+            id: '1',
+            content: 'Step 1',
+            status: 'completed',
+            completedAt: new Date(),
+            order: 0,
+          },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -607,9 +658,27 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', completedAt: date1, order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', completedAt: date2, order: 1 },
-          { id: '3', content: 'Step 3', status: 'completed', completedAt: date3, order: 2 },
+          {
+            id: '1',
+            content: 'Step 1',
+            status: 'completed',
+            completedAt: date1,
+            order: 0,
+          },
+          {
+            id: '2',
+            content: 'Step 2',
+            status: 'completed',
+            completedAt: date2,
+            order: 1,
+          },
+          {
+            id: '3',
+            content: 'Step 3',
+            status: 'completed',
+            completedAt: date3,
+            order: 2,
+          },
           { id: '4', content: 'Step 4', status: 'pending', order: 3 },
           { id: '5', content: 'Step 5', status: 'pending', order: 4 },
         ],
@@ -663,7 +732,11 @@ describe('ActionPlanManager', () => {
 
       const updates = [
         { stepId: 'step-1', status: 'completed' as const },
-        { stepId: 'step-2', status: 'in_progress' as const, notes: 'Working on it' },
+        {
+          stepId: 'step-2',
+          status: 'in_progress' as const,
+          notes: 'Working on it',
+        },
       ];
 
       const updatedPlan = await manager.batchUpdateSteps(plan, updates);
@@ -671,7 +744,7 @@ describe('ActionPlanManager', () => {
       expect(updatedPlan.version).toBe(3); // Should increment for each update
       const step1 = updatedPlan.steps.find(s => s.id === 'step-1');
       const step2 = updatedPlan.steps.find(s => s.id === 'step-2');
-      
+
       expect(step1?.status).toBe('completed');
       expect(step1?.completedAt).toBeInstanceOf(Date);
       expect(step2?.status).toBe('in_progress');
@@ -681,18 +754,36 @@ describe('ActionPlanManager', () => {
 
   describe('isValidStepStatusTransition', () => {
     test('allows valid transitions', () => {
-      expect(manager.isValidStepStatusTransition('pending', 'in_progress')).toBe(true);
-      expect(manager.isValidStepStatusTransition('pending', 'completed')).toBe(true);
-      expect(manager.isValidStepStatusTransition('in_progress', 'completed')).toBe(true);
-      expect(manager.isValidStepStatusTransition('in_progress', 'pending')).toBe(true);
-      expect(manager.isValidStepStatusTransition('completed', 'pending')).toBe(true);
-      expect(manager.isValidStepStatusTransition('completed', 'in_progress')).toBe(true);
+      expect(
+        manager.isValidStepStatusTransition('pending', 'in_progress')
+      ).toBe(true);
+      expect(manager.isValidStepStatusTransition('pending', 'completed')).toBe(
+        true
+      );
+      expect(
+        manager.isValidStepStatusTransition('in_progress', 'completed')
+      ).toBe(true);
+      expect(
+        manager.isValidStepStatusTransition('in_progress', 'pending')
+      ).toBe(true);
+      expect(manager.isValidStepStatusTransition('completed', 'pending')).toBe(
+        true
+      );
+      expect(
+        manager.isValidStepStatusTransition('completed', 'in_progress')
+      ).toBe(true);
     });
 
     test('allows same status transitions', () => {
-      expect(manager.isValidStepStatusTransition('pending', 'pending')).toBe(true);
-      expect(manager.isValidStepStatusTransition('in_progress', 'in_progress')).toBe(true);
-      expect(manager.isValidStepStatusTransition('completed', 'completed')).toBe(true);
+      expect(manager.isValidStepStatusTransition('pending', 'pending')).toBe(
+        true
+      );
+      expect(
+        manager.isValidStepStatusTransition('in_progress', 'in_progress')
+      ).toBe(true);
+      expect(
+        manager.isValidStepStatusTransition('completed', 'completed')
+      ).toBe(true);
     });
   });
 
@@ -703,8 +794,20 @@ describe('ActionPlanManager', () => {
         id: 'plan-123',
         content: 'test',
         steps: [
-          { id: '1', content: 'Step 1', status: 'completed', completedAt: today, order: 0 },
-          { id: '2', content: 'Step 2', status: 'completed', completedAt: new Date(today.getTime() - 86400000), order: 1 }, // yesterday
+          {
+            id: '1',
+            content: 'Step 1',
+            status: 'completed',
+            completedAt: today,
+            order: 0,
+          },
+          {
+            id: '2',
+            content: 'Step 2',
+            status: 'completed',
+            completedAt: new Date(today.getTime() - 86400000),
+            order: 1,
+          }, // yesterday
           { id: '3', content: 'Step 3', status: 'in_progress', order: 2 },
           { id: '4', content: 'Step 4', status: 'pending', order: 3 },
           { id: '5', content: 'Step 5', status: 'pending', order: 4 },

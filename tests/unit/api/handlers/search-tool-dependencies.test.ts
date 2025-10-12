@@ -3,10 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { handleSearchTool } from '../../../../src/api/handlers/search-tool.js';
-import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+
+import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
@@ -122,14 +124,19 @@ describe('handleSearchTool with dependency filters', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]); // Tasks 1, 2, 5 are ready
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]); // Tasks 1, 2, 5 are ready
 
     const result = await handleSearchTool(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.results).toHaveLength(2); // Tasks 2 and 4 have dependencies
+
     const resultIds = response.results.map((t: any) => t.id);
     expect(resultIds).toContain('222e2222-e22b-22d2-a222-222222222222');
     expect(resultIds).toContain('444e4444-e44b-44d4-a444-444444444444');
@@ -155,14 +162,19 @@ describe('handleSearchTool with dependency filters', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]);
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]);
 
     const result = await handleSearchTool(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.results).toHaveLength(3); // Tasks 1, 3, 5 have no dependencies
+
     expect(response.results.map((t: any) => t.id)).toEqual([
       '111e1111-e11b-11d1-a111-111111111111',
       '333e3333-e33b-33d3-a333-333333333333',
@@ -191,20 +203,26 @@ describe('handleSearchTool with dependency filters', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]); // Tasks 1, 2, 5 are ready
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]); // Tasks 1, 2, 5 are ready
 
     const result = await handleSearchTool(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.results).toHaveLength(3); // Tasks 1, 2, 5 are ready
+
     const resultIds = response.results.map((t: any) => t.id);
     expect(resultIds).toContain('111e1111-e11b-11d1-a111-111111111111');
     expect(resultIds).toContain('222e2222-e22b-22d2-a222-222222222222');
     expect(resultIds).toContain('555e5555-e55b-55d5-a555-555555555555');
-    
+
     // Check that all returned tasks have isReady: true
+
     response.results.forEach((task: any) => {
       expect(task.isReady).toBe(true);
     });
@@ -231,12 +249,16 @@ describe('handleSearchTool with dependency filters', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]); // Tasks 1, 2, 5 are ready
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]); // Tasks 1, 2, 5 are ready
 
     const result = await handleSearchTool(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.results).toHaveLength(1); // Only Task 4 is blocked (has dependencies and not ready)
     expect(response.results[0].id).toBe('444e4444-e44b-44d4-a444-444444444444');
@@ -267,12 +289,16 @@ describe('handleSearchTool with dependency filters', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]); // Tasks 1, 2, 5 are ready
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]); // Tasks 1, 2, 5 are ready
 
     const result = await handleSearchTool(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const response = JSON.parse(result.content[0].text);
     expect(response.results).toHaveLength(1); // Only Task 2 matches all criteria
     expect(response.results[0].id).toBe('222e2222-e22b-22d2-a222-222222222222');

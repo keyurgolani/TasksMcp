@@ -14,7 +14,6 @@ The `TodoListRepositoryAdapter` is a critical component that bridges the existin
 ### Key Features
 
 1. **Complete Interface Implementation**
-
    - Implements all 9 methods from `ITodoListRepository`
    - `save()` - Saves TodoLists with backup and validation
    - `findById()` - Retrieves lists with optional filtering/sorting/pagination
@@ -27,34 +26,29 @@ The `TodoListRepositoryAdapter` is a critical component that bridges the existin
    - `healthCheck()` - Verifies storage health
 
 2. **Comprehensive Error Handling**
-
    - All methods wrapped in try-catch blocks
    - Detailed error messages with context
    - Errors logged before being thrown
    - Non-throwing healthCheck for resilience
 
 3. **Advanced Filtering Capabilities**
-
    - **Task Filters**: Status, priority, tags, description, dependencies, duration, dates, text search
    - **List Filters**: Text search, project tag, status, task properties, date ranges
    - **Tag Operators**: AND (all tags) or OR (any tag) logic
    - **Date Filters**: Created before/after, due date before/after
 
 4. **Sorting Support**
-
    - **Task Sorting**: Title, status, priority, dates, duration
    - **List Sorting**: Title, dates, priority (max of tasks), status (progress)
    - **Summary Sorting**: Title, last updated, progress
    - Supports both ascending and descending order
 
 5. **Pagination**
-
    - Offset-based pagination for tasks and lists
    - Returns metadata (totalCount, hasMore, pagination info)
    - Efficient slicing after filtering and sorting
 
 6. **Comprehensive Logging**
-
    - Debug logs for all operations
    - Info logs for successful operations with metrics
    - Error logs with full context
@@ -143,12 +137,12 @@ All tests pass with 100% success rate.
 ## Usage Example
 
 ```typescript
-import { TodoListRepositoryAdapter } from "./domain/repositories/index.js";
-import { FileStorageBackend } from "./infrastructure/storage/file-storage.js";
+import { TodoListRepositoryAdapter } from './domain/repositories/index.js';
+import { FileStorageBackend } from './infrastructure/storage/file-storage.js';
 
 // Create storage backend
 const storage = new FileStorageBackend({
-  dataDirectory: "./data",
+  dataDirectory: './data',
   backupRetentionDays: 7,
 });
 
@@ -168,12 +162,12 @@ const todoListManager = new TodoListManager(
 );
 
 // Repository operations
-const list = await repository.findById("list-123");
+const list = await repository.findById('list-123');
 const results = await repository.search({
-  text: "project",
-  projectTag: "alpha",
-  status: "active",
-  sorting: { field: "title", direction: "asc" },
+  text: 'project',
+  projectTag: 'alpha',
+  status: 'active',
+  sorting: { field: 'title', direction: 'asc' },
   pagination: { offset: 0, limit: 10 },
 });
 ```

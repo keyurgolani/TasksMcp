@@ -3,11 +3,9 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTodoListManager } from '../utils/test-helpers.js';
+
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import { TestCleanup } from '../setup.js';
 import { createTodoListManager } from '../utils/test-helpers.js';
 
@@ -20,7 +18,7 @@ describe('MCP Tool Performance Regression', () => {
     await storage.initialize();
     manager = createTodoListManager(storage);
     await manager.initialize();
-    
+
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
     TestCleanup.registerManager(manager);
@@ -28,7 +26,7 @@ describe('MCP Tool Performance Regression', () => {
 
   it('should maintain consistent performance across operations', async () => {
     const startTime = Date.now();
-    
+
     // Create multiple lists to test scalability
     const lists = [];
     for (let i = 0; i < 10; i++) {
@@ -50,7 +48,6 @@ describe('MCP Tool Performance Regression', () => {
     for (const list of lists) {
       await manager.getDependencyGraph(list.id);
       await manager.getReadyItems(list.id);
-      await manager.suggestTaskOrder(list.id);
     }
 
     const endTime = Date.now();
@@ -63,7 +60,7 @@ describe('MCP Tool Performance Regression', () => {
 
   it('should handle memory efficiently during bulk operations', async () => {
     const startTime = Date.now();
-    
+
     // Create a single list with many tasks
     const list = await manager.createTodoList({
       title: 'Memory Efficiency Test',
@@ -72,7 +69,7 @@ describe('MCP Tool Performance Regression', () => {
       tasks: Array.from({ length: 200 }, (_, i) => ({
         title: `Memory Test Task ${i}`,
         description: `Memory test description ${i}`,
-        priority: (i % 5 + 1) as 1 | 2 | 3 | 4 | 5,
+        priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
         tags: [`tag-${i % 10}`],
       })),
     });
@@ -81,7 +78,7 @@ describe('MCP Tool Performance Regression', () => {
     const operations = [
       () => manager.getDependencyGraph(list.id),
       () => manager.getReadyItems(list.id),
-      () => manager.suggestTaskOrder(list.id),
+
       () => manager.getCriticalPath(list.id),
     ];
 

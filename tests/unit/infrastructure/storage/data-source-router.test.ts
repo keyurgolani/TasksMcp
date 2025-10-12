@@ -1,5 +1,10 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { DataSourceRouter, type DataSourceConfig } from '../../../../src/infrastructure/storage/data-source-router.js';
+
+import {
+  DataSourceRouter,
+  type DataSourceConfig,
+} from '../../../../src/infrastructure/storage/data-source-router.js';
+
 import type { StorageBackend } from '../../../../src/shared/types/storage.js';
 import type { TodoList } from '../../../../src/shared/types/todo.js';
 
@@ -38,11 +43,19 @@ function createMockTodoList(): TodoList {
 class MockStorageBackend implements StorageBackend {
   public saveCallCount = 0;
   async initialize(): Promise<void> {}
-  async healthCheck(): Promise<boolean> { return true; }
-  async save(): Promise<void> { this.saveCallCount++; }
-  async load(): Promise<TodoList | null> { return createMockTodoList(); }
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
+  async save(): Promise<void> {
+    this.saveCallCount++;
+  }
+  async load(): Promise<TodoList | null> {
+    return createMockTodoList();
+  }
   async delete(): Promise<void> {}
-  async list(): Promise<[]> { return []; }
+  async list(): Promise<[]> {
+    return [];
+  }
   async shutdown(): Promise<void> {}
   async loadAllData(): Promise<{ version: string; todoLists: TodoList[] }> {
     return { version: '1.0', todoLists: [] };
@@ -67,15 +80,17 @@ describe('DataSourceRouter', () => {
   });
 
   it('should initialize data sources', async () => {
-    const config: DataSourceConfig[] = [{
-      id: 'source1',
-      name: 'Source 1',
-      type: 'filesystem',
-      priority: 100,
-      readonly: false,
-      enabled: true,
-      config: { type: 'file', file: { dataDirectory: './data' } },
-    }];
+    const config: DataSourceConfig[] = [
+      {
+        id: 'source1',
+        name: 'Source 1',
+        type: 'filesystem',
+        priority: 100,
+        readonly: false,
+        enabled: true,
+        config: { type: 'file', file: { dataDirectory: './data' } },
+      },
+    ];
 
     router = new DataSourceRouter(config);
     await router.initialize();
@@ -86,47 +101,57 @@ describe('DataSourceRouter', () => {
   });
 
   it('should route read operations', async () => {
-    const config: DataSourceConfig[] = [{
-      id: 'primary',
-      name: 'Primary',
-      type: 'filesystem',
-      priority: 100,
-      readonly: false,
-      enabled: true,
-      config: { type: 'file', file: { dataDirectory: './data' } },
-    }];
+    const config: DataSourceConfig[] = [
+      {
+        id: 'primary',
+        name: 'Primary',
+        type: 'filesystem',
+        priority: 100,
+        readonly: false,
+        enabled: true,
+        config: { type: 'file', file: { dataDirectory: './data' } },
+      },
+    ];
 
     router = new DataSourceRouter(config);
     await router.initialize();
 
-    const result = await router.routeOperation<TodoList | null>({
-      type: 'read',
-      key: 'test-key',
-    }, {});
+    const result = await router.routeOperation<TodoList | null>(
+      {
+        type: 'read',
+        key: 'test-key',
+      },
+      {}
+    );
 
     expect(result).toBeTruthy();
     expect(result?.id).toBe('test-list');
   });
 
   it('should route write operations', async () => {
-    const config: DataSourceConfig[] = [{
-      id: 'primary',
-      name: 'Primary',
-      type: 'filesystem',
-      priority: 100,
-      readonly: false,
-      enabled: true,
-      config: { type: 'file', file: { dataDirectory: './data' } },
-    }];
+    const config: DataSourceConfig[] = [
+      {
+        id: 'primary',
+        name: 'Primary',
+        type: 'filesystem',
+        priority: 100,
+        readonly: false,
+        enabled: true,
+        config: { type: 'file', file: { dataDirectory: './data' } },
+      },
+    ];
 
     router = new DataSourceRouter(config);
     await router.initialize();
 
-    await router.routeOperation({
-      type: 'write',
-      key: 'test-key',
-      data: createMockTodoList(),
-    }, {});
+    await router.routeOperation(
+      {
+        type: 'write',
+        key: 'test-key',
+        data: createMockTodoList(),
+      },
+      {}
+    );
 
     const backend = router.getBackend('primary') as MockStorageBackend;
     expect(backend.saveCallCount).toBe(1);

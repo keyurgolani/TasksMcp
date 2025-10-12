@@ -1,11 +1,12 @@
 /**
  * Debug Integration Test
- * 
+ *
  * Simple test to debug the integration testing setup and understand
  * what's happening with the list creation and parameter passing.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { McpTaskManagerServer } from '../../src/app/server.js';
 import { TestCleanup } from '../setup.js';
 
@@ -20,7 +21,7 @@ describe('Debug Integration Test', () => {
 
     server = new McpTaskManagerServer();
     await server.start();
-    
+
     // Register server for cleanup
     TestCleanup.registerServer(server);
   });
@@ -73,7 +74,7 @@ describe('Debug Integration Test', () => {
         // Check if the response is double-wrapped or single-wrapped
         const responseText = addTaskResult.content[0].text;
         let taskData;
-        
+
         try {
           // Try parsing as single-wrapped first
           taskData = JSON.parse(responseText);
@@ -85,7 +86,7 @@ describe('Debug Integration Test', () => {
           // If single parse fails, it might be already parsed
           taskData = responseText;
         }
-        
+
         expect(taskData).toBeDefined();
         if (taskData && typeof taskData === 'object') {
           expect(taskData.priority).toBe(5);
@@ -106,7 +107,7 @@ describe('Debug Integration Test', () => {
     // The result is double-wrapped, so we need to parse twice
     const outerResult = JSON.parse(createListResult.content[0].text);
     const listData = JSON.parse(outerResult.content[0].text);
-    
+
     expect(listData).toBeDefined();
     expect(listData.id).toBeDefined();
 
@@ -119,28 +120,40 @@ describe('Debug Integration Test', () => {
       },
       {
         name: 'JSON string tags',
-        params: { listId: listData.id, title: 'Test 2', tags: '["tag1", "tag2"]' },
+        params: {
+          listId: listData.id,
+          title: 'Test 2',
+          tags: '["tag1", "tag2"]',
+        },
         expectedTags: ['tag1', 'tag2'],
       },
       {
         name: 'String duration',
-        params: { listId: listData.id, title: 'Test 3', estimatedDuration: '90' },
+        params: {
+          listId: listData.id,
+          title: 'Test 3',
+          estimatedDuration: '90',
+        },
         expectedDuration: 90,
       },
     ];
 
     for (const testCase of testCases) {
-      const result = await simulateToolCall(server, 'add_task', testCase.params);
+      const result = await simulateToolCall(
+        server,
+        'add_task',
+        testCase.params
+      );
       const isSuccess = !result.content[0].text.includes('❌');
-      
+
       expect(isSuccess).toBe(true);
-      
+
       if (isSuccess) {
         try {
           // Handle double-wrapped response format
           const responseText = result.content[0].text;
           let taskData;
-          
+
           try {
             // Try parsing as single-wrapped first
             taskData = JSON.parse(responseText);
@@ -152,20 +165,20 @@ describe('Debug Integration Test', () => {
             // If parsing fails, the response might be a plain string
             taskData = responseText;
           }
-          
+
           expect(taskData).toBeDefined();
           expect(typeof taskData).toBe('object');
-          
+
           if (testCase.expectedPriority !== undefined) {
             expect(taskData.priority).toBe(testCase.expectedPriority);
             expect(typeof taskData.priority).toBe('number');
           }
-          
+
           if (testCase.expectedTags !== undefined) {
             expect(taskData.tags).toEqual(testCase.expectedTags);
             expect(Array.isArray(taskData.tags)).toBe(true);
           }
-          
+
           if (testCase.expectedDuration !== undefined) {
             expect(taskData.estimatedDuration).toBe(testCase.expectedDuration);
             expect(typeof taskData.estimatedDuration).toBe('number');
@@ -194,10 +207,10 @@ async function simulateToolCall(
   };
 
   try {
-    // Use reflection to access the private routeToolCall method
-    const routeToolCall = (server as any).routeToolCall.bind(server);
+    // Use the public routeToolCall method
+    const routeToolCall = server.routeToolCall.bind(server);
     const result = await routeToolCall(toolName, request);
-    
+
     return {
       content: [
         {

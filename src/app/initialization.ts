@@ -1,23 +1,31 @@
 /**
  * Application Initialization Module
- * 
+ *
  * Handles initialization of the data delegation layer including:
  * - DataSourceRouter configuration and setup
  * - MultiSourceAggregator creation
  * - TodoListRepository instantiation
  * - Health checks for all configured sources
- * 
+ *
  * This module provides a clean separation between configuration loading
  * and application startup, making it easier to test and maintain.
  */
 
-import { DataSourceRouter, type DataSourceConfig as RouterDataSourceConfig } from '../infrastructure/storage/data-source-router.js';
-import { MultiSourceAggregator } from '../infrastructure/storage/multi-source-aggregator.js';
 import { TodoListRepository } from '../domain/repositories/todo-list-repository-impl.js';
+import {
+  getDefaultMultiSourceConfig,
+  type MultiSourceConfig,
+  type DataSourceConfig,
+} from '../infrastructure/config/data-source-config.js';
 import { DataSourceConfigLoader } from '../infrastructure/config/data-source-loader.js';
-import { getDefaultMultiSourceConfig, type MultiSourceConfig, type DataSourceConfig } from '../infrastructure/config/data-source-config.js';
-import type { StorageConfiguration } from '../infrastructure/storage/storage-factory.js';
+import {
+  DataSourceRouter,
+  type DataSourceConfig as RouterDataSourceConfig,
+} from '../infrastructure/storage/data-source-router.js';
+import { MultiSourceAggregator } from '../infrastructure/storage/multi-source-aggregator.js';
 import { logger } from '../shared/utils/logger.js';
+
+import type { StorageConfiguration } from '../infrastructure/storage/storage-factory.js';
 
 /**
  * Initialization options
@@ -25,16 +33,16 @@ import { logger } from '../shared/utils/logger.js';
 export interface InitializationOptions {
   /** Path to data source configuration file */
   configPath?: string;
-  
+
   /** Whether to use environment variables for configuration */
   useEnvironment?: boolean;
-  
+
   /** Whether to require a configuration file */
   requireConfigFile?: boolean;
-  
+
   /** Fallback to single storage configuration if multi-source config not found */
   fallbackStorage?: StorageConfiguration;
-  
+
   /** Whether to enable multi-source aggregation */
   enableAggregation?: boolean;
 }
@@ -45,16 +53,16 @@ export interface InitializationOptions {
 export interface InitializationResult {
   /** Data source router for operation routing */
   router: DataSourceRouter;
-  
+
   /** Multi-source aggregator for data aggregation */
   aggregator: MultiSourceAggregator;
-  
+
   /** TodoList repository implementation */
   repository: TodoListRepository;
-  
+
   /** Configuration used for initialization */
   config: MultiSourceConfig;
-  
+
   /** Health check results for all sources */
   healthStatus: {
     healthy: number;
@@ -74,14 +82,14 @@ export interface InitializationResult {
 export class ApplicationInitializer {
   /**
    * Initialize the data delegation layer
-   * 
+   *
    * This method:
    * 1. Loads data source configuration from file or environment
    * 2. Creates and initializes DataSourceRouter
    * 3. Creates MultiSourceAggregator with conflict resolution
    * 4. Creates TodoListRepository with router and aggregator
    * 5. Performs health checks on all configured sources
-   * 
+   *
    * @param options - Initialization options
    * @returns Initialization result with all components
    * @throws Error if initialization fails
@@ -158,14 +166,14 @@ export class ApplicationInitializer {
 
   /**
    * Load data source configuration
-   * 
+   *
    * Attempts to load configuration from:
    * 1. Specified config file
    * 2. Default config file locations
    * 3. Environment variables
    * 4. Fallback storage configuration
    * 5. Default configuration
-   * 
+   *
    * @param options - Initialization options
    * @returns Multi-source configuration
    */
@@ -179,12 +187,12 @@ export class ApplicationInitializer {
       });
 
       const config = this.createConfigFromStorage(options.fallbackStorage);
-      
+
       // Override aggregation setting if specified
       if (options.enableAggregation !== undefined) {
         config.aggregationEnabled = options.enableAggregation;
       }
-      
+
       return config;
     }
 
@@ -200,11 +208,11 @@ export class ApplicationInitializer {
         useEnvironment: options.useEnvironment ?? true,
         requireConfigFile: options.requireConfigFile ?? false,
       };
-      
+
       if (options.configPath !== undefined) {
         loaderOptions.configPath = options.configPath;
       }
-      
+
       const config = await loader.load(loaderOptions);
 
       // Override aggregation setting if specified
@@ -221,33 +229,33 @@ export class ApplicationInitializer {
         });
 
         const config = this.createConfigFromStorage(options.fallbackStorage);
-        
+
         // Override aggregation setting if specified
         if (options.enableAggregation !== undefined) {
           config.aggregationEnabled = options.enableAggregation;
         }
-        
+
         return config;
       }
 
       // Otherwise, use default configuration
       logger.warn('Failed to load configuration, using defaults', { error });
       const config = getDefaultMultiSourceConfig();
-      
+
       // Override aggregation setting if specified
       if (options.enableAggregation !== undefined) {
         config.aggregationEnabled = options.enableAggregation;
       }
-      
+
       return config;
     }
   }
 
   /**
    * Create multi-source configuration from single storage configuration
-   * 
+   *
    * This provides backward compatibility with the existing single-storage setup.
-   * 
+   *
    * @param storage - Storage configuration
    * @returns Multi-source configuration with single source
    */
@@ -256,7 +264,7 @@ export class ApplicationInitializer {
   ): MultiSourceConfig {
     // Convert StorageConfiguration to DataSourceConfig format
     let config: DataSourceConfig['config'];
-    
+
     if (storage.type === 'file' && storage.file) {
       config = {
         dataDirectory: storage.file.dataDirectory,
@@ -291,7 +299,10 @@ export class ApplicationInitializer {
     const dataSourceConfig: DataSourceConfig = {
       id: 'default',
       name: 'Default Storage',
-      type: storage.type === 'file' ? 'filesystem' : storage.type as 'postgresql' | 'mongodb' | 'memory',
+      type:
+        storage.type === 'file'
+          ? 'filesystem'
+          : (storage.type as 'postgresql' | 'mongodb' | 'memory'),
       priority: 100,
       readonly: false,
       enabled: true,
@@ -310,7 +321,7 @@ export class ApplicationInitializer {
 
   /**
    * Convert DataSourceConfig to StorageConfiguration format
-   * 
+   *
    * @param source - Data source configuration
    * @returns Storage configuration for StorageFactory
    */
@@ -318,14 +329,18 @@ export class ApplicationInitializer {
     source: DataSourceConfig
   ): StorageConfiguration {
     const config = source.config;
-    
+
     switch (source.type) {
       case 'filesystem':
         return {
           type: 'file',
-          file: config as { dataDirectory: string; backupRetentionDays?: number; enableCompression?: boolean },
+          file: config as {
+            dataDirectory: string;
+            backupRetentionDays?: number;
+            enableCompression?: boolean;
+          },
         };
-      
+
       case 'postgresql':
         return {
           type: 'postgresql',
@@ -339,12 +354,12 @@ export class ApplicationInitializer {
             maxConnections: number;
           },
         };
-      
+
       case 'memory':
         return {
           type: 'memory',
         };
-      
+
       case 'mongodb':
         // MongoDB not yet implemented, fall back to memory
         logger.warn('MongoDB storage not implemented, using memory storage', {
@@ -353,7 +368,7 @@ export class ApplicationInitializer {
         return {
           type: 'memory',
         };
-      
+
       default:
         throw new Error(`Unsupported data source type: ${source.type}`);
     }
@@ -361,7 +376,7 @@ export class ApplicationInitializer {
 
   /**
    * Create and initialize DataSourceRouter
-   * 
+   *
    * @param config - Multi-source configuration
    * @returns Initialized DataSourceRouter
    */
@@ -369,26 +384,28 @@ export class ApplicationInitializer {
     config: MultiSourceConfig
   ): Promise<DataSourceRouter> {
     // Convert MultiSourceConfig to RouterDataSourceConfig array
-    const dataSourceConfigs: RouterDataSourceConfig[] = config.sources.map(source => {
-      // Convert DataSourceConfig.config to StorageConfiguration format
-      const storageConfig = this.convertToStorageConfiguration(source);
-      
-      const routerConfig: RouterDataSourceConfig = {
-        id: source.id,
-        name: source.name,
-        type: source.type,
-        priority: source.priority,
-        readonly: source.readonly,
-        enabled: source.enabled,
-        config: storageConfig,
-      };
-      
-      if (source.tags !== undefined) {
-        routerConfig.tags = source.tags;
+    const dataSourceConfigs: RouterDataSourceConfig[] = config.sources.map(
+      source => {
+        // Convert DataSourceConfig.config to StorageConfiguration format
+        const storageConfig = this.convertToStorageConfiguration(source);
+
+        const routerConfig: RouterDataSourceConfig = {
+          id: source.id,
+          name: source.name,
+          type: source.type,
+          priority: source.priority,
+          readonly: source.readonly,
+          enabled: source.enabled,
+          config: storageConfig,
+        };
+
+        if (source.tags !== undefined) {
+          routerConfig.tags = source.tags;
+        }
+
+        return routerConfig;
       }
-      
-      return routerConfig;
-    });
+    );
 
     // Create router with configuration
     const router = new DataSourceRouter(dataSourceConfigs, {
@@ -406,7 +423,7 @@ export class ApplicationInitializer {
 
   /**
    * Create MultiSourceAggregator
-   * 
+   *
    * @param config - Multi-source configuration
    * @returns MultiSourceAggregator instance
    */
@@ -422,7 +439,7 @@ export class ApplicationInitializer {
 
   /**
    * Perform health checks on all configured sources
-   * 
+   *
    * @param router - DataSourceRouter to check
    * @returns Health status summary
    */
@@ -445,10 +462,10 @@ export class ApplicationInitializer {
 
   /**
    * Validate initialization result
-   * 
+   *
    * Checks that all required components are properly initialized
    * and at least one data source is healthy.
-   * 
+   *
    * @param result - Initialization result to validate
    * @throws Error if validation fails
    */
@@ -477,7 +494,7 @@ export class ApplicationInitializer {
 
   /**
    * Shutdown all initialized components
-   * 
+   *
    * @param result - Initialization result to shutdown
    */
   static async shutdown(result: InitializationResult): Promise<void> {
@@ -499,7 +516,7 @@ export class ApplicationInitializer {
 
 /**
  * Convenience function to initialize the application
- * 
+ *
  * @param options - Initialization options
  * @returns Initialization result
  */
@@ -511,7 +528,7 @@ export async function initializeApplication(
 
 /**
  * Convenience function to shutdown the application
- * 
+ *
  * @param result - Initialization result to shutdown
  */
 export async function shutdownApplication(

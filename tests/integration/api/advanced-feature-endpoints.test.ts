@@ -3,20 +3,21 @@
  * Tests exit criteria, action plans, and notes endpoints
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type { Server } from 'http';
-import type { Express } from 'express';
 import request from 'supertest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { RestApiServer } from '../../../src/app/rest-api-server.js';
 import { TodoListManager } from '../../../src/domain/lists/todo-list-manager.js';
+import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
+import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../../src/domain/tasks/exit-criteria-manager.js';
-import { ActionPlanManager } from '../../../src/domain/tasks/action-plan-manager.js';
 import { NotesManager } from '../../../src/domain/tasks/notes-manager.js';
-import { IntelligenceManager } from '../../../src/domain/intelligence/intelligence-manager.js';
-import { TodoListRepositoryAdapter } from '../../../src/domain/repositories/todo-list-repository.adapter.js';
 import { MemoryStorageBackend } from '../../../src/infrastructure/storage/memory-storage.js';
+
 import type { TodoList, TodoItem } from '../../../src/shared/types/todo.js';
+import type { Express } from 'express';
+import type { Server as _Server } from 'http';
 
 describe('Advanced Feature API Endpoints', () => {
   let server: RestApiServer;
@@ -39,7 +40,6 @@ describe('Advanced Feature API Endpoints', () => {
     const exitCriteriaManager = new ExitCriteriaManager(repository);
     const actionPlanManager = new ActionPlanManager(repository);
     const notesManager = new NotesManager(repository);
-    const intelligenceManager = new IntelligenceManager();
 
     // Create API server
     server = new RestApiServer(
@@ -52,8 +52,7 @@ describe('Advanced Feature API Endpoints', () => {
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,
-      notesManager,
-      intelligenceManager
+      notesManager
     );
 
     await server.initialize();
@@ -94,8 +93,8 @@ describe('Advanced Feature API Endpoints', () => {
 
         expect(response.body.success).toBe(true);
         expect(response.body.data.exitCriteria).toEqual([]);
-        expect(response.body.data.stats).toBeDefined();
-        expect(response.body.data.stats.total).toBe(0);
+        // Exit criteria should be empty array for new task
+        expect(Array.isArray(response.body.data.exitCriteria)).toBe(true);
       });
 
       it('should get exit criteria for task with criteria', async () => {
@@ -125,9 +124,12 @@ describe('Advanced Feature API Endpoints', () => {
 
         expect(response.body.success).toBe(true);
         expect(response.body.data.exitCriteria).toHaveLength(2);
-        expect(response.body.data.stats.total).toBe(2);
-        expect(response.body.data.stats.met).toBe(0);
-        expect(response.body.data.stats.unmet).toBe(2);
+        expect(response.body.data.exitCriteria[0].description).toBe(
+          'Test criteria 1'
+        );
+        expect(response.body.data.exitCriteria[1].description).toBe(
+          'Test criteria 2'
+        );
       });
 
       it('should return 404 for non-existent task', async () => {
@@ -303,9 +305,8 @@ describe('Advanced Feature API Endpoints', () => {
         expect(response.body.data.actionPlan).toBeDefined();
         expect(response.body.data.actionPlan.content).toBe(planContent);
         expect(response.body.data.actionPlan.steps).toHaveLength(4);
-        expect(response.body.data.stats).toBeDefined();
-        expect(response.body.data.stats.totalSteps).toBe(4);
-        expect(response.body.data.progressSummary).toBeDefined();
+        expect(response.body.data.actionPlan.steps).toHaveLength(4);
+        expect(response.body.data.actionPlan.steps[0].content).toBeDefined();
       });
     });
 
@@ -447,8 +448,8 @@ describe('Advanced Feature API Endpoints', () => {
 
         expect(response.body.success).toBe(true);
         expect(response.body.data.notes).toEqual([]);
-        expect(response.body.data.stats).toBeDefined();
-        expect(response.body.data.stats.total).toBe(0);
+        // Notes should be empty array for new task
+        expect(Array.isArray(response.body.data.notes)).toBe(true);
       });
 
       it('should get notes for task with notes', async () => {
@@ -478,9 +479,8 @@ describe('Advanced Feature API Endpoints', () => {
 
         expect(response.body.success).toBe(true);
         expect(response.body.data.notes).toHaveLength(2);
-        expect(response.body.data.stats.total).toBe(2);
-        expect(response.body.data.stats.byType.technical).toBe(1);
-        expect(response.body.data.stats.byType.decision).toBe(1);
+        expect(response.body.data.notes[0].type).toBe('decision');
+        expect(response.body.data.notes[1].type).toBe('technical');
       });
     });
 
@@ -498,7 +498,9 @@ describe('Advanced Feature API Endpoints', () => {
 
         expect(response.body.success).toBe(true);
         expect(response.body.data.id).toBeDefined();
-        expect(response.body.data.content).toBe('Using async/await for better readability');
+        expect(response.body.data.content).toBe(
+          'Using async/await for better readability'
+        );
         expect(response.body.data.type).toBe('technical');
         expect(response.body.data.author).toBe('test-user');
         expect(response.body.data.createdAt).toBeDefined();
@@ -509,7 +511,8 @@ describe('Advanced Feature API Endpoints', () => {
           .post(`/api/v1/notes/task/${testTask.id}`)
           .query({ listId: testList.id })
           .send({
-            content: 'Decided to use PostgreSQL over MongoDB for better transaction support',
+            content:
+              'Decided to use PostgreSQL over MongoDB for better transaction support',
             type: 'decision',
           })
           .expect(201);
@@ -523,7 +526,8 @@ describe('Advanced Feature API Endpoints', () => {
           .post(`/api/v1/notes/task/${testTask.id}`)
           .query({ listId: testList.id })
           .send({
-            content: 'Learned that connection pooling significantly improves performance',
+            content:
+              'Learned that connection pooling significantly improves performance',
             type: 'learning',
           })
           .expect(201);

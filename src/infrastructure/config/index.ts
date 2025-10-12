@@ -7,11 +7,12 @@ import { z } from 'zod';
 // Export data source configuration modules
 export * from './data-source-config.js';
 export * from './data-source-loader.js';
+import { logger } from '../../shared/utils/logger.js';
 import {
   StorageFactory,
   type StorageConfiguration,
 } from '../storage/storage-factory.js';
-import { logger } from '../../shared/utils/logger.js';
+
 import { baseConfig } from './base.js';
 
 // Custom boolean parser for environment variables
@@ -32,20 +33,16 @@ const EnvironmentSchema = z.object({
   STORAGE_TYPE: z.enum(['memory', 'file', 'postgresql']).default('file'),
   DATA_DIRECTORY: z.string().default('./data'),
   BACKUP_RETENTION_DAYS: z.coerce.number().int().positive().default(7),
-  ENABLE_COMPRESSION: booleanFromString.default('false'),
+  ENABLE_COMPRESSION: booleanFromString.default(false),
   MAX_LISTS_PER_CONTEXT: z.coerce.number().int().positive().default(100),
   MAX_ITEMS_PER_LIST: z.coerce.number().int().positive().default(1000),
 
   // Health check configuration
-  HEALTH_CHECK_ENABLED: booleanFromString.default('true'),
+  HEALTH_CHECK_ENABLED: booleanFromString.default(true),
   HEALTH_CHECK_INTERVAL: z.coerce.number().int().positive().default(30000),
 
-  // Monitoring configuration
-  METRICS_ENABLED: booleanFromString.default('false'),
-  METRICS_PORT: z.coerce.number().int().positive().default(9090),
-
   // Backup configuration
-  BACKUP_ENABLED: booleanFromString.default('true'),
+  BACKUP_ENABLED: booleanFromString.default(true),
   BACKUP_SCHEDULE: z.string().default('0 2 * * *'), // Daily at 2 AM
   BACKUP_MAX_FILES: z.coerce.number().int().positive().default(30),
 
@@ -67,7 +64,7 @@ const EnvironmentSchema = z.object({
   POSTGRES_MAX_CONNECTIONS: z.coerce.number().int().positive().default(10),
 
   // Security configuration
-  RATE_LIMIT_ENABLED: booleanFromString.default('true'),
+  RATE_LIMIT_ENABLED: booleanFromString.default(true),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
 
@@ -76,17 +73,18 @@ const EnvironmentSchema = z.object({
     .enum(['error', 'warn', 'info', 'debug', 'silent'])
     .default('info'),
   LOG_FORMAT: z.enum(['json', 'simple']).default('json'),
-  LOG_FILE_ENABLED: booleanFromString.default('true'),
+  LOG_FILE_ENABLED: booleanFromString.default(true),
   LOG_FILE_PATH: z.string().default('./logs/combined.log'),
 
-
-  
   // Feature-specific configuration
   MAX_ACTION_PLAN_STEPS: z.coerce.number().int().positive().default(50),
-  MAX_IMPLEMENTATION_NOTES_PER_ENTITY: z.coerce.number().int().positive().default(100),
+  MAX_IMPLEMENTATION_NOTES_PER_ENTITY: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(100),
   MAX_NOTE_LENGTH: z.coerce.number().int().positive().default(10000),
-  CLEANUP_SUGGESTION_DAYS: z.coerce.number().int().positive().default(7),
-  CLEANUP_SUGGESTION_COOLDOWN_DAYS: z.coerce.number().int().positive().default(30),
+
   PRETTY_PRINT_MAX_WIDTH: z.coerce.number().int().positive().default(120),
   PROJECT_TAG_MAX_LENGTH: z.coerce.number().int().positive().default(50),
 });
@@ -109,18 +107,7 @@ export interface ServerConfig {
     enabled: boolean;
     interval: number;
   };
-  monitoring: {
-    enabled: boolean;
-    port: number;
-    performanceInterval?: number;
-    memoryInterval?: number;
-    metricsRetention?: number;
-    alerting?: {
-      enabled: boolean;
-      escalationTime: number;
-      cooldownTime: number;
-    };
-  };
+
   backup: {
     enabled: boolean;
     schedule: string;
@@ -146,8 +133,7 @@ export interface ServerConfig {
     maxImplementationNotesPerEntity: number;
     maxNoteLength: number;
     prettyPrintMaxWidth: number;
-    cleanupSuggestionDays: number;
-    cleanupSuggestionCooldownDays: number;
+
     projectTagMaxLength: number;
   };
 }
@@ -181,12 +167,12 @@ export class ConfigManager {
 
   /**
    * Load and validate complete server configuration
-   * 
+   *
    * Orchestrates the configuration loading process by:
    * 1. Validating environment variables against schema
    * 2. Building storage-specific configuration
    * 3. Assembling complete server configuration with defaults
-   * 
+   *
    * @returns ServerConfig - Complete validated server configuration
    * @throws Error - If configuration validation fails
    */
@@ -216,10 +202,7 @@ export class ConfigManager {
         enabled: env.HEALTH_CHECK_ENABLED,
         interval: env.HEALTH_CHECK_INTERVAL,
       },
-      monitoring: {
-        enabled: env.METRICS_ENABLED,
-        port: env.METRICS_PORT,
-      },
+
       backup: {
         enabled: env.BACKUP_ENABLED,
         schedule: env.BACKUP_SCHEDULE,
@@ -242,11 +225,11 @@ export class ConfigManager {
       // Features are now always enabled - configuration for limits only
       limits: {
         maxActionPlanSteps: env.MAX_ACTION_PLAN_STEPS,
-        maxImplementationNotesPerEntity: env.MAX_IMPLEMENTATION_NOTES_PER_ENTITY,
+        maxImplementationNotesPerEntity:
+          env.MAX_IMPLEMENTATION_NOTES_PER_ENTITY,
         maxNoteLength: env.MAX_NOTE_LENGTH,
         prettyPrintMaxWidth: env.PRETTY_PRINT_MAX_WIDTH,
-        cleanupSuggestionDays: env.CLEANUP_SUGGESTION_DAYS,
-        cleanupSuggestionCooldownDays: env.CLEANUP_SUGGESTION_COOLDOWN_DAYS,
+
         projectTagMaxLength: env.PROJECT_TAG_MAX_LENGTH,
       },
     };
@@ -260,8 +243,6 @@ export class ConfigManager {
         dataDirectory: this.getDataDirectory(config.storage),
         healthEnabled: config.health.enabled,
         backupEnabled: config.backup.enabled,
-        metricsEnabled: config.monitoring.enabled,
-
       });
     }
 
@@ -270,11 +251,11 @@ export class ConfigManager {
 
   /**
    * Validate environment variables against schema
-   * 
+   *
    * Uses Zod schema validation to ensure all required environment variables
    * are present and have valid values. Provides detailed error messages
    * for configuration issues.
-   * 
+   *
    * @returns Environment - Validated environment configuration
    * @throws Error - If environment validation fails with detailed error messages
    */
@@ -295,10 +276,10 @@ export class ConfigManager {
 
   /**
    * Build storage configuration based on environment settings
-   * 
+   *
    * Creates storage-specific configuration objects based on the selected storage type.
    * Validates required parameters for each storage type and provides appropriate defaults.
-   * 
+   *
    * @param env - Validated environment configuration
    * @returns StorageConfiguration - Storage configuration for the selected backend
    * @throws Error - If required storage parameters are missing
@@ -323,7 +304,7 @@ export class ConfigManager {
       case 'postgresql':
         // PostgreSQL storage: Validate required connection parameters
         this.validatePostgreSQLConfig(env);
-        
+
         return {
           type: 'postgresql',
           postgresql: {
@@ -346,20 +327,29 @@ export class ConfigManager {
 
   /**
    * Validate PostgreSQL configuration parameters
-   * 
+   *
    * @param env - Environment configuration to validate
    * @throws Error - If required PostgreSQL parameters are missing
    */
   private validatePostgreSQLConfig(env: Environment): void {
-    const requiredParams = ['POSTGRES_HOST', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD'];
+    const requiredParams = [
+      'POSTGRES_HOST',
+      'POSTGRES_DB',
+      'POSTGRES_USER',
+      'POSTGRES_PASSWORD',
+    ];
     const missingParams = requiredParams.filter(param => {
       const value = env[param as keyof Environment];
-      return value == null || (typeof value === 'string' && value.trim() === '');
+      return (
+        value == null || (typeof value === 'string' && value.trim() === '')
+      );
     });
 
     if (missingParams.length > 0) {
       throw new Error(
-        `PostgreSQL configuration incomplete. Missing required parameters: ${missingParams.join(', ')}`
+        `PostgreSQL configuration incomplete. Missing required parameters: ${missingParams.join(
+          ', '
+        )}`
       );
     }
   }
@@ -383,12 +373,16 @@ export class ConfigManager {
   private isMcpMode(): boolean {
     // Check if running with CLI flags that indicate non-MCP mode
     const args = process.argv.slice(2);
-    const hasCliFlags = args.some(arg => 
-      arg === '--help' || arg === '-h' || 
-      arg === '--version' || arg === '-v' ||
-      arg === '--verbose' || arg === '--quiet'
+    const hasCliFlags = args.some(
+      arg =>
+        arg === '--help' ||
+        arg === '-h' ||
+        arg === '--version' ||
+        arg === '-v' ||
+        arg === '--verbose' ||
+        arg === '--quiet'
     );
-    
+
     // If no CLI flags and not explicitly disabled, assume MCP mode
     return !hasCliFlags && process.env['MCP_DISABLE_STDIO_MODE'] !== 'true';
   }

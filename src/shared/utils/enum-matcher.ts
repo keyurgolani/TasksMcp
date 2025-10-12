@@ -1,6 +1,6 @@
 /**
  * Enum Fuzzy Matching Algorithm
- * 
+ *
  * Provides fuzzy matching capabilities to suggest the closest valid enum value
  * when agents provide invalid options. Helps agents quickly correct enum validation errors.
  */
@@ -75,7 +75,7 @@ export class EnumMatcher {
 
   /**
    * Find the closest matching enum value
-   * 
+   *
    * @param input - Input value to match
    * @param validOptions - Array of valid enum values
    * @returns EnumMatchResult with best match and suggestions
@@ -92,17 +92,17 @@ export class EnumMatcher {
 
     // Create cache key
     const cacheKey = this.createCacheKey(input, validOptions);
-    
+
     // Check cache first
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
     }
 
     const result = this.performMatching(input, validOptions);
-    
+
     // Cache result for performance
     this.cache.set(cacheKey, result);
-    
+
     // Log matching attempt for debugging
     logger.debug('Enum fuzzy matching performed', {
       input,
@@ -119,9 +119,12 @@ export class EnumMatcher {
   /**
    * Perform the actual matching logic
    */
-  private performMatching(input: string, validOptions: string[]): EnumMatchResult {
+  private performMatching(
+    input: string,
+    validOptions: string[]
+  ): EnumMatchResult {
     const normalizedInput = this.normalizeString(input);
-    
+
     // Handle empty input
     if (normalizedInput === '') {
       return {
@@ -147,12 +150,18 @@ export class EnumMatcher {
 
     // 2. Partial match
     if (this.config.enablePartialMatch) {
-      const partialMatches = this.findPartialMatches(normalizedInput, validOptions);
+      const partialMatches = this.findPartialMatches(
+        normalizedInput,
+        validOptions
+      );
       suggestions.push(...partialMatches);
     }
 
     // 3. Distance-based matching (Levenshtein)
-    const distanceMatches = this.findDistanceMatches(normalizedInput, validOptions);
+    const distanceMatches = this.findDistanceMatches(
+      normalizedInput,
+      validOptions
+    );
     suggestions.push(...distanceMatches);
 
     // 4. Sort suggestions by confidence and remove duplicates
@@ -162,28 +171,39 @@ export class EnumMatcher {
     // Return best match, but only if it has reasonable confidence
     const bestMatch = topSuggestions[0];
     let minConfidenceForMatch = 0.2; // Minimum confidence to consider a match
-    
+
     // Special case: if there's only one valid option, lower the threshold but still require some similarity
     if (validOptions.length === 1 && bestMatch) {
       // For single options, accept if distance is reasonable (less than half the length)
-      const maxLength = Math.max(normalizedInput.length, validOptions[0]!.length);
-      if (bestMatch.distance !== undefined && bestMatch.distance < maxLength / 2) {
+      const maxLength = Math.max(
+        normalizedInput.length,
+        validOptions[0]!.length
+      );
+      if (
+        bestMatch.distance !== undefined &&
+        bestMatch.distance < maxLength / 2
+      ) {
         minConfidenceForMatch = 0.01; // Very low threshold for single option with reasonable distance
       }
     }
-    
+
     // If no suggestions found or best match has very low confidence, provide fallback suggestions
     if (topSuggestions.length === 0 && validOptions.length > 0) {
-      topSuggestions = validOptions.slice(0, this.config.maxSuggestions).map(option => ({
-        value: option,
-        confidence: 0.1, // Very low confidence
-        matchType: 'distance' as const,
-        distance: 999,
-      }));
+      topSuggestions = validOptions
+        .slice(0, this.config.maxSuggestions)
+        .map(option => ({
+          value: option,
+          confidence: 0.1, // Very low confidence
+          matchType: 'distance' as const,
+          distance: 999,
+        }));
     }
-    
+
     return {
-      match: (bestMatch && bestMatch.confidence >= minConfidenceForMatch) ? bestMatch.value : null,
+      match:
+        bestMatch && bestMatch.confidence >= minConfidenceForMatch
+          ? bestMatch.value
+          : null,
       confidence: bestMatch?.confidence || 0,
       matchType: bestMatch?.matchType || 'none',
       suggestions: topSuggestions,
@@ -193,10 +213,13 @@ export class EnumMatcher {
   /**
    * Find exact matches (case-insensitive if configured)
    */
-  private findExactMatch(normalizedInput: string, validOptions: string[]): EnumSuggestion | null {
+  private findExactMatch(
+    normalizedInput: string,
+    validOptions: string[]
+  ): EnumSuggestion | null {
     for (const option of validOptions) {
       const normalizedOption = this.normalizeString(option);
-      
+
       if (normalizedInput === normalizedOption) {
         return {
           value: option,
@@ -205,29 +228,38 @@ export class EnumMatcher {
         };
       }
     }
-    
+
     return null;
   }
 
   /**
    * Find partial matches (substring matching)
    */
-  private findPartialMatches(normalizedInput: string, validOptions: string[]): EnumSuggestion[] {
+  private findPartialMatches(
+    normalizedInput: string,
+    validOptions: string[]
+  ): EnumSuggestion[] {
     const matches: EnumSuggestion[] = [];
-    
+
     for (const option of validOptions) {
       const normalizedOption = this.normalizeString(option);
-      
+
       // Check if input is contained in option or vice versa
       const inputInOption = normalizedOption.includes(normalizedInput);
       const optionInInput = normalizedInput.includes(normalizedOption);
-      
+
       if (inputInOption || optionInInput) {
         // Calculate confidence based on overlap
-        const overlap = Math.min(normalizedInput.length, normalizedOption.length);
-        const maxLength = Math.max(normalizedInput.length, normalizedOption.length);
+        const overlap = Math.min(
+          normalizedInput.length,
+          normalizedOption.length
+        );
+        const maxLength = Math.max(
+          normalizedInput.length,
+          normalizedOption.length
+        );
         const confidence = overlap / maxLength;
-        
+
         matches.push({
           value: option,
           confidence: confidence * 0.8, // Slightly lower than exact match
@@ -235,28 +267,42 @@ export class EnumMatcher {
         });
       }
     }
-    
+
     return matches;
   }
 
   /**
    * Find matches based on Levenshtein distance
    */
-  private findDistanceMatches(normalizedInput: string, validOptions: string[]): EnumSuggestion[] {
+  private findDistanceMatches(
+    normalizedInput: string,
+    validOptions: string[]
+  ): EnumSuggestion[] {
     const matches: EnumSuggestion[] = [];
-    
+
     for (const option of validOptions) {
       const normalizedOption = this.normalizeString(option);
-      const distance = this.levenshteinDistance(normalizedInput, normalizedOption);
-      
+      const distance = this.levenshteinDistance(
+        normalizedInput,
+        normalizedOption
+      );
+
       // Always consider distance matches, but with reasonable limits
-      const maxReasonableDistance = Math.min(this.config.maxDistance, Math.max(normalizedInput.length, normalizedOption.length));
-      
+      const maxReasonableDistance = Math.min(
+        this.config.maxDistance,
+        Math.max(normalizedInput.length, normalizedOption.length)
+      );
+
       if (distance <= maxReasonableDistance) {
         // Calculate confidence (inverse of distance, normalized)
-        const maxPossibleDistance = Math.max(normalizedInput.length, normalizedOption.length);
-        const confidence = Math.max(0, (maxPossibleDistance - distance) / maxPossibleDistance) * 0.6;
-        
+        const maxPossibleDistance = Math.max(
+          normalizedInput.length,
+          normalizedOption.length
+        );
+        const confidence =
+          Math.max(0, (maxPossibleDistance - distance) / maxPossibleDistance) *
+          0.6;
+
         matches.push({
           value: option,
           confidence,
@@ -265,7 +311,7 @@ export class EnumMatcher {
         });
       }
     }
-    
+
     return matches;
   }
 
@@ -274,11 +320,11 @@ export class EnumMatcher {
    */
   private normalizeString(str: string): string {
     let normalized = str.trim();
-    
+
     if (!this.config.caseSensitive) {
       normalized = normalized.toLowerCase();
     }
-    
+
     return normalized;
   }
 
@@ -286,9 +332,9 @@ export class EnumMatcher {
    * Calculate Levenshtein distance between two strings
    */
   private levenshteinDistance(str1: string, str2: string): number {
-    const matrix: number[][] = Array(str2.length + 1).fill(null).map(() => 
-      Array(str1.length + 1).fill(0)
-    );
+    const matrix: number[][] = Array(str2.length + 1)
+      .fill(null)
+      .map(() => Array(str1.length + 1).fill(0));
 
     // Initialize first row and column
     for (let i = 0; i <= str1.length; i++) matrix[0]![i] = i;
@@ -299,8 +345,8 @@ export class EnumMatcher {
       for (let i = 1; i <= str1.length; i++) {
         const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
         matrix[j]![i] = Math.min(
-          matrix[j]![i - 1]! + 1,     // deletion
-          matrix[j - 1]![i]! + 1,     // insertion
+          matrix[j]![i - 1]! + 1, // deletion
+          matrix[j - 1]![i]! + 1, // insertion
           matrix[j - 1]![i - 1]! + indicator // substitution
         );
       }
@@ -315,20 +361,20 @@ export class EnumMatcher {
   private deduplicateAndSort(suggestions: EnumSuggestion[]): EnumSuggestion[] {
     const seen = new Set<string>();
     const unique: EnumSuggestion[] = [];
-    
+
     for (const suggestion of suggestions) {
       if (!seen.has(suggestion.value)) {
         seen.add(suggestion.value);
         unique.push(suggestion);
       }
     }
-    
+
     // Sort by confidence (descending), then by match type priority
     return unique.sort((a, b) => {
       if (a.confidence !== b.confidence) {
         return b.confidence - a.confidence;
       }
-      
+
       // If confidence is equal, prioritize by match type
       const typePriority = { exact: 3, partial: 2, distance: 1 };
       return typePriority[b.matchType] - typePriority[a.matchType];
@@ -364,7 +410,11 @@ export class EnumMatcher {
   /**
    * Find multiple suggestions for an input
    */
-  findSuggestions(input: string, validOptions: string[], maxSuggestions?: number): EnumSuggestion[] {
+  findSuggestions(
+    input: string,
+    validOptions: string[],
+    maxSuggestions?: number
+  ): EnumSuggestion[] {
     const result = this.findClosestEnumValue(input, validOptions);
     const limit = maxSuggestions || this.config.maxSuggestions;
     return result.suggestions.slice(0, limit);
@@ -373,7 +423,11 @@ export class EnumMatcher {
   /**
    * Check if input is a reasonable match for any enum value
    */
-  hasReasonableMatch(input: string, validOptions: string[], minConfidence = 0.3): boolean {
+  hasReasonableMatch(
+    input: string,
+    validOptions: string[],
+    minConfidence = 0.3
+  ): boolean {
     const result = this.findClosestEnumValue(input, validOptions);
     return result.confidence >= minConfidence;
   }
@@ -386,40 +440,49 @@ export const enumMatcher = new EnumMatcher();
 
 /**
  * Convenience function to find closest enum match with default settings
- * 
+ *
  * @param input - Input value to match
  * @param validOptions - Array of valid enum values
  * @returns The closest matching enum value or null
  */
-export function findClosestEnumValue(input: string, validOptions: string[]): string | null {
+export function findClosestEnumValue(
+  input: string,
+  validOptions: string[]
+): string | null {
   const result = enumMatcher.findClosestEnumValue(input, validOptions);
   return result.match;
 }
 
 /**
  * Convenience function to get enum suggestions
- * 
+ *
  * @param input - Input value to match
  * @param validOptions - Array of valid enum values
  * @param maxSuggestions - Maximum number of suggestions to return
  * @returns Array of suggestions ordered by confidence
  */
 export function getEnumSuggestions(
-  input: string, 
-  validOptions: string[], 
+  input: string,
+  validOptions: string[],
   maxSuggestions = 3
 ): string[] {
-  const suggestions = enumMatcher.findSuggestions(input, validOptions, maxSuggestions);
+  const suggestions = enumMatcher.findSuggestions(
+    input,
+    validOptions,
+    maxSuggestions
+  );
   return suggestions.map(s => s.value);
 }
 
 /**
  * Create a custom enum matcher with specific configuration
- * 
+ *
  * @param config - Custom matching configuration
  * @returns New EnumMatcher instance
  */
-export function createEnumMatcher(config: Partial<EnumMatchingConfig>): EnumMatcher {
+export function createEnumMatcher(
+  config: Partial<EnumMatchingConfig>
+): EnumMatcher {
   return new EnumMatcher(config);
 }
 

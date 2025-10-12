@@ -4,8 +4,9 @@
  * Provides comprehensive cleanup utilities for all test types
  */
 
-import { EventEmitter } from "events";
-import { afterEach, beforeEach } from "vitest";
+import { EventEmitter } from 'events';
+
+import { afterEach, beforeEach } from 'vitest';
 
 // Increase the default max listeners for all EventEmitters during testing
 // This prevents MaxListenersExceededWarning when running parallel integration tests
@@ -16,13 +17,19 @@ process.setMaxListeners(50);
 
 // Suppress specific warnings that are expected during testing
 const originalEmit = process.emit;
-process.emit = function (event: string, ...args: any[]) {
+process.emit = function (event: string, ...args: unknown[]) {
   // Suppress MaxListenersExceededWarning during tests as it's expected with parallel execution
-  if (event === "warning" && args[0]?.name === "MaxListenersExceededWarning") {
+  if (
+    event === 'warning' &&
+    args[0] &&
+    typeof args[0] === 'object' &&
+    'name' in args[0] &&
+    args[0].name === 'MaxListenersExceededWarning'
+  ) {
     return false;
   }
   return originalEmit.call(this, event, ...args);
-} as any;
+} as typeof process.emit;
 
 // Track test artifacts for cleanup
 interface TestArtifacts {
@@ -88,12 +95,14 @@ export const TestCleanup = {
   async registerEnvVar(key: string, value: string) {
     testArtifacts.environmentVariables.add(key);
     process.env[key] = value;
-    
+
     // Reload ConfigManager to pick up the new environment variable
     try {
-      const { ConfigManager } = await import('../src/infrastructure/config/index.js');
+      const { ConfigManager } = await import(
+        '../src/infrastructure/config/index.js'
+      );
       ConfigManager.getInstance().reload();
-    } catch (error) {
+    } catch (_error) {
       // Ignore errors if ConfigManager hasn't been loaded yet
     }
   },
@@ -189,8 +198,8 @@ export const TestCleanup = {
     // If there were errors, log them but don't fail the test
     if (errors.length > 0) {
       console.warn(
-        "Test cleanup encountered errors:",
-        errors.map((e) => e.message).join(", ")
+        'Test cleanup encountered errors:',
+        errors.map(e => e.message).join(', ')
       );
     }
   },
@@ -206,15 +215,17 @@ beforeEach(async () => {
   delete process.env.DATA_DIRECTORY;
   delete process.env.BACKUP_RETENTION_DAYS;
   delete process.env.ENABLE_COMPRESSION;
-  
+
   // Disable file logging during tests to prevent log file creation
   process.env.DISABLE_FILE_LOGGING = 'true';
-  
+
   // Reset ConfigManager singleton to pick up new environment variables
   try {
-    const { ConfigManager } = await import('../src/infrastructure/config/index.js');
+    const { ConfigManager } = await import(
+      '../src/infrastructure/config/index.js'
+    );
     ConfigManager.getInstance().reload();
-  } catch (error) {
+  } catch (_error) {
     // Ignore errors if ConfigManager hasn't been loaded yet
   }
 });

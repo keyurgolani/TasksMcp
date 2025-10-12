@@ -3,29 +3,31 @@
  * Handles the update_exit_criteria tool request to mark criteria as met/unmet
  */
 
-import { z } from "zod";
-import type {
-  CallToolRequest,
-  CallToolResult,
-} from "../../shared/types/mcp-types.js";
-import type { TodoListManager } from "../../domain/lists/todo-list-manager.js";
-import type { ExitCriteriaUpdateResponse } from "../../shared/types/mcp-types.js";
-import { ExitCriteriaManager } from "../../domain/tasks/exit-criteria-manager.js";
-import { logger } from "../../shared/utils/logger.js";
+import { z } from 'zod';
+
+import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
-} from "../../shared/utils/handler-error-formatter.js";
+} from '../../shared/utils/handler-error-formatter.js';
+import { logger } from '../../shared/utils/logger.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type { ExitCriteriaUpdateResponse } from '../../shared/types/mcp-types.js';
 
 /**
  * Validation schema for update exit criteria request parameters
  */
 const UpdateExitCriteriaSchema = z.object({
-  listId: z.string().uuid("List ID must be a valid UUID"),
-  taskId: z.string().uuid("Task ID must be a valid UUID"),
-  criteriaId: z.string().uuid("Criteria ID must be a valid UUID"),
+  listId: z.string().uuid('List ID must be a valid UUID'),
+  taskId: z.string().uuid('Task ID must be a valid UUID'),
+  criteriaId: z.string().uuid('Criteria ID must be a valid UUID'),
   isMet: z.boolean().optional(),
-  notes: z.string().max(1000, "Notes too long").optional(),
+  notes: z.string().max(1000, 'Notes too long').optional(),
 });
 
 /**
@@ -42,7 +44,7 @@ export async function handleUpdateExitCriteria(
   todoListManager: TodoListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug("Processing update_exit_criteria request", {
+    logger.debug('Processing update_exit_criteria request', {
       params: request.params?.arguments,
     });
 
@@ -51,7 +53,7 @@ export async function handleUpdateExitCriteria(
     // Ensure at least one field is provided for update
     if (args.isMet === undefined && !args.notes) {
       throw new Error(
-        "At least one field to update must be provided (isMet or notes)"
+        'At least one field to update must be provided (isMet or notes)'
       );
     }
 
@@ -65,13 +67,13 @@ export async function handleUpdateExitCriteria(
       throw new Error(`Todo list not found: ${args.listId}`);
     }
 
-    const task = currentList.items.find((item) => item.id === args.taskId);
+    const task = currentList.items.find(item => item.id === args.taskId);
     if (!task) {
       throw new Error(`Task not found: ${args.taskId}`);
     }
 
     const criteriaIndex = task.exitCriteria.findIndex(
-      (c) => c.id === args.criteriaId
+      c => c.id === args.criteriaId
     );
     if (criteriaIndex === -1) {
       throw new Error(`Exit criteria not found: ${args.criteriaId}`);
@@ -98,24 +100,24 @@ export async function handleUpdateExitCriteria(
 
     const result = await todoListManager.updateTodoList({
       listId: args.listId,
-      action: "update_item",
+      action: 'update_item',
       itemId: args.taskId,
       itemData: {
         exitCriteriaObjects: updatedExitCriteria, // Use objects to preserve IDs and state
       },
     });
 
-    const updatedTask = result.items.find((item) => item.id === args.taskId);
+    const updatedTask = result.items.find(item => item.id === args.taskId);
     if (!updatedTask) {
-      throw new Error("Task not found after updating exit criteria");
+      throw new Error('Task not found after updating exit criteria');
     }
 
     // Find the updated criteria in the result
     const finalCriteria = updatedTask.exitCriteria.find(
-      (c) => c.id === args.criteriaId
+      c => c.id === args.criteriaId
     );
     if (!finalCriteria) {
-      throw new Error("Updated criteria not found in result");
+      throw new Error('Updated criteria not found in result');
     }
 
     // Calculate task completion readiness
@@ -131,17 +133,18 @@ export async function handleUpdateExitCriteria(
       criteriaId: args.criteriaId,
       description: finalCriteria.description,
       isMet: finalCriteria.isMet,
-      ...(finalCriteria.metAt && { 
-        metAt: finalCriteria.metAt instanceof Date 
-          ? finalCriteria.metAt.toISOString() 
-          : new Date(finalCriteria.metAt).toISOString() 
+      ...(finalCriteria.metAt && {
+        metAt:
+          finalCriteria.metAt instanceof Date
+            ? finalCriteria.metAt.toISOString()
+            : new Date(finalCriteria.metAt).toISOString(),
       }),
       ...(finalCriteria.notes && { notes: finalCriteria.notes }),
       taskCanComplete: canComplete,
       exitCriteriaProgress: progress,
     };
 
-    logger.info("Exit criteria updated successfully", {
+    logger.info('Exit criteria updated successfully', {
       listId: args.listId,
       taskId: args.taskId,
       criteriaId: args.criteriaId,
@@ -153,7 +156,7 @@ export async function handleUpdateExitCriteria(
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: JSON.stringify(response, null, 2),
         },
       ],
@@ -161,7 +164,7 @@ export async function handleUpdateExitCriteria(
   } catch (error) {
     // Use error formatting with taskManagement configuration
     const formatError = createHandlerErrorFormatter(
-      "update_exit_criteria",
+      'update_exit_criteria',
       ERROR_CONFIGS.taskManagement
     );
     return formatError(error, request.params?.arguments);

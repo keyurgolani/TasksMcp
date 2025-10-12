@@ -1,16 +1,17 @@
 /**
  * Comprehensive error handling with retry logic and circuit breaker
- * 
+ *
  * Provides enterprise-grade error management for the MCP Task Manager including:
  * - Automatic error categorization and severity assessment
  * - Circuit breaker pattern for fault tolerance and system protection
  * - Exponential backoff retry logic with jitter for resilience
  * - Error recovery mechanisms and automatic resolution attempts
  * - Comprehensive error reporting and analytics
- * - Integration with monitoring and alerting systems
+ * - Integration with error reporting systems
  */
 
 import { EventEmitter } from 'events';
+
 // import { ConfigManager } from '../infrastructure/config/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -100,10 +101,10 @@ export class ErrorHandler extends EventEmitter {
 
   /**
    * Handle an error with context and automatic categorization
-   * 
+   *
    * Processes errors by categorizing them, determining severity, and attempting recovery.
-   * Stores error reports for analysis and emits events for external monitoring systems.
-   * 
+   * Stores error reports for analysis and emits events for external systems.
+   *
    * @param error - The error instance to handle
    * @param context - Contextual information about where/when the error occurred
    * @returns ErrorReport - Comprehensive error report with categorization and metadata
@@ -153,11 +154,11 @@ export class ErrorHandler extends EventEmitter {
 
   /**
    * Execute operation with retry logic and circuit breaker
-   * 
+   *
    * Executes an operation with automatic retry on failure, respecting circuit breaker state.
    * Uses exponential backoff with jitter for retry delays. Updates circuit breaker state
    * based on success/failure outcomes.
-   * 
+   *
    * @param operation - Async function to execute with retry logic
    * @param context - Error context for logging and categorization
    * @param retryConfig - Optional retry configuration overrides
@@ -177,7 +178,13 @@ export class ErrorHandler extends EventEmitter {
     if (circuitBreaker.state === 'open') {
       if (Date.now() < circuitBreaker.nextAttemptTime) {
         // Circuit breaker is still in cooldown period
-        throw new Error(`Circuit breaker open for ${context.operation}`);
+        throw new Error(
+          `Circuit breaker open for ${
+            context.operation
+          }. Too many failures detected. Next attempt allowed at ${new Date(
+            circuitBreaker.nextAttemptTime
+          ).toISOString()}`
+        );
       } else {
         // Cooldown period has elapsed, transition to half-open state for testing
         circuitBreaker.state = 'half-open';
@@ -195,7 +202,7 @@ export class ErrorHandler extends EventEmitter {
         // Operation succeeded - update circuit breaker with success
         this.updateCircuitBreaker(context.operation, true);
 
-        // Log successful retry for monitoring
+        // Log successful retry
         if (attempt > 1) {
           logger.info('Operation succeeded after retry', {
             operation: context.operation,
@@ -245,7 +252,9 @@ export class ErrorHandler extends EventEmitter {
       throw lastError;
     }
 
-    throw new Error('Operation failed without error');
+    throw new Error(
+      `Operation '${context.operation}' failed without providing error details. This indicates an unexpected failure condition.`
+    );
   }
 
   /**
@@ -278,11 +287,11 @@ export class ErrorHandler extends EventEmitter {
   }
 
   /**
-   * Get comprehensive error statistics for analysis and monitoring
-   * 
+   * Get comprehensive error statistics for analysis
+   *
    * Analyzes error reports within a specified time window to provide insights
    * into error patterns, recovery rates, and system health metrics.
-   * 
+   *
    * @param timeWindowMs - Time window in milliseconds for analysis (default: 1 hour)
    * @returns Object containing error statistics and analysis
    */
@@ -363,13 +372,19 @@ export class ErrorHandler extends EventEmitter {
     if (error.name.includes('ActionPlan')) {
       return 'action_plan';
     }
-    if (error.name.includes('ProjectManagement') || error.name.includes('Project')) {
+    if (
+      error.name.includes('ProjectManagement') ||
+      error.name.includes('Project')
+    ) {
       return 'project_management';
     }
     if (error.name.includes('Notes') || error.name.includes('Note')) {
       return 'notes';
     }
-    if (error.name.includes('Formatting') || error.name.includes('PrettyPrint')) {
+    if (
+      error.name.includes('Formatting') ||
+      error.name.includes('PrettyPrint')
+    ) {
       return 'formatting';
     }
     if (error.name.includes('Cleanup')) {
@@ -564,7 +579,7 @@ export class ErrorHandler extends EventEmitter {
         context: errorReport.context,
         error: errorReport.error,
       });
-      
+
       return `Recovery event emitted for ${errorReport.category} error`;
     } catch (recoveryError) {
       logger.error('Error recovery failed', {
@@ -577,10 +592,6 @@ export class ErrorHandler extends EventEmitter {
       return undefined;
     }
   }
-
-
-
-
 
   private getCircuitBreaker(operationName: string): CircuitBreakerState {
     if (!this.circuitBreakers.has(operationName)) {
@@ -597,7 +608,9 @@ export class ErrorHandler extends EventEmitter {
     const circuitBreaker = this.circuitBreakers.get(operationName);
     if (circuitBreaker == null) {
       throw new Error(
-        `Circuit breaker not found for operation: ${operationName}`
+        `Circuit breaker not found for operation: ${operationName}. Available operations: ${Array.from(
+          this.circuitBreakers.keys()
+        ).join(', ')}`
       );
     }
     return circuitBreaker;
@@ -736,20 +749,8 @@ export class ErrorHandler extends EventEmitter {
    * Setup error reporting integration
    */
   private setupErrorReporting(): void {
-    // Import error reporting system dynamically to avoid circular dependencies
-    import('../../infrastructure/monitoring/error-reporting.js')
-      .then(({ errorReportingSystem }) => {
-        this.on('error', (errorReport: ErrorReport) => {
-          errorReportingSystem
-            .reportError(errorReport)
-            .catch((error: unknown) => {
-              logger.error('Failed to report error', { error });
-            });
-        });
-      })
-      .catch((error: unknown) => {
-        logger.warn('Failed to setup error reporting', { error });
-      });
+    // Error reporting system not available
+    // Error reporting is disabled
   }
 
   /**

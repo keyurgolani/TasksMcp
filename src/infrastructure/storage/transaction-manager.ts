@@ -3,9 +3,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { TodoList } from '../../shared/types/todo.js';
-import type { StorageBackend } from '../../shared/types/storage.js';
+
 import { logger } from '../../shared/utils/logger.js';
+
+import type { StorageBackend } from '../../shared/types/storage.js';
+import type { TodoList } from '../../shared/types/todo.js';
 
 export interface Transaction {
   id: string;
@@ -80,7 +82,7 @@ export class TransactionManager {
     try {
       backup =
         (await this.storage.load(key, { includeArchived: true })) ?? undefined;
-    } catch (error) {
+    } catch (_error) {
       // Ignore errors when loading backup - item might not exist
       logger.debug('No existing data to backup', { key, transactionId });
     }

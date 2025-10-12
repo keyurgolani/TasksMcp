@@ -3,14 +3,15 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import {
   EnumMatcher,
   findClosestEnumValue,
   getEnumSuggestions,
   createEnumMatcher,
   COMMON_ENUM_PATTERNS,
-  type EnumMatchingConfig,
-  type EnumMatchResult,
+  type EnumMatchingConfig as _EnumMatchingConfig,
+  type EnumMatchResult as _EnumMatchResult,
 } from '../../../../src/shared/utils/enum-matcher.js';
 
 describe('EnumMatcher', () => {
@@ -24,7 +25,10 @@ describe('EnumMatcher', () => {
   describe('Exact Matching', () => {
     it('should find exact matches (case sensitive)', () => {
       const caseSensitiveMatcher = new EnumMatcher({ caseSensitive: true });
-      const result = caseSensitiveMatcher.findClosestEnumValue('pending', testEnums);
+      const result = caseSensitiveMatcher.findClosestEnumValue(
+        'pending',
+        testEnums
+      );
 
       expect(result.match).toBe('pending');
       expect(result.confidence).toBe(1.0);
@@ -69,7 +73,10 @@ describe('EnumMatcher', () => {
     });
 
     it('should find partial matches when option is contained in input', () => {
-      const result = matcher.findClosestEnumValue('completed_successfully', testEnums);
+      const result = matcher.findClosestEnumValue(
+        'completed_successfully',
+        testEnums
+      );
 
       expect(result.match).toBe('completed');
       expect(result.matchType).toBe('partial');
@@ -84,7 +91,10 @@ describe('EnumMatcher', () => {
 
     it('should respect partial matching configuration', () => {
       const noPartialMatcher = new EnumMatcher({ enablePartialMatch: false });
-      const result = noPartialMatcher.findClosestEnumValue('progress', testEnums);
+      const result = noPartialMatcher.findClosestEnumValue(
+        'progress',
+        testEnums
+      );
 
       // Should fall back to distance matching or no match
       expect(result.matchType).not.toBe('partial');
@@ -132,7 +142,10 @@ describe('EnumMatcher', () => {
     });
 
     it('should not suggest matches that are too different', () => {
-      const result = matcher.findClosestEnumValue('completely_different', testEnums);
+      const result = matcher.findClosestEnumValue(
+        'completely_different',
+        testEnums
+      );
 
       expect(result.confidence).toBeLessThan(0.5);
     });
@@ -144,7 +157,7 @@ describe('EnumMatcher', () => {
       const result = matcher.findClosestEnumValue('pend', enums);
 
       expect(result.suggestions.length).toBeGreaterThan(1);
-      
+
       // Should be ordered by confidence (descending)
       for (let i = 1; i < result.suggestions.length; i++) {
         expect(result.suggestions[i - 1].confidence).toBeGreaterThanOrEqual(
@@ -155,7 +168,12 @@ describe('EnumMatcher', () => {
 
     it('should respect maximum suggestions configuration', () => {
       const limitedMatcher = new EnumMatcher({ maxSuggestions: 2 });
-      const enums = ['pending', 'pending_review', 'pending_approval', 'pending_confirmation'];
+      const enums = [
+        'pending',
+        'pending_review',
+        'pending_approval',
+        'pending_confirmation',
+      ];
       const result = limitedMatcher.findClosestEnumValue('pend', enums);
 
       expect(result.suggestions).toHaveLength(2);
@@ -234,8 +252,14 @@ describe('EnumMatcher', () => {
       const caseSensitive = new EnumMatcher({ caseSensitive: true });
       const caseInsensitive = new EnumMatcher({ caseSensitive: false });
 
-      const sensitiveResult = caseSensitive.findClosestEnumValue('PENDING', testEnums);
-      const insensitiveResult = caseInsensitive.findClosestEnumValue('PENDING', testEnums);
+      const sensitiveResult = caseSensitive.findClosestEnumValue(
+        'PENDING',
+        testEnums
+      );
+      const insensitiveResult = caseInsensitive.findClosestEnumValue(
+        'PENDING',
+        testEnums
+      );
 
       expect(sensitiveResult.matchType).not.toBe('exact');
       expect(insensitiveResult.matchType).toBe('exact');
@@ -249,7 +273,9 @@ describe('EnumMatcher', () => {
       const strictResult = strict.findClosestEnumValue(input, testEnums);
       const lenientResult = lenient.findClosestEnumValue(input, testEnums);
 
-      expect(strictResult.suggestions.length).toBeLessThanOrEqual(lenientResult.suggestions.length);
+      expect(strictResult.suggestions.length).toBeLessThanOrEqual(
+        lenientResult.suggestions.length
+      );
     });
 
     it('should respect partial matching setting', () => {
@@ -258,10 +284,15 @@ describe('EnumMatcher', () => {
 
       const input = 'progress'; // Should match 'in_progress' partially
       const withResult = withPartial.findClosestEnumValue(input, testEnums);
-      const withoutResult = withoutPartial.findClosestEnumValue(input, testEnums);
+      const withoutResult = withoutPartial.findClosestEnumValue(
+        input,
+        testEnums
+      );
 
       // With partial matching should find better match
-      expect(withResult.confidence).toBeGreaterThanOrEqual(withoutResult.confidence);
+      expect(withResult.confidence).toBeGreaterThanOrEqual(
+        withoutResult.confidence
+      );
     });
   });
 
@@ -291,8 +322,11 @@ describe('EnumMatcher', () => {
     });
 
     it('should handle large enum sets efficiently', () => {
-      const largeEnumSet = Array.from({ length: 1000 }, (_, i) => `option_${i}`);
-      
+      const largeEnumSet = Array.from(
+        { length: 1000 },
+        (_, i) => `option_${i}`
+      );
+
       const startTime = Date.now();
       const result = matcher.findClosestEnumValue('option_500', largeEnumSet);
       const endTime = Date.now();
@@ -344,7 +378,10 @@ describe('EnumMatcher', () => {
     });
 
     it('should work with createEnumMatcher factory function', () => {
-      const customMatcher = createEnumMatcher({ caseSensitive: true, maxDistance: 1 });
+      const customMatcher = createEnumMatcher({
+        caseSensitive: true,
+        maxDistance: 1,
+      });
       const result = customMatcher.findClosestEnumValue('PENDING', testEnums);
 
       expect(result.matchType).not.toBe('exact'); // Due to case sensitivity
@@ -361,20 +398,29 @@ describe('EnumMatcher', () => {
     });
 
     it('should work with common status patterns', () => {
-      const result = matcher.findClosestEnumValue('inprogress', COMMON_ENUM_PATTERNS.status);
+      const result = matcher.findClosestEnumValue(
+        'inprogress',
+        COMMON_ENUM_PATTERNS.status
+      );
 
       expect(result.match).toBe('in_progress');
       expect(result.confidence).toBeGreaterThan(0.5);
     });
 
     it('should work with common priority patterns', () => {
-      const result = matcher.findClosestEnumValue('hi', COMMON_ENUM_PATTERNS.priority);
+      const result = matcher.findClosestEnumValue(
+        'hi',
+        COMMON_ENUM_PATTERNS.priority
+      );
 
       expect(result.match).toBe('high');
     });
 
     it('should work with common boolean patterns', () => {
-      const result = matcher.findClosestEnumValue('on', COMMON_ENUM_PATTERNS.boolean);
+      const result = matcher.findClosestEnumValue(
+        'on',
+        COMMON_ENUM_PATTERNS.boolean
+      );
 
       expect(result.match).toBe('on');
       expect(result.matchType).toBe('exact');
@@ -410,21 +456,34 @@ describe('EnumMatcher', () => {
     });
 
     it('should handle different naming conventions', () => {
-      const conventions = ['camelCase', 'snake_case', 'kebab-case', 'PascalCase'];
-      
-      const camelResult = matcher.findClosestEnumValue('snakeCase', conventions);
+      const conventions = [
+        'camelCase',
+        'snake_case',
+        'kebab-case',
+        'PascalCase',
+      ];
+
+      const camelResult = matcher.findClosestEnumValue(
+        'snakeCase',
+        conventions
+      );
       expect(camelResult.match).toBe('snake_case');
 
-      const kebabResult = matcher.findClosestEnumValue('camel-case', conventions);
+      const kebabResult = matcher.findClosestEnumValue(
+        'camel-case',
+        conventions
+      );
       expect(kebabResult.match).toBe('camelCase');
     });
 
     it('should provide helpful suggestions for completely wrong inputs', () => {
       const result = matcher.findClosestEnumValue('xyz', testEnums);
-      
+
       // Even for wrong inputs, should provide some suggestions
       expect(result.suggestions.length).toBeGreaterThan(0);
-      expect(result.suggestions.every(s => testEnums.includes(s.value))).toBe(true);
+      expect(result.suggestions.every(s => testEnums.includes(s.value))).toBe(
+        true
+      );
     });
   });
 });

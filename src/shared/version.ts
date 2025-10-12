@@ -5,8 +5,8 @@
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,23 +28,28 @@ export function getVersionInfo(): VersionInfo {
       const versionPath = join(__dirname, '../../version.json');
       const versionContent = readFileSync(versionPath, 'utf-8');
       versionInfo = JSON.parse(versionContent) as VersionInfo;
-    } catch (error) {
+    } catch (_error) {
       // Fallback to package.json if version.json is not available
       try {
         const packagePath = join(__dirname, '../../package.json');
         const packageContent = readFileSync(packagePath, 'utf-8');
-        const packageJson = JSON.parse(packageContent) as { version: string; name: string; description: string };
+        const packageJson = JSON.parse(packageContent) as {
+          version: string;
+          name: string;
+          description: string;
+        };
         versionInfo = {
           version: packageJson.version,
           name: packageJson.name,
-          description: packageJson.description
+          description: packageJson.description,
         };
-      } catch (fallbackError) {
+      } catch (_fallbackError) {
         // Ultimate fallback
         versionInfo = {
           version: '2.0.0',
           name: 'task-list-mcp',
-          description: 'An intelligent Model Context Protocol (MCP) server for task management with AI-powered complexity analysis'
+          description:
+            'An intelligent Model Context Protocol (MCP) server for task management with AI-powered complexity analysis',
         };
       }
     }

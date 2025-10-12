@@ -2,10 +2,12 @@
  * Factory for creating storage backend instances
  */
 
-import type { StorageBackend } from '../../shared/types/storage.js';
-import { MemoryStorageBackend } from './memory-storage.js';
-import { FileStorageBackend, type FileStorageConfig } from './file-storage.js';
 import { logger } from '../../shared/utils/logger.js';
+
+import { FileStorageBackend, type FileStorageConfig } from './file-storage.js';
+import { MemoryStorageBackend } from './memory-storage.js';
+
+import type { StorageBackend } from '../../shared/types/storage.js';
 
 export type StorageType = 'memory' | 'file' | 'postgresql';
 
@@ -28,10 +30,10 @@ export interface StorageConfiguration {
 export class StorageFactory {
   /**
    * Create and initialize a storage backend instance
-   * 
+   *
    * Factory method that creates the appropriate storage backend based on configuration.
    * Handles initialization and validation of storage backends.
-   * 
+   *
    * @param config - Storage configuration specifying type and parameters
    * @returns Promise<StorageBackend> - Initialized storage backend instance
    * @throws Error - If storage type is unsupported or configuration is invalid
@@ -66,8 +68,8 @@ export class StorageFactory {
             'PostgreSQL storage configuration is required when type is "postgresql"'
           );
         }
-        // TODO: Implement PostgreSQL storage backend
-        // For now, fall back to file storage as PostgreSQL implementation is not complete
+        // PostgreSQL storage backend is not implemented in this version
+        // Fall back to file storage for compatibility
         logger.warn(
           'PostgreSQL storage not implemented, falling back to file storage'
         );
@@ -79,13 +81,19 @@ export class StorageFactory {
         break;
 
       default:
-        throw new Error(`Unsupported storage type: ${String(config.type)}`);
+        throw new Error(
+          `Unsupported storage type: "${String(
+            config.type
+          )}". Supported types are: memory, file, postgresql`
+        );
     }
 
     // Initialize the storage backend if it supports initialization
     if (typeof backend.initialize === 'function') {
       await backend.initialize();
-      logger.info('Storage backend initialized successfully', { type: config.type });
+      logger.info('Storage backend initialized successfully', {
+        type: config.type,
+      });
     }
 
     return backend;
@@ -93,25 +101,27 @@ export class StorageFactory {
 
   /**
    * Legacy method for backward compatibility
-   * 
+   *
    * This method is maintained for backward compatibility with existing code.
    * New implementations should use createStorage() for better clarity and consistency.
-   * 
+   *
    * @deprecated Use createStorage() instead - this method will be removed in v2.0
    * @param config - Storage configuration specifying type and parameters
    * @returns Promise<StorageBackend> - Initialized storage backend instance
    */
   static async create(config: StorageConfiguration): Promise<StorageBackend> {
-    logger.warn('Using deprecated StorageFactory.create() method. Please migrate to createStorage()');
+    logger.warn(
+      'Using deprecated StorageFactory.create() method. Please migrate to createStorage()'
+    );
     return this.createStorage(config);
   }
 
   /**
    * Synchronous storage creation (deprecated)
-   * 
+   *
    * Creates storage backend synchronously without proper initialization.
    * This method is deprecated and should not be used in new code.
-   * 
+   *
    * @deprecated Use async createStorage() instead for proper initialization
    * @param config - Storage configuration
    * @returns StorageBackend - Storage backend instance (not initialized)
@@ -150,15 +160,19 @@ export class StorageFactory {
         });
 
       default:
-        throw new Error(`Unsupported storage type: ${String(config.type)}`);
+        throw new Error(
+          `Unsupported storage type: "${String(
+            config.type
+          )}". Supported types are: memory, file, postgresql`
+        );
     }
   }
 
   /**
    * Get default storage configuration
-   * 
+   *
    * Provides sensible defaults for file-based storage suitable for most deployments.
-   * 
+   *
    * @returns StorageConfiguration - Default file storage configuration
    */
   static getDefaultConfig(): StorageConfiguration {
@@ -174,10 +188,10 @@ export class StorageFactory {
 
   /**
    * Validate storage configuration for completeness and correctness
-   * 
+   *
    * Performs comprehensive validation of storage configuration to ensure
    * all required parameters are present and valid.
-   * 
+   *
    * @param config - Storage configuration to validate
    * @throws Error - If configuration is invalid or incomplete
    */
@@ -210,6 +224,6 @@ export class StorageFactory {
       }
     }
 
-    // TODO: Add PostgreSQL configuration validation when implemented
+    // PostgreSQL configuration validation will be added when PostgreSQL backend is implemented
   }
 }

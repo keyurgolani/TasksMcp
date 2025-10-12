@@ -3,11 +3,19 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { ListResponse } from '../../shared/types/mcp-types.js';
+
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type { ListResponse } from '../../shared/types/mcp-types.js';
 
 const ListAllListsSchema = z.object({
   projectTag: z.string().max(50).optional(),
@@ -67,7 +75,10 @@ export async function handleListAllLists(
     };
   } catch (error) {
     // Use error formatting with listManagement configuration
-    const formatError = createHandlerErrorFormatter('list_all_lists', ERROR_CONFIGS.listManagement);
+    const formatError = createHandlerErrorFormatter(
+      'list_all_lists',
+      ERROR_CONFIGS.listManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

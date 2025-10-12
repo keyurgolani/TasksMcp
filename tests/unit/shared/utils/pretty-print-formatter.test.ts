@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PrettyPrintFormatter, type FormatOptions } from '../../../../src/shared/utils/pretty-print-formatter.js';
+
 import {
   type TodoList,
   type TodoItem,
@@ -13,6 +13,10 @@ import {
   TaskStatus,
   Priority,
 } from '../../../../src/shared/types/todo.js';
+import {
+  PrettyPrintFormatter,
+  type FormatOptions,
+} from '../../../../src/shared/utils/pretty-print-formatter.js';
 
 describe('PrettyPrintFormatter', () => {
   let formatter: PrettyPrintFormatter;
@@ -211,7 +215,7 @@ describe('PrettyPrintFormatter', () => {
       const options: Partial<FormatOptions> = { colorize: true };
       const result = formatter.formatTaskList(mockTodoList, options);
 
-      expect(result.content).toContain('\x1b['); // ANSI color codes
+      expect(result.content).toContain('\u001b['); // ANSI color codes
     });
 
     it('should group tasks by status', () => {
@@ -233,7 +237,12 @@ describe('PrettyPrintFormatter', () => {
     });
 
     it('should handle empty task list', () => {
-      const emptyList = { ...mockTodoList, items: [], totalItems: 0, completedItems: 0 };
+      const emptyList = {
+        ...mockTodoList,
+        items: [],
+        totalItems: 0,
+        completedItems: 0,
+      };
       const result = formatter.formatTaskList(emptyList);
 
       expect(result.content).toContain('No tasks found');
@@ -254,7 +263,13 @@ describe('PrettyPrintFormatter', () => {
 
       const lines = result.content.split('\n');
       // Most lines should respect the width limit (allowing some flexibility for formatting)
-      const longLines = lines.filter(line => line.replace(/\x1b\[[0-9;]*m/g, '').length > 50);
+      const longLines = lines.filter(
+        line =>
+          line.replace(
+            new RegExp(String.fromCharCode(27) + '\\[[0-9;]*m', 'g'),
+            ''
+          ).length > 50
+      );
       expect(longLines.length).toBeLessThan(lines.length / 2);
     });
   });
@@ -377,7 +392,7 @@ describe('PrettyPrintFormatter', () => {
       const options: Partial<FormatOptions> = { colorize: true };
       const result = formatter.formatProgressBar(2, 5, options);
 
-      expect(result).toContain('\x1b['); // ANSI color codes
+      expect(result).toContain('\u001b['); // ANSI color codes
       expect(result).toContain('40%');
     });
   });
@@ -418,7 +433,7 @@ describe('PrettyPrintFormatter', () => {
       const options: Partial<FormatOptions> = { colorize: true };
       const result = formatter.formatActionPlan(mockActionPlan, options);
 
-      expect(result).toContain('\x1b['); // ANSI color codes
+      expect(result).toContain('\u001b['); // ANSI color codes
     });
   });
 
@@ -444,7 +459,10 @@ describe('PrettyPrintFormatter', () => {
         description: longText,
       };
 
-      const options: Partial<FormatOptions> = { maxWidth: 80, truncateNotes: 50 };
+      const options: Partial<FormatOptions> = {
+        maxWidth: 80,
+        truncateNotes: 50,
+      };
       const result = formatter.formatTask(taskWithLongContent, options);
 
       expect(result.content).toContain('...');

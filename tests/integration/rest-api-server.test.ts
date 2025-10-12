@@ -3,14 +3,15 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
 import { RestApiServer } from '../../src/app/rest-api-server.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
+import { ActionPlanManager } from '../../src/domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
-import { ActionPlanManager } from '../../src/domain/tasks/action-plan-manager.js';
 import { NotesManager } from '../../src/domain/tasks/notes-manager.js';
-import { IntelligenceManager } from '../../src/domain/intelligence/intelligence-manager.js';
 import { StorageFactory } from '../../src/infrastructure/storage/storage-factory.js';
+
 import type { StorageBackend } from '../../src/shared/types/storage.js';
 
 describe('REST API Server', () => {
@@ -21,7 +22,6 @@ describe('REST API Server', () => {
   let exitCriteriaManager: ExitCriteriaManager;
   let actionPlanManager: ActionPlanManager;
   let notesManager: NotesManager;
-  let intelligenceManager: IntelligenceManager;
 
   beforeAll(async () => {
     // Initialize storage with memory backend for testing
@@ -36,7 +36,6 @@ describe('REST API Server', () => {
     exitCriteriaManager = new ExitCriteriaManager(storage);
     actionPlanManager = new ActionPlanManager(storage);
     notesManager = new NotesManager(storage);
-    intelligenceManager = new IntelligenceManager();
 
     // Create server
     server = new RestApiServer(
@@ -48,8 +47,7 @@ describe('REST API Server', () => {
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,
-      notesManager,
-      intelligenceManager
+      notesManager
     );
 
     // Initialize routes before starting

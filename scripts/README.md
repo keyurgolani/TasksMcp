@@ -62,6 +62,7 @@ scripts/
 ## 🔄 Development Workflows
 
 ### Available Workflows
+
 - **quick-check**: Quick development check (lint + unit tests)
 - **full-test**: Complete testing suite (all tests + validation)
 - **pre-commit**: Pre-commit validation (lint + tests + validation)
@@ -72,11 +73,13 @@ scripts/
 ## 📋 Script Categories
 
 ### 🔨 Build Scripts
+
 - **dev**: Build for development with source maps
 - **prod**: Build for production with minification
 - **clean**: Clean build artifacts
 
 ### 🧪 Test Scripts
+
 - **all**: Run all tests (unit, integration, performance)
 - **unit**: Run unit tests only
 - **integration**: Run integration tests only
@@ -84,30 +87,36 @@ scripts/
 - **watch**: Run tests in watch mode
 
 ### ✅ Validation Scripts
+
 - **project**: Validate project structure and configuration
 - **lint**: Run TypeScript linting
 
 ### 🧹 Clean Scripts
+
 - **basic**: Remove logs, temp files, OS artifacts
 - **deep**: Deep cleanup including node_modules
 - **build**: Clean build artifacts only
 
 ### 📦 Version Scripts
+
 - **sync**: Synchronize version across all project files
 - **update**: Update version and sync all files
 
 ### 🚀 Deploy Scripts
+
 - **prepare**: Prepare project for deployment
 - **staging**: Deploy to staging environment
 - **production**: Deploy to production environment
 
 ### 🛠️ Development Scripts
+
 - **start**: Start development server
 - **health**: Check application health
 
 ## 🎯 Usage Examples
 
 ### Development Workflow
+
 ```bash
 # Start development
 npm run script dev start
@@ -121,6 +130,7 @@ npm run script validate lint
 ```
 
 ### Build and Test Workflow
+
 ```bash
 # Clean previous build
 npm run script clean build
@@ -136,6 +146,7 @@ npm run script validate final
 ```
 
 ### Release Workflow
+
 ```bash
 # Update version
 npm run script version update
@@ -151,6 +162,7 @@ npm run script deploy production
 ```
 
 ### Maintenance Workflow
+
 ```bash
 # Deep cleanup
 npm run script clean deep
@@ -166,7 +178,9 @@ npm run script validate project
 ## 🔧 Adding New Scripts
 
 ### 1. Create the Script File
+
 Place your script in the appropriate category directory:
+
 ```bash
 # For a new test script
 touch scripts/test/my-new-test.sh
@@ -174,7 +188,9 @@ chmod +x scripts/test/my-new-test.sh
 ```
 
 ### 2. Update the Script Runner
+
 Add your script to the appropriate category in `scripts/run.js`:
+
 ```javascript
 test: {
   description: 'Testing and validation scripts',
@@ -189,7 +205,9 @@ test: {
 ```
 
 ### 3. Add NPM Script (Optional)
+
 For frequently used scripts, add a direct npm script in `package.json`:
+
 ```json
 {
   "scripts": {
@@ -201,12 +219,15 @@ For frequently used scripts, add a direct npm script in `package.json`:
 ## 🎨 Script Conventions
 
 ### File Naming
+
 - Use kebab-case for script files: `validate-project.sh`
 - Use descriptive names that indicate purpose
 - Include file extension (`.sh` for shell, `.js` for Node.js)
 
 ### Script Structure
+
 All scripts should follow this structure:
+
 ```bash
 #!/bin/bash
 # Script Description
@@ -225,12 +246,14 @@ echo "🚀 Starting script..."
 ```
 
 ### Error Handling
+
 - Always use `set -e` to exit on errors
 - Provide meaningful error messages
 - Use colored output for better UX
 - Return appropriate exit codes
 
 ### Documentation
+
 - Include header comment explaining purpose
 - Document any parameters or environment variables
 - Provide usage examples in comments
@@ -238,17 +261,20 @@ echo "🚀 Starting script..."
 ## 🔍 Troubleshooting
 
 ### Permission Issues
+
 ```bash
 # Make scripts executable
 chmod +x scripts/**/*.sh
 ```
 
 ### Path Issues
+
 - All script paths are relative to project root
 - Use `__dirname` in Node.js scripts for reliable paths
 - Test scripts from project root directory
 
 ### Environment Issues
+
 - Ensure Node.js version compatibility (>=18.0.0)
 - Check that all dependencies are installed
 - Verify environment variables are set correctly

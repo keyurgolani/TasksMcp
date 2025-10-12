@@ -2,7 +2,6 @@
  * In-memory storage backend for development and testing
  */
 
-import type { TodoList, TodoListSummary, TodoItem } from '../../shared/types/todo.js';
 import {
   StorageBackend,
   type SaveOptions,
@@ -10,6 +9,12 @@ import {
   type ListOptions,
 } from '../../shared/types/storage.js';
 import { logger } from '../../shared/utils/logger.js';
+
+import type {
+  TodoList,
+  TodoListSummary,
+  TodoItem,
+} from '../../shared/types/todo.js';
 
 export class MemoryStorageBackend extends StorageBackend {
   private readonly data: Map<string, TodoList> = new Map();
@@ -101,7 +106,10 @@ export class MemoryStorageBackend extends StorageBackend {
       }
 
       // Convert dates in list-level implementation notes
-      if (clonedData.implementationNotes && Array.isArray(clonedData.implementationNotes)) {
+      if (
+        clonedData.implementationNotes &&
+        Array.isArray(clonedData.implementationNotes)
+      ) {
         clonedData.implementationNotes.forEach(note => {
           if (note.createdAt) {
             note.createdAt = new Date(note.createdAt);
@@ -120,7 +128,10 @@ export class MemoryStorageBackend extends StorageBackend {
         }
 
         // Convert dates in item-level implementation notes
-        if (item.implementationNotes && Array.isArray(item.implementationNotes)) {
+        if (
+          item.implementationNotes &&
+          Array.isArray(item.implementationNotes)
+        ) {
           item.implementationNotes.forEach(note => {
             if (note.createdAt) {
               note.createdAt = new Date(note.createdAt);
@@ -139,7 +150,7 @@ export class MemoryStorageBackend extends StorageBackend {
           if (item.actionPlan.updatedAt) {
             item.actionPlan.updatedAt = new Date(item.actionPlan.updatedAt);
           }
-          
+
           // Convert dates in action plan steps
           if (item.actionPlan.steps && Array.isArray(item.actionPlan.steps)) {
             item.actionPlan.steps.forEach(step => {
@@ -381,28 +392,30 @@ export class MemoryStorageBackend extends StorageBackend {
     logger.info('MemoryStorageBackend shutdown completed');
   }
 
-  async loadAllData(): Promise<import('../../shared/types/storage.js').StorageData> {
+  async loadAllData(): Promise<
+    import('../../shared/types/storage.js').StorageData
+  > {
     const todoLists: TodoList[] = [];
-    
+
     for (const [key, data] of this.data.entries()) {
       if (!key.includes('_backup_')) {
         todoLists.push(data);
       }
     }
-    
+
     return {
       version: '1.0',
-      todoLists
+      todoLists,
     };
   }
 
-  async saveAllData(data: import('../../shared/types/storage.js').StorageData): Promise<void> {
+  async saveAllData(
+    data: import('../../shared/types/storage.js').StorageData
+  ): Promise<void> {
     this.data.clear();
-    
+
     for (const list of data.todoLists) {
       this.data.set(list.id, list);
     }
   }
-
-
 }

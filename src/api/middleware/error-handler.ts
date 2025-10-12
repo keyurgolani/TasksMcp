@@ -2,11 +2,17 @@
  * Global error handling middleware
  */
 
-import type { Request, Response, NextFunction } from 'express';
-import type { ApiRequest, ApiResponse, ApiError as ApiErrorType } from '../../shared/types/api.js';
-import { logger } from '../../shared/utils/logger.js';
 import { ZodError } from 'zod';
+
 import { ApiError } from '../../shared/errors/api-error.js';
+import { logger } from '../../shared/utils/logger.js';
+
+import type {
+  ApiRequest,
+  ApiResponse,
+  ApiError as ApiErrorType,
+} from '../../shared/types/api.js';
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * Error codes for different error types
@@ -45,7 +51,7 @@ export class ApiErrorClass extends Error {
 /**
  * Format Zod validation errors into a more readable format
  */
-function formatZodErrors(errors: ZodError['errors']): Array<{
+function formatZodErrors(errors: ZodError['issues']): Array<{
   field: string;
   message: string;
   code: string;
@@ -66,7 +72,7 @@ function categorizeError(err: Error): {
   message: string;
 } {
   const message = err.message.toLowerCase();
-  
+
   // Check for specific error patterns
   if (message.includes('not found')) {
     return {
@@ -75,7 +81,7 @@ function categorizeError(err: Error): {
       message: err.message,
     };
   }
-  
+
   if (message.includes('archived')) {
     return {
       statusCode: 409,
@@ -83,7 +89,7 @@ function categorizeError(err: Error): {
       message: err.message,
     };
   }
-  
+
   if (message.includes('circular dependency')) {
     return {
       statusCode: 400,
@@ -91,7 +97,7 @@ function categorizeError(err: Error): {
       message: err.message,
     };
   }
-  
+
   if (message.includes('depend') && message.includes('not completed')) {
     return {
       statusCode: 409,
@@ -99,7 +105,7 @@ function categorizeError(err: Error): {
       message: err.message,
     };
   }
-  
+
   if (message.includes('exit criteria') && message.includes('not met')) {
     return {
       statusCode: 409,
@@ -107,7 +113,7 @@ function categorizeError(err: Error): {
       message: err.message,
     };
   }
-  
+
   if (message.includes('invalid') || message.includes('required')) {
     return {
       statusCode: 400,
@@ -115,7 +121,7 @@ function categorizeError(err: Error): {
       message: err.message,
     };
   }
-  
+
   // Default to internal error
   return {
     statusCode: 500,
@@ -134,13 +140,13 @@ export function errorHandlerMiddleware(
   _next: NextFunction
 ): void {
   const apiReq = req as ApiRequest;
-  
+
   // Determine error details
   let statusCode = 500;
   let errorCode = ErrorCode.INTERNAL_ERROR;
   let message = 'An internal server error occurred';
   let details: unknown = undefined;
-  
+
   if (err instanceof ApiError) {
     // Handle our ApiError class from shared/errors
     statusCode = err.statusCode;
@@ -159,8 +165,8 @@ export function errorHandlerMiddleware(
     errorCode = ErrorCode.VALIDATION_ERROR;
     message = 'Request validation failed';
     details = {
-      errors: formatZodErrors(err.errors),
-      count: err.errors.length,
+      errors: formatZodErrors(err.issues),
+      count: err.issues.length,
     };
   } else {
     // Categorize other errors based on message patterns
@@ -169,7 +175,7 @@ export function errorHandlerMiddleware(
     errorCode = categorized.errorCode;
     message = categorized.message;
   }
-  
+
   // Log error with full context
   const logLevel = statusCode >= 500 ? 'error' : 'warn';
   logger[logLevel]('Request error', {
@@ -186,19 +192,19 @@ export function errorHandlerMiddleware(
     ip: req.ip,
     duration: Date.now() - apiReq.startTime,
   });
-  
+
   // Build error response
   const apiError: ApiErrorType = {
     code: errorCode,
     message,
     details,
   };
-  
+
   // Include stack trace in development
   if (process.env['NODE_ENV'] === 'development') {
     apiError.stack = err.stack ?? undefined;
   }
-  
+
   const response: ApiResponse = {
     success: false,
     error: apiError,
@@ -208,7 +214,7 @@ export function errorHandlerMiddleware(
       duration: Date.now() - apiReq.startTime,
     },
   };
-  
+
   res.status(statusCode).json(response);
 }
 

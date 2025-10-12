@@ -4,19 +4,24 @@
 
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
-import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
+
 import {
   StorageBackend,
   type SaveOptions,
   type LoadOptions,
   type ListOptions,
 } from '../../shared/types/storage.js';
-import { logger } from '../../shared/utils/logger.js';
-import { memoryCleanupManager, MemoryUtils } from '../../shared/utils/memory-cleanup.js';
-import { memoryLeakPrevention } from '../../shared/utils/memory-leak-prevention.js';
 import { FileLock } from '../../shared/utils/file-lock.js';
-import { RetryLogic } from '../../shared/utils/retry-logic.js';
 import { JsonOptimizer } from '../../shared/utils/json-optimizer.js';
+import { logger } from '../../shared/utils/logger.js';
+import {
+  memoryCleanupManager,
+  MemoryUtils,
+} from '../../shared/utils/memory-cleanup.js';
+import { memoryLeakPrevention } from '../../shared/utils/memory-leak-prevention.js';
+import { RetryLogic } from '../../shared/utils/retry-logic.js';
+
+import type { TodoList, TodoListSummary } from '../../shared/types/todo.js';
 
 export interface FileStorageConfig {
   dataDirectory: string;
@@ -730,7 +735,7 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  // Helper method to get storage statistics (useful for monitoring)
+  // Helper method to get storage statistics
   async getStats(): Promise<{
     totalLists: number;
     archivedLists: number;
@@ -871,8 +876,6 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-
-
   /**
    * Shutdown file storage and cleanup resources
    */
@@ -1010,7 +1013,6 @@ export class FileStorageBackend extends StorageBackend {
   /**
    * Attempt to recover from permission errors
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async recoverPermissionError(_event: {
     context: unknown;
     error: Error;
@@ -1032,7 +1034,6 @@ export class FileStorageBackend extends StorageBackend {
   /**
    * Attempt to recover from disk space errors
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async recoverDiskSpaceError(_event: {
     context: unknown;
     error: Error;
@@ -1069,7 +1070,6 @@ export class FileStorageBackend extends StorageBackend {
   /**
    * Attempt to recover from lock errors
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async recoverLockError(_event: {
     context: unknown;
     error: Error;
@@ -1127,6 +1127,7 @@ export class FileStorageBackend extends StorageBackend {
             analytics: {
               totalItems: 0,
               completedItems: 0,
+              pendingItems: 0,
               inProgressItems: 0,
               blockedItems: 0,
               progress: 0,
@@ -1136,7 +1137,7 @@ export class FileStorageBackend extends StorageBackend {
                 itemsPerDay: 0,
                 completionRate: 0,
               },
-              complexityDistribution: {},
+
               tagFrequency: {},
               dependencyGraph: [],
             },
@@ -1245,28 +1246,31 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  async loadAllData(): Promise<import('../../shared/types/storage.js').StorageData> {
+  async loadAllData(): Promise<
+    import('../../shared/types/storage.js').StorageData
+  > {
     const lists = await this.list({ includeArchived: true });
     const todoLists: TodoList[] = [];
-    
+
     for (const summary of lists) {
       const list = await this.load(summary.id);
       if (list) {
         todoLists.push(list);
       }
     }
-    
+
     return {
       version: '1.0',
-      todoLists
+      todoLists,
     };
   }
 
-  async saveAllData(data: import('../../shared/types/storage.js').StorageData, options?: SaveOptions): Promise<void> {
+  async saveAllData(
+    data: import('../../shared/types/storage.js').StorageData,
+    options?: SaveOptions
+  ): Promise<void> {
     for (const list of data.todoLists) {
       await this.save(list.id, list, options);
     }
   }
-
-
 }

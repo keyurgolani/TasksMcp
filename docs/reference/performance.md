@@ -6,42 +6,42 @@ This guide covers performance characteristics, optimization techniques, and scal
 
 ### Response Times
 
-| Operation Type | Target | Typical | Maximum Tested |
-|----------------|--------|---------|----------------|
-| **Create Operations** | < 10ms | 5ms | 25ms |
-| **Read Operations** | < 5ms | 2ms | 15ms |
-| **Update Operations** | < 10ms | 6ms | 30ms |
-| **Delete Operations** | < 10ms | 4ms | 20ms |
-| **Search Operations** | < 50ms | 25ms | 100ms |
-| **Complex Analysis** | < 100ms | 75ms | 200ms |
+| Operation Type        | Target  | Typical | Maximum Tested |
+| --------------------- | ------- | ------- | -------------- |
+| **Create Operations** | < 10ms  | 5ms     | 25ms           |
+| **Read Operations**   | < 5ms   | 2ms     | 15ms           |
+| **Update Operations** | < 10ms  | 6ms     | 30ms           |
+| **Delete Operations** | < 10ms  | 4ms     | 20ms           |
+| **Search Operations** | < 50ms  | 25ms    | 100ms          |
+| **Complex Analysis**  | < 100ms | 75ms    | 200ms          |
 
 ### Throughput
 
-| Metric | Target | Typical | Maximum Tested |
-|--------|--------|---------|----------------|
-| **Operations/Second** | 900+ | 894 | 2500+ |
-| **Concurrent Requests** | 100+ | 150 | 300+ |
-| **Sustained Load** | 1200 ops/min | 1180 ops/min | 2000+ ops/min |
+| Metric                  | Target       | Typical      | Maximum Tested |
+| ----------------------- | ------------ | ------------ | -------------- |
+| **Operations/Second**   | 900+         | 894          | 2500+          |
+| **Concurrent Requests** | 100+         | 150          | 300+           |
+| **Sustained Load**      | 1200 ops/min | 1180 ops/min | 2000+ ops/min  |
 
 ### Memory Usage
 
-| Scenario | Target | Typical | Maximum Tested |
-|----------|--------|---------|----------------|
-| **Idle State** | < 100MB | 85MB | 120MB |
-| **Normal Operation** | < 200MB | 145MB | 180MB |
-| **Heavy Load** | < 400MB | 320MB | 480MB |
-| **Large Datasets** | < 600MB | 450MB | 800MB |
+| Scenario             | Target  | Typical | Maximum Tested |
+| -------------------- | ------- | ------- | -------------- |
+| **Idle State**       | < 100MB | 85MB    | 120MB          |
+| **Normal Operation** | < 200MB | 145MB   | 180MB          |
+| **Heavy Load**       | < 400MB | 320MB   | 480MB          |
+| **Large Datasets**   | < 600MB | 450MB   | 800MB          |
 
 ### Data Volume Limits
 
-| Resource | Recommended | Maximum Tested | Hard Limit |
-|----------|-------------|----------------|------------|
-| **Tasks per List** | 1,000 | 10,000 | 50,000 |
-| **Total Lists** | 100 | 1,000 | Unlimited* |
-| **Search Results** | 100 | 1,000 | 10,000 |
-| **Bulk Operations** | 50 | 100 | 500 |
+| Resource            | Recommended | Maximum Tested | Hard Limit  |
+| ------------------- | ----------- | -------------- | ----------- |
+| **Tasks per List**  | 1,000       | 10,000         | 50,000      |
+| **Total Lists**     | 100         | 1,000          | Unlimited\* |
+| **Search Results**  | 100         | 1,000          | 10,000      |
+| **Bulk Operations** | 50          | 100            | 500         |
 
-*Limited by available storage space
+\*Limited by available storage space
 
 ## 🚀 Optimization Techniques
 
@@ -50,6 +50,7 @@ This guide covers performance characteristics, optimization techniques, and scal
 #### Use Efficient Tools
 
 **Recommended:**
+
 ```json
 // Use unified search tool
 {
@@ -63,6 +64,7 @@ This guide covers performance characteristics, optimization techniques, and scal
 ```
 
 **Avoid:**
+
 ```json
 // Don't use multiple separate calls
 {
@@ -71,7 +73,7 @@ This guide covers performance characteristics, optimization techniques, and scal
 }
 // followed by
 {
-  "tool": "filter_tasks", 
+  "tool": "filter_tasks",
   "parameters": {"priority": 4}
 }
 ```
@@ -79,21 +81,23 @@ This guide covers performance characteristics, optimization techniques, and scal
 #### Bulk Operations
 
 **Efficient:**
+
 ```json
 {
   "tool": "bulk_task_operations",
   "parameters": {
     "listId": "project-id",
     "operations": [
-      {"type": "create", "data": {"title": "Task 1"}},
-      {"type": "create", "data": {"title": "Task 2"}},
-      {"type": "create", "data": {"title": "Task 3"}}
+      { "type": "create", "data": { "title": "Task 1" } },
+      { "type": "create", "data": { "title": "Task 2" } },
+      { "type": "create", "data": { "title": "Task 3" } }
     ]
   }
 }
 ```
 
 **Inefficient:**
+
 ```json
 // Multiple individual calls
 {"tool": "add_task", "parameters": {"title": "Task 1"}}
@@ -109,9 +113,9 @@ This guide covers performance characteristics, optimization techniques, and scal
 {
   "tool": "search_tool",
   "parameters": {
-    "listId": "specific-list",  // Limit scope
-    "status": ["pending"],      // Filter early
-    "limit": 20                 // Reasonable limit
+    "listId": "specific-list", // Limit scope
+    "status": ["pending"], // Filter early
+    "limit": 20 // Reasonable limit
   }
 }
 ```
@@ -158,12 +162,14 @@ This guide covers performance characteristics, optimization techniques, and scal
 #### Efficient Task Design
 
 **Good:**
+
 - Concise titles and descriptions
 - Reasonable number of tags (< 10)
 - Appropriate exit criteria (< 20)
 - Limited dependencies (< 10)
 
 **Poor:**
+
 - Extremely long descriptions (> 1000 chars)
 - Excessive tags (> 20)
 - Too many exit criteria (> 50)
@@ -172,12 +178,14 @@ This guide covers performance characteristics, optimization techniques, and scal
 #### List Organization
 
 **Efficient:**
+
 - Keep lists focused (< 1000 tasks)
 - Use meaningful project tags
 - Archive completed projects
 - Regular cleanup of old data
 
 **Inefficient:**
+
 - Massive lists (> 5000 tasks)
 - No organization or tagging
 - Never archive completed work
@@ -221,6 +229,7 @@ MAX_ITEMS_PER_LIST=500
 #### File Storage
 
 **Optimized Setup:**
+
 ```bash
 # Use SSD storage
 DATA_DIRECTORY=/fast/ssd/path/task-manager
@@ -233,6 +242,7 @@ find $DATA_DIRECTORY/backups -mtime +30 -delete
 ```
 
 **Performance Tips:**
+
 - Use SSD storage for data directory
 - Avoid network-mounted storage
 - Regular backup cleanup
@@ -241,12 +251,14 @@ find $DATA_DIRECTORY/backups -mtime +30 -delete
 #### Memory Storage
 
 **Use Cases:**
+
 - Development and testing
 - Temporary workflows
 - High-performance scenarios
 - CI/CD environments
 
 **Limitations:**
+
 - Data lost on restart
 - Memory usage grows with data
 - No persistence across sessions
@@ -266,21 +278,25 @@ export HEALTH_CHECK_INTERVAL=30000
 #### Key Metrics to Track
 
 **Response Times:**
+
 - Average response time per tool
 - 95th percentile response times
 - Slow query identification
 
 **Throughput:**
+
 - Requests per second
 - Operations per minute
 - Peak load handling
 
 **Resource Usage:**
+
 - Memory consumption
 - CPU utilization
 - Disk I/O patterns
 
 **Error Rates:**
+
 - Validation error frequency
 - System error rates
 - Recovery success rates
@@ -321,11 +337,13 @@ du -sh $DATA_DIRECTORY
 #### Slow Response Times
 
 **Symptoms:**
+
 - Operations taking > 1 second
 - Timeouts on requests
 - High CPU usage
 
 **Diagnosis:**
+
 ```bash
 # Enable debug logging
 export MCP_LOG_LEVEL=debug
@@ -338,6 +356,7 @@ find $DATA_DIRECTORY -name "*.json" | wc -l
 ```
 
 **Solutions:**
+
 1. **Reduce data volume**: Archive old projects
 2. **Optimize queries**: Use specific filters
 3. **Increase limits**: Adjust system resources
@@ -346,11 +365,13 @@ find $DATA_DIRECTORY -name "*.json" | wc -l
 #### High Memory Usage
 
 **Symptoms:**
+
 - Memory usage > 500MB
 - Out of memory errors
 - System slowdown
 
 **Diagnosis:**
+
 ```bash
 # Monitor memory over time
 while true; do
@@ -360,6 +381,7 @@ done
 ```
 
 **Solutions:**
+
 1. **Restart server**: Clear memory leaks
 2. **Reduce cache size**: Lower cache limits
 3. **Use memory storage**: For testing only
@@ -368,11 +390,13 @@ done
 #### Storage Performance Issues
 
 **Symptoms:**
+
 - Slow file operations
 - High disk I/O wait
 - Storage errors
 
 **Diagnosis:**
+
 ```bash
 # Check disk performance
 iostat -x 1
@@ -385,6 +409,7 @@ time ls -la $DATA_DIRECTORY
 ```
 
 **Solutions:**
+
 1. **Use SSD storage**: Faster disk access
 2. **Clean up backups**: Remove old backup files
 3. **Optimize file system**: Use appropriate file system
@@ -397,16 +422,19 @@ time ls -la $DATA_DIRECTORY
 #### Hardware Optimization
 
 **CPU:**
+
 - Multi-core processors benefit bulk operations
 - Higher clock speeds improve single-threaded performance
 - ARM processors (Apple Silicon) show excellent performance
 
 **Memory:**
+
 - 2GB+ recommended for production
 - 4GB+ for large datasets
 - Monitor memory usage patterns
 
 **Storage:**
+
 - SSD strongly recommended
 - NVMe for highest performance
 - Network storage adds latency
@@ -414,6 +442,7 @@ time ls -la $DATA_DIRECTORY
 #### Software Optimization
 
 **Node.js Tuning:**
+
 ```bash
 # Increase memory limit
 export NODE_OPTIONS="--max-old-space-size=2048"
@@ -423,6 +452,7 @@ export NODE_ENV=production
 ```
 
 **System Tuning:**
+
 ```bash
 # Increase file descriptor limits
 ulimit -n 4096
@@ -436,27 +466,31 @@ mount -o noatime /dev/ssd /data
 #### Multiple Instances
 
 **Use Cases:**
+
 - Different projects/teams
 - Development vs. production
 - Geographic distribution
 
 **Setup:**
+
 ```bash
 # Instance 1: Development
 NODE_ENV=development DATA_DIRECTORY=./dev-data npx task-list-mcp@latest
 
-# Instance 2: Production  
+# Instance 2: Production
 NODE_ENV=production DATA_DIRECTORY=/prod/data npx task-list-mcp@latest
 ```
 
 #### Load Distribution
 
 **Strategies:**
+
 - Separate instances per project
 - Read/write instance separation
 - Geographic distribution
 
 **Considerations:**
+
 - No built-in clustering
 - Data synchronization challenges
 - Client configuration complexity

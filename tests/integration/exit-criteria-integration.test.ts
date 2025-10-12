@@ -4,29 +4,20 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createTodoListManager } from '../utils/test-helpers.js';
+
+import { handleAddTask } from '../../src/api/handlers/add-task.js';
+import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
+import { handleGetList } from '../../src/api/handlers/get-list.js';
+import { handleSetTaskExitCriteria } from '../../src/api/handlers/set-task-exit-criteria.js';
+import { handleUpdateExitCriteria } from '../../src/api/handlers/update-exit-criteria.js';
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import { TestCleanup } from '../setup.js';
 import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleAddTask } from '../../src/api/handlers/add-task.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleSetTaskExitCriteria } from '../../src/api/handlers/set-task-exit-criteria.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleUpdateExitCriteria } from '../../src/api/handlers/update-exit-criteria.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleCompleteTask } from '../../src/api/handlers/complete-task.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { handleGetList } from '../../src/api/handlers/get-list.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
-import { ExitCriteriaManager } from '../../src/domain/tasks/exit-criteria-manager.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
+
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 import type { TodoList } from '../../src/shared/types/todo.js';
-import { createTodoListManager } from '../utils/test-helpers.js';
 
 describe('Exit Criteria Integration Tests', () => {
   let todoListManager: TodoListManager;
@@ -62,6 +53,7 @@ describe('Exit Criteria Integration Tests', () => {
   /**
    * Helper function to make MCP tool calls
    */
+
   async function callTool(toolName: string, args: any) {
     const request: CallToolRequest = {
       method: 'tools/call',
@@ -98,19 +90,20 @@ describe('Exit Criteria Integration Tests', () => {
           'User can login with valid credentials',
           'User can logout successfully',
           'Password validation is implemented',
-          'Session management works correctly'
-        ]
+          'Session management works correctly',
+        ],
       });
 
       expect(result.isError).toBeFalsy();
       const taskData = JSON.parse(result.content[0]!.text);
-      
+
       expect(taskData.title).toBe('Implement user authentication');
       expect(taskData.exitCriteria).toHaveLength(5);
       expect(taskData.exitCriteriaProgress).toBe(0);
       expect(taskData.canComplete).toBe(false);
-      
+
       // Verify all criteria are initially unmet
+
       taskData.exitCriteria.forEach((criteria: any) => {
         expect(criteria.isMet).toBe(false);
         expect(criteria.description).toBeTruthy();
@@ -122,12 +115,12 @@ describe('Exit Criteria Integration Tests', () => {
       const result = await callTool('add_task', {
         listId: testList.id,
         title: 'Simple task without criteria',
-        description: 'A basic task'
+        description: 'A basic task',
       });
 
       expect(result.isError).toBeFalsy();
       const taskData = JSON.parse(result.content[0]!.text);
-      
+
       expect(taskData.title).toBe('Simple task without criteria');
       // Tasks without exit criteria should still have the field, just empty
       expect(taskData.exitCriteria || []).toHaveLength(0);
@@ -145,13 +138,9 @@ describe('Exit Criteria Integration Tests', () => {
         listId: testList.id,
         title: 'Test Task',
         description: 'Task for testing exit criteria management',
-        exitCriteria: [
-          'First criteria',
-          'Second criteria',
-          'Third criteria'
-        ]
+        exitCriteria: ['First criteria', 'Second criteria', 'Third criteria'],
       });
-      
+
       const taskData = JSON.parse(result.content[0]!.text);
       taskId = taskData.id;
     });
@@ -160,15 +149,12 @@ describe('Exit Criteria Integration Tests', () => {
       const result = await callTool('set_task_exit_criteria', {
         listId: testList.id,
         taskId: taskId,
-        exitCriteria: [
-          'New first criteria',
-          'New second criteria'
-        ]
+        exitCriteria: ['New first criteria', 'New second criteria'],
       });
 
       expect(result.isError).toBeFalsy();
       const response = JSON.parse(result.content[0]!.text);
-      
+
       expect(response.exitCriteria).toHaveLength(2);
       expect(response.exitCriteria[0].description).toBe('New first criteria');
       expect(response.exitCriteria[1].description).toBe('New second criteria');
@@ -178,12 +164,14 @@ describe('Exit Criteria Integration Tests', () => {
 
     it('should update individual exit criteria status', async () => {
       // Get the current task to find criteria IDs
-      const fullList = await todoListManager.getTodoList({ listId: testList.id });
+      const fullList = await todoListManager.getTodoList({
+        listId: testList.id,
+      });
       const fullTask = fullList?.items.find(item => item.id === taskId);
       expect(fullTask).toBeDefined();
       expect(fullTask!.exitCriteria).toBeDefined();
       expect(fullTask!.exitCriteria).toHaveLength(3);
-      
+
       const firstCriteriaId = fullTask!.exitCriteria[0]!.id;
 
       // Mark first criteria as met using the handler
@@ -192,12 +180,12 @@ describe('Exit Criteria Integration Tests', () => {
         taskId: taskId,
         criteriaId: firstCriteriaId,
         isMet: true,
-        notes: 'Completed successfully'
+        notes: 'Completed successfully',
       });
 
       expect(updateResult.isError).toBeFalsy();
       const response = JSON.parse(updateResult.content[0]!.text);
-      
+
       expect(response.isMet).toBe(true);
       expect(response.notes).toBe('Completed successfully');
       expect(response.taskCanComplete).toBe(false); // Still 2 unmet criteria
@@ -207,12 +195,12 @@ describe('Exit Criteria Integration Tests', () => {
     it('should prevent task completion when criteria are unmet', async () => {
       const result = await callTool('complete_task', {
         listId: testList.id,
-        taskId: taskId
+        taskId: taskId,
       });
 
       expect(result.isError).toBe(true);
       const errorData = JSON.parse(result.content[0]!.text);
-      
+
       expect(errorData.error).toBe('Cannot complete task');
       expect(errorData.reason).toContain('exit criteria still need to be met');
       expect(errorData.unmetCriteria).toHaveLength(3);
@@ -220,7 +208,9 @@ describe('Exit Criteria Integration Tests', () => {
 
     it('should allow task completion when all criteria are met', async () => {
       // Get the current task to find criteria IDs
-      const fullList = await todoListManager.getTodoList({ listId: testList.id });
+      const fullList = await todoListManager.getTodoList({
+        listId: testList.id,
+      });
       const task = fullList?.items.find(item => item.id === taskId);
       expect(task).toBeDefined();
       expect(task!.exitCriteria).toBeDefined();
@@ -231,19 +221,19 @@ describe('Exit Criteria Integration Tests', () => {
           listId: testList.id,
           taskId: taskId,
           criteriaId: criteria.id,
-          isMet: true
+          isMet: true,
         });
       }
 
       // Now try to complete the task
       const result = await callTool('complete_task', {
         listId: testList.id,
-        taskId: taskId
+        taskId: taskId,
       });
 
       expect(result.isError).toBeFalsy();
       const taskData = JSON.parse(result.content[0]!.text);
-      
+
       expect(taskData.status).toBe('completed');
       expect(taskData.completedAt).toBeTruthy();
     });
@@ -283,22 +273,33 @@ describe('Exit Criteria Integration Tests', () => {
         { id: '2', description: 'Test 2', isMet: false, order: 1 },
       ];
 
-      const suggestion = exitCriteriaManager.suggestTaskCompletionReadiness(unmetCriteria);
-      
+      const suggestion =
+        exitCriteriaManager.suggestTaskCompletionReadiness(unmetCriteria);
+
       expect(suggestion.canComplete).toBe(false);
-      expect(suggestion.reason).toContain('2 exit criteria still need to be met');
+      expect(suggestion.reason).toContain(
+        '2 exit criteria still need to be met'
+      );
       expect(suggestion.unmetCriteria).toHaveLength(2);
-      expect(suggestion.recommendation).toContain('Complete all remaining exit criteria');
+      expect(suggestion.recommendation).toContain(
+        'Complete all remaining exit criteria'
+      );
     });
 
     it('should format criteria for display', () => {
       const criteria = [
-        { id: '1', description: 'First task', isMet: true, order: 0, metAt: new Date() },
+        {
+          id: '1',
+          description: 'First task',
+          isMet: true,
+          order: 0,
+          metAt: new Date(),
+        },
         { id: '2', description: 'Second task', isMet: false, order: 1 },
       ];
 
       const formatted = exitCriteriaManager.formatCriteriaForDisplay(criteria);
-      
+
       expect(formatted).toContain('Exit Criteria Progress: 1/2 (50%)');
       expect(formatted).toContain('✅ First task');
       expect(formatted).toContain('❌ Second task');
@@ -310,7 +311,7 @@ describe('Exit Criteria Integration Tests', () => {
       const result = await callTool('set_task_exit_criteria', {
         listId: testList.id,
         taskId: 'non-existent-task',
-        exitCriteria: []
+        exitCriteria: [],
       });
 
       expect(result.isError).toBe(true);
@@ -318,7 +319,7 @@ describe('Exit Criteria Integration Tests', () => {
 
     it('should validate exit criteria descriptions', async () => {
       const exitCriteriaManager = new ExitCriteriaManager();
-      
+
       await expect(async () => {
         await exitCriteriaManager.createExitCriteria({
           taskId: 'test',
@@ -339,9 +340,9 @@ describe('Exit Criteria Integration Tests', () => {
       const taskResult = await callTool('add_task', {
         listId: testList.id,
         title: 'Test Task',
-        exitCriteria: ['Test criteria']
+        exitCriteria: ['Test criteria'],
       });
-      
+
       const taskData = JSON.parse(taskResult.content[0]!.text);
 
       // Try to update non-existent criteria
@@ -349,7 +350,7 @@ describe('Exit Criteria Integration Tests', () => {
         listId: testList.id,
         taskId: taskData.id,
         criteriaId: 'non-existent-criteria-id',
-        isMet: true
+        isMet: true,
       });
 
       expect(result.isError).toBe(true);
@@ -363,22 +364,22 @@ describe('Exit Criteria Integration Tests', () => {
       const result = await callTool('add_task', {
         listId: testList.id,
         title: 'Legacy Task',
-        description: 'Task created before exit criteria feature'
+        description: 'Task created before exit criteria feature',
       });
 
       expect(result.isError).toBeFalsy();
       const taskData = JSON.parse(result.content[0]!.text);
-      
+
       // Should have empty exit criteria array
       expect(taskData.exitCriteria || []).toHaveLength(0);
       expect(taskData.canComplete).toBe(true);
-      
+
       // Should be able to complete immediately
       const completeResult = await callTool('complete_task', {
         listId: testList.id,
-        taskId: taskData.id
+        taskId: taskData.id,
       });
-      
+
       expect(completeResult.isError).toBeFalsy();
     });
   });

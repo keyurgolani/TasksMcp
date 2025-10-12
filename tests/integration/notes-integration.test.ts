@@ -3,12 +3,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { TodoListManager } from '../../src/domain/lists/todo-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { TestCleanup } from '../setup.js';
 import { Priority, TaskStatus } from '../../src/shared/types/todo.js';
-import type { ImplementationNote } from '../../src/shared/types/todo.js';
+import { TestCleanup } from '../setup.js';
 import { createTodoListManager } from '../utils/test-helpers.js';
+
+import type { ImplementationNote as _ImplementationNote } from '../../src/shared/types/todo.js';
 
 describe('Notes Integration Tests', () => {
   let todoListManager: TodoListManager;
@@ -19,7 +21,7 @@ describe('Notes Integration Tests', () => {
     await storage.initialize();
     todoListManager = createTodoListManager(storage);
     await todoListManager.initialize();
-    
+
     // Register for automatic cleanup
     TestCleanup.registerStorage(storage);
     TestCleanup.registerManager(todoListManager);
@@ -74,7 +76,8 @@ describe('Notes Integration Tests', () => {
       await todoListManager.updateTodoList({
         listId: createResult.id,
         action: 'add_list_note',
-        noteContent: 'This is a list-level implementation note with important details about the project setup',
+        noteContent:
+          'This is a list-level implementation note with important details about the project setup',
         noteType: 'technical',
       });
 
@@ -95,16 +98,22 @@ describe('Notes Integration Tests', () => {
       expect(result?.implementationNotes).toHaveLength(2);
 
       // Check that notes are properly formatted
-      const technicalNote = result?.implementationNotes?.find(note => note.type === 'technical');
+      const technicalNote = result?.implementationNotes?.find(
+        note => note.type === 'technical'
+      );
       expect(technicalNote).toBeDefined();
       expect(technicalNote).toMatchObject({
         type: 'technical',
         isTruncated: false,
       });
-      expect(technicalNote?.content).toContain('list-level implementation note');
+      expect(technicalNote?.content).toContain(
+        'list-level implementation note'
+      );
       expect(technicalNote?.createdAt).toBeInstanceOf(Date);
 
-      const decisionNote = result?.implementationNotes?.find(note => note.type === 'decision');
+      const decisionNote = result?.implementationNotes?.find(
+        note => note.type === 'decision'
+      );
       expect(decisionNote).toBeDefined();
       expect(decisionNote).toMatchObject({
         type: 'decision',
@@ -134,7 +143,8 @@ describe('Notes Integration Tests', () => {
         listId: createResult.id,
         action: 'add_task_note',
         itemId: taskId,
-        noteContent: 'This task requires careful consideration of the API design patterns',
+        noteContent:
+          'This task requires careful consideration of the API design patterns',
         noteType: 'technical',
       });
 
@@ -142,7 +152,8 @@ describe('Notes Integration Tests', () => {
         listId: createResult.id,
         action: 'add_task_note',
         itemId: taskId,
-        noteContent: 'Learning: Found that async/await pattern works better here',
+        noteContent:
+          'Learning: Found that async/await pattern works better here',
         noteType: 'learning',
       });
 
@@ -159,7 +170,9 @@ describe('Notes Integration Tests', () => {
       expect(taskWithNotes?.implementationNotes).toHaveLength(2);
 
       // Check that task notes are properly formatted
-      const technicalTaskNote = taskWithNotes?.implementationNotes?.find(note => note.type === 'technical');
+      const technicalTaskNote = taskWithNotes?.implementationNotes?.find(
+        note => note.type === 'technical'
+      );
       expect(technicalTaskNote).toBeDefined();
       expect(technicalTaskNote).toMatchObject({
         type: 'technical',
@@ -167,7 +180,9 @@ describe('Notes Integration Tests', () => {
       });
       expect(technicalTaskNote?.content).toContain('API design patterns');
 
-      const learningTaskNote = taskWithNotes?.implementationNotes?.find(note => note.type === 'learning');
+      const learningTaskNote = taskWithNotes?.implementationNotes?.find(
+        note => note.type === 'learning'
+      );
       expect(learningTaskNote).toBeDefined();
       expect(learningTaskNote).toMatchObject({
         type: 'learning',
@@ -190,8 +205,11 @@ describe('Notes Integration Tests', () => {
       });
 
       // Add a very long note using TodoListManager
-      const longContent = 'This is a very long implementation note that should be truncated when displayed in the todo list response. '.repeat(10);
-      
+      const longContent =
+        'This is a very long implementation note that should be truncated when displayed in the todo list response. '.repeat(
+          10
+        );
+
       await todoListManager.updateTodoList({
         listId: createResult.id,
         action: 'add_list_note',
@@ -297,18 +315,24 @@ describe('Notes Integration Tests', () => {
 
       // Check list-level notes
       expect(result?.implementationNotes).toHaveLength(1);
-      expect(result?.implementationNotes?.[0]?.content).toContain('list-level note');
+      expect(result?.implementationNotes?.[0]?.content).toContain(
+        'list-level note'
+      );
 
       // Check task-level notes
       expect(result?.items).toHaveLength(2);
-      
+
       const task1 = result?.items[0];
       expect(task1?.implementationNotes).toHaveLength(1);
-      expect(task1?.implementationNotes?.[0]?.content).toContain('specific to task 1');
+      expect(task1?.implementationNotes?.[0]?.content).toContain(
+        'specific to task 1'
+      );
 
       const task2 = result?.items[1];
       expect(task2?.implementationNotes).toHaveLength(1);
-      expect(task2?.implementationNotes?.[0]?.content).toContain('specific to task 2');
+      expect(task2?.implementationNotes?.[0]?.content).toContain(
+        'specific to task 2'
+      );
     });
 
     it('should maintain note formatting with filtering and pagination', async () => {
@@ -373,7 +397,9 @@ describe('Notes Integration Tests', () => {
       const pendingTask = result?.items[0];
       expect(pendingTask?.status).toBe(TaskStatus.PENDING);
       expect(pendingTask?.implementationNotes).toHaveLength(1);
-      expect(pendingTask?.implementationNotes?.[0]?.content).toContain('still pending');
+      expect(pendingTask?.implementationNotes?.[0]?.content).toContain(
+        'still pending'
+      );
     });
   });
 });

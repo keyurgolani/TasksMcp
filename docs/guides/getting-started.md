@@ -5,6 +5,7 @@ This guide will walk you through your first steps with the MCP Task Manager, fro
 ## Prerequisites
 
 Before starting, ensure you have:
+
 - ✅ **Installed the MCP Task Manager** - See [Installation Guide](installation.md)
 - ✅ **Configured your MCP client** - Claude Desktop, Kiro IDE, or custom client
 - ✅ **Verified the connection** - Server appears in available tools
@@ -27,6 +28,7 @@ Let's start by creating your first todo list and adding some tasks.
 ```
 
 **Response:**
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -59,6 +61,7 @@ Great! You've created your first todo list. Note the `id` - you'll use this to a
 ```
 
 **Response:**
+
 ```json
 {
   "id": "456e7890-e89b-12d3-a456-426614174001",
@@ -124,6 +127,7 @@ Excellent! You've added your first task. Let's add a few more to build a complet
 ```
 
 **Response:**
+
 ```
 📋 My First Project (3 tasks, 0% complete)
 
@@ -167,6 +171,7 @@ Let's complete the basic task:
 ```
 
 **Response:**
+
 ```json
 {
   "id": "456e7890-e89b-12d3-a456-426614174001",
@@ -189,6 +194,7 @@ Great! Now let's see what tasks are ready to work on:
 ```
 
 **Response:**
+
 ```json
 {
   "readyTasks": [
@@ -359,6 +365,7 @@ As your projects grow, you'll need to find specific tasks quickly:
 ```
 
 **Response:**
+
 ```
 📊 DEPENDENCY ANALYSIS
 
@@ -446,10 +453,12 @@ Get AI-powered insights about task complexity:
 ## 📋 Best Practices
 
 ### 1. Use Meaningful Titles and Descriptions
+
 - **Good**: "Implement user login with OAuth2 integration"
 - **Poor**: "Login stuff"
 
 ### 2. Set Appropriate Priorities
+
 - **5 (Critical)**: Urgent, blocking other work
 - **4 (High)**: Important, should be done soon
 - **3 (Medium)**: Normal priority, default
@@ -457,21 +466,25 @@ Get AI-powered insights about task complexity:
 - **1 (Minimal)**: Optional, lowest priority
 
 ### 3. Use Tags for Organization
+
 - **Project tags**: "frontend", "backend", "mobile"
 - **Type tags**: "bug", "feature", "documentation"
 - **Status tags**: "urgent", "blocked", "review-needed"
 
 ### 4. Set Realistic Time Estimates
+
 - Break large tasks into smaller, estimable pieces
 - Use past experience to guide estimates
 - Include buffer time for unexpected issues
 
 ### 5. Use Exit Criteria for Quality Control
+
 - Define clear completion requirements
 - Include testing and review steps
 - Ensure deliverables meet standards
 
 ### 6. Plan Dependencies Carefully
+
 - Only set true prerequisites as dependencies
 - Avoid circular dependencies
 - Use dependency analysis to optimize workflows
@@ -481,16 +494,22 @@ Get AI-powered insights about task complexity:
 ### Daily Planning Workflow
 
 1. **Check ready tasks**:
+
    ```json
-   {"tool": "get_ready_tasks", "parameters": {"listId": "project-id"}}
+   { "tool": "get_ready_tasks", "parameters": { "listId": "project-id" } }
    ```
 
 2. **Prioritize work**:
+
    ```json
-   {"tool": "search_tool", "parameters": {"isReady": true, "sortBy": "priority"}}
+   {
+     "tool": "search_tool",
+     "parameters": { "isReady": true, "sortBy": "priority" }
+   }
    ```
 
 3. **Update progress**:
+
    ```json
    {"tool": "update_exit_criteria", "parameters": {...}}
    ```
@@ -503,16 +522,19 @@ Get AI-powered insights about task complexity:
 ### Project Setup Workflow
 
 1. **Create project list**:
+
    ```json
-   {"tool": "create_list", "parameters": {"title": "New Project"}}
+   { "tool": "create_list", "parameters": { "title": "New Project" } }
    ```
 
 2. **Add initial tasks**:
+
    ```json
    {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
    ```
 
 3. **Set up dependencies**:
+
    ```json
    {"tool": "set_task_dependencies", "parameters": {...}}
    ```
@@ -525,13 +547,15 @@ Get AI-powered insights about task complexity:
 ### Review and Cleanup Workflow
 
 1. **Find completed tasks**:
+
    ```json
-   {"tool": "search_tool", "parameters": {"status": ["completed"]}}
+   { "tool": "search_tool", "parameters": { "status": ["completed"] } }
    ```
 
 2. **Archive old projects**:
+
    ```json
-   {"tool": "delete_list", "parameters": {"permanent": false}}
+   { "tool": "delete_list", "parameters": { "permanent": false } }
    ```
 
 3. **Update priorities**:
@@ -544,14 +568,17 @@ Get AI-powered insights about task complexity:
 ### Common Issues
 
 #### "List not found" Error
+
 - **Cause**: Using wrong list ID or list was deleted
 - **Solution**: Use `list_all_lists` to find correct ID
 
 #### "Task is blocked" Error
+
 - **Cause**: Task has incomplete dependencies
 - **Solution**: Use `get_ready_tasks` to find available work
 
 #### "Exit criteria not met" Error
+
 - **Cause**: Trying to complete task with unmet criteria
 - **Solution**: Use `update_exit_criteria` to mark criteria as complete
 
@@ -566,16 +593,19 @@ Get AI-powered insights about task complexity:
 Congratulations! You've learned the basics of the MCP Task Manager. Here's what to explore next:
 
 ### Intermediate Topics
+
 - **[Configuration Guide](configuration.md)** - Advanced setup options
 - **[Multi-Agent Orchestration](multi-agent.md)** - Coordinate multiple AI agents
 - **[Advanced Examples](../examples/advanced.md)** - Complex workflow patterns
 
 ### Advanced Topics
+
 - **[Performance Optimization](../reference/performance.md)** - Scale to large projects
 - **[Custom Integration](../examples/agents.md)** - Build custom AI agent workflows
 - **[Contributing](../../CONTRIBUTING.md)** - Help improve the project
 
 ### Practice Projects
+
 1. **Personal Task Management**: Organize your daily tasks
 2. **Team Project**: Coordinate work across team members
 3. **Software Development**: Manage development workflows

@@ -3,8 +3,15 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { TodoList, TodoItem, Priority, ImplementationNote } from '../../src/shared/types/todo.js';
+
 import { TaskStatus } from '../../src/shared/types/todo.js';
+
+import type {
+  TodoList,
+  TodoItem,
+  Priority,
+  ImplementationNote,
+} from '../../src/shared/types/todo.js';
 
 export interface DatasetOptions {
   listCount?: number;
@@ -16,13 +23,13 @@ export interface DatasetOptions {
 export class DefaultDatasetGenerator {
   private readonly priorities: Priority[] = [1, 2, 3, 4, 5];
   private readonly statuses: TaskStatus[] = [
-    TaskStatus.PENDING, 
-    TaskStatus.IN_PROGRESS, 
-    TaskStatus.COMPLETED, 
-    TaskStatus.BLOCKED, 
-    TaskStatus.CANCELLED
+    TaskStatus.PENDING,
+    TaskStatus.IN_PROGRESS,
+    TaskStatus.COMPLETED,
+    TaskStatus.BLOCKED,
+    TaskStatus.CANCELLED,
   ];
-  
+
   private readonly sampleTitles = [
     'Implement user authentication',
     'Fix database connection issues',
@@ -76,7 +83,12 @@ export class DefaultDatasetGenerator {
     const lists: TodoList[] = [];
 
     for (let i = 0; i < listCount; i++) {
-      const list = this.generateTodoList(i, tasksPerList, notesPerTask, projectTags);
+      const list = this.generateTodoList(
+        i,
+        tasksPerList,
+        notesPerTask,
+        projectTags
+      );
       lists.push(list);
     }
 
@@ -94,11 +106,16 @@ export class DefaultDatasetGenerator {
   ): TodoList {
     const listId = uuidv4();
     const now = new Date();
-    const createdAt = new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000); // Random date within last 30 days
-    
+    const createdAt = new Date(
+      now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000
+    ); // Random date within last 30 days
+
     const items = this.generateTasks(taskCount, notesPerTask);
-    const completedItems = items.filter(item => item.status === 'completed').length;
-    const progress = items.length > 0 ? Math.round((completedItems / items.length) * 100) : 0;
+    const completedItems = items.filter(
+      item => item.status === 'completed'
+    ).length;
+    const progress =
+      items.length > 0 ? Math.round((completedItems / items.length) * 100) : 0;
 
     return {
       id: listId,
@@ -106,7 +123,10 @@ export class DefaultDatasetGenerator {
       description: `Generated test list for performance testing - ${this.getRandomElement(this.sampleDescriptions)}`,
       items,
       createdAt,
-      updatedAt: new Date(createdAt.getTime() + Math.random() * (now.getTime() - createdAt.getTime())),
+      updatedAt: new Date(
+        createdAt.getTime() +
+          Math.random() * (now.getTime() - createdAt.getTime())
+      ),
       totalItems: items.length,
       completedItems,
       progress,
@@ -116,8 +136,11 @@ export class DefaultDatasetGenerator {
       analytics: {
         totalItems: items.length,
         completedItems,
-        inProgressItems: items.filter(item => item.status === TaskStatus.IN_PROGRESS).length,
-        blockedItems: items.filter(item => item.status === TaskStatus.BLOCKED).length,
+        inProgressItems: items.filter(
+          item => item.status === TaskStatus.IN_PROGRESS
+        ).length,
+        blockedItems: items.filter(item => item.status === TaskStatus.BLOCKED)
+          .length,
         progress,
         averageCompletionTime: Math.floor(Math.random() * 60),
         estimatedTimeRemaining: Math.floor(Math.random() * 120),
@@ -154,12 +177,18 @@ export class DefaultDatasetGenerator {
   generateTask(index: number, notesCount: number): TodoItem {
     const taskId = uuidv4();
     const now = new Date();
-    const createdAt = new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000); // Random date within last 7 days
-    
+    const createdAt = new Date(
+      now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000
+    ); // Random date within last 7 days
+
     const status = this.getRandomElement(this.statuses);
-    const completedAt = status === TaskStatus.COMPLETED 
-      ? new Date(createdAt.getTime() + Math.random() * (now.getTime() - createdAt.getTime()))
-      : undefined;
+    const completedAt =
+      status === TaskStatus.COMPLETED
+        ? new Date(
+            createdAt.getTime() +
+              Math.random() * (now.getTime() - createdAt.getTime())
+          )
+        : undefined;
 
     return {
       id: taskId,
@@ -169,7 +198,10 @@ export class DefaultDatasetGenerator {
       priority: this.getRandomElement(this.priorities),
       tags: this.generateTags(),
       createdAt,
-      updatedAt: new Date(createdAt.getTime() + Math.random() * (now.getTime() - createdAt.getTime())),
+      updatedAt: new Date(
+        createdAt.getTime() +
+          Math.random() * (now.getTime() - createdAt.getTime())
+      ),
       ...(completedAt && { completedAt }),
       estimatedDuration: Math.floor(Math.random() * 480) + 30, // 30 minutes to 8 hours
       dependencies: [],
@@ -185,7 +217,12 @@ export class DefaultDatasetGenerator {
     const notes: ImplementationNote[] = [];
 
     for (let i = 0; i < count; i++) {
-      const noteTypes = ["general", "technical", "decision", "learning"] as const;
+      const noteTypes = [
+        'general',
+        'technical',
+        'decision',
+        'learning',
+      ] as const;
       notes.push({
         id: uuidv4(),
         content: this.getRandomElement(this.sampleNotes),
@@ -202,7 +239,16 @@ export class DefaultDatasetGenerator {
    * Generate random tags for a task
    */
   generateTags(): string[] {
-    const allTags = ['urgent', 'bug', 'feature', 'refactor', 'test', 'docs', 'performance', 'security'];
+    const allTags = [
+      'urgent',
+      'bug',
+      'feature',
+      'refactor',
+      'test',
+      'docs',
+      'performance',
+      'security',
+    ];
     const tagCount = Math.floor(Math.random() * 3) + 1; // 1-3 tags
     const selectedTags: string[] = [];
 
@@ -235,7 +281,16 @@ export class DefaultDatasetGenerator {
       listCount: 100,
       tasksPerList: 20,
       notesPerTask: 3,
-      projectTags: ['frontend', 'backend', 'mobile', 'devops', 'design', 'qa', 'docs', 'research'],
+      projectTags: [
+        'frontend',
+        'backend',
+        'mobile',
+        'devops',
+        'design',
+        'qa',
+        'docs',
+        'research',
+      ],
     });
   }
 

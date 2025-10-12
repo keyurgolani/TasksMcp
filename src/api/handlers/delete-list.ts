@@ -3,10 +3,18 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
 
 const DeleteListSchema = z.object({
   listId: z.string().uuid(),
@@ -55,7 +63,10 @@ export async function handleDeleteList(
     };
   } catch (error) {
     // Use error formatting with listManagement configuration
-    const formatError = createHandlerErrorFormatter('delete_list', ERROR_CONFIGS.listManagement);
+    const formatError = createHandlerErrorFormatter(
+      'delete_list',
+      ERROR_CONFIGS.listManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

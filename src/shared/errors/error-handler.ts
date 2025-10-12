@@ -3,6 +3,7 @@
  */
 
 import { EventEmitter } from 'events';
+
 // import { ConfigManager } from '../infrastructure/config/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -150,7 +151,13 @@ export class ErrorHandler extends EventEmitter {
     // Check circuit breaker
     if (circuitBreaker.state === 'open') {
       if (Date.now() < circuitBreaker.nextAttemptTime) {
-        throw new Error(`Circuit breaker open for ${context.operation}`);
+        throw new Error(
+          `Circuit breaker open for ${
+            context.operation
+          }. Too many failures detected. Next attempt allowed at ${new Date(
+            circuitBreaker.nextAttemptTime
+          ).toISOString()}`
+        );
       } else {
         // Transition to half-open
         circuitBreaker.state = 'half-open';
@@ -215,7 +222,9 @@ export class ErrorHandler extends EventEmitter {
       throw lastError;
     }
 
-    throw new Error('Operation failed without error');
+    throw new Error(
+      `Operation '${context.operation}' failed without providing error details. This indicates an unexpected failure condition.`
+    );
   }
 
   /**
@@ -327,13 +336,19 @@ export class ErrorHandler extends EventEmitter {
     if (error.name.includes('ActionPlan')) {
       return 'action_plan';
     }
-    if (error.name.includes('ProjectManagement') || error.name.includes('Project')) {
+    if (
+      error.name.includes('ProjectManagement') ||
+      error.name.includes('Project')
+    ) {
       return 'project_management';
     }
     if (error.name.includes('Notes') || error.name.includes('Note')) {
       return 'notes';
     }
-    if (error.name.includes('Formatting') || error.name.includes('PrettyPrint')) {
+    if (
+      error.name.includes('Formatting') ||
+      error.name.includes('PrettyPrint')
+    ) {
       return 'formatting';
     }
     if (error.name.includes('Cleanup')) {
@@ -533,7 +548,7 @@ export class ErrorHandler extends EventEmitter {
         context: errorReport.context,
         error: errorReport.error,
       });
-      
+
       return `Recovery event emitted for ${errorReport.category} error`;
     } catch (recoveryError) {
       logger.error('Error recovery failed', {
@@ -546,10 +561,6 @@ export class ErrorHandler extends EventEmitter {
       return undefined;
     }
   }
-
-
-
-
 
   private getCircuitBreaker(operationName: string): CircuitBreakerState {
     if (!this.circuitBreakers.has(operationName)) {
@@ -566,7 +577,9 @@ export class ErrorHandler extends EventEmitter {
     const circuitBreaker = this.circuitBreakers.get(operationName);
     if (circuitBreaker == null) {
       throw new Error(
-        `Circuit breaker not found for operation: ${operationName}`
+        `Circuit breaker not found for operation: ${operationName}. Available operations: ${Array.from(
+          this.circuitBreakers.keys()
+        ).join(', ')}`
       );
     }
     return circuitBreaker;
@@ -705,20 +718,8 @@ export class ErrorHandler extends EventEmitter {
    * Setup error reporting integration
    */
   private setupErrorReporting(): void {
-    // Import error reporting system dynamically to avoid circular dependencies
-    import('../../infrastructure/monitoring/error-reporting.js')
-      .then(({ errorReportingSystem }) => {
-        this.on('error', (errorReport: ErrorReport) => {
-          errorReportingSystem
-            .reportError(errorReport)
-            .catch((error: unknown) => {
-              logger.error('Failed to report error', { error });
-            });
-        });
-      })
-      .catch((error: unknown) => {
-        logger.warn('Failed to setup error reporting', { error });
-      });
+    // Error reporting system not available
+    // Error reporting is disabled
   }
 
   /**

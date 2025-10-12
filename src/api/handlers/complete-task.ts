@@ -3,13 +3,24 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskResponse, ExitCriteriaResponse } from '../../shared/types/mcp-types.js';
-import { TaskStatus } from '../../shared/types/todo.js';
+
 import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
+import { TaskStatus } from '../../shared/types/todo.js';
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
+import type {
+  TaskResponse,
+  ExitCriteriaResponse,
+} from '../../shared/types/mcp-types.js';
 
 const CompleteTaskSchema = z.object({
   listId: z.string().uuid(),
@@ -44,7 +55,8 @@ export async function handleCompleteTask(
 
     // Check if all exit criteria are met
     const exitCriteriaManager = new ExitCriteriaManager();
-    const completionReadiness = exitCriteriaManager.suggestTaskCompletionReadiness(task.exitCriteria);
+    const completionReadiness =
+      exitCriteriaManager.suggestTaskCompletionReadiness(task.exitCriteria);
 
     if (!completionReadiness.canComplete) {
       logger.warn('Attempted to complete task with unmet exit criteria', {
@@ -57,15 +69,19 @@ export async function handleCompleteTask(
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              error: 'Cannot complete task',
-              reason: completionReadiness.reason,
-              recommendation: completionReadiness.recommendation,
-              unmetCriteria: completionReadiness.unmetCriteria.map(c => ({
-                id: c.id,
-                description: c.description,
-              })),
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                error: 'Cannot complete task',
+                reason: completionReadiness.reason,
+                recommendation: completionReadiness.recommendation,
+                unmetCriteria: completionReadiness.unmetCriteria.map(c => ({
+                  id: c.id,
+                  description: c.description,
+                })),
+              },
+              null,
+              2
+            ),
           },
         ],
         isError: true,
@@ -91,21 +107,23 @@ export async function handleCompleteTask(
     }
 
     // Format exit criteria for response
-    const exitCriteriaResponse: ExitCriteriaResponse[] = completedTask.exitCriteria.map(criteria => ({
-      id: criteria.id,
-      description: criteria.description,
-      isMet: criteria.isMet,
-      ...(criteria.metAt && { 
-        metAt: criteria.metAt instanceof Date 
-          ? criteria.metAt.toISOString() 
-          : new Date(criteria.metAt).toISOString() 
-      }),
-      ...(criteria.notes && { notes: criteria.notes }),
-      order: criteria.order,
-    }));
+    const exitCriteriaResponse: ExitCriteriaResponse[] =
+      completedTask.exitCriteria.map(criteria => ({
+        id: criteria.id,
+        description: criteria.description,
+        isMet: criteria.isMet,
+        ...(criteria.metAt && {
+          metAt:
+            criteria.metAt instanceof Date
+              ? criteria.metAt.toISOString()
+              : new Date(criteria.metAt).toISOString(),
+        }),
+        ...(criteria.notes && { notes: criteria.notes }),
+        order: criteria.order,
+      }));
 
     const response = {
-      ...{
+      ...({
         id: completedTask.id,
         title: completedTask.title,
         description: completedTask.description,
@@ -114,23 +132,28 @@ export async function handleCompleteTask(
         tags: completedTask.tags,
         createdAt: completedTask.createdAt.toISOString(),
         updatedAt: completedTask.updatedAt.toISOString(),
-        ...(completedTask.completedAt && { completedAt: completedTask.completedAt.toISOString() }),
+        ...(completedTask.completedAt && {
+          completedAt: completedTask.completedAt.toISOString(),
+        }),
         estimatedDuration: completedTask.estimatedDuration,
-        ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
-      } as TaskResponse,
+        ...(exitCriteriaResponse.length > 0 && {
+          exitCriteria: exitCriteriaResponse,
+        }),
+      } as TaskResponse),
       _methodologyGuidance: {
-        success: "✅ Task completed successfully! All exit criteria were verified (Persist Until Complete methodology)",
+        success:
+          '✅ Task completed successfully! All exit criteria were verified (Persist Until Complete methodology)',
         reflection: [
-          "📝 Consider using update_task to document key learnings and outcomes",
+          '📝 Consider using update_task to document key learnings and outcomes',
           "🔍 Use get_ready_tasks to find what's now available to work on",
-          "🎯 Reflect on what worked well and what could be improved for future tasks"
+          '🎯 Reflect on what worked well and what could be improved for future tasks',
         ],
         nextSteps: [
-          "Document any insights gained during execution",
-          "Check if completing this task unblocked other work",
-          "Plan next actions based on newly available ready tasks"
-        ]
-      }
+          'Document any insights gained during execution',
+          'Check if completing this task unblocked other work',
+          'Plan next actions based on newly available ready tasks',
+        ],
+      },
     };
 
     logger.info('Task completed successfully', {
@@ -149,7 +172,10 @@ export async function handleCompleteTask(
     };
   } catch (error) {
     // Use error formatting with taskManagement configuration
-    const formatError = createHandlerErrorFormatter('complete_task', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'complete_task',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

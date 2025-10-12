@@ -1,10 +1,10 @@
 /**
  * Repository interface for Task (TodoItem) operations
- * 
+ *
  * Provides task-specific query and manipulation operations that work
  * across TodoLists. This interface complements ITodoListRepository by
  * focusing on individual task operations rather than list-level operations.
- * 
+ *
  * Use cases:
  * - Global task search across all lists
  * - Task dependency analysis across lists
@@ -13,6 +13,12 @@
  */
 
 import type {
+  TaskFilters,
+  SortOptions,
+  PaginationOptions,
+  SearchResult,
+} from './todo-list.repository.js';
+import type {
   TodoItem,
   TaskStatus,
   Priority,
@@ -20,12 +26,6 @@ import type {
   ActionPlan,
   ImplementationNote,
 } from '../../shared/types/todo.js';
-import type {
-  TaskFilters,
-  SortOptions,
-  PaginationOptions,
-  SearchResult,
-} from './todo-list.repository.js';
 
 /**
  * Query parameters for searching tasks across lists
@@ -130,11 +130,11 @@ export interface BulkOperationResult {
 
 /**
  * Repository interface for Task operations
- * 
+ *
  * This interface provides task-centric operations that may span
  * multiple TodoLists. It complements ITodoListRepository by focusing
  * on individual task queries and operations.
- * 
+ *
  * Expected behaviors:
  * - Operations should maintain referential integrity with parent lists
  * - Dependency validation should be enforced
@@ -144,7 +144,7 @@ export interface BulkOperationResult {
 export interface ITaskRepository {
   /**
    * Finds a task by its ID across all lists
-   * 
+   *
    * @param taskId - The unique identifier of the task
    * @param includeListContext - Whether to include parent list information
    * @returns The task with optional context, or null if not found
@@ -157,14 +157,14 @@ export interface ITaskRepository {
 
   /**
    * Searches for tasks across all lists
-   * 
+   *
    * Supports:
    * - Full-text search
    * - Multiple filter criteria
    * - Sorting by various fields
    * - Pagination
    * - Optional list context inclusion
-   * 
+   *
    * @param query - Search query with filters, sorting, and pagination
    * @returns Search result with tasks and metadata
    * @throws Error if the search operation fails
@@ -173,7 +173,7 @@ export interface ITaskRepository {
 
   /**
    * Creates a new task in a list
-   * 
+   *
    * @param options - Task creation options including list ID and task data
    * @returns The created task with its context
    * @throws Error if creation fails or list doesn't exist
@@ -182,7 +182,7 @@ export interface ITaskRepository {
 
   /**
    * Updates an existing task
-   * 
+   *
    * @param options - Update options including list ID, task ID, and updates
    * @returns The updated task with its context
    * @throws Error if update fails or task doesn't exist
@@ -191,7 +191,7 @@ export interface ITaskRepository {
 
   /**
    * Deletes a task from its list
-   * 
+   *
    * @param listId - The list ID containing the task
    * @param taskId - The task ID to delete
    * @throws Error if deletion fails or task doesn't exist
@@ -200,9 +200,9 @@ export interface ITaskRepository {
 
   /**
    * Finds all tasks that depend on a given task
-   * 
+   *
    * Useful for understanding the impact of changes to a task.
-   * 
+   *
    * @param taskId - The task ID to find dependents for
    * @returns Array of tasks that depend on this task
    * @throws Error if the operation fails
@@ -211,7 +211,7 @@ export interface ITaskRepository {
 
   /**
    * Finds all tasks that a given task depends on
-   * 
+   *
    * @param taskId - The task ID to find dependencies for
    * @returns Array of tasks that this task depends on
    * @throws Error if the operation fails
@@ -220,7 +220,7 @@ export interface ITaskRepository {
 
   /**
    * Finds all tasks that are ready to work on (no incomplete dependencies)
-   * 
+   *
    * @param listId - Optional list ID to scope the search
    * @param projectTag - Optional project tag to scope the search
    * @returns Array of tasks that are ready to start
@@ -233,7 +233,7 @@ export interface ITaskRepository {
 
   /**
    * Finds all tasks that are blocked by incomplete dependencies
-   * 
+   *
    * @param listId - Optional list ID to scope the search
    * @param projectTag - Optional project tag to scope the search
    * @returns Array of tasks that are blocked
@@ -246,7 +246,7 @@ export interface ITaskRepository {
 
   /**
    * Counts tasks matching the given query
-   * 
+   *
    * @param query - Optional query to filter which tasks to count
    * @returns The number of tasks matching the query
    * @throws Error if the count operation fails
@@ -255,7 +255,7 @@ export interface ITaskRepository {
 
   /**
    * Performs bulk status updates on multiple tasks
-   * 
+   *
    * @param taskIds - Array of task IDs to update
    * @param status - New status to set
    * @returns Result of the bulk operation
@@ -268,7 +268,7 @@ export interface ITaskRepository {
 
   /**
    * Performs bulk deletion of multiple tasks
-   * 
+   *
    * @param taskIds - Array of task IDs to delete
    * @returns Result of the bulk operation
    * @throws Error if the operation fails

@@ -3,10 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { ProjectManager } from '../../../../src/domain/lists/project-manager.js';
+import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+
 import type { StorageBackend } from '../../../../src/shared/types/storage.js';
 import type { TodoList } from '../../../../src/shared/types/todo.js';
-import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
 
 // Mock storage backend
 const createMockStorage = (): StorageBackend => ({
@@ -91,11 +93,16 @@ describe('ProjectManager', () => {
 
     it('should reject invalid project tags', () => {
       expect(projectManager.validateProjectTag('')).toBe(false);
-      expect(projectManager.validateProjectTag('project with spaces')).toBe(false);
+      expect(projectManager.validateProjectTag('project with spaces')).toBe(
+        false
+      );
       expect(projectManager.validateProjectTag('project@special')).toBe(false);
       expect(projectManager.validateProjectTag('a'.repeat(51))).toBe(false);
+
       expect(projectManager.validateProjectTag(null as any)).toBe(false);
+
       expect(projectManager.validateProjectTag(undefined as any)).toBe(false);
+
       expect(projectManager.validateProjectTag(123 as any)).toBe(false);
     });
   });
@@ -108,21 +115,37 @@ describe('ProjectManager', () => {
 
   describe('sanitizeProjectTag', () => {
     it('should sanitize invalid characters', () => {
-      expect(projectManager.sanitizeProjectTag('project with spaces')).toBe('project-with-spaces');
-      expect(projectManager.sanitizeProjectTag('project@#$%')).toBe('project----');
-      expect(projectManager.sanitizeProjectTag('Project-Name')).toBe('project-name');
+      expect(projectManager.sanitizeProjectTag('project with spaces')).toBe(
+        'project-with-spaces'
+      );
+      expect(projectManager.sanitizeProjectTag('project@#$%')).toBe(
+        'project----'
+      );
+      expect(projectManager.sanitizeProjectTag('Project-Name')).toBe(
+        'project-name'
+      );
     });
 
     it('should handle edge cases', () => {
       expect(projectManager.sanitizeProjectTag('')).toBe('default');
+
       expect(projectManager.sanitizeProjectTag(null as any)).toBe('default');
-      expect(projectManager.sanitizeProjectTag(undefined as any)).toBe('default');
-      expect(projectManager.sanitizeProjectTag('a'.repeat(60))).toBe('a'.repeat(50));
+
+      expect(projectManager.sanitizeProjectTag(undefined as any)).toBe(
+        'default'
+      );
+      expect(projectManager.sanitizeProjectTag('a'.repeat(60))).toBe(
+        'a'.repeat(50)
+      );
     });
 
     it('should preserve valid tags', () => {
-      expect(projectManager.sanitizeProjectTag('valid-project')).toBe('valid-project');
-      expect(projectManager.sanitizeProjectTag('project_123')).toBe('project_123');
+      expect(projectManager.sanitizeProjectTag('valid-project')).toBe(
+        'valid-project'
+      );
+      expect(projectManager.sanitizeProjectTag('project_123')).toBe(
+        'project_123'
+      );
     });
   });
 
@@ -145,27 +168,29 @@ describe('ProjectManager', () => {
       ];
 
       // Mock list to return summaries
-      vi.mocked(mockStorage.list).mockResolvedValue(testLists.map(list => ({
-        id: list.id,
-        title: list.title,
-        progress: list.progress,
-        totalItems: list.totalItems,
-        completedItems: list.completedItems,
-        lastUpdated: list.updatedAt,
-        context: list.context,
-        projectTag: list.projectTag,
-        isArchived: list.isArchived,
-      })));
-      
+      vi.mocked(mockStorage.list).mockResolvedValue(
+        testLists.map(list => ({
+          id: list.id,
+          title: list.title,
+          progress: list.progress,
+          totalItems: list.totalItems,
+          completedItems: list.completedItems,
+          lastUpdated: list.updatedAt,
+          context: list.context,
+          projectTag: list.projectTag,
+          isArchived: list.isArchived,
+        }))
+      );
+
       // Mock load to return full lists
-      vi.mocked(mockStorage.load).mockImplementation(async (id) => {
+      vi.mocked(mockStorage.load).mockImplementation(async id => {
         return testLists.find(list => list.id === id) || null;
       });
 
       const projects = await projectManager.listProjects();
 
       expect(projects).toHaveLength(3);
-      
+
       const projectA = projects.find(p => p.tag === 'project-a');
       expect(projectA).toEqual({
         tag: 'project-a',
@@ -198,10 +223,9 @@ describe('ProjectManager', () => {
     });
 
     it('should handle lists with missing projectTag by using context', async () => {
-      const testLists = [
-        createTestList('1', '', 'legacy-context', 5, 2),
-      ];
+      const testLists = [createTestList('1', '', 'legacy-context', 5, 2)];
       // Remove projectTag to simulate legacy data
+
       testLists[0].projectTag = undefined as any;
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
@@ -214,22 +238,37 @@ describe('ProjectManager', () => {
 
     it('should sort projects by last activity (most recent first)', async () => {
       const testLists = [
-        { ...createTestList('1', 'project-a'), updatedAt: new Date('2024-01-01') },
-        { ...createTestList('2', 'project-b'), updatedAt: new Date('2024-01-03') },
-        { ...createTestList('3', 'project-c'), updatedAt: new Date('2024-01-02') },
+        {
+          ...createTestList('1', 'project-a'),
+          updatedAt: new Date('2024-01-01'),
+        },
+        {
+          ...createTestList('2', 'project-b'),
+          updatedAt: new Date('2024-01-03'),
+        },
+        {
+          ...createTestList('3', 'project-c'),
+          updatedAt: new Date('2024-01-02'),
+        },
       ];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
 
       const projects = await projectManager.listProjects();
 
-      expect(projects.map(p => p.tag)).toEqual(['project-b', 'project-c', 'project-a']);
+      expect(projects.map(p => p.tag)).toEqual([
+        'project-b',
+        'project-c',
+        'project-a',
+      ]);
     });
   });
 
   describe('getProjectStatistics', () => {
     it('should reject invalid project tags', async () => {
-      await expect(projectManager.getProjectStatistics('invalid tag')).rejects.toThrow('Invalid project tag');
+      await expect(
+        projectManager.getProjectStatistics('invalid tag')
+      ).rejects.toThrow('Invalid project tag');
     });
 
     it('should return empty stats for non-existent project', async () => {
@@ -241,7 +280,6 @@ describe('ProjectManager', () => {
         tag: 'non-existent',
         totalLists: 0,
         activeLists: 0,
-        archivedLists: 0,
         totalTasks: 0,
         completedTasks: 0,
         inProgressTasks: 0,
@@ -272,8 +310,7 @@ describe('ProjectManager', () => {
       expect(stats).toEqual({
         tag: 'test-project',
         totalLists: 2,
-        activeLists: 1,
-        archivedLists: 1,
+        activeLists: 2,
         totalTasks: 18,
         completedTasks: 13,
         inProgressTasks: 2,
@@ -304,8 +341,16 @@ describe('ProjectManager', () => {
   describe('migrateContextToProjectTag', () => {
     it('should migrate context to projectTag when projectTag is missing', async () => {
       const testLists = [
-        { ...createTestList('1', '', 'old-context'), projectTag: undefined as any },
-        { ...createTestList('2', '', 'another-context'), projectTag: undefined as any },
+        {
+          ...createTestList('1', '', 'old-context'),
+
+          projectTag: undefined as any,
+        },
+        {
+          ...createTestList('2', '', 'another-context'),
+
+          projectTag: undefined as any,
+        },
       ];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
@@ -313,54 +358,78 @@ describe('ProjectManager', () => {
       await projectManager.migrateContextToProjectTag();
 
       expect(mockStorage.save).toHaveBeenCalledTimes(2);
-      
+
       // Check first list migration
-      expect(mockStorage.save).toHaveBeenCalledWith('1', expect.objectContaining({
-        projectTag: 'old-context',
-        context: 'old-context',
-      }), { validate: true });
+      expect(mockStorage.save).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          projectTag: 'old-context',
+          context: 'old-context',
+        }),
+        { validate: true }
+      );
 
       // Check second list migration
-      expect(mockStorage.save).toHaveBeenCalledWith('2', expect.objectContaining({
-        projectTag: 'another-context',
-        context: 'another-context',
-      }), { validate: true });
+      expect(mockStorage.save).toHaveBeenCalledWith(
+        '2',
+        expect.objectContaining({
+          projectTag: 'another-context',
+          context: 'another-context',
+        }),
+        { validate: true }
+      );
     });
 
     it('should set default values when both context and projectTag are missing', async () => {
       const testLists = [
-        { ...createTestList('1', '', ''), projectTag: undefined as any, context: undefined as any },
+        {
+          ...createTestList('1', '', ''),
+
+          projectTag: undefined as any,
+
+          context: undefined as any,
+        },
       ];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
 
       await projectManager.migrateContextToProjectTag();
 
-      expect(mockStorage.save).toHaveBeenCalledWith('1', expect.objectContaining({
-        projectTag: 'default',
-        context: 'default',
-      }), { validate: true });
+      expect(mockStorage.save).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          projectTag: 'default',
+          context: 'default',
+        }),
+        { validate: true }
+      );
     });
 
     it('should ensure context is set for backward compatibility when projectTag exists', async () => {
       const testLists = [
-        { ...createTestList('1', 'existing-project'), context: undefined as any },
+        {
+          ...createTestList('1', 'existing-project'),
+
+          context: undefined as any,
+        },
       ];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
 
       await projectManager.migrateContextToProjectTag();
 
-      expect(mockStorage.save).toHaveBeenCalledWith('1', expect.objectContaining({
-        projectTag: 'existing-project',
-        context: 'existing-project',
-      }), { validate: true });
+      expect(mockStorage.save).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          projectTag: 'existing-project',
+          context: 'existing-project',
+        }),
+        { validate: true }
+      );
     });
 
     it('should skip lists that already have both fields set', async () => {
-      const testLists = [
-        createTestList('1', 'project-tag', 'context-value'),
-      ];
+      const testLists = [createTestList('1', 'project-tag', 'context-value')];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
 
@@ -371,27 +440,41 @@ describe('ProjectManager', () => {
 
     it('should sanitize invalid context values during migration', async () => {
       const testLists = [
-        { ...createTestList('1', '', 'invalid context with spaces'), projectTag: undefined as any },
+        {
+          ...createTestList('1', '', 'invalid context with spaces'),
+
+          projectTag: undefined as any,
+        },
       ];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
 
       await projectManager.migrateContextToProjectTag();
 
-      expect(mockStorage.save).toHaveBeenCalledWith('1', expect.objectContaining({
-        projectTag: 'invalid-context-with-spaces',
-      }), { validate: true });
+      expect(mockStorage.save).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          projectTag: 'invalid-context-with-spaces',
+        }),
+        { validate: true }
+      );
     });
 
     it('should handle storage errors gracefully', async () => {
       const testLists = [
-        { ...createTestList('1', '', 'test-context'), projectTag: undefined as any },
+        {
+          ...createTestList('1', '', 'test-context'),
+
+          projectTag: undefined as any,
+        },
       ];
 
       vi.mocked(mockStorage.list).mockResolvedValue(testLists);
       vi.mocked(mockStorage.save).mockRejectedValue(new Error('Storage error'));
 
-      await expect(projectManager.migrateContextToProjectTag()).rejects.toThrow('Storage error');
+      await expect(projectManager.migrateContextToProjectTag()).rejects.toThrow(
+        'Storage error'
+      );
     });
   });
 });

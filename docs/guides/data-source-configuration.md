@@ -134,6 +134,7 @@ Local file-based storage (default).
 ```
 
 **Configuration Options:**
+
 - `dataDirectory` (required): Directory for storing data files
 - `backupRetentionDays` (optional): Number of days to keep backups (default: 7)
 - `enableCompression` (optional): Enable gzip compression (default: false)
@@ -160,6 +161,7 @@ Enterprise-grade relational database storage.
 ```
 
 **Configuration Options:**
+
 - `host` (required): Database host
 - `port` (required): Database port
 - `database` (required): Database name
@@ -190,6 +192,7 @@ Document-oriented NoSQL database storage.
 ```
 
 **Configuration Options:**
+
 - `uri` (required): MongoDB connection URI
 - `database` (required): Database name
 - `collection` (optional): Collection name (default: "tasks")
@@ -214,6 +217,7 @@ In-memory storage for testing and caching.
 ```
 
 **Configuration Options:**
+
 - `maxSize` (optional): Maximum number of items to store
 - `persistToDisk` (optional): Save to disk on shutdown (default: false)
 - `persistPath` (optional): Path for disk persistence
@@ -233,11 +237,13 @@ In-memory storage for testing and caching.
 ### Priority System
 
 Priority determines which source is preferred when:
+
 - Writing new data (highest priority writable source is used)
 - Resolving conflicts (highest priority version is kept with `priority` strategy)
 - Selecting fallback sources (next highest priority is tried)
 
 Example priority scheme:
+
 - 300: In-memory cache (fastest, temporary)
 - 200: Primary database (PostgreSQL)
 - 100: Local filesystem (fallback)

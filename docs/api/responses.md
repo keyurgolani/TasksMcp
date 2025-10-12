@@ -28,7 +28,7 @@ Most tools return structured JSON data:
 {
   "content": [
     {
-      "type": "text", 
+      "type": "text",
       "text": "{\"id\":\"123e4567-e89b-12d3-a456-426614174000\",\"title\":\"My List\",\"taskCount\":5}"
     }
   ],
@@ -71,7 +71,7 @@ Some tools (like `show_tasks`) return formatted text:
 ### Error Message Components
 
 - **❌ Error Indicator**: Clear identification of the problem
-- **💡 Guidance**: Explanation of what's expected  
+- **💡 Guidance**: Explanation of what's expected
 - **📝 Examples**: Working examples to follow
 - **🔧 Common Fixes**: Step-by-step solutions
 
@@ -173,13 +173,21 @@ Some tools (like `show_tasks`) return formatted text:
       "taskId": "setup-database",
       "title": "Set up database schema",
       "blocksCount": 5,
-      "blockedTasks": ["user-model", "product-catalog", "orders", "payments", "reports"]
+      "blockedTasks": [
+        "user-model",
+        "product-catalog",
+        "orders",
+        "payments",
+        "reports"
+      ]
     }
   ],
   "issues": {
     "circularDependencies": [],
     "unreachableTasks": [],
-    "warnings": ["Task 'deploy-production' has no dependencies but high complexity"]
+    "warnings": [
+      "Task 'deploy-production' has no dependencies but high complexity"
+    ]
   },
   "recommendations": [
     "Focus on the critical path: Start with \"Set up database schema\" as it affects 5 other tasks.",
@@ -197,7 +205,7 @@ Some tools (like `show_tasks`) return formatted text:
     {
       "operation": {
         "type": "create",
-        "data": {"title": "New Task 1"}
+        "data": { "title": "New Task 1" }
       },
       "success": true,
       "result": {
@@ -208,8 +216,8 @@ Some tools (like `show_tasks`) return formatted text:
     },
     {
       "operation": {
-        "type": "create", 
-        "data": {"title": ""}
+        "type": "create",
+        "data": { "title": "" }
       },
       "success": false,
       "error": "Title is required and cannot be empty"
@@ -228,40 +236,40 @@ Some tools (like `show_tasks`) return formatted text:
 
 ### Task Status Values
 
-| Status | Description |
-|--------|-------------|
-| `pending` | Not yet started |
-| `in_progress` | Currently being worked on |
-| `completed` | Finished successfully |
-| `blocked` | Cannot proceed due to dependencies |
-| `cancelled` | Abandoned or no longer needed |
+| Status        | Description                        |
+| ------------- | ---------------------------------- |
+| `pending`     | Not yet started                    |
+| `in_progress` | Currently being worked on          |
+| `completed`   | Finished successfully              |
+| `blocked`     | Cannot proceed due to dependencies |
+| `cancelled`   | Abandoned or no longer needed      |
 
 ### Priority Levels
 
-| Priority | Level | Description |
-|----------|-------|-------------|
-| `1` | Minimal | Optional, lowest priority |
-| `2` | Low | Nice to have, when time permits |
-| `3` | Medium | Normal priority (default) |
-| `4` | High | Important, time-sensitive |
-| `5` | Critical | Urgent, blocking other work |
+| Priority | Level    | Description                     |
+| -------- | -------- | ------------------------------- |
+| `1`      | Minimal  | Optional, lowest priority       |
+| `2`      | Low      | Nice to have, when time permits |
+| `3`      | Medium   | Normal priority (default)       |
+| `4`      | High     | Important, time-sensitive       |
+| `5`      | Critical | Urgent, blocking other work     |
 
 ### Sort Options
 
-| Sort By | Description |
-|---------|-------------|
-| `relevance` | Search relevance score (default for search) |
-| `priority` | Task priority level |
-| `createdAt` | Creation timestamp |
-| `updatedAt` | Last modification timestamp |
-| `completedAt` | Completion timestamp |
-| `title` | Alphabetical by title |
+| Sort By       | Description                                 |
+| ------------- | ------------------------------------------- |
+| `relevance`   | Search relevance score (default for search) |
+| `priority`    | Task priority level                         |
+| `createdAt`   | Creation timestamp                          |
+| `updatedAt`   | Last modification timestamp                 |
+| `completedAt` | Completion timestamp                        |
+| `title`       | Alphabetical by title                       |
 
 ### Sort Order
 
-| Order | Description |
-|-------|-------------|
-| `asc` | Ascending (lowest to highest) |
+| Order  | Description                    |
+| ------ | ------------------------------ |
+| `asc`  | Ascending (lowest to highest)  |
 | `desc` | Descending (highest to lowest) |
 
 ## Response Examples by Tool Category
@@ -269,6 +277,7 @@ Some tools (like `show_tasks`) return formatted text:
 ### List Management Responses
 
 #### create_list
+
 ```json
 {
   "content": [
@@ -282,6 +291,7 @@ Some tools (like `show_tasks`) return formatted text:
 ```
 
 #### list_all_lists
+
 ```json
 {
   "content": [
@@ -297,6 +307,7 @@ Some tools (like `show_tasks`) return formatted text:
 ### Task Management Responses
 
 #### add_task
+
 ```json
 {
   "content": [
@@ -310,6 +321,7 @@ Some tools (like `show_tasks`) return formatted text:
 ```
 
 #### complete_task
+
 ```json
 {
   "content": [
@@ -325,6 +337,7 @@ Some tools (like `show_tasks`) return formatted text:
 ### Search & Display Responses
 
 #### search_tool
+
 ```json
 {
   "content": [
@@ -338,6 +351,7 @@ Some tools (like `show_tasks`) return formatted text:
 ```
 
 #### show_tasks
+
 ```json
 {
   "content": [
@@ -353,6 +367,7 @@ Some tools (like `show_tasks`) return formatted text:
 ### Advanced Features Responses
 
 #### analyze_task
+
 ```json
 {
   "content": [
@@ -366,6 +381,7 @@ Some tools (like `show_tasks`) return formatted text:
 ```
 
 #### get_task_suggestions
+
 ```json
 {
   "content": [

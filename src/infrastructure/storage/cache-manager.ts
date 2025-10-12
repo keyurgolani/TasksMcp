@@ -64,7 +64,7 @@ export class CacheManager {
    */
   get<T>(key: string): T | null {
     const entry = this.cache.get(key) as CacheEntry<T> | undefined;
-    
+
     if (!entry) {
       return null;
     }
@@ -126,38 +126,38 @@ export class CacheManager {
   }
 
   // TodoList-specific cache methods
-  setTodoList(listId: string, todoList: any): void {
+  setTodoList(listId: string, todoList: unknown): void {
     this.set(`todolist:${listId}`, todoList);
   }
 
-  getTodoList(listId: string): any | null {
+  getTodoList(listId: string): unknown | null {
     return this.get(`todolist:${listId}`);
   }
 
   invalidateTodoList(listId: string): void {
     this.delete(`todolist:${listId}`);
     // Also invalidate related summary caches
-    const summaryKeys = Array.from(this.cache.keys()).filter(key => 
-      key.startsWith('summary:') && key.includes(listId)
+    const summaryKeys = Array.from(this.cache.keys()).filter(
+      key => key.startsWith('summary:') && key.includes(listId)
     );
     summaryKeys.forEach(key => this.delete(key));
   }
 
   // Summary list cache methods
-  generateSummaryKey(options: any): string {
+  generateSummaryKey(options: Record<string, unknown>): string {
     const keyParts = ['summary'];
-    if (options.includeArchived) keyParts.push('archived');
-    if (options.context) keyParts.push(`context:${options.context}`);
-    if (options.limit) keyParts.push(`limit:${options.limit}`);
-    if (options.offset) keyParts.push(`offset:${options.offset}`);
+    if (options['includeArchived']) keyParts.push('archived');
+    if (options['context']) keyParts.push(`context:${options['context']}`);
+    if (options['limit']) keyParts.push(`limit:${options['limit']}`);
+    if (options['offset']) keyParts.push(`offset:${options['offset']}`);
     return keyParts.join(':');
   }
 
-  getSummaryList(cacheKey: string): any[] | null {
+  getSummaryList(cacheKey: string): unknown[] | null {
     return this.get(cacheKey);
   }
 
-  setSummaryList(cacheKey: string, summaries: any[]): void {
+  setSummaryList(cacheKey: string, summaries: unknown[]): void {
     this.set(cacheKey, summaries);
   }
 
@@ -205,7 +205,10 @@ export class CacheManager {
     }
 
     if (cleaned > 0) {
-      logger.debug('Cache cleanup completed', { cleaned, remaining: this.cache.size });
+      logger.debug('Cache cleanup completed', {
+        cleaned,
+        remaining: this.cache.size,
+      });
     }
   }
 

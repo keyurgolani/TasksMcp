@@ -3,10 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import { handleShowTasks } from '../../../../src/api/handlers/show-tasks.js';
-import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
-import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
 import { TaskStatus, Priority } from '../../../../src/shared/types/todo.js';
+
+import type { TodoListManager } from '../../../../src/domain/lists/todo-list-manager.js';
+import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
@@ -132,22 +134,26 @@ describe('handleShowTasks with dependency status display', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]); // Tasks 1, 2, 5 are ready
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]); // Tasks 1, 2, 5 are ready
 
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
-    
+
     // Check that dependency icons are included
     expect(output).toContain('🆓'); // No dependencies icon
     expect(output).toContain('✅'); // Ready with dependencies icon
     expect(output).toContain('⛔'); // Blocked icon
-    
+
     // Check that dependency counts are shown
     expect(output).toContain('(1 deps)'); // Tasks with dependencies show count
-    
+
     // Check task titles are present
     expect(output).toContain('Task 1 - No Dependencies');
     expect(output).toContain('Task 2 - Ready with Dependencies');
@@ -180,26 +186,32 @@ describe('handleShowTasks with dependency status display', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]); // Tasks 1, 2, 5 are ready
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]); // Tasks 1, 2, 5 are ready
 
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
-    
+
     // Check that dependency icons are included in task headers
     expect(output).toContain('🆓'); // No dependencies icon
     expect(output).toContain('✅'); // Ready with dependencies icon
     expect(output).toContain('⛔'); // Blocked icon
-    
+
     // Check that dependency information is in metadata
     expect(output).toContain('Dependencies: 1 (Ready)'); // Ready task with dependencies
     expect(output).toContain('Dependencies: 1 (Blocked)'); // Blocked task
-    
+
     // Check task descriptions are present
     expect(output).toContain('A task with no dependencies');
-    expect(output).toContain('A task that is ready despite having dependencies');
+    expect(output).toContain(
+      'A task that is ready despite having dependencies'
+    );
     expect(output).toContain('A task blocked by pending dependencies');
   });
 
@@ -228,18 +240,22 @@ describe('handleShowTasks with dependency status display', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]);
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]);
 
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
-    
+
     // Check that status grouping headers are present
     expect(output).toContain('## Pending');
     expect(output).toContain('## Completed');
-    
+
     // Check that dependency icons are still shown within groups
     expect(output).toContain('🆓');
     expect(output).toContain('✅');
@@ -271,19 +287,23 @@ describe('handleShowTasks with dependency status display', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]);
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]);
 
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
-    
+
     // Check that priority grouping headers are present
     expect(output).toContain('## High Priority');
     expect(output).toContain('## Medium Priority');
     expect(output).toContain('## Low Priority');
-    
+
     // Check that dependency icons are still shown within groups
     expect(output).toContain('🆓');
     expect(output).toContain('✅');
@@ -316,14 +336,18 @@ describe('handleShowTasks with dependency status display', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]);
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]);
 
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
-    
+
     // Summary format should work as before (no dependency icons needed)
     expect(output).toContain('# Test List - Summary');
     expect(output).toContain('**Total Tasks:** 5');
@@ -360,7 +384,7 @@ describe('handleShowTasks with dependency status display', () => {
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
     expect(output).toContain('No tasks to display.');
   });
@@ -455,17 +479,21 @@ describe('handleShowTasks with dependency status display', () => {
     };
 
     mockTodoListManager.getTodoList = vi.fn().mockResolvedValue(mockList);
-    mockGetReadyItems.mockReturnValue([mockTasks[0], mockTasks[1], mockTasks[4]]);
+    mockGetReadyItems.mockReturnValue([
+      mockTasks[0],
+      mockTasks[1],
+      mockTasks[4],
+    ]);
 
     const result = await handleShowTasks(request, mockTodoListManager);
 
     expect(result.isError).toBeFalsy();
-    
+
     const output = result.content[0].text;
-    
+
     // Should not contain the completed task
     expect(output).not.toContain('Task 3 - Completed Dependency');
-    
+
     // Should contain the pending tasks
     expect(output).toContain('Task 1 - No Dependencies');
     expect(output).toContain('Task 2 - Ready with Dependencies');

@@ -4,8 +4,9 @@
 
 import { ConfigManager } from '../infrastructure/config/index.js';
 import { StorageFactory } from '../infrastructure/storage/storage-factory.js';
-import type { StorageBackend } from '../shared/types/storage.js';
 import { logger } from '../shared/utils/logger.js';
+
+import type { StorageBackend } from '../shared/types/storage.js';
 
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -113,6 +114,7 @@ export class HealthChecker {
         analytics: {
           totalItems: 0,
           completedItems: 0,
+          pendingItems: 0,
           inProgressItems: 0,
           blockedItems: 0,
           progress: 0,
@@ -159,7 +161,9 @@ export class HealthChecker {
         name: 'storage',
         status: 'fail',
         duration: Date.now() - startTime,
-        message: `Storage backend failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Storage backend failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
         details: {
           type: this.config.storage.type,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -217,7 +221,9 @@ export class HealthChecker {
         name: 'memory',
         status: 'fail',
         duration: Date.now() - startTime,
-        message: `Memory check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Memory check failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -261,7 +267,9 @@ export class HealthChecker {
         name: 'disk',
         status: 'fail',
         duration: Date.now() - startTime,
-        message: `Disk space check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Disk space check failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -314,7 +322,9 @@ export class HealthChecker {
         name: 'configuration',
         status: 'fail',
         duration: Date.now() - startTime,
-        message: `Configuration check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Configuration check failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -328,7 +338,7 @@ export class HealthChecker {
   }
 }
 
-// Standalone health check for external monitoring
+// Standalone health check for external systems
 export async function performHealthCheck(): Promise<void> {
   try {
     const healthChecker = new HealthChecker();

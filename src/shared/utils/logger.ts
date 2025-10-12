@@ -3,10 +3,11 @@
  * Provides consistent logging across the application with debugging capabilities
  */
 
-import winston from 'winston';
 import { mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+
+import winston from 'winston';
 
 /**
  * Logger configuration based on environment
@@ -19,22 +20,26 @@ const enablePerformanceLogging =
 
 /**
  * Detect if running in MCP mode (stdio communication)
- * 
+ *
  * MCP servers communicate via stdio and should not log to console as it
  * interferes with the protocol communication. This function detects when
  * the server is running in MCP mode vs CLI mode.
- * 
+ *
  * @returns boolean - True if running in MCP mode, false for CLI mode
  */
 const isMcpMode = (): boolean => {
   // Check if running with CLI flags that indicate non-MCP mode
   const args = process.argv.slice(2);
-  const hasCliFlags = args.some(arg => 
-    arg === '--help' || arg === '-h' || 
-    arg === '--version' || arg === '-v' ||
-    arg === '--verbose' || arg === '--quiet'
+  const hasCliFlags = args.some(
+    arg =>
+      arg === '--help' ||
+      arg === '-h' ||
+      arg === '--version' ||
+      arg === '-v' ||
+      arg === '--verbose' ||
+      arg === '--quiet'
   );
-  
+
   // If no CLI flags and not explicitly disabled, assume MCP mode
   return !hasCliFlags && process.env['MCP_DISABLE_STDIO_MODE'] !== 'true';
 };
@@ -128,13 +133,15 @@ export const logger = winston.createLogger({
  * Add file transport for production environments or when in MCP mode
  * Enable file logging if explicitly requested OR if in MCP mode (to ensure logs are captured)
  */
-if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') || 
-    (isMcpMode() && process.env['DISABLE_FILE_LOGGING'] !== 'true')) {
+if (
+  (nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') ||
+  (isMcpMode() && process.env['DISABLE_FILE_LOGGING'] !== 'true')
+) {
   try {
     // Get the project root directory (where package.json is located)
     // Use PROJECT_ROOT env var if available, otherwise derive from current file location
     let projectRoot: string;
-    
+
     if (process.env['PROJECT_ROOT']) {
       projectRoot = process.env['PROJECT_ROOT'];
     } else {
@@ -148,7 +155,7 @@ if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') 
       const srcDir = dirname(sharedDir);
       projectRoot = dirname(srcDir);
     }
-    
+
     const logsDir = join(projectRoot, 'logs');
 
     // Check if directory exists, create if it doesn't
@@ -233,15 +240,14 @@ if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') 
       throw new Error('Failed to create logs directory');
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      'Failed to set up file logging:',
-      error instanceof Error ? error.message : 'Unknown error',
-      'Working directory:',
-      process.cwd()
+    // Use process.stderr here as this is logger initialization failure
+    process.stderr.write(
+      `Warning: Failed to set up file logging: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      } Working directory: ${process.cwd()}\n`
     );
-    
-    // If file logging fails and we're in MCP mode (no console transport), 
+
+    // If file logging fails and we're in MCP mode (no console transport),
     // add a minimal console transport to prevent Winston warnings
     if (isMcpMode() && logger.transports.length === 0) {
       logger.add(
@@ -251,7 +257,7 @@ if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') 
             winston.format.timestamp(),
             winston.format.simple()
           ),
-          silent: false
+          silent: false,
         })
       );
     }
@@ -260,22 +266,22 @@ if ((nodeEnv === 'production' && process.env['ENABLE_FILE_LOGGING'] === 'true') 
 
 /**
  * Logging utilities for debugging production issues
- * 
+ *
  * Provides advanced logging capabilities including:
  * - Correlation ID tracking for related operations
- * - Performance monitoring and timing
+ * - Performance timing and metrics
  * - System state snapshots for debugging
- * - Critical event logging with alerting
+ * - Critical event logging
  */
 export class DebugLogger {
   private static correlationId = 0;
 
   /**
    * Generate a unique correlation ID for tracking related log entries
-   * 
+   *
    * Creates a unique identifier that can be used to correlate log entries
    * across multiple operations or components for easier debugging.
-   * 
+   *
    * @returns string - Unique correlation ID in format "corr_timestamp_sequence"
    */
   static generateCorrelationId(): string {
@@ -411,12 +417,12 @@ export class DebugLogger {
   static logCriticalEvent(
     event: string,
     details: Record<string, unknown> = {},
-    shouldAlert = true
+    shouldLog = true
   ): void {
     logger.error('Critical system event', {
       event,
       critical: true,
-      shouldAlert,
+      shouldLog,
       timestamp: new Date().toISOString(),
       ...details,
     });
@@ -467,7 +473,9 @@ export function logTiming(operation?: string): MethodDecorator {
     const originalMethod = descriptor.value as (...args: unknown[]) => unknown;
     const operationName =
       operation ??
-      `${(target as { constructor: { name: string } }).constructor.name}.${String(propertyKey)}`;
+      `${
+        (target as { constructor: { name: string } }).constructor.name
+      }.${String(propertyKey)}`;
 
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       return DebugLogger.timeOperation(

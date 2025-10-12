@@ -1,20 +1,22 @@
 /**
  * Data source configuration loader
- * 
+ *
  * Loads and validates data source configurations from files and environment variables.
  * Supports JSON and YAML formats with environment variable substitution for credentials.
  */
 
-import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
+import { readFile } from 'fs/promises';
 import { resolve } from 'path';
+
+import { logger } from '../../shared/utils/logger.js';
+
 import {
   type MultiSourceConfig,
   type DataSourceConfig,
   validateMultiSourceConfig,
   getDefaultMultiSourceConfig,
 } from './data-source-config.js';
-import { logger } from '../../shared/utils/logger.js';
 
 /**
  * Configuration loader options
@@ -22,13 +24,13 @@ import { logger } from '../../shared/utils/logger.js';
 export interface LoaderOptions {
   /** Path to configuration file */
   configPath?: string;
-  
+
   /** Whether to use environment variables */
   useEnvironment?: boolean;
-  
+
   /** Custom environment variable prefix */
   envPrefix?: string;
-  
+
   /** Whether to fail if config file is missing */
   requireConfigFile?: boolean;
 }
@@ -47,13 +49,13 @@ export class DataSourceConfigLoader {
 
   /**
    * Load data source configuration
-   * 
+   *
    * Attempts to load configuration from:
    * 1. Specified config file
    * 2. Default config file locations
    * 3. Environment variables
    * 4. Default configuration
-   * 
+   *
    * @param options - Loader options
    * @returns Validated multi-source configuration
    */
@@ -110,11 +112,13 @@ export class DataSourceConfigLoader {
 
   /**
    * Load configuration from a specific file
-   * 
+   *
    * @param filePath - Path to configuration file
    * @returns Parsed configuration or null if file doesn't exist
    */
-  private async loadFromFile(filePath: string): Promise<MultiSourceConfig | null> {
+  private async loadFromFile(
+    filePath: string
+  ): Promise<MultiSourceConfig | null> {
     const resolvedPath = resolve(filePath);
 
     if (!existsSync(resolvedPath)) {
@@ -125,7 +129,7 @@ export class DataSourceConfigLoader {
     try {
       const content = await readFile(resolvedPath, 'utf-8');
       const config = this.parseConfigContent(content, filePath);
-      
+
       logger.info('Configuration loaded from file', { path: resolvedPath });
       return config;
     } catch (error) {
@@ -133,13 +137,15 @@ export class DataSourceConfigLoader {
         path: resolvedPath,
         error: error instanceof Error ? error.message : String(error),
       });
-      throw new Error(`Failed to load configuration from ${filePath}: ${error}`);
+      throw new Error(
+        `Failed to load configuration from ${filePath}: ${error}`
+      );
     }
   }
 
   /**
    * Load configuration from default locations
-   * 
+   *
    * @returns Parsed configuration or null if no default file exists
    */
   private async loadFromDefaultLocations(): Promise<MultiSourceConfig | null> {
@@ -154,12 +160,15 @@ export class DataSourceConfigLoader {
 
   /**
    * Parse configuration file content
-   * 
+   *
    * @param content - File content
    * @param filePath - File path (for format detection)
    * @returns Parsed configuration
    */
-  private parseConfigContent(content: string, filePath: string): MultiSourceConfig {
+  private parseConfigContent(
+    content: string,
+    filePath: string
+  ): MultiSourceConfig {
     const isYaml = filePath.endsWith('.yaml') || filePath.endsWith('.yml');
 
     if (isYaml) {
@@ -180,11 +189,11 @@ export class DataSourceConfigLoader {
 
   /**
    * Load configuration from environment variables
-   * 
+   *
    * Supports defining data sources through environment variables:
    * - DATASOURCE_COUNT: Number of data sources
    * - DATASOURCE_0_ID, DATASOURCE_0_TYPE, etc.
-   * 
+   *
    * @param prefix - Environment variable prefix
    * @returns Configuration or null if not defined in environment
    */
@@ -210,40 +219,65 @@ export class DataSourceConfigLoader {
 
     return {
       sources,
-      conflictResolution: this.getEnvValue(`${prefix}_CONFLICT_RESOLUTION`, 'latest') as any,
-      aggregationEnabled: this.getEnvBoolean(`${prefix}_AGGREGATION_ENABLED`, false),
+      conflictResolution: this.getEnvValue(
+        `${prefix}_CONFLICT_RESOLUTION`,
+        'latest'
+      ) as 'latest' | 'priority' | 'merge',
+      aggregationEnabled: this.getEnvBoolean(
+        `${prefix}_AGGREGATION_ENABLED`,
+        false
+      ),
       operationTimeout: this.getEnvNumber(`${prefix}_OPERATION_TIMEOUT`, 30000),
       maxRetries: this.getEnvNumber(`${prefix}_MAX_RETRIES`, 3),
-      allowPartialFailure: this.getEnvBoolean(`${prefix}_ALLOW_PARTIAL_FAILURE`, true),
+      allowPartialFailure: this.getEnvBoolean(
+        `${prefix}_ALLOW_PARTIAL_FAILURE`,
+        true
+      ),
     };
   }
 
   /**
    * Load a single data source from environment variables
-   * 
+   *
    * @param prefix - Environment variable prefix
    * @param index - Source index
    * @returns Data source configuration
    */
-  private loadSourceFromEnvironment(prefix: string, index: number): DataSourceConfig {
+  private loadSourceFromEnvironment(
+    prefix: string,
+    index: number
+  ): DataSourceConfig {
     const sourcePrefix = `${prefix}_${index}`;
 
     const id = this.getEnvValue(`${sourcePrefix}_ID`, `source-${index}`);
     const name = this.getEnvValue(`${sourcePrefix}_NAME`, `Source ${index}`);
-    const type = this.getEnvValue(`${sourcePrefix}_TYPE`, 'filesystem') as any;
+    const type = this.getEnvValue(`${sourcePrefix}_TYPE`, 'filesystem') as
+      | 'filesystem'
+      | 'memory'
+      | 'postgresql'
+      | 'mongodb';
     const priority = this.getEnvNumber(`${sourcePrefix}_PRIORITY`, 100);
     const readonly = this.getEnvBoolean(`${sourcePrefix}_READONLY`, false);
     const enabled = this.getEnvBoolean(`${sourcePrefix}_ENABLED`, true);
     const tags = this.getEnvArray(`${sourcePrefix}_TAGS`);
 
-    let config: any;
+    let config: Record<string, unknown>;
 
     switch (type) {
       case 'filesystem':
         config = {
-          dataDirectory: this.getEnvValue(`${sourcePrefix}_DATA_DIRECTORY`, './data'),
-          backupRetentionDays: this.getEnvNumber(`${sourcePrefix}_BACKUP_RETENTION_DAYS`, 7),
-          enableCompression: this.getEnvBoolean(`${sourcePrefix}_ENABLE_COMPRESSION`, false),
+          dataDirectory: this.getEnvValue(
+            `${sourcePrefix}_DATA_DIRECTORY`,
+            './data'
+          ),
+          backupRetentionDays: this.getEnvNumber(
+            `${sourcePrefix}_BACKUP_RETENTION_DAYS`,
+            7
+          ),
+          enableCompression: this.getEnvBoolean(
+            `${sourcePrefix}_ENABLE_COMPRESSION`,
+            false
+          ),
         };
         break;
 
@@ -251,18 +285,30 @@ export class DataSourceConfigLoader {
         config = {
           host: this.getEnvValue(`${sourcePrefix}_HOST`, 'localhost'),
           port: this.getEnvNumber(`${sourcePrefix}_PORT`, 5432),
-          database: this.getEnvValue(`${sourcePrefix}_DATABASE`, 'task_manager'),
+          database: this.getEnvValue(
+            `${sourcePrefix}_DATABASE`,
+            'task_manager'
+          ),
           user: this.getEnvValue(`${sourcePrefix}_USER`, 'postgres'),
           password: this.getEnvValue(`${sourcePrefix}_PASSWORD`, ''),
           ssl: this.getEnvBoolean(`${sourcePrefix}_SSL`, false),
-          maxConnections: this.getEnvNumber(`${sourcePrefix}_MAX_CONNECTIONS`, 10),
+          maxConnections: this.getEnvNumber(
+            `${sourcePrefix}_MAX_CONNECTIONS`,
+            10
+          ),
         };
         break;
 
       case 'mongodb':
         config = {
-          uri: this.getEnvValue(`${sourcePrefix}_URI`, 'mongodb://localhost:27017'),
-          database: this.getEnvValue(`${sourcePrefix}_DATABASE`, 'task_manager'),
+          uri: this.getEnvValue(
+            `${sourcePrefix}_URI`,
+            'mongodb://localhost:27017'
+          ),
+          database: this.getEnvValue(
+            `${sourcePrefix}_DATABASE`,
+            'task_manager'
+          ),
           collection: this.getEnvValue(`${sourcePrefix}_COLLECTION`, 'tasks'),
           maxPoolSize: this.getEnvNumber(`${sourcePrefix}_MAX_POOL_SIZE`, 10),
         };
@@ -271,8 +317,14 @@ export class DataSourceConfigLoader {
       case 'memory':
         config = {
           maxSize: this.getEnvNumber(`${sourcePrefix}_MAX_SIZE`, undefined),
-          persistToDisk: this.getEnvBoolean(`${sourcePrefix}_PERSIST_TO_DISK`, false),
-          persistPath: this.getEnvValue(`${sourcePrefix}_PERSIST_PATH`, undefined),
+          persistToDisk: this.getEnvBoolean(
+            `${sourcePrefix}_PERSIST_TO_DISK`,
+            false
+          ),
+          persistPath: this.getEnvValue(
+            `${sourcePrefix}_PERSIST_PATH`,
+            undefined
+          ),
         };
         break;
 
@@ -294,12 +346,12 @@ export class DataSourceConfigLoader {
 
   /**
    * Apply environment variable overrides for sensitive credentials
-   * 
+   *
    * Allows overriding credentials in config files with environment variables
    * for security. Supports patterns like:
    * - DATASOURCE_<ID>_PASSWORD
    * - DATASOURCE_<ID>_USER
-   * 
+   *
    * @param config - Base configuration
    * @param prefix - Environment variable prefix
    * @returns Configuration with environment overrides applied
@@ -309,41 +361,43 @@ export class DataSourceConfigLoader {
     prefix: string
   ): MultiSourceConfig {
     const sources = config.sources.map(source => {
-      const sourcePrefix = `${prefix}_${source.id.toUpperCase().replace(/-/g, '_')}`;
+      const sourcePrefix = `${prefix}_${source.id
+        .toUpperCase()
+        .replace(/-/g, '_')}`;
       const overriddenConfig = { ...source.config };
 
       // PostgreSQL credential overrides
       if (source.type === 'postgresql') {
-        const pgConfig = overriddenConfig as any;
-        
+        const pgConfig = overriddenConfig as Record<string, unknown>;
+
         const host = process.env[`${sourcePrefix}_HOST`];
-        if (host) pgConfig.host = host;
-        
+        if (host) pgConfig['host'] = host;
+
         const port = process.env[`${sourcePrefix}_PORT`];
-        if (port) pgConfig.port = parseInt(port, 10);
-        
+        if (port) pgConfig['port'] = parseInt(port, 10);
+
         const database = process.env[`${sourcePrefix}_DATABASE`];
-        if (database) pgConfig.database = database;
-        
+        if (database) pgConfig['database'] = database;
+
         const user = process.env[`${sourcePrefix}_USER`];
-        if (user) pgConfig.user = user;
-        
+        if (user) pgConfig['user'] = user;
+
         const password = process.env[`${sourcePrefix}_PASSWORD`];
-        if (password) pgConfig.password = password;
-        
+        if (password) pgConfig['password'] = password;
+
         const ssl = process.env[`${sourcePrefix}_SSL`];
-        if (ssl) pgConfig.ssl = ssl === 'true';
+        if (ssl) pgConfig['ssl'] = ssl === 'true';
       }
 
       // MongoDB credential overrides
       if (source.type === 'mongodb') {
-        const mongoConfig = overriddenConfig as any;
-        
+        const mongoConfig = overriddenConfig as Record<string, unknown>;
+
         const uri = process.env[`${sourcePrefix}_URI`];
-        if (uri) mongoConfig.uri = uri;
-        
+        if (uri) mongoConfig['uri'] = uri;
+
         const database = process.env[`${sourcePrefix}_DATABASE`];
-        if (database) mongoConfig.database = database;
+        if (database) mongoConfig['database'] = database;
       }
 
       return {
@@ -393,12 +447,15 @@ export class DataSourceConfigLoader {
   private getEnvArray(key: string): string[] | undefined {
     const value = process.env[key];
     if (!value) return undefined;
-    return value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    return value
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
   }
 
   /**
    * Save configuration to file
-   * 
+   *
    * @param config - Configuration to save
    * @param filePath - Destination file path
    */

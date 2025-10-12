@@ -5,6 +5,7 @@ This document demonstrates advanced features including AI-powered analysis, depe
 ## 🎯 Advanced Methodology Integration
 
 These examples demonstrate the three core principles in complex scenarios:
+
 - **Plan and Reflect**: Deep analysis and investigation for complex projects
 - **Use Tools, Don't Guess**: Comprehensive research and validation approaches
 - **Persist Until Complete**: Quality assurance through detailed exit criteria and progress tracking
@@ -14,6 +15,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ### Investigation-First Approach for Complex Tasks
 
 **Step 1: Initial Task Analysis (Plan and Reflect)**
+
 ```json
 {
   "tool": "analyze_task",
@@ -26,6 +28,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 2: Research Existing Similar Work (Use Tools, Don't Guess)**
+
 ```json
 {
   "tool": "search_tool",
@@ -39,6 +42,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 3: Analyze Project Dependencies**
+
 ```json
 {
   "tool": "analyze_task_dependencies",
@@ -50,6 +54,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Response:**
+
 ```json
 {
   "isComplex": false,
@@ -58,9 +63,7 @@ These examples demonstrate the three core principles in complex scenarios:
   "estimatedDuration": 732,
   "reasoning": "Task appears straightforward (score: 4/10). Can likely be completed as a single task.",
   "suggestions": [],
-  "breakdown": [
-    "Technical complexity: 8/10 - Requires programming expertise"
-  ]
+  "breakdown": ["Technical complexity: 8/10 - Requires programming expertise"]
 }
 ```
 
@@ -69,6 +72,7 @@ These examples demonstrate the three core principles in complex scenarios:
 **Phase 1: Investigation and Analysis (Plan and Reflect)**
 
 **Step 1: Comprehensive Task Analysis**
+
 ```json
 {
   "tool": "analyze_task",
@@ -81,6 +85,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 2: Research Similar Completed Projects**
+
 ```json
 {
   "tool": "search_tool",
@@ -95,6 +100,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 3: Analyze Current Project State**
+
 ```json
 {
   "tool": "analyze_task_dependencies",
@@ -109,6 +115,7 @@ These examples demonstrate the three core principles in complex scenarios:
 **Phase 2: Strategic Task Creation with Detailed Planning**
 
 **Step 4: Create Foundation Tasks with Investigation-Based Action Plans**
+
 ```json
 {
   "tool": "add_task",
@@ -136,6 +143,7 @@ These examples demonstrate the three core principles in complex scenarios:
 **Phase 3: Execution with Continuous Updates**
 
 **Step 5: Start with Research and Context Gathering**
+
 ```json
 {
   "tool": "get_ready_tasks",
@@ -147,6 +155,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 6: Execute with Regular Progress Updates**
+
 ```json
 {
   "tool": "update_task",
@@ -159,6 +168,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 7: Track Exit Criteria Progress**
+
 ```json
 {
   "tool": "update_exit_criteria",
@@ -175,6 +185,7 @@ These examples demonstrate the three core principles in complex scenarios:
 **Phase 4: Quality Completion (Persist Until Complete)**
 
 **Step 8: Verify All Exit Criteria Before Completion**
+
 ```json
 {
   "tool": "get_list",
@@ -185,6 +196,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 9: Complete Only When All Criteria Met**
+
 ```json
 {
   "tool": "complete_task",
@@ -196,6 +208,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Step 10: Document Comprehensive Learnings and Outcomes**
+
 ```json
 {
   "tool": "update_task",
@@ -208,6 +221,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Response:**
+
 ```json
 {
   "isComplex": true,
@@ -224,7 +238,7 @@ These examples demonstrate the three core principles in complex scenarios:
   ],
   "breakdown": [
     "User Management System - 240 minutes",
-    "Product Catalog with Search - 360 minutes", 
+    "Product Catalog with Search - 360 minutes",
     "Shopping Cart and Checkout - 300 minutes",
     "Payment Processing Integration - 180 minutes",
     "Order Management System - 240 minutes"
@@ -246,6 +260,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Response:**
+
 ```json
 {
   "suggestions": [
@@ -280,6 +295,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ### Setting Task Dependencies
 
 **Basic Dependencies:**
+
 ```json
 {
   "tool": "set_task_dependencies",
@@ -292,6 +308,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Response:**
+
 ```json
 {
   "id": "e7e5a962-f706-4607-b7e1-95f44b9867ee",
@@ -310,6 +327,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Multiple Dependencies:**
+
 ```json
 {
   "tool": "set_task_dependencies",
@@ -337,6 +355,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Response:**
+
 ```json
 {
   "readyTasks": [
@@ -377,6 +396,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Response:**
+
 ```json
 {
   "analysis": {
@@ -415,6 +435,7 @@ These examples demonstrate the three core principles in complex scenarios:
 ### Pattern 1: Parallel Feature Development
 
 **Setup: Create feature tasks with dependencies**
+
 ```json
 {
   "tool": "add_task",
@@ -429,7 +450,7 @@ These examples demonstrate the three core principles in complex scenarios:
 
 ```json
 {
-  "tool": "add_task", 
+  "tool": "add_task",
   "parameters": {
     "listId": "web-app-project",
     "title": "Design user interface",
@@ -440,16 +461,18 @@ These examples demonstrate the three core principles in complex scenarios:
 ```
 
 **Orchestration: Find ready tasks**
+
 ```json
 {
   "tool": "get_ready_tasks",
-  "parameters": {"listId": "web-app-project", "limit": 5}
+  "parameters": { "listId": "web-app-project", "limit": 5 }
 }
 ```
 
 **Returns:** `["setup-database", "create-wireframes"]` - can be assigned to different agents
 
 **Assignment:**
+
 - Database Agent → "setup-database"
 - Design Agent → "create-wireframes"
 - Both work in parallel, unlocking more tasks when complete
@@ -457,18 +480,25 @@ These examples demonstrate the three core principles in complex scenarios:
 ### Pattern 2: Pipeline Processing
 
 **Setup: Content creation pipeline**
+
 ```json
 {
   "tool": "set_task_dependencies",
   "parameters": {
     "listId": "content-pipeline",
     "taskId": "publish-article",
-    "dependencyIds": ["write-draft", "edit-content", "create-graphics", "seo-review"]
+    "dependencyIds": [
+      "write-draft",
+      "edit-content",
+      "create-graphics",
+      "seo-review"
+    ]
   }
 }
 ```
 
 **Orchestration: As each stage completes, next becomes ready**
+
 - Stage 1: Writer Agent → "write-draft"
 - Stage 2: Editor Agent → "edit-content" (after draft complete)
 - Stage 3: Designer Agent → "create-graphics" (parallel with editing)
@@ -478,20 +508,27 @@ These examples demonstrate the three core principles in complex scenarios:
 ### Pattern 3: Quality Gates
 
 **Setup: Code deployment with multiple approvals**
+
 ```json
 {
   "tool": "set_task_dependencies",
   "parameters": {
     "listId": "deployment",
     "taskId": "deploy-production",
-    "dependencyIds": ["code-review-1", "code-review-2", "security-scan", "performance-test"]
+    "dependencyIds": [
+      "code-review-1",
+      "code-review-2",
+      "security-scan",
+      "performance-test"
+    ]
   }
 }
 ```
 
 **Orchestration: Multiple review agents work in parallel**
+
 - Review Agent 1 → "code-review-1"
-- Review Agent 2 → "code-review-2" 
+- Review Agent 2 → "code-review-2"
 - Security Agent → "security-scan"
 - Performance Agent → "performance-test"
 - All must complete before deployment agent can proceed
@@ -511,7 +548,7 @@ get_ready_tasks → Get list of unblocked tasks
 
 # 3. Assign tasks to specialized agents:
 # - Frontend Agent: UI components (if design complete)
-# - Backend Agent: API endpoints (if database ready)  
+# - Backend Agent: API endpoints (if database ready)
 # - Testing Agent: Unit tests (if code available)
 # - DevOps Agent: Infrastructure (if requirements defined)
 
@@ -597,6 +634,7 @@ get_ready_tasks → Identify articles ready for next stage
 ### Batch Operations
 
 **Create Multiple Related Tasks:**
+
 ```json
 {
   "tool": "bulk_task_operations",
@@ -636,6 +674,7 @@ get_ready_tasks → Identify articles ready for next stage
 ```
 
 **Update Multiple Task Priorities:**
+
 ```json
 {
   "tool": "bulk_task_operations",
@@ -665,21 +704,25 @@ get_ready_tasks → Identify articles ready for next stage
 ## Best Practices for Advanced Workflows
 
 ### Task Design
+
 - **Atomic Tasks**: Create tasks that can be completed independently by a single agent
 - **Clear Dependencies**: Only set dependencies that represent true prerequisites
 - **Balanced Workload**: Design tasks with similar complexity for parallel execution
 
 ### Dependency Management
+
 - **Minimize Dependencies**: Reduce coupling between tasks where possible
 - **Parallel Paths**: Create multiple independent work streams
 - **Critical Path Focus**: Prioritize tasks on the critical path
 
 ### Multi-Agent Coordination
+
 - **Role-Based Assignment**: Assign tasks based on agent specialization
 - **Progress Monitoring**: Regular check-ins on task completion status
 - **Dynamic Rebalancing**: Reassign work based on agent availability and progress
 
 ### Performance Optimization
+
 - **Batch Operations**: Use bulk operations for multiple related changes
 - **Efficient Filtering**: Use specific criteria to reduce data transfer
 - **Context Management**: Maintain context for related operations

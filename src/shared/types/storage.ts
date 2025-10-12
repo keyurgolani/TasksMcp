@@ -1,6 +1,6 @@
 /**
  * Storage backend interfaces and types
- * 
+ *
  * Defines the contract for storage implementations including file, memory, and database backends.
  * Provides consistent interface for data persistence with options for backup, validation, and filtering.
  */
@@ -48,7 +48,7 @@ export interface StorageData {
 /**
  * Abstract base class for storage backends
  * Defines the contract that all storage implementations must follow
- * 
+ *
  * Implementations include:
  * - FileStorage: JSON file-based storage
  * - MemoryStorage: In-memory storage for testing
@@ -106,7 +106,7 @@ export abstract class StorageBackend {
    * Closes connections and cleans up resources
    */
   abstract shutdown(): Promise<void>;
-  
+
   /**
    * Loads all data from storage for bulk operations
    * @returns Promise<StorageData> - Complete storage data

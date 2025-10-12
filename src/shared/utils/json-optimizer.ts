@@ -3,6 +3,7 @@
  */
 
 import { logger } from './logger.js';
+
 import type { TodoList, TodoItem } from '../types/todo.js';
 
 export interface SerializationOptions {
@@ -460,7 +461,10 @@ export class JsonOptimizer {
     }
 
     // Convert dates in list-level implementation notes
-    if (todoList.implementationNotes && Array.isArray(todoList.implementationNotes)) {
+    if (
+      todoList.implementationNotes &&
+      Array.isArray(todoList.implementationNotes)
+    ) {
       for (const note of todoList.implementationNotes) {
         this.convertDatesInObject(note);
       }
@@ -481,14 +485,21 @@ export class JsonOptimizer {
         }
 
         // Convert dates in item-level implementation notes
-        if (item.implementationNotes && Array.isArray(item.implementationNotes)) {
+        if (
+          item.implementationNotes &&
+          Array.isArray(item.implementationNotes)
+        ) {
           for (const note of item.implementationNotes) {
             this.convertDatesInObject(note);
           }
         }
 
         // Convert dates in action plan steps if present
-        if (item.actionPlan && item.actionPlan.steps && Array.isArray(item.actionPlan.steps)) {
+        if (
+          item.actionPlan &&
+          item.actionPlan.steps &&
+          Array.isArray(item.actionPlan.steps)
+        ) {
           for (const step of item.actionPlan.steps) {
             this.convertDatesInObject(step);
           }
@@ -497,17 +508,18 @@ export class JsonOptimizer {
     }
   }
 
-  private static convertDatesInObject(obj: any): void {
+  private static convertDatesInObject(obj: unknown): void {
     if (!obj || typeof obj !== 'object') {
       return;
     }
 
+    const objRecord = obj as Record<string, unknown>;
     for (const field of this.DATE_FIELDS) {
-      const value = obj[field];
+      const value = objRecord[field];
       if (typeof value === 'string') {
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
-          obj[field] = date;
+          objRecord[field] = date;
         }
       }
     }

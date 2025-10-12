@@ -20,10 +20,10 @@ interface CliOptions {
 
 /**
  * Parse command line arguments into structured options
- * 
+ *
  * Processes command line arguments and returns a structured options object.
  * Handles both short and long form arguments with proper validation.
- * 
+ *
  * @param args - Array of command line arguments (typically process.argv.slice(2))
  * @returns CliOptions - Parsed options object with typed properties
  */
@@ -39,7 +39,7 @@ function parseArgs(args: string[]): CliOptions {
       case '--help':
         options.help = true;
         break;
-      
+
       case '-v':
       case '--version':
         options.version = true;
@@ -87,7 +87,7 @@ function parseArgs(args: string[]): CliOptions {
       case '--verbose':
         options.verbose = true;
         break;
-      
+
       case '--quiet':
         options.quiet = true;
         break;
@@ -110,9 +110,23 @@ function parseArgs(args: string[]): CliOptions {
   return options;
 }
 
+/**
+ * CLI output utility for user-facing messages
+ * Separate from logging to avoid confusion with system logs
+ * Uses process.stdout/stderr directly to avoid ESLint no-console rule
+ */
+const cliOutput = {
+  print: (message: string): void => {
+    // CLI output is intentional user-facing output, not logging
+    process.stdout.write(message + '\n');
+  },
+  error: (message: string): void => {
+    process.stderr.write(message + '\n');
+  },
+};
+
 function showHelp(): void {
-  // eslint-disable-next-line no-console
-  console.log(`
+  cliOutput.print(`
 MCP Task Manager - Intelligent task management for AI agents
 
 USAGE:
@@ -146,7 +160,7 @@ FEATURES:
   ✓ Pretty Print Display  - Human-readable formatted task views
   ✓ Cleanup Suggestions  - Proactive cleanup of completed lists
   ✓ Project Organization  - Tag-based project management
-  ✓ Progress Tracking     - Advanced progress monitoring
+  ✓ Progress Tracking     - Advanced progress tracking
 
 MCP TOOLS AVAILABLE:
   LIST MANAGEMENT:
@@ -169,8 +183,7 @@ MCP TOOLS AVAILABLE:
   • show_tasks            Display formatted task lists
 
   ADVANCED FEATURES:
-  • analyze_task          Analyze task complexity
-  • get_task_suggestions  Get AI-generated suggestions
+  • analyze_task_dependencies  Analyze task dependencies and project structure
 
 CONFIGURATION:
   The server can be configured via:
@@ -202,35 +215,21 @@ For more information, visit: https://github.com/keyurgolani/task-list-mcp
 
 async function showVersion(): Promise<void> {
   try {
-    // eslint-disable-next-line no-console
-    console.log(`${getFormattedVersionInfo()}`);
-    // eslint-disable-next-line no-console
-    console.log(`Node.js ${process.version}`);
-    // eslint-disable-next-line no-console
-    console.log(`Platform: ${process.platform} ${process.arch}`);
-    // eslint-disable-next-line no-console
-    console.log('');
-    // eslint-disable-next-line no-console
-    console.log('Features:');
-    // eslint-disable-next-line no-console
-    console.log('  ✓ Action Plans & Progress Tracking');
-    // eslint-disable-next-line no-console
-    console.log('  ✓ Implementation Notes & Context');
-    // eslint-disable-next-line no-console
-    console.log('  ✓ Pretty Print Formatting');
-    // eslint-disable-next-line no-console
-    console.log('  ✓ Proactive Cleanup Suggestions');
-    // eslint-disable-next-line no-console
-    console.log('  ✓ Project-Based Organization');
-    // eslint-disable-next-line no-console
-    console.log('  ✓ Advanced Filtering & Search');
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(`MCP Task Manager v2.0.0`);
-    // eslint-disable-next-line no-console
-    console.log(`Node.js ${process.version}`);
-    // eslint-disable-next-line no-console
-    console.log(`Platform: ${process.platform} ${process.arch}`);
+    cliOutput.print(`${getFormattedVersionInfo()}`);
+    cliOutput.print(`Node.js ${process.version}`);
+    cliOutput.print(`Platform: ${process.platform} ${process.arch}`);
+    cliOutput.print('');
+    cliOutput.print('Features:');
+    cliOutput.print('  ✓ Action Plans & Progress Tracking');
+    cliOutput.print('  ✓ Implementation Notes & Context');
+    cliOutput.print('  ✓ Pretty Print Formatting');
+    cliOutput.print('  ✓ Proactive Cleanup Suggestions');
+    cliOutput.print('  ✓ Project-Based Organization');
+    cliOutput.print('  ✓ Advanced Filtering & Search');
+  } catch (_error) {
+    cliOutput.print(`MCP Task Manager v2.0.0`);
+    cliOutput.print(`Node.js ${process.version}`);
+    cliOutput.print(`Platform: ${process.platform} ${process.arch}`);
   }
 }
 
@@ -264,7 +263,7 @@ async function main(): Promise<void> {
   try {
     // Dynamically import the server to avoid early initialization
     const { McpTaskManagerServer } = await import('./server.js');
-    
+
     logger.info('Starting MCP Task Manager server...', {
       version: process.env['npm_package_version'] ?? getVersionInfo().version,
       nodeVersion: process.version,
@@ -298,10 +297,10 @@ async function main(): Promise<void> {
     process.stdin.resume();
   } catch (error) {
     logger.error('Failed to start MCP Task Manager server', { error });
-    // eslint-disable-next-line no-console
-    console.error(
-      'Failed to start server:',
-      error instanceof Error ? error.message : error
+    cliOutput.error(
+      `Failed to start server: ${
+        error instanceof Error ? error.message : error
+      }`
     );
     process.exit(1);
   }
@@ -321,7 +320,6 @@ process.on('uncaughtException', error => {
 
 // Start the CLI
 main().catch(error => {
-  // eslint-disable-next-line no-console
-  console.error('CLI startup error:', error);
+  cliOutput.error(`CLI startup error: ${error}`);
   process.exit(1);
 });

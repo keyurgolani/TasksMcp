@@ -4,14 +4,25 @@
  */
 
 import { z } from 'zod';
-import type { CallToolRequest, CallToolResult } from '../../shared/types/mcp-types.js';
-import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
-import type { TaskWithDependencies, ExitCriteriaResponse } from '../../shared/types/mcp-types.js';
-import { Priority } from '../../shared/types/todo.js';
+
 import { DependencyResolver } from '../../domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../../domain/tasks/exit-criteria-manager.js';
+import { Priority } from '../../shared/types/todo.js';
+import {
+  createHandlerErrorFormatter,
+  ERROR_CONFIGS,
+} from '../../shared/utils/handler-error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
-import { createHandlerErrorFormatter, ERROR_CONFIGS } from '../../shared/utils/handler-error-formatter.js';
+
+import type { TodoListManager } from '../../domain/lists/todo-list-manager.js';
+import type {
+  TaskWithDependencies,
+  ExitCriteriaResponse,
+} from '../../shared/types/mcp-types.js';
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from '../../shared/types/mcp-types.js';
 
 /**
  * Validation schema for add task request parameters
@@ -25,13 +36,17 @@ const AddTaskSchema = z.object({
   tags: z.array(z.string().max(50)).max(10).optional().default([]),
   estimatedDuration: z.number().min(1).optional(),
   dependencies: z.array(z.string().uuid()).max(10).optional().default([]),
-  exitCriteria: z.array(z.string().min(1).max(500)).max(20).optional().default([]),
+  exitCriteria: z
+    .array(z.string().min(1).max(500))
+    .max(20)
+    .optional()
+    .default([]),
 });
 
 /**
  * Handles MCP add_task tool requests
  * Adds a new task to an existing todo list with specified properties
- * 
+ *
  * @param request - The MCP call tool request containing task creation parameters
  * @param todoListManager - The todo list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with created task details or error
@@ -60,7 +75,7 @@ export async function handleAddTask(
       }
 
       const dependencyResolver = new DependencyResolver();
-      
+
       // Create a temporary task ID for validation (we'll get the real ID after creation)
       const tempTaskId = 'temp-validation-id';
       const validationResult = dependencyResolver.validateDependencies(
@@ -107,9 +122,15 @@ export async function handleAddTask(
         ...(args.description && { description: args.description }),
         priority,
         ...(args.tags && { tags: args.tags }),
-        ...(args.estimatedDuration && { estimatedDuration: args.estimatedDuration }),
-        ...(args.dependencies.length > 0 && { dependencies: args.dependencies }),
-        ...(args.exitCriteria.length > 0 && { exitCriteria: args.exitCriteria }),
+        ...(args.estimatedDuration && {
+          estimatedDuration: args.estimatedDuration,
+        }),
+        ...(args.dependencies.length > 0 && {
+          dependencies: args.dependencies,
+        }),
+        ...(args.exitCriteria.length > 0 && {
+          exitCriteria: args.exitCriteria,
+        }),
       },
     });
 
@@ -122,7 +143,7 @@ export async function handleAddTask(
     const dependencyResolver = new DependencyResolver();
     const readyItems = dependencyResolver.getReadyItems(result.items);
     const isReady = readyItems.some(item => item.id === newTask.id);
-    
+
     const blockedBy: string[] = [];
     if (!isReady && newTask.dependencies.length > 0) {
       for (const depId of newTask.dependencies) {
@@ -135,22 +156,28 @@ export async function handleAddTask(
 
     // Calculate exit criteria information
     const exitCriteriaManager = new ExitCriteriaManager();
-    const exitCriteriaProgress = exitCriteriaManager.calculateCriteriaProgress(newTask.exitCriteria);
-    const canComplete = exitCriteriaManager.areAllCriteriaMet(newTask.exitCriteria);
+    const exitCriteriaProgress = exitCriteriaManager.calculateCriteriaProgress(
+      newTask.exitCriteria
+    );
+    const canComplete = exitCriteriaManager.areAllCriteriaMet(
+      newTask.exitCriteria
+    );
 
     // Format exit criteria for response
-    const exitCriteriaResponse: ExitCriteriaResponse[] = newTask.exitCriteria.map(criteria => ({
-      id: criteria.id,
-      description: criteria.description,
-      isMet: criteria.isMet,
-      ...(criteria.metAt && { 
-        metAt: criteria.metAt instanceof Date 
-          ? criteria.metAt.toISOString() 
-          : new Date(criteria.metAt).toISOString() 
-      }),
-      ...(criteria.notes && { notes: criteria.notes }),
-      order: criteria.order,
-    }));
+    const exitCriteriaResponse: ExitCriteriaResponse[] =
+      newTask.exitCriteria.map(criteria => ({
+        id: criteria.id,
+        description: criteria.description,
+        isMet: criteria.isMet,
+        ...(criteria.metAt && {
+          metAt:
+            criteria.metAt instanceof Date
+              ? criteria.metAt.toISOString()
+              : new Date(criteria.metAt).toISOString(),
+        }),
+        ...(criteria.notes && { notes: criteria.notes }),
+        order: criteria.order,
+      }));
 
     const response: TaskWithDependencies = {
       id: newTask.id,
@@ -167,7 +194,9 @@ export async function handleAddTask(
       ...(blockedBy.length > 0 && { blockedBy }),
       canComplete,
       exitCriteriaProgress,
-      ...(exitCriteriaResponse.length > 0 && { exitCriteria: exitCriteriaResponse }),
+      ...(exitCriteriaResponse.length > 0 && {
+        exitCriteria: exitCriteriaResponse,
+      }),
     };
 
     dependencyResolver.cleanup();
@@ -185,13 +214,14 @@ export async function handleAddTask(
       ...response,
       _methodologyGuidance: {
         nextSteps: [
-          "📝 Use update_task regularly during execution to track progress and document discoveries",
-          "🎯 Use update_exit_criteria to track completion of individual requirements",
-          "⚠️ Only use complete_task when ALL exit criteria are verified (Persist Until Complete)",
-          "🔍 Use search_tool to research similar completed tasks for context and learnings"
+          '📝 Use update_task regularly during execution to track progress and document discoveries',
+          '🎯 Use update_exit_criteria to track completion of individual requirements',
+          '⚠️ Only use complete_task when ALL exit criteria are verified (Persist Until Complete)',
+          '🔍 Use search_tool to research similar completed tasks for context and learnings',
         ],
-        bestPractice: "Follow Plan and Reflect methodology: plan thoroughly, execute with updates, reflect on outcomes"
-      }
+        bestPractice:
+          'Follow Plan and Reflect methodology: plan thoroughly, execute with updates, reflect on outcomes',
+      },
     };
 
     return {
@@ -204,7 +234,10 @@ export async function handleAddTask(
     };
   } catch (error) {
     // Use error formatting with task management configuration
-    const formatError = createHandlerErrorFormatter('add_task', ERROR_CONFIGS.taskManagement);
+    const formatError = createHandlerErrorFormatter(
+      'add_task',
+      ERROR_CONFIGS.taskManagement
+    );
     return formatError(error, request.params?.arguments);
   }
 }

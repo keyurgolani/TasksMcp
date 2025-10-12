@@ -10,30 +10,33 @@ The MCP Task Manager follows semantic versioning (semver). This guide covers mig
 
 ### Migration Overview
 
-| From Version | To Version | Migration Required | Breaking Changes |
-|--------------|------------|-------------------|------------------|
-| 1.x → 2.x | 2.3.0 | Yes | Tool consolidation, new features |
-| 2.0 → 2.1 | 2.1.x | No | Backward compatible |
-| 2.1 → 2.2 | 2.2.x | No | Agent-friendly features added |
-| 2.2 → 2.3 | 2.3.x | No | Additional tools, improvements |
+| From Version | To Version | Migration Required | Breaking Changes                 |
+| ------------ | ---------- | ------------------ | -------------------------------- |
+| 1.x → 2.x    | 2.3.0      | Yes                | Tool consolidation, new features |
+| 2.0 → 2.1    | 2.1.x      | No                 | Backward compatible              |
+| 2.1 → 2.2    | 2.2.x      | No                 | Agent-friendly features added    |
+| 2.2 → 2.3    | 2.3.x      | No                 | Additional tools, improvements   |
 
 ## 📋 Version 2.x Migration
 
 ### Major Changes in Version 2.x
 
 #### Tool Consolidation
+
 - **`search_tasks`** and **`filter_tasks`** → **`search_tool`** (unified interface)
 - Enhanced search capabilities with advanced filtering
 - Backward compatibility maintained for existing tools
 
 #### New Features Added
+
 - **Exit Criteria Management** (2 new tools)
-- **Dependency Management** (3 new tools) 
+- **Dependency Management** (3 new tools)
 - **Bulk Operations** (1 new tool)
 - **DAG Visualization** (ASCII, DOT, Mermaid formats)
 - **Agent-Friendly Parameter Preprocessing**
 
 #### Configuration Changes
+
 - New environment variables for advanced features
 - Enhanced MCP client configuration options
 - Improved error handling and validation
@@ -54,12 +57,14 @@ cp .kiro/settings/mcp.json .kiro/settings/mcp.json.backup
 #### Step 2: Update Installation
 
 **For npx users (recommended):**
+
 ```bash
 # npx automatically uses the latest version
 npx task-list-mcp@latest --version
 ```
 
 **For global installation:**
+
 ```bash
 # Update to latest version
 npm update -g task-list-mcp
@@ -69,6 +74,7 @@ task-list-mcp --version
 ```
 
 **For development installation:**
+
 ```bash
 # Pull latest changes
 git pull origin main
@@ -100,7 +106,7 @@ npm run health
       },
       "autoApprove": [
         "create_list",
-        "get_list", 
+        "get_list",
         "list_all_lists",
         "delete_list",
         "add_task",
@@ -111,14 +117,12 @@ npm run health
         "add_task_tags",
         "search_tool",
         "show_tasks",
-        "analyze_task",
-        "get_task_suggestions",
+
         "set_task_exit_criteria",
         "update_exit_criteria",
         "set_task_dependencies",
         "get_ready_tasks",
-        "analyze_task_dependencies",
-        "bulk_task_operations"
+analyze_task_dependencies
       ]
     }
   }
@@ -148,7 +152,7 @@ npx task-list-mcp@latest --health
 
 // New recommended pattern
 {
-  "tool": "search_tool", 
+  "tool": "search_tool",
   "parameters": {
     "query": "urgent",
     "priority": [4, 5],
@@ -191,6 +195,7 @@ STORAGE_TYPE=file   # Enhanced file storage with atomic operations
 #### Claude Desktop Migration
 
 **Old Configuration (1.x):**
+
 ```json
 {
   "mcpServers": {
@@ -203,6 +208,7 @@ STORAGE_TYPE=file   # Enhanced file storage with atomic operations
 ```
 
 **New Configuration (2.x):**
+
 ```json
 {
   "mcpServers": {
@@ -222,6 +228,7 @@ STORAGE_TYPE=file   # Enhanced file storage with atomic operations
 #### Kiro IDE Migration
 
 **Enhanced Configuration:**
+
 ```json
 {
   "mcpServers": {
@@ -236,7 +243,6 @@ STORAGE_TYPE=file   # Enhanced file storage with atomic operations
       "disabled": false,
       "autoApprove": [
         "search_tool",
-        "bulk_task_operations",
         "set_task_exit_criteria",
         "update_exit_criteria",
         "set_task_dependencies",
@@ -301,6 +307,7 @@ npx task-list-mcp@latest --health
 #### Version 2.x Data Enhancements
 
 **New Task Properties:**
+
 ```json
 {
   "exitCriteria": [
@@ -318,6 +325,7 @@ npx task-list-mcp@latest --health
 ```
 
 **Enhanced List Properties:**
+
 ```json
 {
   "metadata": {
@@ -334,6 +342,7 @@ npx task-list-mcp@latest --health
 #### Exit Criteria System
 
 **Migration Pattern:**
+
 ```json
 // Old: Basic task completion
 {
@@ -348,7 +357,7 @@ npx task-list-mcp@latest --health
 {
   "tool": "set_task_exit_criteria",
   "parameters": {
-    "listId": "uuid", 
+    "listId": "uuid",
     "taskId": "uuid",
     "exitCriteria": [
       "Code review completed",
@@ -362,6 +371,7 @@ npx task-list-mcp@latest --health
 #### Dependency Management
 
 **Migration Pattern:**
+
 ```json
 // Old: Manual dependency tracking
 // (No built-in support)
@@ -371,7 +381,7 @@ npx task-list-mcp@latest --health
   "tool": "set_task_dependencies",
   "parameters": {
     "listId": "uuid",
-    "taskId": "uuid", 
+    "taskId": "uuid",
     "dependencyIds": ["dep1-uuid", "dep2-uuid"]
   }
 }
@@ -380,26 +390,16 @@ npx task-list-mcp@latest --health
 #### Bulk Operations
 
 **Migration Pattern:**
+
 ```json
 // Old: Multiple individual calls
 [
-  {"tool": "add_task", "parameters": {"title": "Task 1"}},
-  {"tool": "add_task", "parameters": {"title": "Task 2"}},
-  {"tool": "add_task", "parameters": {"title": "Task 3"}}
+  { "tool": "add_task", "parameters": { "title": "Task 1" } },
+  { "tool": "add_task", "parameters": { "title": "Task 2" } },
+  { "tool": "add_task", "parameters": { "title": "Task 3" } }
 ]
 
-// New: Single bulk operation
-{
-  "tool": "bulk_task_operations",
-  "parameters": {
-    "listId": "uuid",
-    "operations": [
-      {"type": "create", "data": {"title": "Task 1"}},
-      {"type": "create", "data": {"title": "Task 2"}},
-      {"type": "create", "data": {"title": "Task 3"}}
-    ]
-  }
-}
+// Use individual add_task calls instead of bulk operations
 ```
 
 ## 🚨 Troubleshooting Migration
@@ -409,11 +409,13 @@ npx task-list-mcp@latest --health
 #### Data Migration Failures
 
 **Symptoms:**
+
 - Server won't start after update
 - Data appears corrupted
 - Missing tasks or lists
 
 **Solutions:**
+
 ```bash
 # Restore from backup
 rm -rf $DATA_DIRECTORY
@@ -426,11 +428,13 @@ npx task-list-mcp@latest --migrate --force
 #### Configuration Issues
 
 **Symptoms:**
+
 - MCP client can't connect
 - Tools not appearing
 - Permission errors
 
 **Solutions:**
+
 ```bash
 # Validate configuration
 cat ~/.config/claude/mcp.json | jq .
@@ -444,11 +448,13 @@ cp examples/mcp-config.json ~/.config/claude/mcp.json
 #### Version Conflicts
 
 **Symptoms:**
+
 - Old version still running
 - Mixed version behavior
 - Unexpected errors
 
 **Solutions:**
+
 ```bash
 # Clear npm cache
 npm cache clean --force
@@ -506,12 +512,14 @@ pkill -f task-list-mcp
 #### Step 2: Restore Previous Version
 
 **For npx users:**
+
 ```bash
 # Install specific version
 npm install -g task-list-mcp@1.9.0
 ```
 
 **For development:**
+
 ```bash
 # Checkout previous version
 git checkout v1.9.0

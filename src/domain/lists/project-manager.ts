@@ -3,8 +3,9 @@
  */
 
 import { logger } from '../../shared/utils/logger.js';
-import type { TodoList } from '../../shared/types/todo.js';
+
 import type { StorageBackend } from '../../shared/types/storage.js';
+import type { TodoList } from '../../shared/types/todo.js';
 
 export interface ProjectSummary {
   tag: string;
@@ -19,7 +20,7 @@ export interface ProjectStats {
   tag: string;
   totalLists: number;
   activeLists: number;
-  archivedLists: number;
+
   totalTasks: number;
   completedTasks: number;
   inProgressTasks: number;
@@ -31,6 +32,20 @@ export interface ProjectStats {
   newestList: Date;
 }
 
+/**
+ * Manages project-level operations and statistics for todo lists
+ *
+ * Provides functionality for:
+ * - Project tag validation and normalization
+ * - Project-level statistics and summaries
+ * - Cross-project analytics
+ *
+ * @example
+ * ```typescript
+ * const projectManager = new ProjectManager(storage);
+ * const summary = await projectManager.getProjectSummary('my-project');
+ * ```
+ */
 export class ProjectManager {
   private readonly DEFAULT_PROJECT_TAG = 'default';
   private readonly PROJECT_TAG_REGEX = /^[a-zA-Z0-9_-]{1,50}$/;
@@ -92,34 +107,45 @@ export class ProjectManager {
     try {
       logger.debug('Listing all projects');
 
-      const allListSummaries = await this.storage.list({ includeArchived: true });
-      
+      const allListSummaries = await this.storage.list({
+        includeArchived: true,
+      });
+
       // Load full list data for each summary
       const allLists: TodoList[] = [];
       for (const summary of allListSummaries) {
         // Handle both real summaries and mocked full objects
-        if ('items' in summary && Array.isArray((summary as any).items)) {
+        if (
+          'items' in summary &&
+          Array.isArray((summary as { items: unknown[] }).items)
+        ) {
           // This is a full TodoList object (from mocked tests)
           allLists.push(summary as unknown as TodoList);
         } else {
           // This is a real summary, load the full list
-          const fullList = await this.storage.load(summary.id, { includeArchived: true });
+          const fullList = await this.storage.load(summary.id, {
+            includeArchived: true,
+          });
           if (fullList) {
             allLists.push(fullList);
           }
         }
       }
-      const projectMap = new Map<string, {
-        lists: TodoList[];
-        totalTasks: number;
-        completedTasks: number;
-        lastActivity: Date;
-      }>();
+      const projectMap = new Map<
+        string,
+        {
+          lists: TodoList[];
+          totalTasks: number;
+          completedTasks: number;
+          lastActivity: Date;
+        }
+      >();
 
       // Group lists by project tag
       for (const list of allLists) {
-        const projectTag = list.projectTag || list.context || this.DEFAULT_PROJECT_TAG;
-        
+        const projectTag =
+          list.projectTag || list.context || this.DEFAULT_PROJECT_TAG;
+
         if (!projectMap.has(projectTag)) {
           projectMap.set(projectTag, {
             lists: [],
@@ -133,7 +159,7 @@ export class ProjectManager {
         project.lists.push(list);
         project.totalTasks += list.totalItems || 0;
         project.completedTasks += list.completedItems || 0;
-        
+
         // Update last activity with the most recent update
         if (list.updatedAt > project.lastActivity) {
           project.lastActivity = list.updatedAt;
@@ -143,9 +169,10 @@ export class ProjectManager {
       // Convert to ProjectSummary array
       const projects: ProjectSummary[] = [];
       for (const [tag, data] of projectMap.entries()) {
-        const completionRate = data.totalTasks > 0 
-          ? Math.round((data.completedTasks / data.totalTasks) * 100)
-          : 0;
+        const completionRate =
+          data.totalTasks > 0
+            ? Math.round((data.completedTasks / data.totalTasks) * 100)
+            : 0;
 
         projects.push({
           tag,
@@ -158,7 +185,9 @@ export class ProjectManager {
       }
 
       // Sort by last activity (most recent first)
-      projects.sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
+      projects.sort(
+        (a, b) => b.lastActivity.getTime() - a.lastActivity.getTime()
+      );
 
       logger.info('Projects listed successfully', {
         projectCount: projects.length,
@@ -180,24 +209,31 @@ export class ProjectManager {
       logger.debug('Getting project statistics', { projectTag });
 
       if (!this.validateProjectTag(projectTag)) {
-        throw new Error(`Invalid project tag: ${projectTag}`);
+        throw new Error(
+          `Invalid project tag: "${projectTag}". Project tags must be 1-50 characters long and contain only letters, numbers, hyphens, and underscores.`
+        );
       }
 
-      const allListSummaries = await this.storage.list({ 
+      const allListSummaries = await this.storage.list({
         includeArchived: true,
-        context: projectTag // Use context parameter since storage interface uses context
+        context: projectTag, // Use context parameter since storage interface uses context
       });
-      
+
       // Load full list data for each summary
       const allLists: TodoList[] = [];
       for (const summary of allListSummaries) {
         // Handle both real summaries and mocked full objects
-        if ('items' in summary && Array.isArray((summary as any).items)) {
+        if (
+          'items' in summary &&
+          Array.isArray((summary as { items: unknown[] }).items)
+        ) {
           // This is a full TodoList object (from mocked tests)
           allLists.push(summary as unknown as TodoList);
         } else {
           // This is a real summary, load the full list
-          const fullList = await this.storage.load(summary.id, { includeArchived: true });
+          const fullList = await this.storage.load(summary.id, {
+            includeArchived: true,
+          });
           if (fullList) {
             allLists.push(fullList);
           }
@@ -205,8 +241,10 @@ export class ProjectManager {
       }
 
       // Filter lists by project tag (in case storage doesn't support projectTag filtering)
-      const projectLists = allLists.filter(list => 
-        (list.projectTag || list.context || this.DEFAULT_PROJECT_TAG) === projectTag
+      const projectLists = allLists.filter(
+        list =>
+          (list.projectTag || list.context || this.DEFAULT_PROJECT_TAG) ===
+          projectTag
       );
 
       if (projectLists.length === 0) {
@@ -215,7 +253,6 @@ export class ProjectManager {
           tag: projectTag,
           totalLists: 0,
           activeLists: 0,
-          archivedLists: 0,
           totalTasks: 0,
           completedTasks: 0,
           inProgressTasks: 0,
@@ -234,20 +271,12 @@ export class ProjectManager {
       let inProgressTasks = 0;
       let pendingTasks = 0;
       let totalProgress = 0;
-      let activeLists = 0;
-      let archivedLists = 0;
+      const activeLists = projectLists.length;
       let lastActivity = new Date(0);
       let oldestList = new Date();
       let newestList = new Date(0);
 
       for (const list of projectLists) {
-        // Count lists by status
-        if (list.isArchived) {
-          archivedLists++;
-        } else {
-          activeLists++;
-        }
-
         // Accumulate task counts
         totalTasks += list.totalItems || 0;
         completedTasks += list.completedItems || 0;
@@ -278,19 +307,18 @@ export class ProjectManager {
         }
       }
 
-      const completionRate = totalTasks > 0 
-        ? Math.round((completedTasks / totalTasks) * 100)
-        : 0;
+      const completionRate =
+        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-      const averageListProgress = projectLists.length > 0
-        ? Math.round(totalProgress / projectLists.length)
-        : 0;
+      const averageListProgress =
+        projectLists.length > 0
+          ? Math.round(totalProgress / projectLists.length)
+          : 0;
 
       const stats: ProjectStats = {
         tag: projectTag,
         totalLists: projectLists.length,
         activeLists,
-        archivedLists,
         totalTasks,
         completedTasks,
         inProgressTasks,
@@ -323,18 +351,25 @@ export class ProjectManager {
     try {
       logger.debug('Starting context to projectTag migration');
 
-      const allListSummaries = await this.storage.list({ includeArchived: true });
-      
+      const allListSummaries = await this.storage.list({
+        includeArchived: true,
+      });
+
       for (const summary of allListSummaries) {
         let list: TodoList;
-        
+
         // Handle both real summaries and mocked full objects (for tests)
-        if ('items' in summary && Array.isArray((summary as any).items)) {
+        if (
+          'items' in summary &&
+          Array.isArray((summary as { items: unknown[] }).items)
+        ) {
           // This is a full TodoList object (from mocked tests)
           list = summary as unknown as TodoList;
         } else {
           // This is a real summary, load the full list
-          const loadedList = await this.storage.load(summary.id, { includeArchived: true });
+          const loadedList = await this.storage.load(summary.id, {
+            includeArchived: true,
+          });
           if (!loadedList) continue;
           list = loadedList;
         }
@@ -370,11 +405,11 @@ export class ProjectManager {
         if (needsUpdate) {
           const updatedList = { ...list, ...updates };
           await this.storage.save(list.id, updatedList, { validate: true });
-          logger.debug('Migrated list', { 
-            listId: list.id, 
-            oldContext: list.context, 
+          logger.debug('Migrated list', {
+            listId: list.id,
+            oldContext: list.context,
             newProjectTag: updates.projectTag,
-            newContext: updates.context
+            newContext: updates.context,
           });
         }
       }
@@ -385,5 +420,4 @@ export class ProjectManager {
       throw error;
     }
   }
-
 }

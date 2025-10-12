@@ -13,14 +13,18 @@ New to the MCP Task Manager? Start here:
 ## 📚 Documentation Structure
 
 ### 🔧 API Reference
+
 Complete reference for all MCP tools and interfaces:
+
 - **[MCP Tools](api/tools.md)** - All 20 MCP tools with examples
 - **[Tool Schemas](api/schemas.md)** - Parameter specifications and validation
 - **[Error Handling](api/errors.md)** - Error codes and troubleshooting
 - **[Response Formats](api/responses.md)** - Standard response structures
 
 ### 📖 Guides
+
 Step-by-step guides for common tasks:
+
 - **[Installation](guides/installation.md)** - Setup and configuration
 - **[Getting Started](guides/getting-started.md)** - Basic usage tutorial
 - **[Agent Best Practices](guides/agent-best-practices.md)** - ⭐ **Essential for AI agents** - Proven methodologies for effective task management
@@ -29,13 +33,17 @@ Step-by-step guides for common tasks:
 - **[Troubleshooting](guides/troubleshooting.md)** - Common issues and solutions
 
 ### 💡 Examples
+
 Practical examples and usage patterns:
+
 - **[Basic Usage](examples/basic.md)** - Simple task management examples
 - **[Advanced Workflows](examples/advanced.md)** - Complex project management and multi-agent patterns
 - **[Configuration Examples](examples/configuration.md)** - Setup for different environments and clients
 
 ### 📋 Reference
+
 Additional resources and information:
+
 - **[FAQ](reference/faq.md)** - Frequently asked questions
 - **[Glossary](reference/glossary.md)** - Terms and definitions
 - **[Migration Guide](reference/migration.md)** - Upgrading from previous versions
@@ -44,6 +52,7 @@ Additional resources and information:
 ## 🎯 Key Features
 
 ### Core Functionality
+
 - ✅ **Complete CRUD Operations** - Create, read, update, delete todo lists and tasks
 - ✅ **AI-Powered Analysis** - Intelligent task complexity analysis and breakdown
 - ✅ **Dependency Management** - Handle complex task relationships and prerequisites
@@ -52,6 +61,7 @@ Additional resources and information:
 - ✅ **Exit Criteria System** - Quality control with detailed completion requirements
 
 ### Agent-Friendly Features
+
 - ✅ **Smart Parameter Preprocessing** - Automatic type conversion for common agent patterns
 - ✅ **Enhanced Error Messages** - Clear, actionable error guidance with examples
 - ✅ **Unified Search Interface** - Single tool for complex search and filtering operations
@@ -61,12 +71,14 @@ Additional resources and information:
 ## 🛠️ System Requirements
 
 ### Minimum Requirements
+
 - **Node.js**: 18.0.0 or higher
 - **Memory**: 512MB RAM
 - **Storage**: 100MB for application + data storage
 - **OS**: Windows, macOS, or Linux
 
 ### Recommended for Production
+
 - **Node.js**: 18.17.0 or higher
 - **Memory**: 2GB+ RAM
 - **Storage**: SSD with 1GB+ available space
@@ -74,22 +86,24 @@ Additional resources and information:
 
 ## 📊 Performance Characteristics
 
-| Metric | Target | Typical | Maximum Tested |
-|--------|--------|---------|----------------|
-| **Response Time** | < 10ms | 5ms create, 2ms read | 95ms |
-| **Throughput** | 900+ ops/s | 894 ops/s | 2500+ ops/s |
-| **Memory Usage** | < 200MB | 145MB | 480MB |
-| **Concurrent Users** | 100+ | 150 | 300+ |
-| **Data Volume** | 1000+ items/list | 500K items | 1M+ items |
+| Metric               | Target           | Typical              | Maximum Tested |
+| -------------------- | ---------------- | -------------------- | -------------- |
+| **Response Time**    | < 10ms           | 5ms create, 2ms read | 95ms           |
+| **Throughput**       | 900+ ops/s       | 894 ops/s            | 2500+ ops/s    |
+| **Memory Usage**     | < 200MB          | 145MB                | 480MB          |
+| **Concurrent Users** | 100+             | 150                  | 300+           |
+| **Data Volume**      | 1000+ items/list | 500K items           | 1M+ items      |
 
 ## 🔗 Integration Support
 
 ### MCP Clients
+
 - **Claude Desktop** - Full support with natural language interface
 - **Kiro IDE** - Complete workspace integration
 - **Custom Clients** - Any MCP 1.0+ compatible client
 
 ### AI Agents
+
 - **Claude (Anthropic)** - Seamless conversation-based task management
 - **GPT-4 (OpenAI)** - Via custom MCP client integration
 - **Custom Agents** - Standard MCP protocol support
@@ -97,18 +111,21 @@ Additional resources and information:
 ## 🎓 Learning Path
 
 ### For New Users
+
 1. **[Installation Guide](guides/installation.md)** - Get set up quickly
 2. **[Getting Started](guides/getting-started.md)** - Learn the basics
 3. **[Basic Examples](examples/basic.md)** - Try simple workflows
 4. **[FAQ](reference/faq.md)** - Common questions answered
 
 ### For Developers
+
 1. **[API Reference](api/tools.md)** - Understand all available tools
 2. **[Advanced Examples](examples/advanced.md)** - Complex integration patterns
 3. **[Multi-Agent Guide](guides/multi-agent.md)** - Orchestration workflows
 4. **[Performance Guide](reference/performance.md)** - Optimization techniques
 
 ### For System Administrators
+
 1. **[Configuration Guide](guides/configuration.md)** - Environment setup
 2. **[Troubleshooting Guide](guides/troubleshooting.md)** - Issue resolution
 3. **[Performance Reference](reference/performance.md)** - Monitoring and tuning
@@ -117,11 +134,13 @@ Additional resources and information:
 ## 🆘 Getting Help
 
 ### Documentation
+
 - **Search this documentation** for specific topics
 - **Check the [FAQ](reference/faq.md)** for common questions
 - **Review [Troubleshooting Guide](guides/troubleshooting.md)** for issues
 
 ### Diagnostics
+
 ```bash
 # Run health check
 npm run health
@@ -134,6 +153,7 @@ npm run build && npm run validate
 ```
 
 ### Community Support
+
 - **GitHub Issues** - Bug reports and feature requests
 - **Discussions** - Community Q&A and sharing
 - **Documentation** - Comprehensive guides and examples
@@ -153,6 +173,7 @@ MIT License - see [LICENSE](../LICENSE) file for details.
 ## 🤝 Contributing
 
 We welcome contributions! See the [Contributing Guide](../CONTRIBUTING.md) for:
+
 - Code contribution guidelines
 - Development setup instructions
 - Testing requirements

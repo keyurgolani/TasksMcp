@@ -1,12 +1,13 @@
 /**
  * Simplified Agent Integration Tests
- * 
+ *
  * Focused tests to validate the agent-friendly improvements work correctly.
  * This test suite demonstrates that preprocessing and enhanced error handling
  * provide better user experience for AI agents.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { McpTaskManagerServer } from '../../src/app/server.js';
 import { TestCleanup } from '../setup.js';
 
@@ -22,7 +23,7 @@ describe('Agent Integration Tests - Simplified', () => {
 
     server = new McpTaskManagerServer();
     await server.start();
-    
+
     // Register server for cleanup
     TestCleanup.registerServer(server);
 
@@ -150,16 +151,16 @@ describe('Agent Integration Tests - Simplified', () => {
       });
 
       const errorText = result.content[0].text;
-      
+
       // Should have clear error indicators
       expect(errorText).toContain('❌');
-      
+
       // Should have helpful suggestions
       expect(errorText).toContain('💡');
-      
+
       // Should be actionable
       expect(errorText.toLowerCase()).toMatch(/use|provide|try|example/);
-      
+
       // Should not be too technical
       expect(errorText).not.toContain('ZodError');
       expect(errorText).not.toContain('ValidationError');
@@ -183,7 +184,7 @@ describe('Agent Integration Tests - Simplified', () => {
   describe('Performance and Resilience', () => {
     it('should not significantly impact performance with preprocessing', async () => {
       const startTime = Date.now();
-      
+
       // Perform multiple operations with preprocessing
       for (let i = 0; i < 5; i++) {
         await simulateToolCall(server, 'add_task', {
@@ -193,10 +194,10 @@ describe('Agent Integration Tests - Simplified', () => {
           tags: JSON.stringify([`tag${i}`, 'performance']),
         });
       }
-      
+
       const endTime = Date.now();
       const totalTime = endTime - startTime;
-      
+
       // Should complete 5 operations in reasonable time
       expect(totalTime).toBeLessThan(5000);
     });
@@ -242,7 +243,7 @@ describe('Agent Integration Tests - Simplified', () => {
 
       for (const params of edgeCases) {
         const result = await simulateToolCall(server, 'add_task', params);
-        
+
         // Should return error response, not crash
         expect(result.content[0].text).toContain('❌');
         expect(result.content[0].text).toContain('💡');
@@ -261,12 +262,20 @@ describe('Agent Integration Tests - Simplified', () => {
         },
         {
           name: 'JSON string tags',
-          params: { listId: testListId, title: 'Task 2', tags: '["urgent", "important"]' },
+          params: {
+            listId: testListId,
+            title: 'Task 2',
+            tags: '["urgent", "important"]',
+          },
           shouldSucceed: true,
         },
         {
           name: 'String duration',
-          params: { listId: testListId, title: 'Task 3', estimatedDuration: '120' },
+          params: {
+            listId: testListId,
+            title: 'Task 3',
+            estimatedDuration: '120',
+          },
           shouldSucceed: true,
         },
         {
@@ -277,7 +286,11 @@ describe('Agent Integration Tests - Simplified', () => {
       ];
 
       for (const pattern of patterns) {
-        const result = await simulateToolCall(server, 'add_task', pattern.params);
+        const result = await simulateToolCall(
+          server,
+          'add_task',
+          pattern.params
+        );
         const isSuccess = !result.content[0].text.includes('❌');
 
         if (pattern.shouldSucceed) {
@@ -291,8 +304,14 @@ describe('Agent Integration Tests - Simplified', () => {
 
     it('should provide consistent error formatting across tools', async () => {
       const tools = [
-        { name: 'add_task', params: { listId: testListId, title: 'Test', priority: 'invalid' } },
-        { name: 'search_tool', params: { listId: testListId, priority: ['invalid'] } },
+        {
+          name: 'add_task',
+          params: { listId: testListId, title: 'Test', priority: 'invalid' },
+        },
+        {
+          name: 'search_tool',
+          params: { listId: testListId, priority: ['invalid'] },
+        },
       ];
 
       const errorFormats: string[] = [];
@@ -303,8 +322,10 @@ describe('Agent Integration Tests - Simplified', () => {
       }
 
       // Check consistency in error formatting
-      const allHaveEmojis = errorFormats.every(text => /[❌💡📝]/.test(text));
-      const allHaveSuggestions = errorFormats.every(text => text.includes('💡'));
+      const allHaveEmojis = errorFormats.every(text => /[❌💡📝]/u.test(text));
+      const allHaveSuggestions = errorFormats.every(text =>
+        text.includes('💡')
+      );
 
       expect(allHaveEmojis).toBe(true);
       expect(allHaveSuggestions).toBe(true);
@@ -315,12 +336,32 @@ describe('Agent Integration Tests - Simplified', () => {
     it('should demonstrate preprocessing effectiveness', async () => {
       const testCases = [
         // Cases that should succeed with preprocessing
-        { params: { listId: testListId, title: 'Task 1', priority: '5' }, shouldSucceed: true },
-        { params: { listId: testListId, title: 'Task 2', tags: '["tag1", "tag2"]' }, shouldSucceed: true },
-        { params: { listId: testListId, title: 'Task 3', estimatedDuration: '120' }, shouldSucceed: true },
-        
+        {
+          params: { listId: testListId, title: 'Task 1', priority: '5' },
+          shouldSucceed: true,
+        },
+        {
+          params: {
+            listId: testListId,
+            title: 'Task 2',
+            tags: '["tag1", "tag2"]',
+          },
+          shouldSucceed: true,
+        },
+        {
+          params: {
+            listId: testListId,
+            title: 'Task 3',
+            estimatedDuration: '120',
+          },
+          shouldSucceed: true,
+        },
+
         // Cases that should still fail (invalid data)
-        { params: { listId: testListId, title: 'Task 4', priority: '10' }, shouldSucceed: false },
+        {
+          params: { listId: testListId, title: 'Task 4', priority: '10' },
+          shouldSucceed: false,
+        },
         { params: { listId: testListId, title: '' }, shouldSucceed: false },
       ];
 
@@ -330,7 +371,11 @@ describe('Agent Integration Tests - Simplified', () => {
       let expectedFailureCount = 0;
 
       for (const testCase of testCases) {
-        const result = await simulateToolCall(server, 'add_task', testCase.params);
+        const result = await simulateToolCall(
+          server,
+          'add_task',
+          testCase.params
+        );
         const isSuccess = !result.content[0].text.includes('❌');
 
         if (testCase.shouldSucceed) {
@@ -361,10 +406,14 @@ describe('Agent Integration Tests - Simplified', () => {
       const errorText = result.content[0].text;
 
       // Quality indicators
-      const hasEmojis = /[❌💡📝🔧]/.test(errorText);
-      const hasStructure = errorText.includes('\\n') || errorText.includes('\n'); // Check for actual or escaped newlines
-      const isReasonableLength = errorText.length > 100 && errorText.length < 2000;
-      const hasActionableLanguage = /use|provide|try|example|choose/i.test(errorText);
+      const hasEmojis = /[❌💡📝🔧]/u.test(errorText);
+      const hasStructure =
+        errorText.includes('\\n') || errorText.includes('\n'); // Check for actual or escaped newlines
+      const isReasonableLength =
+        errorText.length > 100 && errorText.length < 2000;
+      const hasActionableLanguage = /use|provide|try|example|choose/i.test(
+        errorText
+      );
       const avoidsJargon = !/(zod|schema|parse)/i.test(errorText); // Removed 'validation' as it's commonly used
 
       expect(hasEmojis).toBe(true);
@@ -392,10 +441,10 @@ async function simulateToolCall(
   };
 
   try {
-    // Use reflection to access the private routeToolCall method
-    const routeToolCall = (server as any).routeToolCall.bind(server);
+    // Use the public routeToolCall method
+    const routeToolCall = server.routeToolCall.bind(server);
     const result = await routeToolCall(toolName, request);
-    
+
     return {
       content: [
         {

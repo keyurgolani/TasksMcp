@@ -4,8 +4,10 @@
  */
 
 import { z } from 'zod';
-import type { TodoItem } from '../types/todo.js';
+
 import { logger } from './logger.js';
+
+import type { TodoItem } from '../types/todo.js';
 
 /**
  * Validation schema for dependency IDs array
@@ -39,7 +41,7 @@ export interface DependencyValidationResult {
 /**
  * Validates dependency IDs for a task
  * Performs comprehensive validation including existence, circular dependencies, and self-dependencies
- * 
+ *
  * @param taskId - The ID of the task to validate dependencies for
  * @param dependencyIds - Array of dependency IDs to validate
  * @param allTasks - All tasks in the list for validation context
@@ -70,7 +72,9 @@ export function validateDependencyIds(
 
     if (invalidDeps.length > 0) {
       result.isValid = false;
-      result.errors.push(`Invalid dependencies: ${invalidDeps.join(', ')} do not exist`);
+      result.errors.push(
+        `Invalid dependencies: ${invalidDeps.join(', ')} do not exist`
+      );
     }
 
     // Check for self-dependency
@@ -82,7 +86,9 @@ export function validateDependencyIds(
     // Check for duplicate dependencies
     const uniqueDeps = new Set(dependencyIds);
     if (uniqueDeps.size !== dependencyIds.length) {
-      result.warnings.push('Duplicate dependencies detected and will be removed');
+      result.warnings.push(
+        'Duplicate dependencies detected and will be removed'
+      );
     }
 
     // Check for circular dependencies
@@ -106,7 +112,9 @@ export function validateDependencyIds(
         const task = allTasks.find(t => t.id === dep);
         return task?.title ?? dep;
       });
-      result.warnings.push(`Dependencies on completed tasks: ${completedTitles.join(', ')}`);
+      result.warnings.push(
+        `Dependencies on completed tasks: ${completedTitles.join(', ')}`
+      );
     }
 
     logger.debug('Dependency validation completed', {
@@ -121,18 +129,22 @@ export function validateDependencyIds(
   } catch (error) {
     logger.error('Failed to validate dependency IDs', { taskId, error });
     result.isValid = false;
-    result.errors.push(`Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.errors.push(
+      `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
     return result;
   }
 }
 
 /**
  * Creates user-friendly error messages for dependency validation failures
- * 
+ *
  * @param validation - The validation result to format
  * @returns Formatted error message with suggestions
  */
-export function formatDependencyValidationError(validation: DependencyValidationResult): string {
+export function formatDependencyValidationError(
+  validation: DependencyValidationResult
+): string {
   const messages: string[] = [];
 
   if (validation.errors.length > 0) {
@@ -160,15 +172,21 @@ export function formatDependencyValidationError(validation: DependencyValidation
   if (validation.errors.some(e => e.includes('Invalid dependencies'))) {
     messages.push('');
     messages.push('Suggestions:');
-    messages.push('  • Verify that all dependency task IDs exist in the same list');
+    messages.push(
+      '  • Verify that all dependency task IDs exist in the same list'
+    );
     messages.push('  • Check for typos in task IDs');
   }
 
   if (validation.errors.some(e => e.includes('Circular dependency'))) {
     messages.push('');
     messages.push('Suggestions:');
-    messages.push('  • Remove one or more dependencies to break the circular chain');
-    messages.push('  • Consider restructuring tasks to avoid circular dependencies');
+    messages.push(
+      '  • Remove one or more dependencies to break the circular chain'
+    );
+    messages.push(
+      '  • Consider restructuring tasks to avoid circular dependencies'
+    );
   }
 
   return messages.join('\n');
@@ -176,7 +194,7 @@ export function formatDependencyValidationError(validation: DependencyValidation
 
 /**
  * Detects circular dependencies using depth-first search
- * 
+ *
  * @param taskId - The ID of the task to check dependencies for
  * @param newDependencies - Array of new dependency IDs to validate
  * @param allTasks - All tasks in the list for validation context
@@ -259,7 +277,7 @@ export function detectCircularDependencies(
 /**
  * Centralized dependency validation function with comprehensive error handling
  * This is the main validation function that should be used by all dependency management tools
- * 
+ *
  * @param taskId - The ID of the task to validate dependencies for
  * @param dependencyIds - Array of dependency IDs to validate
  * @param allTasks - All tasks in the list for validation context
@@ -298,11 +316,12 @@ export function validateTaskDependencies(
       };
     }
 
-    const dependencyIdsValidation = DependencyIdsSchema.safeParse(dependencyIds);
+    const dependencyIdsValidation =
+      DependencyIdsSchema.safeParse(dependencyIds);
     if (!dependencyIdsValidation.success) {
       return {
         isValid: false,
-        errors: dependencyIdsValidation.error.errors.map(e => e.message),
+        errors: dependencyIdsValidation.error.issues.map(e => e.message),
         warnings: [],
         circularDependencies: [],
       };
@@ -328,7 +347,9 @@ export function validateTaskDependencies(
 
     return {
       isValid: false,
-      errors: [`Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+      errors: [
+        `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      ],
       warnings: [],
       circularDependencies: [],
     };
@@ -337,7 +358,7 @@ export function validateTaskDependencies(
 
 /**
  * Creates user-friendly error responses with suggestions for fixing issues
- * 
+ *
  * @param validation - The validation result to format
  * @param taskId - The task ID for context in error messages
  * @returns Formatted error response with actionable suggestions
@@ -372,7 +393,9 @@ export function createDependencyErrorResponse(
 
   // Generate specific suggestions based on error types
   if (validation.errors.some(e => e.includes('Invalid dependencies'))) {
-    suggestions.push('Verify that all dependency task IDs exist in the same list');
+    suggestions.push(
+      'Verify that all dependency task IDs exist in the same list'
+    );
     suggestions.push('Check for typos in task IDs');
     suggestions.push('Use the get_list tool to see all available task IDs');
   }
@@ -383,13 +406,21 @@ export function createDependencyErrorResponse(
   }
 
   if (validation.circularDependencies.length > 0) {
-    suggestions.push('Remove one or more dependencies to break the circular chain');
-    suggestions.push('Consider restructuring tasks to avoid circular dependencies');
-    suggestions.push('Use the analyze_task_dependencies tool to visualize the dependency graph');
+    suggestions.push(
+      'Remove one or more dependencies to break the circular chain'
+    );
+    suggestions.push(
+      'Consider restructuring tasks to avoid circular dependencies'
+    );
+    suggestions.push(
+      'Use the analyze_task_dependencies tool to visualize the dependency graph'
+    );
   }
 
   if (validation.warnings.some(w => w.includes('completed tasks'))) {
-    suggestions.push('Consider removing dependencies on completed tasks as they are already done');
+    suggestions.push(
+      'Consider removing dependencies on completed tasks as they are already done'
+    );
   }
 
   if (validation.warnings.some(w => w.includes('Duplicate dependencies'))) {
@@ -402,7 +433,9 @@ export function createDependencyErrorResponse(
     errorCode = 'CIRCULAR_DEPENDENCY_ERROR';
   } else if (invalidDependencies.length > 0) {
     errorCode = 'INVALID_DEPENDENCY_ERROR';
-  } else if (validation.errors.some(e => e.includes('cannot depend on itself'))) {
+  } else if (
+    validation.errors.some(e => e.includes('cannot depend on itself'))
+  ) {
     errorCode = 'SELF_DEPENDENCY_ERROR';
   }
 
@@ -434,7 +467,7 @@ export function createDependencyErrorResponse(
 
 /**
  * Removes duplicate dependency IDs while preserving order
- * 
+ *
  * @param dependencyIds - Array of dependency IDs that may contain duplicates
  * @returns Array with duplicates removed
  */

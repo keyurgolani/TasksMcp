@@ -5,27 +5,31 @@ This document provides quick reference schemas for all MCP Task Manager tools.
 ## Common Types
 
 ### UUID Format
+
 ```
 Pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
 Example: "123e4567-e89b-12d3-a456-426614174000"
 ```
 
 ### Priority Scale
+
 ```
 Range: 1-5
 1 = Lowest priority (minimal)
-2 = Low priority 
+2 = Low priority
 3 = Medium priority (default)
 4 = High priority
 5 = Highest priority (critical)
 ```
 
 ### Status Values
+
 ```
 Enum: ["pending", "in_progress", "completed", "blocked", "cancelled"]
 ```
 
 ### Tag Format
+
 ```
 Pattern: ^[a-z0-9-_]+$
 Max Length: 50 characters
@@ -35,6 +39,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## List Management Tools
 
 ### create_list
+
 ```json
 {
   "name": "create_list",
@@ -61,6 +66,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### get_list
+
 ```json
 {
   "name": "get_list",
@@ -82,6 +88,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### list_all_lists
+
 ```json
 {
   "name": "list_all_lists",
@@ -109,6 +116,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### delete_list
+
 ```json
 {
   "name": "delete_list",
@@ -132,6 +140,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Task Management Tools
 
 ### add_task
+
 ```json
 {
   "name": "add_task",
@@ -192,6 +201,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### update_task
+
 ```json
 {
   "name": "update_task",
@@ -226,6 +236,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### remove_task
+
 ```json
 {
   "name": "remove_task",
@@ -247,6 +258,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### complete_task
+
 ```json
 {
   "name": "complete_task",
@@ -268,6 +280,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### set_task_priority
+
 ```json
 {
   "name": "set_task_priority",
@@ -294,6 +307,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### add_task_tags
+
 ```json
 {
   "name": "add_task_tags",
@@ -326,6 +340,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Search & Display Tools
 
 ### search_tool (Recommended)
+
 ```json
 {
   "name": "search_tool",
@@ -345,7 +360,13 @@ Examples: ["urgent", "frontend", "bug-fix"]
         "type": "array",
         "items": {
           "type": "string",
-          "enum": ["pending", "in_progress", "completed", "blocked", "cancelled"]
+          "enum": [
+            "pending",
+            "in_progress",
+            "completed",
+            "blocked",
+            "cancelled"
+          ]
         }
       },
       "priority": {
@@ -400,6 +421,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### show_tasks
+
 ```json
 {
   "name": "show_tasks",
@@ -433,6 +455,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Advanced Features Tools
 
 ### analyze_task
+
 ```json
 {
   "name": "analyze_task",
@@ -461,6 +484,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### get_task_suggestions
+
 ```json
 {
   "name": "get_task_suggestions",
@@ -491,6 +515,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Exit Criteria Management Tools
 
 ### set_task_exit_criteria
+
 ```json
 {
   "name": "set_task_exit_criteria",
@@ -520,6 +545,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### update_exit_criteria
+
 ```json
 {
   "name": "update_exit_criteria",
@@ -554,6 +580,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Dependency Management Tools
 
 ### set_task_dependencies
+
 ```json
 {
   "name": "set_task_dependencies",
@@ -583,6 +610,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### get_ready_tasks
+
 ```json
 {
   "name": "get_ready_tasks",
@@ -606,6 +634,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### analyze_task_dependencies
+
 ```json
 {
   "name": "analyze_task_dependencies",
@@ -635,6 +664,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Bulk Operations Tool
 
 ### bulk_task_operations
+
 ```json
 {
   "name": "bulk_task_operations",
@@ -681,13 +711,14 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ## Response Formats
 
 ### Standard List Response
+
 ```json
 {
   "id": "string (uuid)",
   "title": "string",
   "description": "string",
   "taskCount": "number",
-  "completedCount": "number", 
+  "completedCount": "number",
   "progress": "number (0-100)",
   "lastUpdated": "string (ISO date)",
   "projectTag": "string",
@@ -696,6 +727,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### Standard Task Response
+
 ```json
 {
   "id": "string (uuid)",
@@ -727,6 +759,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### Search Response
+
 ```json
 {
   "results": ["TaskResponse"],
@@ -738,6 +771,7 @@ Examples: ["urgent", "frontend", "bug-fix"]
 ```
 
 ### Error Response
+
 ```json
 {
   "content": [
