@@ -7,6 +7,7 @@ import { Task, TaskStatus, Priority } from '../../../domain/models/task';
 import {
   CreateTaskData,
   UpdateTaskData,
+  SearchTasksData,
 } from '../../../shared/types/task-operations';
 
 import { BaseOrchestrator } from './base-orchestrator';
@@ -56,4 +57,70 @@ export interface TaskOrchestrator extends BaseOrchestrator {
    * Completes a task with validation
    */
   completeTask(id: string): Promise<Task>;
+
+  /**
+   * Sets task exit criteria
+   */
+  setTaskExitCriteria(id: string, exitCriteria: string[]): Promise<Task>;
+
+  /**
+   * Updates exit criteria status
+   */
+  updateExitCriteria(
+    taskId: string,
+    criteriaId: string,
+    updates: {
+      isMet?: boolean;
+      notes?: string;
+    }
+  ): Promise<Task>;
+
+  /**
+   * Searches tasks with criteria
+   */
+  searchTasks(criteria: SearchTasksData): Promise<{
+    tasks: Task[];
+    total: number;
+    offset: number;
+    limit: number;
+    hasMore: boolean;
+  }>;
+
+  // Bulk operations (not available in MCP)
+  /**
+   * Creates multiple tasks in bulk
+   */
+  createBulkTasks(tasks: CreateTaskData[]): Promise<Task[]>;
+
+  /**
+   * Updates multiple tasks in bulk
+   */
+  updateBulkTasks(
+    updates: Array<{ id: string; data: UpdateTaskData }>
+  ): Promise<Task[]>;
+
+  /**
+   * Deletes multiple tasks in bulk
+   */
+  deleteBulkTasks(taskIds: string[]): Promise<number>;
+
+  /**
+   * Completes multiple tasks in bulk
+   */
+  completeBulkTasks(taskIds: string[]): Promise<Task[]>;
+
+  /**
+   * Sets priority for multiple tasks in bulk
+   */
+  setBulkTaskPriority(taskIds: string[], priority: Priority): Promise<Task[]>;
+
+  /**
+   * Adds tags to multiple tasks in bulk
+   */
+  addBulkTaskTags(taskIds: string[], tags: string[]): Promise<Task[]>;
+
+  /**
+   * Removes tags from multiple tasks in bulk
+   */
+  removeBulkTaskTags(taskIds: string[], tags: string[]): Promise<Task[]>;
 }

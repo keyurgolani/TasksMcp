@@ -17,7 +17,7 @@ This comprehensive guide covers all configuration options for the MCP Task Manag
 
 | Variable                 | Default | Description                 |
 | ------------------------ | ------- | --------------------------- |
-| `MAX_ITEMS_PER_LIST`     | `1000`  | Maximum tasks per todo list |
+| `MAX_ITEMS_PER_LIST`     | `1000`  | Maximum tasks per task list |
 | `MAX_LISTS_PER_CONTEXT`  | `100`   | Maximum lists per context   |
 | `BACKUP_ENABLED`         | `true`  | Enable automatic backups    |
 | `BACKUP_RETENTION_DAYS`  | `30`    | Days to keep backup files   |
@@ -158,7 +158,7 @@ MAX_LISTS_PER_CONTEXT=10
 
 ```
 DATA_DIRECTORY/
-├── lists/              # Todo list data files
+├── lists/              # Task list data files
 │   ├── list-uuid.json
 │   └── ...
 ├── backups/            # Automatic backups

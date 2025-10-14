@@ -14,11 +14,6 @@ import {
 import { FileLock } from '../../shared/utils/file-lock.js';
 import { JsonOptimizer } from '../../shared/utils/json-optimizer.js';
 import { logger } from '../../shared/utils/logger.js';
-import {
-  memoryCleanupManager,
-  MemoryUtils,
-} from '../../shared/utils/memory-cleanup.js';
-import { memoryLeakPrevention } from '../../shared/utils/memory-leak-prevention.js';
 import { RetryLogic } from '../../shared/utils/retry-logic.js';
 
 import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
@@ -32,13 +27,10 @@ export interface FileStorageConfig {
 export class FileStorageBackend extends StorageBackend {
   private readonly config: Required<FileStorageConfig>;
   private initialized = false;
-  private readonly indexCache = new Map<string, unknown>();
   private readonly contextIndex = new Map<string, Set<string>>(); // context -> set of list IDs
-  private readonly listMetadataCache = new Map<string, TaskListSummary>(); // listId -> summary
   private cleanupInterval: NodeJS.Timeout | undefined;
   private isShuttingDown = false;
-  private readonly MAX_INDEX_CACHE_SIZE = 5; // Further reduced cache size
-  private readonly MAX_METADATA_CACHE_SIZE = 1000; // Cache for list summaries
+
   private readonly LOCK_TIMEOUT = 30000; // 30 seconds
   private readonly INDEX_RETRY_OPTIONS = {
     maxRetries: 3,
@@ -78,11 +70,7 @@ export class FileStorageBackend extends StorageBackend {
       // Clean up old backups
       await this.cleanupOldBackups();
 
-      // Register caches with memory leak prevention
-      memoryLeakPrevention.registerCache(
-        'file-storage-index-cache',
-        this.indexCache as Map<unknown, unknown>
-      );
+      // Memory leak prevention removed - no longer supported
 
       // Load context index into memory for fast lookups
       await this.loadContextIndexIntoMemory();
@@ -114,7 +102,7 @@ export class FileStorageBackend extends StorageBackend {
     try {
       // Validate data if requested
       if (options?.validate === true) {
-        this.validateTodoList(data);
+        this.validateTaskList(data);
       }
 
       // Create backup if file exists and backup is requested
@@ -127,7 +115,7 @@ export class FileStorageBackend extends StorageBackend {
       await this.ensureDirectoryExists(dirname(filePath));
 
       // Write to temporary file first (atomic operation) with serialization
-      const jsonData = JsonOptimizer.serializeTodoList(data, {
+      const jsonData = JsonOptimizer.serializeTaskList(data, {
         prettyPrint: false, // Skip pretty printing for performance
         includeMetadata: true,
       });
@@ -144,7 +132,7 @@ export class FileStorageBackend extends StorageBackend {
         await fs.unlink(backupPath);
       }
 
-      logger.debug('Todo list saved to file storage', {
+      logger.debug('Task list saved to file storage', {
         key,
         title: data.title,
         filePath,
@@ -166,7 +154,7 @@ export class FileStorageBackend extends StorageBackend {
         });
       }
 
-      logger.error('Failed to save todo list to file storage', {
+      logger.error('Failed to save task list to file storage', {
         key,
         error,
       });
@@ -190,12 +178,12 @@ export class FileStorageBackend extends StorageBackend {
       }
 
       const jsonData = await fs.readFile(filePath, 'utf8');
-      const data = JsonOptimizer.deserializeTodoList(jsonData, {
+      const data = JsonOptimizer.deserializeTaskList(jsonData, {
         validateSchema: false, // Skip validation for performance
         convertDates: true,
       });
 
-      logger.debug('Todo list loaded from file storage', {
+      logger.debug('Task list loaded from file storage', {
         key,
         title: data.title,
         filePath,
@@ -203,7 +191,7 @@ export class FileStorageBackend extends StorageBackend {
 
       return data;
     } catch (error) {
-      logger.error('Failed to load todo list from file storage', {
+      logger.error('Failed to load task list from file storage', {
         key,
         error,
       });
@@ -211,7 +199,7 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  async delete(key: string, permanent = false): Promise<void> {
+  async delete(key: string): Promise<void> {
     if (!this.initialized) {
       throw new Error('Storage backend not initialized');
     }
@@ -223,36 +211,25 @@ export class FileStorageBackend extends StorageBackend {
         throw new Error(`Task list not found: ${key}`);
       }
 
-      if (permanent) {
-        // Create backup before permanent deletion
-        const backupPath = join(
-          this.getBackupsDirectory(),
-          `${key}_deleted_${Date.now()}.json`
-        );
-        await fs.copyFile(filePath, backupPath);
+      // Create backup before permanent deletion
+      const backupPath = join(
+        this.getBackupsDirectory(),
+        `${key}_deleted_${Date.now()}.json`
+      );
+      await fs.copyFile(filePath, backupPath);
 
-        // Permanently delete the file
-        await fs.unlink(filePath);
+      // Permanently delete the file
+      await fs.unlink(filePath);
 
-        // Remove from indexes with retry logic and locking
-        await this.removeFromIndexesSafely(key);
+      // Remove from indexes with retry logic and locking
+      await this.removeFromIndexesSafely(key);
 
-        logger.info('Todo list permanently deleted from file storage', {
-          key,
-          backupPath,
-        });
-      } else {
-        // Archive instead of delete
-        const data = await this.load(key, {});
-        if (data) {
-          data.isArchived = true;
-          data.updatedAt = new Date();
-          await this.save(key, data, { backup: true });
-          logger.info('Todo list archived in file storage', { key });
-        }
-      }
+      logger.info('Task list permanently deleted from file storage', {
+        key,
+        backupPath,
+      });
     } catch (error) {
-      logger.error('Failed to delete todo list from file storage', {
+      logger.error('Failed to delete task list from file storage', {
         key,
         error,
       });
@@ -297,32 +274,24 @@ export class FileStorageBackend extends StorageBackend {
         const batch = targetListIds.slice(i, i + batchSize);
         const batchPromises = batch.map(async key => {
           try {
-            // Try to get from metadata cache first
-            let summary = this.listMetadataCache.get(key);
+            // Load from disk
+            const data = await this.load(key, {});
 
-            if (!summary) {
-              // Load from disk if not in cache
-              const data = await this.load(key, {});
-
-              if (!data) {
-                return null;
-              }
-
-              // Create summary and cache it
-              summary = {
-                id: data.id,
-                title: data.title,
-                progress: data.progress,
-                totalItems: data.totalItems,
-                completedItems: data.completedItems,
-                lastUpdated: new Date(data.updatedAt),
-                context: data.context,
-                projectTag: data.projectTag || data.context || 'default',
-                isArchived: data.isArchived,
-              };
-
-              this.updateMetadataCache(key, data);
+            if (!data) {
+              return null;
             }
+
+            // Create summary
+            const summary = {
+              id: data.id,
+              title: data.title,
+              progress: data.progress,
+              totalItems: data.totalItems,
+              completedItems: data.completedItems,
+              lastUpdated: new Date(data.updatedAt),
+              context: data.context,
+              projectTag: data.projectTag || data.context || 'default',
+            };
 
             return summary;
           } catch (error) {
@@ -349,14 +318,14 @@ export class FileStorageBackend extends StorageBackend {
         result = result.slice(0, options.limit);
       }
 
-      logger.debug('Todo list summaries retrieved from file storage', {
+      logger.debug('Task list summaries retrieved from file storage', {
         count: result.length,
         total: summaries.length,
       });
 
       return result;
     } catch (error) {
-      logger.error('Failed to list todo lists from file storage', { error });
+      logger.error('Failed to list task lists from file storage', { error });
       throw error;
     }
   }
@@ -425,27 +394,27 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  private validateTodoList(data: TaskList): void {
+  private validateTaskList(data: TaskList): void {
     if (!data.id || typeof data.id !== 'string') {
-      throw new Error('Invalid todo list: missing or invalid id');
+      throw new Error('Invalid task list: missing or invalid id');
     }
     if (!data.title || typeof data.title !== 'string') {
-      throw new Error('Invalid todo list: missing or invalid title');
+      throw new Error('Invalid task list: missing or invalid title');
     }
     if (!Array.isArray(data.items)) {
-      throw new Error('Invalid todo list: items must be an array');
+      throw new Error('Invalid task list: items must be an array');
     }
     if (
       typeof data.createdAt !== 'string' &&
       !(data.createdAt instanceof Date)
     ) {
-      throw new Error('Invalid todo list: createdAt must be a date');
+      throw new Error('Invalid task list: createdAt must be a date');
     }
     if (
       typeof data.updatedAt !== 'string' &&
       !(data.updatedAt instanceof Date)
     ) {
-      throw new Error('Invalid todo list: updatedAt must be a date');
+      throw new Error('Invalid task list: updatedAt must be a date');
     }
   }
 
@@ -497,7 +466,7 @@ export class FileStorageBackend extends StorageBackend {
     data: TaskList,
     contextIndexPath: string
   ): Promise<void> {
-    // Load current index (don't use cache during locked operation for consistency)
+    // Load current index for consistency
     let contextIndex: Record<string, string[]> = {};
 
     if (await this.fileExists(contextIndexPath)) {
@@ -540,14 +509,8 @@ export class FileStorageBackend extends StorageBackend {
       // Atomic rename
       await fs.rename(tempPath, contextIndexPath);
 
-      // Update cache after successful write
-      this.indexCache.set('context', contextIndex);
-
       // Update in-memory context index for fast lookups
       this.updateInMemoryContextIndex(key, context);
-
-      // Update metadata cache for fast list operations
-      this.updateMetadataCache(key, data);
 
       // Clean up backup
       if (await this.fileExists(backupPath)) {
@@ -614,7 +577,7 @@ export class FileStorageBackend extends StorageBackend {
     key: string,
     contextIndexPath: string
   ): Promise<void> {
-    // Load current index (don't use cache during locked operation for consistency)
+    // Load current index for consistency
     let contextIndex: Record<string, string[]> = {};
 
     if (await this.fileExists(contextIndexPath)) {
@@ -666,12 +629,8 @@ export class FileStorageBackend extends StorageBackend {
       // Atomic rename
       await fs.rename(tempPath, contextIndexPath);
 
-      // Update cache after successful write
-      this.indexCache.set('context', contextIndex);
-
       // Update in-memory indexes
       this.removeFromInMemoryContextIndex(key);
-      this.removeFromMetadataCache(key);
 
       // Clean up backup
       if (await this.fileExists(backupPath)) {
@@ -720,127 +679,12 @@ export class FileStorageBackend extends StorageBackend {
     }
   }
 
-  // Helper method to get storage statistics
-  async getStats(): Promise<{
-    totalLists: number;
-    archivedLists: number;
-    totalItems: number;
-    diskUsage: number;
-  }> {
-    try {
-      const summaries = await this.list({});
-      let totalItems = 0;
-      let archivedLists = 0;
-
-      for (const summary of summaries) {
-        totalItems += summary.totalItems;
-        const data = await this.load(summary.id, {});
-        if (data?.isArchived === true) {
-          archivedLists++;
-        }
-      }
-
-      // Calculate disk usage
-      let diskUsage = 0;
-      const listsDir = this.getListsDirectory();
-      const files = await fs.readdir(listsDir);
-
-      for (const file of files) {
-        if (file.endsWith('.json')) {
-          const stats = await fs.stat(join(listsDir, file));
-          diskUsage += stats.size;
-        }
-      }
-
-      return {
-        totalLists: summaries.length,
-        archivedLists,
-        totalItems,
-        diskUsage,
-      };
-    } catch (error) {
-      logger.error('Failed to get storage statistics', { error });
-      throw error;
-    }
-  }
-
   /**
    * Setup memory management for file storage
    */
   private setupMemoryManagement(): void {
-    // Register cleanup tasks
-    memoryCleanupManager.registerCleanupTask({
-      name: 'file-storage-cache',
-      cleanup: () => this.cleanupCache(),
-      priority: 'medium',
-    });
-
-    memoryCleanupManager.registerCleanupTask({
-      name: 'file-storage-locks',
-      cleanup: () => this.cleanupLocks(),
-      priority: 'high',
-    });
-
-    memoryCleanupManager.registerCleanupTask({
-      name: 'file-storage-shutdown',
-      cleanup: () => this.shutdown(),
-      priority: 'critical',
-    });
-
-    // Periodic cache cleanup with memory pressure detection
-    this.cleanupInterval = setInterval(() => {
-      if (!this.isShuttingDown) {
-        this.cleanupCache();
-
-        // Aggressive cleanup under memory pressure or when cache gets large
-        if (this.indexCache.size > 3 || MemoryUtils.isMemoryPressure()) {
-          this.aggressiveCleanup();
-        }
-      }
-    }, 30000); // Clean up every 30 seconds (was 1 minute)
-  }
-
-  /**
-   * Clean up cached indexes
-   */
-  private cleanupCache(): void {
-    const cacheSize = this.indexCache.size;
-
-    // Clear cache if it's getting large or under memory pressure
-    if (
-      cacheSize > this.MAX_INDEX_CACHE_SIZE ||
-      MemoryUtils.isMemoryPressure()
-    ) {
-      this.indexCache.clear();
-      logger.debug('Cleaned up file storage cache', {
-        clearedEntries: cacheSize,
-      });
-    }
-  }
-
-  /**
-   * Aggressive cleanup for memory pressure situations
-   */
-  private aggressiveCleanup(): void {
-    const cacheSize = this.indexCache.size;
-    const lockCount = FileLock.getLockCount();
-
-    // Clear all caches
-    this.indexCache.clear();
-
-    // Clean up locks if there are too many
-    if (lockCount > 10) {
-      FileLock.cleanup().catch((error: unknown) => {
-        logger.warn('Failed to cleanup locks during aggressive cleanup', {
-          error,
-        });
-      });
-    }
-
-    logger.info('File storage aggressive cleanup completed', {
-      clearedCacheEntries: cacheSize,
-      activeLocks: lockCount,
-    });
+    // Memory management removed - no longer supported
+    // Memory management setup
   }
 
   /**
@@ -881,8 +725,8 @@ export class FileStorageBackend extends StorageBackend {
     // Wait for locks to be released
     await this.cleanupLocks();
 
-    // Clear caches
-    this.indexCache.clear();
+    // Clear context index
+    this.contextIndex.clear();
 
     logger.info('FileStorageBackend shutdown completed');
   }
@@ -1105,7 +949,6 @@ export class FileStorageBackend extends StorageBackend {
             createdAt: new Date(),
             updatedAt: new Date(),
             context: 'recovered',
-            isArchived: false,
             totalItems: 0,
             completedItems: 0,
             progress: 0,
@@ -1169,40 +1012,6 @@ export class FileStorageBackend extends StorageBackend {
   }
 
   /**
-   * Update metadata cache for fast list operations
-   */
-  private updateMetadataCache(key: string, data: TaskList): void {
-    const summary: TaskListSummary = {
-      id: data.id,
-      title: data.title,
-      progress: data.progress,
-      totalItems: data.totalItems,
-      completedItems: data.completedItems,
-      lastUpdated: new Date(data.updatedAt),
-      context: data.context,
-      projectTag: data.projectTag || data.context || 'default',
-      isArchived: data.isArchived,
-    };
-
-    this.listMetadataCache.set(key, summary);
-
-    // Evict old entries if cache is too large
-    if (this.listMetadataCache.size > this.MAX_METADATA_CACHE_SIZE) {
-      const oldestKey = this.listMetadataCache.keys().next().value;
-      if (typeof oldestKey === 'string') {
-        this.listMetadataCache.delete(oldestKey);
-      }
-    }
-  }
-
-  /**
-   * Remove from metadata cache
-   */
-  private removeFromMetadataCache(key: string): void {
-    this.listMetadataCache.delete(key);
-  }
-
-  /**
    * Load context index into memory for fast lookups
    */
   private async loadContextIndexIntoMemory(): Promise<void> {
@@ -1235,18 +1044,18 @@ export class FileStorageBackend extends StorageBackend {
     import('../../shared/types/storage.js').StorageData
   > {
     const lists = await this.list({});
-    const todoLists: TaskList[] = [];
+    const taskLists: TaskList[] = [];
 
     for (const summary of lists) {
       const list = await this.load(summary.id);
       if (list) {
-        todoLists.push(list);
+        taskLists.push(list);
       }
     }
 
     return {
       version: '1.0',
-      todoLists,
+      taskLists,
     };
   }
 
@@ -1254,7 +1063,7 @@ export class FileStorageBackend extends StorageBackend {
     data: import('../../shared/types/storage.js').StorageData,
     options?: SaveOptions
   ): Promise<void> {
-    for (const list of data.todoLists) {
+    for (const list of data.taskLists) {
       await this.save(list.id, list, options);
     }
   }

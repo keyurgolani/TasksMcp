@@ -30,7 +30,7 @@ const CompleteTaskSchema = z.object({
 
 export async function handleCompleteTask(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing complete_task request', {
@@ -40,7 +40,7 @@ export async function handleCompleteTask(
     const args = CompleteTaskSchema.parse(request.params?.arguments);
 
     // First, get the current task to check exit criteria
-    const currentList = await todoListManager.getTaskList({
+    const currentList = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
@@ -58,14 +58,19 @@ export async function handleCompleteTask(
 
     // Check if all exit criteria are met
     const exitCriteriaManager = new ExitCriteriaManager();
-    const completionReadiness =
-      exitCriteriaManager.suggestTaskCompletionReadiness(task.exitCriteria);
+    const canComplete = exitCriteriaManager.areAllCriteriaMet(
+      task.exitCriteria
+    );
+    const unmetCriteria = exitCriteriaManager.getUnmetCriteria(
+      task.exitCriteria
+    );
 
-    if (!completionReadiness.canComplete) {
+    // Task completion readiness check
+    if (!canComplete) {
       logger.warn('Attempted to complete task with unmet exit criteria', {
         listId: args.listId,
         taskId: args.taskId,
-        unmetCriteria: completionReadiness.unmetCriteria.length,
+        unmetCriteria: unmetCriteria.length,
       });
 
       return {
@@ -75,14 +80,13 @@ export async function handleCompleteTask(
             text: JSON.stringify(
               {
                 error: 'Cannot complete task',
-                reason: completionReadiness.reason,
-                recommendation: completionReadiness.recommendation,
-                unmetCriteria: completionReadiness.unmetCriteria.map(
-                  (c: ExitCriteria) => ({
-                    id: c.id,
-                    description: c.description,
-                  })
-                ),
+                reason: `${unmetCriteria.length} exit criteria still need to be met`,
+                recommendation:
+                  'Complete all exit criteria before marking task as done',
+                unmetCriteria: unmetCriteria.map((c: ExitCriteria) => ({
+                  id: c.id,
+                  description: c.description,
+                })),
               },
               null,
               2
@@ -93,7 +97,7 @@ export async function handleCompleteTask(
       };
     }
 
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_status',
       itemId: args.taskId,
@@ -152,7 +156,7 @@ export async function handleCompleteTask(
         reflection: [
           '📝 Consider using update_task to document key learnings and outcomes',
           "🔍 Use get_ready_tasks to find what's now available to work on",
-          '🎯 Reflect on what worked well and what could be improved for future tasks',
+          '🎯 Reflect on what worked well and what could be changed for future tasks',
         ],
         nextSteps: [
           'Document any insights gained during execution',

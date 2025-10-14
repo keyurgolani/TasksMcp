@@ -20,6 +20,7 @@ export class TaskHandlers {
     try {
       const params = request.params.arguments as Record<string, unknown>;
       const {
+        listId,
         title,
         description,
         priority,
@@ -31,6 +32,7 @@ export class TaskHandlers {
       } = params;
 
       const taskData: CreateTaskData = {
+        listId: listId as string,
         title: title as string,
         ...(description !== undefined && {
           description: description as string,

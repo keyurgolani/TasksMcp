@@ -27,7 +27,7 @@ const SetTaskPrioritySchema = z.object({
 
 export async function handleSetTaskPriority(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing set_task_priority request', {
@@ -40,8 +40,8 @@ export async function handleSetTaskPriority(
     // Convert priority number to Priority enum
     const priority = args.priority as Priority;
 
-    // Update the task priority using the TaskListManager's updateTodoList method
-    const result = await todoListManager.updateTaskList({
+    // Update the task priority using the TaskListManager's updateTaskList method
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,

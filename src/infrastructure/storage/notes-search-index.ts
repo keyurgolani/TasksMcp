@@ -150,7 +150,6 @@ export class NotesSearchIndex {
         .sort((a, b) => (b['score'] as number) - (a['score'] as number))
         .slice(0, limit as number),
       searchTime,
-      indexStats: this.getStats(),
     };
   }
 
@@ -217,35 +216,6 @@ export class NotesSearchIndex {
         note.taskId
       );
     }
-  }
-
-  /**
-   * Get index statistics
-   */
-  getStats(): {
-    size: number;
-    totalWords: number;
-    totalNotes?: number;
-    totalTerms?: number;
-    averageTermsPerNote?: number;
-    rebuildCount?: number;
-  } {
-    let totalWords = 0;
-    for (const entry of this.index.values()) {
-      totalWords += entry.words.size;
-    }
-
-    const totalNotes = this.index.size;
-    const averageTermsPerNote = totalNotes > 0 ? totalWords / totalNotes : 0;
-
-    return {
-      size: this.index.size,
-      totalWords,
-      totalNotes,
-      totalTerms: totalWords,
-      averageTermsPerNote,
-      rebuildCount: this.rebuildCount,
-    };
   }
 
   /**

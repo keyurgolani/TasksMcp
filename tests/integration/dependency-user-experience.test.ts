@@ -144,8 +144,8 @@ describe('Dependency Management User Experience Tests', () => {
       expect(errorMessage).toContain('cannot depend on itself');
       expect(errorMessage).toMatch(/cannot.*depend.*itself/i);
 
-      // Should be simple and clear
-      expect(errorMessage.length).toBeLessThan(200);
+      // Should be simple and clear (allowing for helpful suggestions)
+      expect(errorMessage.length).toBeLessThan(300);
     });
 
     it('should provide clear error message for non-existent dependencies', async () => {

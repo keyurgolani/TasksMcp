@@ -1,7 +1,7 @@
 /**
  * Validation utilities with error handling
  *
- * Provides comprehensive validation functions using Zod schemas with:
+ * Provides validation functions using Zod schemas with:
  * - Type-safe validation results
  * - Graceful error handling with fallbacks
  * - Common validation patterns (email, URL, UUID, etc.)
@@ -388,7 +388,7 @@ export class Validator {
    * Validate file path
    */
   validateFilePath(path: string): ValidationResult<string> {
-    // Basic path validation - can be extended based on requirements
+    // Path validation - can be extended based on requirements
     const pathSchema = z.string().min(1, 'Path cannot be empty');
 
     const result = this.validate(pathSchema, path);

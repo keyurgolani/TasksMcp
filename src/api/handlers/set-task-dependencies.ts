@@ -1,6 +1,6 @@
 /**
  * MCP handler for setting task dependencies
- * Handles the set_task_dependencies tool request with comprehensive validation and error handling
+ * Handles the set_task_dependencies tool request with validation and error handling
  */
 
 import { z } from 'zod';
@@ -22,12 +22,12 @@ import type { Task } from '../../shared/types/task.js';
 
 /**
  * Validation schema for set task dependencies request parameters
- * Validates list ID, task ID, and dependency IDs array
+ * Validates list ID, task ID, and optional dependency IDs array
  */
 const SetTaskDependenciesSchema = z.object({
   listId: z.string().uuid(),
   taskId: z.string().uuid(),
-  dependencyIds: z.array(z.string().uuid()).min(0).max(50), // Allow empty arrays to remove all dependencies
+  dependencyIds: z.array(z.string().uuid()).min(0).max(50).optional(), // Optional parameter - empty array or undefined removes all dependencies
 });
 
 /**
@@ -35,12 +35,12 @@ const SetTaskDependenciesSchema = z.object({
  * Sets all dependencies for a task, replacing any existing dependencies
  *
  * @param request - The MCP call tool request containing dependency parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated task details or error
  */
 export async function handleSetTaskDependencies(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   const dependencyResolver = new DependencyResolver();
 
@@ -51,8 +51,11 @@ export async function handleSetTaskDependencies(
 
     const args = SetTaskDependenciesSchema.parse(request.params?.arguments);
 
+    // Default to empty array if dependencyIds is not provided (clears all dependencies)
+    const dependencyIds = args.dependencyIds ?? [];
+
     // Get the current list to validate task and dependencies exist
-    const currentList = await todoListManager.getTaskList({
+    const currentList = await taskListManager.getTaskList({
       listId: args.listId,
     });
     if (!currentList) {
@@ -86,7 +89,7 @@ export async function handleSetTaskDependencies(
     // Validate dependencies using the DependencyResolver
     const validationResult = dependencyResolver.validateDependencies(
       args.taskId,
-      args.dependencyIds,
+      dependencyIds,
       currentList.items
     );
 
@@ -94,7 +97,7 @@ export async function handleSetTaskDependencies(
       const errorMessage = validationResult.errors.join('; ');
       logger.warn('Dependency validation failed', {
         taskId: args.taskId,
-        dependencyIds: args.dependencyIds,
+        dependencyIds: dependencyIds,
         errors: validationResult.errors,
       });
 
@@ -118,12 +121,12 @@ export async function handleSetTaskDependencies(
     }
 
     // Update the task with new dependencies
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
       itemData: {
-        dependencies: args.dependencyIds,
+        dependencies: dependencyIds,
       },
     });
 
@@ -152,7 +155,7 @@ export async function handleSetTaskDependencies(
     logger.info('Task dependencies updated successfully', {
       listId: args.listId,
       taskId: args.taskId,
-      dependencyCount: args.dependencyIds.length,
+      dependencyCount: dependencyIds.length,
       warnings: validationResult.warnings,
     });
 

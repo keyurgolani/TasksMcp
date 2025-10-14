@@ -43,7 +43,7 @@ describe('TemplateEngine', () => {
       createdAt: new Date('2023-01-01T00:00:00Z'),
       updatedAt: new Date('2023-01-02T00:00:00Z'),
       context: 'test-context',
-      isArchived: false,
+
       totalItems: 1,
       completedItems: 0,
       progress: 0,

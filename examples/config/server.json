@@ -1,0 +1,37 @@
+{
+  "environment": "production",
+  "version": "2.5.0",
+  "rest": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "cors": true,
+    "middleware": {
+      "compression": true,
+      "helmet": true,
+      "rateLimit": {
+        "enabled": true,
+        "windowMs": 60000,
+        "maxRequests": 100
+      }
+    },
+    "ssl": {
+      "enabled": false,
+      "keyPath": "./ssl/server.key",
+      "certPath": "./ssl/server.crt"
+    }
+  },
+  "ui": {
+    "port": 3001,
+    "host": "0.0.0.0",
+    "publicPath": "/ui",
+    "staticFiles": {
+      "enabled": true,
+      "path": "./public",
+      "maxAge": 86400
+    },
+    "proxy": {
+      "enabled": false,
+      "target": "http://localhost:3000"
+    }
+  }
+}

@@ -1,672 +1,464 @@
 /**
- * Unit tests for Enhanced Error Formatter
+ * Unit tests for enhanced error formatting utilities
  */
 
 import { describe, it, expect } from 'vitest';
-import { z, ZodError } from 'zod';
 
 import {
-  ErrorFormatter,
-  formatZodError,
-  createErrorContext,
-  type EnhancedErrorMessage,
-  type ErrorFormattingContext as _ErrorFormattingContext,
+  ValidationError,
+  OrchestrationError,
+} from '../../../../src/shared/errors/orchestration-error.js';
+import {
+  createValidationError,
+  createOrchestrationError,
+  formatValidationErrors,
+  ErrorContexts,
+  DetailedErrors,
 } from '../../../../src/shared/utils/error-formatter.js';
 
-describe('ErrorFormatter', () => {
-  describe('Type Validation Errors', () => {
-    it('should format invalid type errors with suggestions', () => {
-      const schema = z.object({
-        priority: z.number(),
-        enabled: z.boolean(),
-      });
-
-      try {
-        schema.parse({ priority: 'high', enabled: 'yes' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          { toolName: 'add_task' }
-        );
-
-        expect(formatted).toHaveLength(2);
-
-        const priorityError = formatted.find(e => e.field === 'priority');
-        expect(priorityError?.message).toContain(
-          'Expected number, but received string'
-        );
-        expect(priorityError?.suggestion).toBe(
-          'Use numbers 1-5, where 5 is highest priority'
-        ); // Tool-specific guidance
-        expect(priorityError?.example).toBe('5 (highest) to 1 (lowest)'); // Tool-specific example
-        expect(priorityError?.code).toBe('invalid_type');
-
-        const enabledError = formatted.find(e => e.field === 'enabled');
-        expect(enabledError?.message).toContain(
-          'Expected boolean, but received string'
-        );
-        expect(enabledError?.suggestion).toContain(
-          'Please provide a value of type boolean'
-        );
-        expect(enabledError?.example).toBe('true or false');
-      }
-    });
-
-    it('should provide tool-specific guidance for known parameters', () => {
-      const schema = z.object({
-        priority: z.number(),
-      });
-
-      try {
-        schema.parse({ priority: 'high' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          { toolName: 'add_task' }
-        );
-
-        const priorityError = formatted[0];
-        expect(priorityError.suggestion).toBe(
-          'Use numbers 1-5, where 5 is highest priority'
-        );
-        expect(priorityError.example).toBe('5 (highest) to 1 (lowest)');
-      }
-    });
-  });
-
-  describe('String Validation Errors', () => {
-    it('should format string length errors', () => {
-      const schema = z.object({
-        title: z.string().min(3).max(10),
-      });
-
-      // Test too short
-      try {
-        schema.parse({ title: 'hi' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const titleError = formatted[0];
-
-        expect(titleError.message).toContain(
-          'Text must be at least 3 characters long'
-        );
-        expect(titleError.suggestion).toContain(
-          'Please provide text with 3 or more characters'
-        );
-        expect(titleError.code).toBe('too_small');
-      }
-
-      // Test too long
-      try {
-        schema.parse({ title: 'this is way too long' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const titleError = formatted[0];
-
-        expect(titleError.message).toContain(
-          'Text must be no more than 10 characters long'
-        );
-        expect(titleError.suggestion).toContain(
-          'Please shorten your text to 10 characters or less'
-        );
-        expect(titleError.code).toBe('too_big');
-      }
-    });
-
-    it('should format UUID validation errors', () => {
-      const schema = z.object({
-        listId: z.string().uuid(),
-      });
-
-      try {
-        schema.parse({ listId: 'invalid-uuid' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const uuidError = formatted[0];
-
-        expect(uuidError.message).toContain('Invalid UUID format');
-        expect(uuidError.suggestion).toContain(
-          'UUID must be in format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-        );
-        expect(uuidError.example).toContain(
-          'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
-        );
-        expect(uuidError.code).toBe('invalid_format');
-      }
-    });
-  });
-
-  describe('Enum Validation Errors', () => {
-    it('should format enum errors with valid options', () => {
-      const schema = z.object({
-        status: z.enum(['pending', 'completed', 'in_progress']),
-      });
-
-      try {
-        schema.parse({ status: 'done' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const statusError = formatted[0];
-
-        expect(statusError.message).toContain(
-          'Invalid option. Valid choices are: pending, completed, in_progress'
-        );
-        expect(statusError.suggestion).toContain(
-          'Please choose one of: pending, completed, in_progress'
-        );
-        expect(statusError.code).toBe('invalid_value');
-      }
-    });
-
-    it('should suggest closest match for enum errors', () => {
-      const schema = z.object({
-        status: z.enum(['pending', 'completed', 'in_progress']),
-      });
-
-      const input = { status: 'complete' };
-      try {
-        schema.parse(input); // Close to 'completed'
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          undefined,
-          input
-        );
-        const statusError = formatted[0];
-
-        expect(statusError.suggestion).toContain('Did you mean "completed"?');
-      }
-    });
-
-    it('should handle case-insensitive enum matching', () => {
-      const schema = z.object({
-        priority: z.enum(['high', 'medium', 'low']),
-      });
-
-      const input = { priority: 'HIGH' };
-      try {
-        schema.parse(input);
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          undefined,
-          input
-        );
-        const priorityError = formatted[0];
-
-        expect(priorityError.suggestion).toContain('Did you mean "high"?');
-      }
-    });
-  });
-
-  describe('Number Validation Errors', () => {
-    it('should format number range errors', () => {
-      const schema = z.object({
-        priority: z.number().min(1).max(5),
-      });
-
-      // Test too small
-      try {
-        schema.parse({ priority: 0 });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const priorityError = formatted[0];
-
-        expect(priorityError.message).toContain('Value must be at least 1');
-        expect(priorityError.suggestion).toContain(
-          'Please provide a value of 1 or greater'
-        );
-        expect(priorityError.code).toBe('too_small');
-      }
-
-      // Test too big
-      try {
-        schema.parse({ priority: 10 });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const priorityError = formatted[0];
-
-        expect(priorityError.message).toContain('Value must be no more than 5');
-        expect(priorityError.suggestion).toContain(
-          'Please provide a value of 5 or less'
-        );
-        expect(priorityError.code).toBe('too_big');
-      }
-    });
-  });
-
-  describe('Array and Object Validation Errors', () => {
-    it('should format array type errors', () => {
-      const schema = z.object({
-        tags: z.array(z.string()),
-      });
-
-      try {
-        schema.parse({ tags: 'not-an-array' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const tagsError = formatted[0];
-
-        expect(tagsError.message).toContain(
-          'Expected array, but received string'
-        );
-        expect(tagsError.example).toBe('["item1", "item2"] or use JSON format');
-      }
-    });
-
-    it('should format object type errors', () => {
-      const schema = z.object({
-        config: z.object({ enabled: z.boolean() }),
-      });
-
-      try {
-        schema.parse({ config: 'not-an-object' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const configError = formatted[0];
-
-        expect(configError.message).toContain(
-          'Expected object, but received string'
-        );
-        expect(configError.example).toBe('{"key": "value"} or use JSON format');
-      }
-    });
-  });
-
-  describe('Custom Validation Errors', () => {
-    it('should format custom validation errors', () => {
-      const schema = z.string().refine(val => val.includes('@'), {
-        message: 'Email must contain @ symbol',
-      });
-
-      try {
-        schema.parse('invalid-email');
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const emailError = formatted[0];
-
-        expect(emailError.message).toContain('Email must contain @ symbol');
-        expect(emailError.suggestion).toContain(
-          'Please check your input and try again'
-        );
-        expect(emailError.code).toBe('custom');
-      }
-    });
-  });
-
-  describe('Multiple Errors', () => {
-    it('should format multiple validation errors', () => {
-      const schema = z.object({
-        title: z.string().min(3),
-        priority: z.number().min(1).max(5),
-        status: z.enum(['pending', 'completed']),
-      });
-
-      try {
-        schema.parse({
-          title: 'hi',
-          priority: 10,
-          status: 'done',
-        });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-
-        expect(formatted).toHaveLength(3);
-        expect(formatted.map(e => e.field)).toEqual([
-          'title',
-          'priority',
-          'status',
-        ]);
-        expect(formatted.map(e => e.code)).toEqual([
-          'too_small',
-          'too_big',
-          'invalid_value',
-        ]);
-      }
-    });
-  });
-
-  describe('Error Display Formatting', () => {
-    it('should format single error for display', () => {
-      const errors: EnhancedErrorMessage[] = [
-        {
-          message: 'Expected number, but received string',
-          suggestion: 'Please provide a number',
-          example: '42',
-          field: 'priority',
-          code: 'invalid_type',
-        },
-      ];
-
-      const display = ErrorFormatter.formatErrorsForDisplay(errors);
-
-      expect(display).toContain('❌ Expected number, but received string');
-      expect(display).toContain('💡 Please provide a number');
-      expect(display).toContain('📝 Example: 42');
-    });
-
-    it('should format multiple errors for display', () => {
-      const errors: EnhancedErrorMessage[] = [
-        {
-          message: 'Title too short',
-          suggestion: 'Use at least 3 characters',
+describe('Error Formatter', () => {
+  describe('createValidationError', () => {
+    it('should create Validation error with length information', () => {
+      const error = createValidationError('Field exceeds maximum length', {
+        context: {
+          operation: 'Test Operation',
           field: 'title',
-          code: 'too_small',
+          actualLength: 150,
+          maxLength: 100,
+          currentValue: 'a'.repeat(150),
+          expectedValue: 'string with max 100 characters',
         },
-        {
-          message: 'Invalid priority',
-          suggestion: 'Use numbers 1-5',
+      });
+
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.message).toContain('current: 150 characters');
+      expect(error.message).toContain('maximum: 100 characters');
+      expect(error.context).toBe('Test Operation');
+      expect(error.currentValue).toBe('a'.repeat(150));
+      expect(error.expectedValue).toBe('string with max 100 characters');
+      expect(error.actionableGuidance).toContain(
+        'Reduce the title by 50 characters'
+      );
+    });
+
+    it('should create Validation error with valid options', () => {
+      const validOptions = ['pending', 'in_progress', 'completed'];
+      const error = createValidationError('Invalid status value', {
+        context: {
+          operation: 'Status Validation',
+          field: 'status',
+          currentValue: 'invalid_status',
+          expectedValue: 'valid status',
+          validOptions,
+        },
+      });
+
+      expect(error.message).toContain(
+        'Valid options: pending, in_progress, completed'
+      );
+      expect(error.actionableGuidance).toContain(
+        'Choose one of the valid options'
+      );
+    });
+
+    it('should generate actionable guidance for type errors', () => {
+      const error = createValidationError('Invalid type', {
+        context: {
+          operation: 'Type Validation',
           field: 'priority',
-          code: 'invalid_type',
+          currentValue: 'high',
+          expectedValue: 'number',
+        },
+      });
+
+      expect(error.actionableGuidance).toContain(
+        'Provide a numeric value for priority'
+      );
+      expect(error.actionableGuidance).toContain('Current type: string');
+    });
+  });
+
+  describe('createOrchestrationError', () => {
+    it('should create orchestration error with field prefix', () => {
+      const error = createOrchestrationError('validation failed', {
+        context: {
+          operation: 'Test Operation',
+          field: 'title',
+          currentValue: 'test',
+          expectedValue: 'valid title',
+        },
+      });
+
+      expect(error).toBeInstanceOf(OrchestrationError);
+      expect(error.message).toBe('title: validation failed');
+      expect(error.context).toBe('Test Operation');
+    });
+
+    it('should include length information in message', () => {
+      const error = createOrchestrationError('exceeds limit', {
+        context: {
+          operation: 'Length Validation',
+          field: 'description',
+          actualLength: 200,
+          maxLength: 100,
+          currentValue: 'test description',
+        },
+      });
+
+      expect(error.message).toContain('current: 200, maximum: 100');
+    });
+  });
+
+  describe('formatValidationErrors', () => {
+    it('should format single error', () => {
+      const error = new ValidationError(
+        'Test error',
+        'Test Context',
+        'test',
+        'valid value',
+        'Fix the test value'
+      );
+
+      const formatted = formatValidationErrors([error]);
+      expect(formatted).toBe('Test error Fix the test value');
+    });
+
+    it('should format multiple errors', () => {
+      const errors = [
+        new ValidationError(
+          'First error',
+          'Context 1',
+          'test1',
+          'valid1',
+          'Fix first'
+        ),
+        new ValidationError(
+          'Second error',
+          'Context 2',
+          'test2',
+          'valid2',
+          'Fix second'
+        ),
+      ];
+
+      const formatted = formatValidationErrors(errors);
+      expect(formatted).toContain('2 validation errors found:');
+      expect(formatted).toContain('1. First error Fix first');
+      expect(formatted).toContain('2. Second error Fix second');
+    });
+
+    it('should handle empty error array', () => {
+      const formatted = formatValidationErrors([]);
+      expect(formatted).toBe('No validation errors');
+    });
+  });
+
+  describe('ErrorContexts', () => {
+    it('should create required field context', () => {
+      const context = ErrorContexts.requiredField('title', 'Task Creation');
+
+      expect(context.operation).toBe('Task Creation');
+      expect(context.field).toBe('title');
+      expect(context.currentValue).toBeUndefined();
+      expect(context.expectedValue).toBe('non-empty value');
+    });
+
+    it('should create length validation context', () => {
+      const context = ErrorContexts.lengthValidation(
+        'description',
+        'Validation',
+        150,
+        100
+      );
+
+      expect(context.operation).toBe('Validation');
+      expect(context.field).toBe('description');
+      expect(context.actualLength).toBe(150);
+      expect(context.maxLength).toBe(100);
+      expect(context.expectedValue).toBe('string with max 100 characters');
+    });
+
+    it('should create type validation context', () => {
+      const context = ErrorContexts.typeValidation(
+        'priority',
+        'Type Check',
+        'high',
+        'number'
+      );
+
+      expect(context.operation).toBe('Type Check');
+      expect(context.field).toBe('priority');
+      expect(context.currentValue).toBe('high');
+      expect(context.expectedValue).toBe('number');
+    });
+
+    it('should create options validation context', () => {
+      const validOptions = ['low', 'medium', 'high'];
+      const context = ErrorContexts.optionsValidation(
+        'priority',
+        'Options Check',
+        'invalid',
+        validOptions
+      );
+
+      expect(context.operation).toBe('Options Check');
+      expect(context.field).toBe('priority');
+      expect(context.currentValue).toBe('invalid');
+      expect(context.validOptions).toEqual(validOptions);
+      expect(context.expectedValue).toBe('one of: low, medium, high');
+    });
+
+    it('should create range validation context', () => {
+      const context = ErrorContexts.rangeValidation(
+        'priority',
+        'Range Check',
+        10,
+        1,
+        5
+      );
+
+      expect(context.operation).toBe('Range Check');
+      expect(context.field).toBe('priority');
+      expect(context.currentValue).toBe(10);
+      expect(context.expectedValue).toBe('number between 1 and 5');
+      expect(context.validOptions).toEqual(['1 to 5']);
+    });
+
+    it('should create not found context', () => {
+      const context = ErrorContexts.notFound('Task', 'Task Lookup', 'task-123');
+
+      expect(context.operation).toBe('Task Lookup');
+      expect(context.field).toBe('TaskId');
+      expect(context.currentValue).toBe('task-123');
+      expect(context.expectedValue).toBe('valid Task ID');
+    });
+  });
+
+  describe('DetailedErrors', () => {
+    it('should create required field error', () => {
+      const error = DetailedErrors.requiredField('title', 'Task Creation');
+
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.message).toBe('title is required');
+      expect(error.context).toBe('Task Creation');
+      expect(error.actionableGuidance).toContain('Provide a valid title value');
+    });
+
+    it('should create length exceeded error', () => {
+      const error = DetailedErrors.lengthExceeded(
+        'title',
+        'Validation',
+        150,
+        100,
+        'a'.repeat(150)
+      );
+
+      expect(error.message).toContain('title exceeds maximum length');
+      expect(error.message).toContain('current: 150 characters');
+      expect(error.message).toContain('maximum: 100 characters');
+      expect(error.actionableGuidance).toContain(
+        'Reduce the title by 50 characters'
+      );
+    });
+
+    it('should create invalid type error', () => {
+      const error = DetailedErrors.invalidType(
+        'priority',
+        'Type Check',
+        'high',
+        'number'
+      );
+
+      expect(error.message).toBe('priority must be a number');
+      expect(error.currentValue).toBe('high');
+      expect(error.expectedValue).toBe('number');
+      expect(error.actionableGuidance).toContain(
+        'Provide a numeric value for priority'
+      );
+    });
+
+    it('should create not found error', () => {
+      const error = DetailedErrors.notFound('Task', 'Task Lookup', 'task-123');
+
+      expect(error).toBeInstanceOf(OrchestrationError);
+      expect(error.message).toBe('TaskId: Task not found');
+      expect(error.currentValue).toBe('task-123');
+      expect(error.actionableGuidance).toContain(
+        'Ensure the Task ID "task-123" exists'
+      );
+    });
+
+    it('should create invalid option error', () => {
+      const validOptions = ['pending', 'completed'];
+      const error = DetailedErrors.invalidOption(
+        'status',
+        'Status Check',
+        'invalid',
+        validOptions
+      );
+
+      expect(error.message).toContain('status has invalid value');
+      expect(error.currentValue).toBe('invalid');
+      expect(error.actionableGuidance).toContain(
+        'Choose one of the valid options'
+      );
+    });
+
+    it('should create out of range error', () => {
+      const error = DetailedErrors.outOfRange(
+        'priority',
+        'Range Check',
+        10,
+        1,
+        5
+      );
+
+      expect(error.message).toContain('priority is out of valid range');
+      expect(error.currentValue).toBe(10);
+      expect(error.expectedValue).toBe('number between 1 and 5');
+      expect(error.actionableGuidance).toContain(
+        'Set priority to a value between 1 and 5'
+      );
+      expect(error.actionableGuidance).toContain(
+        'Current value 10 is too high'
+      );
+    });
+
+    it('should create out of range error for low value', () => {
+      const error = DetailedErrors.outOfRange(
+        'priority',
+        'Range Check',
+        0,
+        1,
+        5
+      );
+
+      expect(error.actionableGuidance).toContain('Current value 0 is too low');
+    });
+  });
+
+  describe('Actionable Guidance Generation', () => {
+    it('should provide specific guidance for length violations', () => {
+      const error = createValidationError('Too long', {
+        context: {
+          operation: 'Test',
+          field: 'title',
+          actualLength: 120,
+          maxLength: 100,
+        },
+      });
+
+      expect(error.actionableGuidance).toContain(
+        'Reduce the title by 20 characters'
+      );
+      expect(error.actionableGuidance).toContain(
+        'Consider using more concise language'
+      );
+    });
+
+    it('should provide specific guidance for minimum length violations', () => {
+      const error = createValidationError('Too short', {
+        context: {
+          operation: 'Test',
+          field: 'description',
+          actualLength: 5,
+          minLength: 10,
+        },
+      });
+
+      expect(error.actionableGuidance).toContain(
+        'Add at least 5 more characters'
+      );
+      expect(error.actionableGuidance).toContain(
+        'meet the 10 character minimum'
+      );
+    });
+
+    it('should provide type-specific guidance', () => {
+      const contexts = [
+        {
+          currentValue: 'text',
+          expectedValue: 'number',
+          guidance: 'Provide a numeric value for testField',
+        },
+        {
+          currentValue: 123,
+          expectedValue: 'string',
+          guidance: 'Convert the testField to a string',
+        },
+        {
+          currentValue: 'text',
+          expectedValue: 'array',
+          guidance: 'Provide an array for testField',
+        },
+        {
+          currentValue: null,
+          expectedValue: 'object',
+          guidance: 'Provide a valid object for testField',
         },
       ];
 
-      const display = ErrorFormatter.formatErrorsForDisplay(errors);
-
-      expect(display).toContain('❌ Found 2 validation errors:');
-      expect(display).toContain('1. Title too short');
-      expect(display).toContain('2. Invalid priority');
-      expect(display).toContain('💡 Use at least 3 characters');
-      expect(display).toContain('💡 Use numbers 1-5');
-    });
-
-    it('should respect display options', () => {
-      const errors: EnhancedErrorMessage[] = [
-        {
-          message: 'Test error',
-          suggestion: 'Test suggestion',
-          example: 'Test example',
-          field: 'test',
-          code: 'test',
-        },
-      ];
-
-      const displayNoSuggestions = ErrorFormatter.formatErrorsForDisplay(
-        errors,
-        {
-          includeSuggestions: false,
-        }
-      );
-      expect(displayNoSuggestions).not.toContain('💡');
-
-      const displayNoExamples = ErrorFormatter.formatErrorsForDisplay(errors, {
-        includeExamples: false,
-      });
-      expect(displayNoExamples).not.toContain('📝');
-    });
-
-    it('should limit number of displayed errors', () => {
-      const errors: EnhancedErrorMessage[] = Array.from(
-        { length: 10 },
-        (_, i) => ({
-          message: `Error ${i + 1}`,
-          field: `field${i + 1}`,
-          code: 'test',
-        })
-      );
-
-      const display = ErrorFormatter.formatErrorsForDisplay(errors, {
-        maxErrors: 3,
-      });
-
-      expect(display).toContain('1. Error 1');
-      expect(display).toContain('2. Error 2');
-      expect(display).toContain('3. Error 3');
-      expect(display).toContain('... and 7 more errors');
-      expect(display).not.toContain('4. Error 4');
-    });
-  });
-
-  describe('Fuzzy Matching', () => {
-    it('should find exact matches (case insensitive)', () => {
-      const schema = z.object({
-        status: z.enum(['pending', 'completed', 'cancelled']),
-      });
-
-      const input = { status: 'PENDING' };
-      try {
-        schema.parse(input);
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          undefined,
-          input
-        );
-        const statusError = formatted[0];
-
-        expect(statusError.suggestion).toContain('Did you mean "pending"?');
-      }
-    });
-
-    it('should find partial matches', () => {
-      const schema = z.object({
-        status: z.enum(['in_progress', 'completed', 'pending']),
-      });
-
-      const input = { status: 'progress' };
-      try {
-        schema.parse(input);
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          undefined,
-          input
-        );
-        const statusError = formatted[0];
-
-        expect(statusError.suggestion).toContain('Did you mean "in_progress"?');
-      }
-    });
-
-    it('should find close matches using Levenshtein distance', () => {
-      const schema = z.object({
-        status: z.enum(['pending', 'completed', 'cancelled']),
-      });
-
-      const input = { status: 'complet' };
-      try {
-        schema.parse(input); // Missing 'ed'
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          undefined,
-          input
-        );
-        const statusError = formatted[0];
-
-        expect(statusError.suggestion).toContain('Did you mean "completed"?');
-      }
-    });
-
-    it('should not suggest matches that are too different', () => {
-      const schema = z.object({
-        status: z.enum(['pending', 'completed', 'cancelled']),
-      });
-
-      try {
-        schema.parse({ status: 'xyz' }); // Very different
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const statusError = formatted[0];
-
-        expect(statusError.suggestion).not.toContain('Did you mean');
-        expect(statusError.suggestion).toContain('Please choose one of:');
-      }
-    });
-  });
-
-  describe('Tool-Specific Guidance', () => {
-    it('should provide add_task specific guidance', () => {
-      const schema = z.object({
-        tags: z.array(z.string()),
-        estimatedDuration: z.number(),
-      });
-
-      try {
-        schema.parse({ tags: 'not-array', estimatedDuration: 'not-number' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          { toolName: 'add_task' }
-        );
-
-        const tagsError = formatted.find(e => e.field === 'tags');
-        expect(tagsError?.suggestion).toBe(
-          'Provide as array of strings or JSON string format'
-        );
-        expect(tagsError?.example).toBe('["urgent", "important", "bug-fix"]');
-
-        const durationError = formatted.find(
-          e => e.field === 'estimatedDuration'
-        );
-        expect(durationError?.suggestion).toBe(
-          'Provide duration in minutes as a number'
-        );
-        expect(durationError?.example).toBe('120 (for 2 hours in minutes)');
-      }
-    });
-
-    it('should provide search_tool specific guidance', () => {
-      const schema = z.object({
-        status: z.enum(['pending', 'completed']),
-        priority: z.number(),
-      });
-
-      try {
-        schema.parse({ status: 'invalid', priority: 'high' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          { toolName: 'search_tool' }
-        );
-
-        const statusError = formatted.find(e => e.field === 'status');
-        expect(statusError?.suggestion).toBe(
-          'Use one of the valid status values'
-        );
-
-        const priorityError = formatted.find(e => e.field === 'priority');
-        expect(priorityError?.suggestion).toBe(
-          'Use numbers 1-5 to filter by priority level'
-        );
-      }
-    });
-  });
-
-  describe('Utility Functions', () => {
-    it('should work with formatZodError convenience function', () => {
-      const schema = z.object({
-        priority: z.number(),
-      });
-
-      try {
-        schema.parse({ priority: 'high' });
-      } catch (error) {
-        const formatted = formatZodError(error as ZodError, {
-          toolName: 'add_task',
+      contexts.forEach(({ currentValue, expectedValue, guidance }) => {
+        const error = createValidationError('Type error', {
+          context: {
+            operation: 'Test',
+            field: 'testField',
+            currentValue,
+            expectedValue,
+          },
         });
 
-        expect(formatted).toContain('❌');
-        expect(formatted).toContain('Expected number, but received string');
-        expect(formatted).toContain('💡');
-        expect(formatted).toContain('📝');
-      }
+        expect(error.actionableGuidance).toContain(guidance);
+      });
     });
 
-    it('should create error context correctly', () => {
-      const context = createErrorContext('add_task', false);
+    it('should provide guidance for empty required fields', () => {
+      const emptyValues = [undefined, null, ''];
 
-      expect(context.toolName).toBe('add_task');
-      expect(context.includeExamples).toBe(false);
+      emptyValues.forEach(value => {
+        const error = createValidationError('Required field', {
+          context: {
+            operation: 'Test',
+            field: 'title',
+            currentValue: value,
+          },
+        });
+
+        expect(error.actionableGuidance).toContain(
+          'title is required and cannot be empty'
+        );
+      });
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle empty error arrays', () => {
-      const display = ErrorFormatter.formatErrorsForDisplay([]);
-      expect(display).toBe('');
-    });
-
-    it('should handle errors without suggestions or examples', () => {
-      const errors: EnhancedErrorMessage[] = [
-        {
-          message: 'Simple error',
-          field: 'test',
-          code: 'test',
+  describe('Error Message Enhancement', () => {
+    it('should enhance messages with actual vs expected values', () => {
+      const error = createValidationError('Invalid priority', {
+        context: {
+          operation: 'Priority Validation',
+          field: 'priority',
+          currentValue: 10,
+          actualLength: undefined,
+          maxLength: undefined,
+          validOptions: ['1', '2', '3', '4', '5'],
         },
-      ];
-
-      const display = ErrorFormatter.formatErrorsForDisplay(errors);
-      expect(display).toContain('❌ Simple error');
-      expect(display).not.toContain('💡');
-      expect(display).not.toContain('📝');
-    });
-
-    it('should handle nested field paths', () => {
-      const schema = z.object({
-        config: z.object({
-          nested: z.object({
-            value: z.number(),
-          }),
-        }),
       });
 
-      try {
-        schema.parse({ config: { nested: { value: 'not-number' } } });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError
-        );
-        const valueError = formatted[0];
-
-        expect(valueError.field).toBe('config.nested.value');
-        expect(valueError.message).toContain(
-          'config.nested.value: Expected number'
-        );
-      }
+      expect(error.message).toContain('Valid options: 1, 2, 3, 4, 5');
     });
 
-    it('should handle unknown tool names gracefully', () => {
-      const schema = z.object({
-        priority: z.number(),
+    it('should not include value details when disabled', () => {
+      const error = createValidationError('Sensitive error', {
+        context: {
+          operation: 'Security Check',
+          field: 'password',
+          currentValue: 'secret123',
+          expectedValue: 'valid password',
+        },
+        includeValueDetails: false,
       });
 
-      try {
-        schema.parse({ priority: 'high' });
-      } catch (error) {
-        const formatted = ErrorFormatter.formatValidationError(
-          error as ZodError,
-          { toolName: 'unknown_tool' }
-        );
-
-        const priorityError = formatted[0];
-        expect(priorityError.suggestion).toBe(
-          'Please provide a value of type number'
-        );
-        expect(priorityError.example).toBe('42 or 3.14');
-      }
+      expect(error.currentValue).toBeUndefined();
     });
   });
 });

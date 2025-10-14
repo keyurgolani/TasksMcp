@@ -267,25 +267,6 @@ describe('Exit Criteria Integration Tests', () => {
       expect(exitCriteriaManager.areAllCriteriaMet([])).toBe(true); // No criteria = complete
     });
 
-    it('should provide completion readiness suggestions', () => {
-      const unmetCriteria = [
-        { id: '1', description: 'Test 1', isMet: false, order: 0 },
-        { id: '2', description: 'Test 2', isMet: false, order: 1 },
-      ];
-
-      const suggestion =
-        exitCriteriaManager.suggestTaskCompletionReadiness(unmetCriteria);
-
-      expect(suggestion.canComplete).toBe(false);
-      expect(suggestion.reason).toContain(
-        '2 exit criteria still need to be met'
-      );
-      expect(suggestion.unmetCriteria).toHaveLength(2);
-      expect(suggestion.recommendation).toContain(
-        'Complete all remaining exit criteria'
-      );
-    });
-
     it('should format criteria for display', () => {
       const criteria = [
         {

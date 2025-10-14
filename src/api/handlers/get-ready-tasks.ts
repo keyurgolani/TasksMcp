@@ -26,7 +26,7 @@ const GetReadyTasksSchema = z.object({
 
 export async function handleGetReadyTasks(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing get_ready_tasks request', {
@@ -35,19 +35,19 @@ export async function handleGetReadyTasks(
 
     const args = GetReadyTasksSchema.parse(request.params?.arguments);
 
-    // Get the todo list
-    const todoList = await todoListManager.getTaskList({
+    // Get the task list
+    const taskList = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true, // We need all tasks to properly calculate dependencies
     });
 
-    if (!todoList) {
+    if (!taskList) {
       throw new Error(`Task list not found: ${args.listId}`);
     }
 
     // Use DependencyResolver to get ready tasks
     const dependencyResolver = new DependencyResolver();
-    const allReadyTasks = dependencyResolver.getReadyItems(todoList.items);
+    const allReadyTasks = dependencyResolver.getReadyItems(taskList.items);
 
     // Filter out cancelled tasks (DependencyResolver doesn't filter these)
     const readyTasks = allReadyTasks.filter(
@@ -82,13 +82,13 @@ export async function handleGetReadyTasks(
       totalReady: readyTasks.length, // Total before limit applied
 
       summary: {
-        totalTasks: todoList.items.length,
-        completedTasks: todoList.items.filter(
-          task => task.status === TaskStatus.COMPLETED
+        totalTasks: taskList.items.length,
+        completedTasks: taskList.items.filter(
+          (task: Task) => task.status === TaskStatus.COMPLETED
         ).length,
         readyTasks: readyTasks.length,
-        blockedTasks: todoList.items.filter(
-          task =>
+        blockedTasks: taskList.items.filter(
+          (task: Task) =>
             task.status !== TaskStatus.COMPLETED &&
             task.status !== TaskStatus.CANCELLED &&
             task.dependencies.length > 0 &&

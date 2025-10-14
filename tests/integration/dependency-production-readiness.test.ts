@@ -77,7 +77,7 @@ describe('Dependency Management Production Readiness Tests', () => {
       const toolTests = [
         {
           name: 'set_task_dependencies',
-          requiredParams: ['listId', 'taskId', 'dependencyIds'],
+          requiredParams: ['listId', 'taskId'],
         },
         { name: 'get_ready_tasks', requiredParams: ['listId'] },
         { name: 'analyze_task_dependencies', requiredParams: ['listId'] },

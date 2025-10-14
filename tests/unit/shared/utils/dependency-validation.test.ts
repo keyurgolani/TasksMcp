@@ -380,7 +380,7 @@ describe('Dependency Validation Utilities', () => {
   });
 
   describe('formatDependencyValidationError', () => {
-    it('should format validation errors correctly', () => {
+    it('should format Validation errors correctly', () => {
       const validation = {
         isValid: false,
         errors: ['Invalid dependencies: invalid-id do not exist'],

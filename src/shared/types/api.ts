@@ -36,7 +36,7 @@ export interface AuthConfig {
  * Handler context containing all managers
  */
 export interface HandlerContext {
-  todoListManager: TaskListManager;
+  taskListManager: TaskListManager;
   dependencyManager: DependencyResolver;
   exitCriteriaManager: ExitCriteriaManager;
   actionPlanManager: ActionPlanManager;

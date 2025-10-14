@@ -47,7 +47,6 @@ describe('handleGetAgentPrompt', () => {
       createdAt: new Date('2023-01-01T00:00:00Z'),
       updatedAt: new Date('2023-01-02T00:00:00Z'),
       context: 'test-context',
-      isArchived: false,
       totalItems: 1,
       completedItems: 0,
       progress: 0,
@@ -230,7 +229,7 @@ describe('handleGetAgentPrompt', () => {
     });
   });
 
-  describe('validation errors', () => {
+  describe('Validation errors', () => {
     it('should return error for invalid listId format', async () => {
       const request: CallToolRequest = {
         method: 'tools/call',
@@ -246,7 +245,7 @@ describe('handleGetAgentPrompt', () => {
       const result = await handleGetAgentPrompt(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Invalid UUID format');
+      expect(result.content[0].text).toContain('must be a valid UUID');
     });
 
     it('should return error for invalid taskId format', async () => {
@@ -264,7 +263,7 @@ describe('handleGetAgentPrompt', () => {
       const result = await handleGetAgentPrompt(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Invalid UUID format');
+      expect(result.content[0].text).toContain('must be a valid UUID');
     });
 
     it('should return error for missing required parameters', async () => {
@@ -283,7 +282,7 @@ describe('handleGetAgentPrompt', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain(
-        'Expected string, but received undefined'
+        'expected string, received undefined'
       );
     });
   });

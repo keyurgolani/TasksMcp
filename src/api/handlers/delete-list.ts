@@ -1,5 +1,5 @@
 /**
- * MCP handler for deleting todo lists
+ * MCP handler for deleting task lists
  */
 
 import { z } from 'zod';
@@ -18,12 +18,11 @@ import type {
 
 const DeleteListSchema = z.object({
   listId: z.string().uuid(),
-  permanent: z.boolean().optional().default(false),
 });
 
 export async function handleDeleteList(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing delete_list request', {
@@ -33,10 +32,9 @@ export async function handleDeleteList(
     // Validate input parameters
     const args = DeleteListSchema.parse(request.params?.arguments);
 
-    // Delete the todo list
-    const result = await todoListManager.deleteTaskList({
+    // Delete the task list
+    const result = await taskListManager.deleteTaskList({
       listId: args.listId,
-      permanent: args.permanent,
     });
 
     // Format response
@@ -47,9 +45,8 @@ export async function handleDeleteList(
       listId: args.listId,
     };
 
-    logger.info('Todo list deleted successfully', {
+    logger.info('Task list deleted successfully', {
       id: args.listId,
-      permanent: args.permanent,
       operation: result.operation,
     });
 

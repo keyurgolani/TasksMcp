@@ -145,7 +145,7 @@ describe('TaskListManager Action Plan Integration', () => {
       expect(updatedStep?.completedAt).toBeInstanceOf(Date);
     });
 
-    test('auto-updates task status based on action plan progress', async () => {
+    test('does not auto-update task status as intelligence features have been removed', async () => {
       // Get all step IDs
       const list = await manager.getTaskList({ listId });
       const item = list?.items.find(item => item.id === itemId);
@@ -153,7 +153,7 @@ describe('TaskListManager Action Plan Integration', () => {
 
       expect(stepIds).toHaveLength(3);
 
-      // Complete first step - should change task to in_progress
+      // Complete first step - task status should remain unchanged
       let updatedList = await manager.updateTaskList({
         listId,
         action: 'update_step_progress',
@@ -163,9 +163,9 @@ describe('TaskListManager Action Plan Integration', () => {
       });
 
       let updatedItem = updatedList.items.find(item => item.id === itemId);
-      expect(updatedItem?.status).toBe(TaskStatus.IN_PROGRESS);
+      expect(updatedItem?.status).toBe(TaskStatus.PENDING); // Status remains unchanged
 
-      // Complete all remaining steps - should change task to completed
+      // Complete all remaining steps - task status should still remain unchanged
       for (let i = 1; i < stepIds.length; i++) {
         updatedList = await manager.updateTaskList({
           listId,
@@ -177,8 +177,8 @@ describe('TaskListManager Action Plan Integration', () => {
       }
 
       updatedItem = updatedList.items.find(item => item.id === itemId);
-      expect(updatedItem?.status).toBe(TaskStatus.COMPLETED);
-      expect(updatedItem?.completedAt).toBeInstanceOf(Date);
+      expect(updatedItem?.status).toBe(TaskStatus.PENDING); // Status remains unchanged
+      expect(updatedItem?.completedAt).toBeUndefined(); // No automatic completion
     });
 
     test('adds new item with action plan', async () => {
@@ -363,7 +363,7 @@ describe('TaskListManager Action Plan Integration', () => {
           stepId: 'invalid-step-id',
           stepStatus: 'completed',
         })
-      ).rejects.toThrow('Step not found: invalid-step-id');
+      ).rejects.toThrow('Step not found');
     });
   });
 });

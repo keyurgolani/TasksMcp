@@ -54,7 +54,7 @@ export async function getDependencyGraphHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTaskList({
+  const list = await context.taskListManager.getTaskList({
     listId,
   });
 
@@ -129,7 +129,7 @@ export async function validateDependenciesHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId: input.listId,
     });
 
@@ -203,7 +203,7 @@ export async function getReadyTasksHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTaskList({
+  const list = await context.taskListManager.getTaskList({
     listId,
   });
 
@@ -259,20 +259,12 @@ export async function setDependenciesHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId: input.listId,
     });
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${input.listId}`, 404);
-    }
-
-    if (list.isArchived) {
-      throw new ApiError(
-        'CONFLICT',
-        'Cannot modify dependencies in archived list',
-        409
-      );
     }
 
     // Verify task exists
@@ -297,7 +289,7 @@ export async function setDependenciesHandler(
     }
 
     // Update task with new dependencies
-    const updatedList = await context.todoListManager.updateTaskList({
+    const updatedList = await context.taskListManager.updateTaskList({
       listId: input.listId,
       action: 'update_item',
       itemId: input.taskId,
@@ -308,7 +300,7 @@ export async function setDependenciesHandler(
 
     // Find the updated task
     const updatedTask = updatedList.items.find(
-      item => item.id === input.taskId
+      (item: Task) => item.id === input.taskId
     );
 
     if (!updatedTask) {

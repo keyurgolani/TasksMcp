@@ -4,6 +4,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  createOrchestrationError,
+  DetailedErrors,
+} from '../../shared/utils/error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
 import type { ActionPlan, ActionStep } from '../../shared/types/task.js';
@@ -247,12 +251,20 @@ export class ActionPlanManager {
         step => step.id === input.stepId
       );
       if (stepIndex === -1) {
-        throw new Error(`Step not found: ${input.stepId}`);
+        throw DetailedErrors.notFound(
+          'Step',
+          'Action Plan Step Management',
+          input.stepId
+        );
       }
 
       const existingStep = existingPlan.steps[stepIndex];
       if (!existingStep) {
-        throw new Error(`Step not found: ${input.stepId}`);
+        throw DetailedErrors.notFound(
+          'Step',
+          'Action Plan Step Management',
+          input.stepId
+        );
       }
 
       const now = new Date();
@@ -331,46 +343,13 @@ export class ActionPlanManager {
   }
 
   /**
-   * Suggests task status update based on action plan progress
+   * Task status update functionality removed - no longer supported
    */
-  suggestTaskStatusUpdate(
-    plan: ActionPlan
-  ): 'pending' | 'in_progress' | 'completed' | null {
-    try {
-      const progress = this.calculatePlanProgress(plan);
-      const inProgressSteps = plan.steps.filter(
-        step => step.status === 'in_progress'
-      ).length;
-
-      // If all steps are completed, suggest completed
-      if (progress === 100) {
-        return 'completed';
-      }
-
-      // If any steps are in progress or some are completed, suggest in_progress
-      if (inProgressSteps > 0 || progress > 0) {
-        return 'in_progress';
-      }
-
-      // If no progress has been made, suggest pending
-      if (progress === 0) {
-        return 'pending';
-      }
-
-      logger.debug('Task status calculated', {
-        planId: plan.id,
-        progress,
-        inProgressSteps,
-      });
-
-      return null;
-    } catch (error) {
-      logger.error('Failed to suggest task status update', {
-        planId: plan.id,
-        error,
-      });
-      return null;
-    }
+  getTaskStatusUpdate(): 'pending' | 'in_progress' | 'completed' | null {
+    // Task status update functionality removed - no longer supported
+    throw new Error(
+      'Task status update functionality removed - no longer supported'
+    );
   }
 
   /**
@@ -422,7 +401,16 @@ export class ActionPlanManager {
     };
 
     if (!result.isValid) {
-      throw new Error(`Action plan validation failed: ${errors.join(', ')}`);
+      throw createOrchestrationError('Action plan validation failed', {
+        context: {
+          operation: 'Action Plan Validation',
+          field: 'actionPlan',
+          currentValue: errors,
+          expectedValue: 'valid action plan content',
+          additionalContext: { errorCount: errors.length },
+        },
+        actionableGuidance: `Fix the following validation errors: ${errors.join('; ')}. Ensure action plan content is properly formatted and within length limits.`,
+      });
     }
 
     if (warnings.length > 0) {
@@ -433,36 +421,6 @@ export class ActionPlanManager {
     }
 
     return result;
-  }
-
-  /**
-   * Gets action plan statistics
-   */
-  getActionPlanStats(plan: ActionPlan): {
-    totalSteps: number;
-    completedSteps: number;
-    inProgressSteps: number;
-    pendingSteps: number;
-    progress: number;
-    estimatedTimeRemaining?: number;
-  } {
-    const totalSteps = plan.steps.length;
-    const completedSteps = plan.steps.filter(
-      s => s.status === 'completed'
-    ).length;
-    const inProgressSteps = plan.steps.filter(
-      s => s.status === 'in_progress'
-    ).length;
-    const pendingSteps = plan.steps.filter(s => s.status === 'pending').length;
-    const progress = this.calculatePlanProgress(plan);
-
-    return {
-      totalSteps,
-      completedSteps,
-      inProgressSteps,
-      pendingSteps,
-      progress,
-    };
   }
 
   /**
@@ -539,10 +497,13 @@ export class ActionPlanManager {
     confidence: 'low' | 'medium' | 'high';
     reasoning: string;
   } {
-    const stats = this.getActionPlanStats(plan);
+    const completedSteps = plan.steps.filter(
+      s => s.status === 'completed'
+    ).length;
+    const pendingSteps = plan.steps.filter(s => s.status === 'pending').length;
     const avgTime = this.calculateAverageStepCompletionTime(plan);
 
-    if (stats.completedSteps === 0) {
+    if (completedSteps === 0) {
       return {
         estimatedMinutes: null,
         confidence: 'low',
@@ -550,7 +511,7 @@ export class ActionPlanManager {
       };
     }
 
-    if (stats.pendingSteps === 0) {
+    if (pendingSteps === 0) {
       return {
         estimatedMinutes: 0,
         confidence: 'high',
@@ -558,7 +519,7 @@ export class ActionPlanManager {
       };
     }
 
-    if (!avgTime || stats.completedSteps < 2) {
+    if (!avgTime || completedSteps < 2) {
       return {
         estimatedMinutes: null,
         confidence: 'low',
@@ -566,19 +527,19 @@ export class ActionPlanManager {
       };
     }
 
-    const estimatedMinutes = avgTime * stats.pendingSteps;
+    const estimatedMinutes = avgTime * pendingSteps;
     let confidence: 'low' | 'medium' | 'high' = 'low';
 
-    if (stats.completedSteps >= 5) {
+    if (completedSteps >= 5) {
       confidence = 'high';
-    } else if (stats.completedSteps >= 3) {
+    } else if (completedSteps >= 3) {
       confidence = 'medium';
     }
 
     return {
       estimatedMinutes,
       confidence,
-      reasoning: `Based on ${stats.completedSteps} completed steps with average ${avgTime} minutes per step`,
+      reasoning: `Based on ${completedSteps} completed steps with average ${avgTime} minutes per step`,
     };
   }
 
@@ -665,7 +626,11 @@ export class ActionPlanManager {
     completedToday: number;
     estimatedCompletion?: string;
   } {
-    const stats = this.getActionPlanStats(plan);
+    const progress = this.calculatePlanProgress(plan);
+    const completedSteps = plan.steps.filter(
+      s => s.status === 'completed'
+    ).length;
+    const totalSteps = plan.steps.length;
     const nextStep = this.getNextPendingStep(plan);
     const estimation = this.estimateTimeToCompletion(plan);
 
@@ -683,15 +648,19 @@ export class ActionPlanManager {
       return completedDate >= today;
     }).length;
 
+    const inProgressSteps = plan.steps.filter(
+      s => s.status === 'in_progress'
+    ).length;
+
     let statusText = '';
-    if (stats.progress === 100) {
+    if (progress === 100) {
       statusText = 'All steps completed';
-    } else if (stats.inProgressSteps > 0) {
-      statusText = `${stats.inProgressSteps} step${
-        stats.inProgressSteps > 1 ? 's' : ''
+    } else if (inProgressSteps > 0) {
+      statusText = `${inProgressSteps} step${
+        inProgressSteps > 1 ? 's' : ''
       } in progress`;
-    } else if (stats.completedSteps > 0) {
-      statusText = `${stats.completedSteps}/${stats.totalSteps} steps completed`;
+    } else if (completedSteps > 0) {
+      statusText = `${completedSteps}/${totalSteps} steps completed`;
     } else {
       statusText = 'Not started';
     }
@@ -708,7 +677,7 @@ export class ActionPlanManager {
     }
 
     return {
-      progress: stats.progress,
+      progress,
       statusText,
       ...(nextStep?.content && { nextStep: nextStep.content }),
       completedToday,

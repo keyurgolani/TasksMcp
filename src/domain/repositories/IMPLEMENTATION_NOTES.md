@@ -8,11 +8,11 @@
 
 ## What Was Implemented
 
-### 1. ITodoListRepository Interface
+### 1. ITaskListRepository Interface
 
-**File:** `src/domain/repositories/todo-list.repository.ts`
+**File:** `src/domain/repositories/task-list.repository.ts`
 
-Created a comprehensive repository interface for TodoList aggregates with:
+Created a comprehensive repository interface for TaskList aggregates with:
 
 - **CRUD Operations**: save, findById, findAll, delete, exists
 - **Search Operations**: search with complex queries, searchSummaries for lightweight views
@@ -34,7 +34,7 @@ Created a comprehensive repository interface for TodoList aggregates with:
 Created a task-centric repository interface for cross-list operations:
 
 - **Task Operations**: create, update, delete, findById
-- **Cross-List Search**: Find tasks across all TodoLists
+- **Cross-List Search**: Find tasks across all TaskLists
 - **Dependency Analysis**: findDependents, findDependencies
 - **Workflow Support**: findReadyTasks, findBlockedTasks
 - **Bulk Operations**: bulkUpdateStatus, bulkDelete
@@ -48,7 +48,7 @@ Created a task-centric repository interface for cross-list operations:
 
 ### 3. Query Types and Options
 
-**Defined in:** `src/domain/repositories/todo-list.repository.ts`
+**Defined in:** `src/domain/repositories/task-list.repository.ts`
 
 Comprehensive type definitions for queries:
 
@@ -84,7 +84,7 @@ Barrel export file for clean imports:
 
 ```typescript
 import type {
-  ITodoListRepository,
+  ITaskListRepository,
   ITaskRepository,
 } from '../domain/repositories';
 ```
@@ -94,13 +94,13 @@ import type {
 ### 1. Domain-Driven Design Alignment
 
 - Repositories defined in domain layer (not infrastructure)
-- Work with domain entities (TodoList, TodoItem)
+- Work with domain entities (TaskList, Task)
 - No coupling to specific storage implementations
 - Collection-like interface semantics
 
 ### 2. Separation of Concerns
 
-- **ITodoListRepository**: List-centric operations
+- **ITaskListRepository**: List-centric operations
 - **ITaskRepository**: Task-centric operations spanning lists
 - Clear boundaries between list and task operations
 
@@ -134,7 +134,7 @@ import type {
 
 ✅ **Requirement 1.2**: Abstract repository interfaces in domain layer
 
-- ITodoListRepository and ITaskRepository defined
+- ITaskListRepository and ITaskRepository defined
 - Clear contracts for data access
 - Multiple implementations possible
 
@@ -150,22 +150,22 @@ The following tasks will build on these interfaces:
 
 ### Task 2: Implement Repository Adapter
 
-Create `TodoListRepositoryAdapter` that wraps existing `StorageBackend`:
+Create `TaskListRepositoryAdapter` that wraps existing `StorageBackend`:
 
 ```typescript
-export class TodoListRepositoryAdapter implements ITodoListRepository {
+export class TaskListRepositoryAdapter implements ITaskListRepository {
   constructor(private readonly storage: StorageBackend) {}
   // Implement all interface methods
 }
 ```
 
-### Task 3: Refactor TodoListManager
+### Task 3: Refactor TaskListManager
 
-Update `TodoListManager` to use repository instead of direct storage:
+Update `TaskListManager` to use repository instead of direct storage:
 
 ```typescript
-export class TodoListManager {
-  constructor(private readonly repository: ITodoListRepository) {}
+export class TaskListManager {
+  constructor(private readonly repository: ITaskListRepository) {}
   // Replace storage calls with repository calls
 }
 ```
@@ -184,10 +184,10 @@ Update remaining managers to use repository pattern:
 ### Unit Tests (Future)
 
 ```typescript
-describe('TodoListRepositoryAdapter', () => {
+describe('TaskListRepositoryAdapter', () => {
   it('should save a list', async () => {
     const mockStorage = new MockStorageBackend();
-    const repository = new TodoListRepositoryAdapter(mockStorage);
+    const repository = new TaskListRepositoryAdapter(mockStorage);
     await repository.save(testList);
     expect(mockStorage.save).toHaveBeenCalled();
   });
@@ -197,11 +197,11 @@ describe('TodoListRepositoryAdapter', () => {
 ### Integration Tests (Future)
 
 ```typescript
-describe('TodoListManager with Repository', () => {
+describe('TaskListManager with Repository', () => {
   it('should create list through repository', async () => {
-    const repository = new TodoListRepositoryAdapter(storage);
-    const manager = new TodoListManager(repository);
-    const list = await manager.createTodoList({ title: 'Test' });
+    const repository = new TaskListRepositoryAdapter(storage);
+    const manager = new TaskListManager(repository);
+    const list = await manager.createTaskList({ title: 'Test' });
     expect(list).toBeDefined();
   });
 });
@@ -235,7 +235,7 @@ npm run test:run
 
 ## Files Created
 
-1. `src/domain/repositories/todo-list.repository.ts` (280 lines)
+1. `src/domain/repositories/task-list.repository.ts` (280 lines)
 2. `src/domain/repositories/task.repository.ts` (240 lines)
 3. `src/domain/repositories/index.ts` (30 lines)
 4. `src/domain/repositories/README.md` (450 lines)

@@ -5,7 +5,7 @@
  * Handles MCP server initialization with environment variable configuration
  */
 
-const { McpServer } = require('./dist/app/server.js');
+const { ConsolidatedMcpServer } = require('./dist/api/mcp/mcp-server.js');
 const {
   ConfigurationManager,
 } = require('./dist/infrastructure/config/system-configuration.js');
@@ -20,7 +20,7 @@ async function startMcpServer() {
       `Data Store: ${config.dataStore.type} at ${config.dataStore.location}`
     );
 
-    const server = new McpServer(config);
+    const server = new ConsolidatedMcpServer(config);
     await server.start();
 
     console.log('MCP Server started successfully');

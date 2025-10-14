@@ -4,6 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { createOrchestrationError } from '../../shared/utils/error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
 import type { ExitCriteria } from '../../shared/types/task.js';
@@ -12,7 +13,6 @@ import type { ITaskListRepository } from '../repositories/task-list.repository.j
 export interface CreateExitCriteriaInput {
   taskId: string;
   description: string;
-  order?: number;
 }
 
 export interface UpdateExitCriteriaInput {
@@ -278,7 +278,16 @@ export class ExitCriteriaManager {
     };
 
     if (!result.isValid) {
-      throw new Error(`Exit criteria validation failed: ${errors.join(', ')}`);
+      throw createOrchestrationError('Exit criteria validation failed', {
+        context: {
+          operation: 'Exit Criteria Validation',
+          field: 'exitCriteria',
+          currentValue: errors,
+          expectedValue: 'valid exit criteria',
+          additionalContext: { errorCount: errors.length },
+        },
+        actionableGuidance: `Fix the following validation errors: ${errors.join('; ')}. Ensure all exit criteria have clear, measurable descriptions.`,
+      });
     }
 
     if (warnings.length > 0) {
@@ -381,41 +390,6 @@ export class ExitCriteriaManager {
     const header = `Exit Criteria Progress: ${progress.met}/${progress.total} (${progress.progress}%)`;
 
     return `${header}\n\n${formattedCriteria.join('\n\n')}`;
-  }
-
-  /**
-   * Suggests task completion readiness based on exit criteria
-   */
-  suggestTaskCompletionReadiness(criteria: ExitCriteria[]): {
-    canComplete: boolean;
-    reason: string;
-    unmetCriteria: ExitCriteria[];
-    recommendation: string;
-  } {
-    const unmetCriteria = this.getUnmetCriteria(criteria);
-    const canComplete = unmetCriteria.length === 0;
-
-    if (canComplete) {
-      return {
-        canComplete: true,
-        reason: 'All exit criteria have been met',
-        unmetCriteria: [],
-        recommendation: 'Task is ready to be marked as completed',
-      };
-    }
-
-    const reason = `${unmetCriteria.length} exit criteria still need to be met`;
-    const recommendation =
-      unmetCriteria.length === 1
-        ? 'Complete the remaining exit criteria before marking task as done'
-        : 'Complete all remaining exit criteria before marking task as done';
-
-    return {
-      canComplete: false,
-      reason,
-      unmetCriteria,
-      recommendation,
-    };
   }
 
   /**

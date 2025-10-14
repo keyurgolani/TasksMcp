@@ -1,5 +1,5 @@
 /**
- * MCP handler for retrieving todo lists
+ * MCP handler for retrieving task lists
  */
 
 import { z } from 'zod';
@@ -26,7 +26,7 @@ const GetListSchema = z.object({
 
 export async function handleGetList(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing get_list request', {
@@ -34,21 +34,21 @@ export async function handleGetList(
     });
 
     const args = GetListSchema.parse(request.params?.arguments);
-    const todoList = await todoListManager.getTaskList({
+    const taskList = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: args.includeCompleted,
     });
 
-    if (!todoList) {
+    if (!taskList) {
       throw new Error(`Task list not found: ${args.listId}`);
     }
 
     // Calculate dependency information for all tasks
     const dependencyResolver = new DependencyResolver();
-    const readyItems = dependencyResolver.getReadyItems(todoList.items);
+    const readyItems = dependencyResolver.getReadyItems(taskList.items);
     const readyItemIds = new Set(readyItems.map((item: Task) => item.id));
 
-    const tasksWithDependencies: TaskWithDependencies[] = todoList.items.map(
+    const tasksWithDependencies: TaskWithDependencies[] = taskList.items.map(
       task => {
         const isReady = readyItemIds.has(task.id);
         const blockedBy: string[] = [];
@@ -56,7 +56,7 @@ export async function handleGetList(
         // Calculate what this task is blocked by if it's not ready
         if (!isReady && task.dependencies.length > 0) {
           for (const depId of task.dependencies) {
-            const depTask = todoList.items.find(
+            const depTask = taskList.items.find(
               (item: Task) => item.id === depId
             );
             if (depTask && depTask.status !== 'completed') {
@@ -91,21 +91,21 @@ export async function handleGetList(
     dependencyResolver.cleanup();
 
     const response = {
-      id: todoList.id,
-      title: todoList.title,
-      description: todoList.description,
-      taskCount: todoList.totalItems,
-      completedCount: todoList.completedItems,
-      progress: todoList.progress,
-      lastUpdated: todoList.updatedAt.toISOString(),
-      projectTag: todoList.projectTag,
+      id: taskList.id,
+      title: taskList.title,
+      description: taskList.description,
+      taskCount: taskList.totalItems,
+      completedCount: taskList.completedItems,
+      progress: taskList.progress,
+      lastUpdated: taskList.updatedAt.toISOString(),
+      projectTag: taskList.projectTag,
       tasks: tasksWithDependencies,
     };
 
-    logger.info('Todo list retrieved successfully', {
-      id: todoList.id,
-      title: todoList.title,
-      taskCount: todoList.items.length,
+    logger.info('Task list retrieved successfully', {
+      id: taskList.id,
+      title: taskList.title,
+      taskCount: taskList.items.length,
     });
 
     return {

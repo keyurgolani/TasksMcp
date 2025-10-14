@@ -429,7 +429,7 @@ export class DataSourceRouter {
       throw new Error('Delete operation requires a key');
     }
 
-    await backend.delete(operation.key, operation.permanent);
+    await backend.delete(operation.key);
     return undefined as T;
   }
 

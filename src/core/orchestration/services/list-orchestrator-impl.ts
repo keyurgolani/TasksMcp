@@ -149,4 +149,52 @@ export class ListOrchestratorImpl implements ListOrchestrator {
   async delegateData(operation: DataOperation): Promise<unknown> {
     return this.dataDelegation.execute(operation);
   }
+
+  // Bulk operations (not available in MCP)
+  async createBulkLists(lists: CreateListData[]): Promise<TaskList[]> {
+    const results: TaskList[] = [];
+
+    for (const listData of lists) {
+      try {
+        const list = await this.createList(listData);
+        results.push(list);
+      } catch (error) {
+        throw this.handleError(error as Error, 'Bulk List Creation');
+      }
+    }
+
+    return results;
+  }
+
+  async updateBulkLists(
+    updates: Array<{ id: string; data: UpdateListData }>
+  ): Promise<TaskList[]> {
+    const results: TaskList[] = [];
+
+    for (const update of updates) {
+      try {
+        const list = await this.updateList(update.id, update.data);
+        results.push(list);
+      } catch (error) {
+        throw this.handleError(error as Error, 'Bulk List Update');
+      }
+    }
+
+    return results;
+  }
+
+  async deleteBulkLists(listIds: string[]): Promise<number> {
+    let deletedCount = 0;
+
+    for (const listId of listIds) {
+      try {
+        await this.deleteList(listId);
+        deletedCount++;
+      } catch (_error) {
+        // Continue with other deletions even if one fails
+      }
+    }
+
+    return deletedCount;
+  }
 }

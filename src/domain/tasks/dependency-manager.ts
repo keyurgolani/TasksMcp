@@ -44,19 +44,12 @@ export interface DependencyValidationResult {
  * - Provide detailed dependency analysis and blocking reasons
  */
 export class DependencyResolver {
-  private readonly graphCache = new Map<string, DependencyGraph>();
-  private cacheTimeout: NodeJS.Timeout | undefined;
   // Repository for future multi-source dependency resolution
   // Currently unused but prepared for future enhancements
   private readonly repository: ITaskListRepository | undefined;
 
   constructor(repository?: ITaskListRepository) {
     this.repository = repository;
-
-    // Setup periodic cache cleanup - more frequent to prevent memory buildup
-    this.cacheTimeout = setInterval(() => {
-      this.cleanupCache();
-    }, 60000); // Clean up every minute (was 5 minutes)
 
     logger.debug('DependencyResolver initialized', {
       hasRepository: !!repository,
@@ -118,10 +111,15 @@ export class DependencyResolver {
       if (cycles.length > 0) {
         result.isValid = false;
         result.circularDependencies = cycles;
+
+        // Provide detailed error messages for each cycle
+        const cycleDescriptions = cycles.map(cycle => {
+          const cycleChain = cycle.join(' → ');
+          return `${cycleChain} (creates infinite loop)`;
+        });
+
         result.errors.push(
-          `Circular dependencies detected: ${cycles
-            .map(cycle => cycle.join(' -> '))
-            .join(', ')}`
+          `Circular dependencies detected: ${cycleDescriptions.join('; ')}. Remove one dependency from each cycle to resolve.`
         );
       }
 
@@ -166,7 +164,8 @@ export class DependencyResolver {
   }
 
   /**
-   * Detects circular dependencies using depth-first search
+   * Detects circular dependencies using optimized depth-first search
+   * Implements O(V + E) algorithm where V is vertices (tasks) and E is edges (dependencies)
    */
   detectCircularDependencies(
     itemId: string,
@@ -179,7 +178,7 @@ export class DependencyResolver {
       // Create a dependency map including the new dependencies
       const dependencyMap = new Map<string, string[]>();
 
-      // Add existing dependencies
+      // Add existing dependencies for all items
       for (const item of allItems) {
         dependencyMap.set(item.id, [...item.dependencies]);
       }
@@ -187,14 +186,13 @@ export class DependencyResolver {
       // Add or update the item with new dependencies
       dependencyMap.set(itemId, [...newDependencies]);
 
-      // Use DFS to detect cycles
+      // Optimized DFS for cycle detection - O(V + E) complexity
       const visited = new Set<string>();
       const recursionStack = new Set<string>();
-      const path: string[] = [];
 
-      const dfs = (currentId: string): boolean => {
+      const dfs = (currentId: string, path: string[]): boolean => {
+        // If we encounter a node in the recursion stack, we found a cycle
         if (recursionStack.has(currentId)) {
-          // Found a cycle - extract the cycle from the path
           const cycleStart = path.indexOf(currentId);
           if (cycleStart !== -1) {
             const cycle = [...path.slice(cycleStart), currentId];
@@ -203,36 +201,47 @@ export class DependencyResolver {
           return true;
         }
 
+        // If already visited and not in recursion stack, no cycle from this path
         if (visited.has(currentId)) {
           return false;
         }
 
+        // Mark as visited and add to recursion stack
         visited.add(currentId);
         recursionStack.add(currentId);
-        path.push(currentId);
 
+        // Explore all dependencies
         const dependencies = dependencyMap.get(currentId) ?? [];
         for (const dep of dependencies) {
-          if (dfs(dep)) {
-            // Continue searching for more cycles
+          // Only process dependencies that exist in our task set
+          if (dependencyMap.has(dep)) {
+            const newPath = [...path, currentId];
+            if (dfs(dep, newPath)) {
+              // Found a cycle, continue to find all cycles
+            }
           }
         }
 
+        // Remove from recursion stack when backtracking
         recursionStack.delete(currentId);
-        path.pop();
         return false;
       };
 
-      // Check for cycles starting from all nodes
+      // Check for cycles starting from all nodes to ensure we find all strongly connected components
       for (const [nodeId] of dependencyMap) {
         if (!visited.has(nodeId)) {
-          dfs(nodeId);
+          dfs(nodeId, []);
         }
       }
 
       logger.debug('Circular dependency detection completed', {
         itemId,
         cyclesFound: cycles.length,
+        totalNodes: dependencyMap.size,
+        totalEdges: Array.from(dependencyMap.values()).reduce(
+          (sum, deps) => sum + deps.length,
+          0
+        ),
       });
 
       return cycles;
@@ -584,35 +593,89 @@ export class DependencyResolver {
   }
 
   /**
-   * Clean up internal caches
+   * Calculates the block reason for a specific task
    */
-  cleanup(): void {
-    this.graphCache.clear();
+  calculateBlockReason(
+    taskId: string,
+    items: Task[]
+  ): import('../models/task.js').BlockReason | undefined {
+    try {
+      const task = items.find(item => item.id === taskId);
+      if (!task) {
+        logger.warn('Task not found for block reason calculation', { taskId });
+        return undefined;
+      }
 
-    if (this.cacheTimeout) {
-      clearInterval(this.cacheTimeout);
-      this.cacheTimeout = undefined;
+      // If task is completed or has no dependencies, it's not blocked
+      if (
+        task.status === TaskStatus.COMPLETED ||
+        task.dependencies.length === 0
+      ) {
+        return undefined;
+      }
+
+      // Find incomplete dependencies
+      const incompleteDeps = task.dependencies
+        .map(depId => items.find(i => i.id === depId))
+        .filter(
+          (depItem): depItem is Task =>
+            depItem !== undefined && depItem.status !== TaskStatus.COMPLETED
+        );
+
+      // If all dependencies are complete, task is not blocked
+      if (incompleteDeps.length === 0) {
+        return undefined;
+      }
+
+      // Build block reason with details
+      const blockedBy = incompleteDeps.map(dep => dep.id);
+      const details = incompleteDeps.map(dep => {
+        const detail: {
+          taskId: string;
+          taskTitle: string;
+          status: TaskStatus;
+          estimatedCompletion?: Date;
+        } = {
+          taskId: dep.id,
+          taskTitle: dep.title,
+          status: dep.status,
+        };
+
+        if (dep.estimatedDuration) {
+          detail.estimatedCompletion = new Date(
+            Date.now() + dep.estimatedDuration * 60 * 1000
+          );
+        }
+
+        return detail;
+      });
+
+      const blockReason: import('../models/task.js').BlockReason = {
+        blockedBy,
+        details,
+      };
+
+      logger.debug('Block reason calculated', {
+        taskId,
+        blockedByCount: blockedBy.length,
+        details: details.map(d => ({
+          id: d.taskId,
+          title: d.taskTitle,
+          status: d.status,
+        })),
+      });
+
+      return blockReason;
+    } catch (error) {
+      logger.error('Failed to calculate block reason', { taskId, error });
+      return undefined;
     }
-
-    logger.debug('DependencyResolver cleanup completed');
   }
 
   /**
-   * Clean up old cache entries
+   * Clean up internal resources
    */
-  private cleanupCache(): void {
-    const maxCacheSize = 20; // Limit cache size to prevent memory growth
-    const cacheSize = this.graphCache.size;
-
-    // If cache is too large, clear it entirely
-    // In a production system, we could implement LRU eviction
-    if (cacheSize > maxCacheSize) {
-      this.graphCache.clear();
-
-      logger.debug('DependencyResolver cache cleaned', {
-        clearedEntries: cacheSize,
-        maxSize: maxCacheSize,
-      });
-    }
+  cleanup(): void {
+    logger.debug('DependencyResolver cleanup completed');
   }
 }

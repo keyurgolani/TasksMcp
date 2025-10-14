@@ -197,7 +197,7 @@ describe('handleAddTask with dependencies', () => {
     const result = await handleAddTask(request, mockTaskListManager);
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Invalid UUID format');
+    expect(result.content[0].text).toContain('Invalid UUID');
   });
 
   it('should reject task with circular dependencies', async () => {
@@ -306,7 +306,7 @@ describe('handleAddTask with dependencies', () => {
     expect(result.content[0].text).toContain('"blockedBy"');
   });
 
-  it('should handle validation errors gracefully', async () => {
+  it('should handle Validation errors gracefully', async () => {
     const request: CallToolRequest = {
       method: 'tools/call',
       params: {

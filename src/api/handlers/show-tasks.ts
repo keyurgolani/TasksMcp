@@ -1,7 +1,7 @@
 /**
  * MCP handler for formatted task display
  *
- * Provides human-readable formatting of todo lists and tasks with multiple
+ * Provides human-readable formatting of task lists and tasks with multiple
  * display options including compact, detailed, and summary views.
  * Supports grouping by status or priority for better organization.
  */
@@ -29,10 +29,7 @@ import type { TaskList, Task } from '../../shared/types/task.js';
  */
 const ShowTasksSchema = z.object({
   listId: z.string().uuid('List ID must be a valid UUID'),
-  format: z
-    .enum(['compact', 'detailed', 'summary'])
-    .optional()
-    .default('detailed'),
+  format: z.enum(['detailed']).optional().default('detailed'),
   groupBy: z.enum(['status', 'priority', 'none']).optional().default('status'),
   includeCompleted: z.boolean().optional().default(true),
 });
@@ -40,17 +37,17 @@ const ShowTasksSchema = z.object({
 /**
  * Handles MCP show_tasks tool requests
  *
- * Formats and displays todo list tasks in various human-readable formats.
+ * Formats and displays task list tasks in various human-readable formats.
  * Supports different display modes (compact, detailed, summary) and grouping
  * options (by status, priority, or none) for optimal readability.
  *
  * @param request - The MCP call tool request containing display parameters
- * @param todoListManager - The todo list manager instance for list operations
+ * @param taskListManager - The task list manager instance for list operations
  * @returns Promise<CallToolResult> - MCP response with formatted task display
  */
 export async function handleShowTasks(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing show_tasks request', {
@@ -58,7 +55,7 @@ export async function handleShowTasks(
     });
 
     const args = ShowTasksSchema.parse(request.params?.arguments);
-    const list = await todoListManager.getTaskList({
+    const list = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: args.includeCompleted,
     });
@@ -85,7 +82,6 @@ export async function handleShowTasks(
 
     const formattedOutput = formatTasks(
       list,
-      args.format,
       args.groupBy,
       args.includeCompleted,
       readyItemIds
@@ -124,7 +120,7 @@ export async function handleShowTasks(
  * Main formatting function that orchestrates the display of tasks based on
  * user preferences. Handles different formats and grouping strategies.
  *
- * @param list - The todo list containing tasks to format
+ * @param list - The task list containing tasks to format
  * @param format - Display format (compact, detailed, or summary)
  * @param groupBy - Grouping strategy (status, priority, or none)
  * @param includeCompleted - Whether to include completed tasks
@@ -132,7 +128,6 @@ export async function handleShowTasks(
  */
 function formatTasks(
   list: TaskList,
-  format: 'compact' | 'detailed' | 'summary',
   groupBy: 'status' | 'priority' | 'none',
   includeCompleted: boolean,
   readyItemIds: Set<string>
@@ -145,11 +140,6 @@ function formatTasks(
     lines.push(`${list.description}`);
   }
   lines.push('');
-
-  // Handle summary format separately
-  if (format === 'summary') {
-    return formatSummary(list);
-  }
 
   // Filter tasks based on completion status
   let tasks = list.items;
@@ -165,62 +155,12 @@ function formatTasks(
 
   // Apply grouping strategy
   if (groupBy === 'status') {
-    formatTasksByStatus(tasks, lines, format, readyItemIds);
+    formatTasksByStatus(tasks, lines, readyItemIds);
   } else if (groupBy === 'priority') {
-    formatTasksByPriority(tasks, lines, format, readyItemIds);
+    formatTasksByPriority(tasks, lines, readyItemIds);
   } else {
-    formatTasksUngrouped(tasks, lines, format, readyItemIds);
+    formatTasksUngrouped(tasks, lines, readyItemIds);
   }
-
-  return lines.join('\n');
-}
-/**
- * Format summary view of the list
- *
- * Creates a high-level overview of the todo list with statistics,
- * progress information, and breakdowns by status and priority.
- *
- * @param list - The todo list to summarize
- * @returns string - Formatted summary text
- */
-function formatSummary(list: TaskList): string {
-  const lines: string[] = [];
-
-  lines.push(`# ${list.title} - Summary`);
-  if (list.description) {
-    lines.push(`${list.description}`);
-  }
-  lines.push('');
-
-  lines.push(`**Total Tasks:** ${list.totalItems}`);
-  lines.push(`**Completed:** ${list.completedItems}`);
-  lines.push(`**Progress:** ${list.progress.toFixed(1)}%`);
-  lines.push(
-    `**Last Updated:** ${new Date(list.updatedAt).toLocaleDateString()}`
-  );
-
-  if (list.projectTag) {
-    lines.push(`**Project:** ${list.projectTag}`);
-  }
-
-  lines.push('');
-
-  const statusCounts = getStatusCounts(list.items);
-  lines.push('**Status Breakdown:**');
-  Object.entries(statusCounts).forEach(([status, count]) => {
-    if (count > 0) {
-      lines.push(`- ${formatStatusName(status)}: ${count}`);
-    }
-  });
-
-  const priorityCounts = getPriorityCounts(list.items);
-  lines.push('');
-  lines.push('**Priority Breakdown:**');
-  Object.entries(priorityCounts).forEach(([priority, count]) => {
-    if (count > 0) {
-      lines.push(`- ${formatPriorityName(Number(priority))}: ${count}`);
-    }
-  });
 
   return lines.join('\n');
 }
@@ -238,7 +178,6 @@ function formatSummary(list: TaskList): string {
 function formatTasksByStatus(
   tasks: Task[],
   lines: string[],
-  format: 'compact' | 'detailed',
   readyItemIds: Set<string>
 ): void {
   const tasksByStatus = groupTasksByStatus(tasks);
@@ -260,7 +199,7 @@ function formatTasksByStatus(
     lines.push('');
 
     statusTasks.forEach(task => {
-      formatSingleTask(task, lines, format, readyItemIds);
+      formatSingleTask(task, lines, readyItemIds);
     });
   });
 }
@@ -278,7 +217,6 @@ function formatTasksByStatus(
 function formatTasksByPriority(
   tasks: Task[],
   lines: string[],
-  format: 'compact' | 'detailed',
   readyItemIds: Set<string>
 ): void {
   const tasksByPriority = groupTasksByPriority(tasks);
@@ -302,7 +240,7 @@ function formatTasksByPriority(
     lines.push('');
 
     priorityTasks.forEach(task => {
-      formatSingleTask(task, lines, format, readyItemIds);
+      formatSingleTask(task, lines, readyItemIds);
     });
   });
 }
@@ -311,7 +249,7 @@ function formatTasksByPriority(
  * Format tasks without grouping
  *
  * Displays all tasks in a single list without any grouping or categorization.
- * Tasks are shown in their original order from the todo list.
+ * Tasks are shown in their original order from the task list.
  *
  * @param tasks - Array of tasks to format
  * @param lines - Output lines array to append formatted content
@@ -320,14 +258,13 @@ function formatTasksByPriority(
 function formatTasksUngrouped(
   tasks: Task[],
   lines: string[],
-  format: 'compact' | 'detailed',
   readyItemIds: Set<string>
 ): void {
   lines.push(`## Tasks (${tasks.length})`);
   lines.push('');
 
   tasks.forEach(task => {
-    formatSingleTask(task, lines, format, readyItemIds);
+    formatSingleTask(task, lines, readyItemIds);
   });
 }
 
@@ -345,57 +282,43 @@ function formatTasksUngrouped(
 function formatSingleTask(
   task: Task,
   lines: string[],
-  format: 'compact' | 'detailed',
   readyItemIds: Set<string>
 ): void {
   const statusIcon = getStatusIcon(task.status);
   const priorityIcon = getPriorityIcon(task.priority);
   const dependencyIcon = getDependencyIcon(task, readyItemIds);
 
-  if (format === 'compact') {
-    // Compact format: one line per task
-    const tags = task.tags.length > 0 ? ` [${task.tags.join(', ')}]` : '';
-    const duration = task.estimatedDuration
-      ? ` (${task.estimatedDuration}min)`
-      : '';
-    const depCount =
-      task.dependencies.length > 0 ? ` (${task.dependencies.length} deps)` : '';
-    lines.push(
-      `${statusIcon} ${priorityIcon} ${dependencyIcon} ${task.title}${tags}${duration}${depCount}`
-    );
-  } else {
-    // Detailed format: multiple lines per task
-    lines.push(
-      `${statusIcon} **${task.title}** ${priorityIcon} ${dependencyIcon}`
-    );
+  // Detailed format: multiple lines per task
+  lines.push(
+    `${statusIcon} **${task.title}** ${priorityIcon} ${dependencyIcon}`
+  );
 
-    if (task.description) {
-      lines.push(`   ${task.description}`);
-    }
-
-    const metadata: string[] = [];
-    if (task.tags.length > 0) {
-      metadata.push(`Tags: ${task.tags.join(', ')}`);
-    }
-    if (task.estimatedDuration) {
-      metadata.push(`Duration: ${task.estimatedDuration}min`);
-    }
-
-    // Add dependency information
-    if (task.dependencies.length > 0) {
-      const isReady = readyItemIds.has(task.id);
-      const depStatus = isReady ? 'Ready' : 'Blocked';
-      metadata.push(`Dependencies: ${task.dependencies.length} (${depStatus})`);
-    }
-
-    metadata.push(`Created: ${new Date(task.createdAt).toLocaleDateString()}`);
-
-    if (metadata.length > 0) {
-      lines.push(`   *${metadata.join(' | ')}*`);
-    }
-
-    lines.push('');
+  if (task.description) {
+    lines.push(`   ${task.description}`);
   }
+
+  const metadata: string[] = [];
+  if (task.tags.length > 0) {
+    metadata.push(`Tags: ${task.tags.join(', ')}`);
+  }
+  if (task.estimatedDuration) {
+    metadata.push(`Duration: ${task.estimatedDuration}min`);
+  }
+
+  // Add dependency information
+  if (task.dependencies.length > 0) {
+    const isReady = readyItemIds.has(task.id);
+    const depStatus = isReady ? 'Ready' : 'Blocked';
+    metadata.push(`Dependencies: ${task.dependencies.length} (${depStatus})`);
+  }
+
+  metadata.push(`Created: ${new Date(task.createdAt).toLocaleDateString()}`);
+
+  if (metadata.length > 0) {
+    lines.push(`   *${metadata.join(' | ')}*`);
+  }
+
+  lines.push('');
 }
 
 /**
@@ -433,28 +356,6 @@ function groupTasksByPriority(tasks: Task[]): Map<Priority, Task[]> {
 /**
  * Get status counts for summary
  */
-function getStatusCounts(tasks: Task[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-
-  tasks.forEach(task => {
-    counts[task.status] = (counts[task.status] || 0) + 1;
-  });
-
-  return counts;
-}
-
-/**
- * Get priority counts for summary
- */
-function getPriorityCounts(tasks: Task[]): Record<number, number> {
-  const counts: Record<number, number> = {};
-
-  tasks.forEach(task => {
-    counts[task.priority] = (counts[task.priority] || 0) + 1;
-  });
-
-  return counts;
-}
 
 /**
  * Format status name for display

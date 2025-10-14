@@ -24,6 +24,7 @@ import {
   handleCompleteTask,
   handleSetTaskPriority,
   handleAddTaskTags,
+  handleRemoveTaskTags,
   handleSearchTool,
   handleShowTasks,
   handleSetTaskDependencies,
@@ -55,7 +56,7 @@ import { getVersionInfo } from '../shared/version.js';
 
 class McpTaskManagerServer {
   private readonly server: Server;
-  private todoListManager: TaskListManager | null = null;
+  private taskListManager: TaskListManager | null = null;
 
   private readonly config: ServerConfig;
 
@@ -81,10 +82,10 @@ class McpTaskManagerServer {
   }
 
   private ensureTaskListManager(): TaskListManager {
-    if (!this.todoListManager) {
+    if (!this.taskListManager) {
       throw new Error('TaskListManager not initialized. Call start() first.');
     }
-    return this.todoListManager;
+    return this.taskListManager;
   }
 
   /**
@@ -225,28 +226,28 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTaskListManager();
+    const taskListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'create_list':
         return await handleCreateList(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'get_list':
-        return await handleGetList(request as CallToolRequest, todoListManager);
+        return await handleGetList(request as CallToolRequest, taskListManager);
 
       case 'list_all_lists':
         return await handleListAllLists(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'delete_list':
         return await handleDeleteList(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       default:
@@ -261,46 +262,52 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTaskListManager();
+    const taskListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'add_task':
-        return await handleAddTask(request as CallToolRequest, todoListManager);
+        return await handleAddTask(request as CallToolRequest, taskListManager);
 
       case 'update_task':
         return await handleUpdateTask(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'get_agent_prompt':
         return await handleGetAgentPrompt(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'remove_task':
         return await handleRemoveTask(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'complete_task':
         return await handleCompleteTask(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'set_task_priority':
         return await handleSetTaskPriority(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'add_task_tags':
         return await handleAddTaskTags(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
+        );
+
+      case 'remove_task_tags':
+        return await handleRemoveTaskTags(
+          request as CallToolRequest,
+          taskListManager
         );
 
       default:
@@ -315,19 +322,19 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTaskListManager();
+    const taskListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'search_tool':
         return await handleSearchTool(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'show_tasks':
         return await handleShowTasks(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       default:
@@ -342,25 +349,25 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTaskListManager();
+    const taskListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'set_task_dependencies':
         return await handleSetTaskDependencies(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'get_ready_tasks':
         return await handleGetReadyTasks(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'analyze_task_dependencies':
         return await handleAnalyzeTaskDependencies(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       default:
@@ -375,19 +382,19 @@ class McpTaskManagerServer {
     toolName: string,
     request: Record<string, unknown>
   ): Promise<unknown> {
-    const todoListManager = this.ensureTaskListManager();
+    const taskListManager = this.ensureTaskListManager();
 
     switch (toolName) {
       case 'set_task_exit_criteria':
         return await handleSetTaskExitCriteria(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       case 'update_exit_criteria':
         return await handleUpdateExitCriteria(
           request as CallToolRequest,
-          todoListManager
+          taskListManager
         );
 
       default:
@@ -449,7 +456,11 @@ class McpTaskManagerServer {
       const originalInput = (
         request['params'] as { arguments?: Record<string, unknown> }
       )?.arguments;
-      const formattedError = formatZodError(error as ZodError, errorContext);
+      const formattedError = formatZodError(
+        error as ZodError,
+        errorContext,
+        originalInput
+      );
 
       logger.warn('Tool validation error with formatting', {
         toolName,
@@ -493,6 +504,7 @@ class McpTaskManagerServer {
       'complete_task',
       'set_task_priority',
       'add_task_tags',
+      'remove_task_tags',
     ].includes(toolName);
   }
 
@@ -549,8 +561,8 @@ class McpTaskManagerServer {
       const repository = new TaskListRepositoryAdapter(storageBackend);
 
       // Create TaskListManager with repository
-      this.todoListManager = new TaskListManager(repository, storageBackend);
-      await this.todoListManager.initialize();
+      this.taskListManager = new TaskListManager(repository, storageBackend);
+      await this.taskListManager.initialize();
 
       // Log health status of all sources
       const routerStatus = initResult.router.getStatus();
@@ -599,9 +611,9 @@ class McpTaskManagerServer {
    */
   async close(): Promise<void> {
     try {
-      if (this.todoListManager) {
-        await this.todoListManager.shutdown();
-        this.todoListManager = null;
+      if (this.taskListManager) {
+        await this.taskListManager.shutdown();
+        this.taskListManager = null;
       }
 
       logger.info('MCP Task Manager server closed successfully');

@@ -337,6 +337,37 @@ Examples: ["urgent", "frontend", "bug-fix"]
 }
 ```
 
+### remove_task_tags
+
+```json
+{
+  "name": "remove_task_tags",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "minItems": 1,
+        "maxItems": 10
+      }
+    },
+    "required": ["listId", "taskId", "tags"]
+  }
+}
+```
+
 ## Search & Display Tools
 
 ### search_tool (Recommended)

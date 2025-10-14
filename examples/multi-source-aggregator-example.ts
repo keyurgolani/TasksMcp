@@ -9,7 +9,7 @@
 import { DataSourceRouter } from '../src/infrastructure/storage/data-source-router.js';
 import { MultiSourceAggregator } from '../src/infrastructure/storage/multi-source-aggregator.js';
 
-import type { SearchQuery } from '../src/domain/repositories/todo-list.repository.js';
+import type { SearchQuery } from '../src/domain/repositories/task-list.repository.js';
 import type { DataSourceConfig } from '../src/infrastructure/storage/data-source-router.js';
 
 // Example 1: Basic aggregation from multiple sources

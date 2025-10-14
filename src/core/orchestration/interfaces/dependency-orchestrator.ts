@@ -34,9 +34,39 @@ export interface DependencyOrchestrator extends BaseOrchestrator {
   getReadyTasks(listId: string, limit?: number): Promise<Task[]>;
 
   /**
-   * Analyzes task dependencies and provides comprehensive analysis
+   * Analyzes task dependencies and provides analysis
    */
-  analyzeDependencies(listId: string): Promise<DependencyAnalysis>;
+  analyzeDependencies(
+    listId: string,
+    options?: {
+      format?: string;
+      dagStyle?: string;
+    }
+  ): Promise<DependencyAnalysis>;
+
+  /**
+   * Validates dependencies for a task
+   */
+  validateDependencies(
+    listId: string,
+    dependencies: string[]
+  ): Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  }>;
+
+  /**
+   * Sets dependencies for multiple tasks in bulk
+   */
+  setBulkTaskDependencies(
+    dependencies: Array<{ taskId: string; dependencies: string[] }>
+  ): Promise<void>;
+
+  /**
+   * Clears dependencies for multiple tasks in bulk
+   */
+  clearBulkTaskDependencies(taskIds: string[]): Promise<void>;
 }
 
 export interface DependencyAnalysis {

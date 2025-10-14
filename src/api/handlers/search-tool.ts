@@ -27,7 +27,7 @@ import type { Task } from '../../shared/types/task.js';
 type TaskWithListInfo = Task & { listId: string; listTitle: string };
 
 const SearchToolSchema = z.object({
-  // Basic search parameters
+  // Search parameters
   query: z.string().min(1).max(1000).optional(),
   listId: z.string().uuid().optional(),
   limit: z.number().min(1).max(500).default(50),
@@ -73,7 +73,7 @@ const SearchToolSchema = z.object({
 
 export async function handleSearchTool(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing search_tool request', {
@@ -87,7 +87,7 @@ export async function handleSearchTool(
     let listsSearched: string[] = [];
 
     if (args.listId) {
-      const list = await todoListManager.getTaskList({
+      const list = await taskListManager.getTaskList({
         listId: args.listId,
         includeCompleted: args.includeCompleted,
       });
@@ -105,10 +105,10 @@ export async function handleSearchTool(
       );
       listsSearched = [args.listId];
     } else {
-      const allLists = await todoListManager.listTaskLists({});
+      const allLists = await taskListManager.listTaskLists({});
 
       for (const listSummary of allLists) {
-        const fullList = await todoListManager.getTaskList({
+        const fullList = await taskListManager.getTaskList({
           listId: listSummary.id,
           includeCompleted: args.includeCompleted,
         });
@@ -194,7 +194,7 @@ export async function handleSearchTool(
 
       // Calculate ready items for dependency filtering
       if (args.listId) {
-        const list = await todoListManager.getTaskList({
+        const list = await taskListManager.getTaskList({
           listId: args.listId,
           includeCompleted: true,
         });
@@ -206,7 +206,7 @@ export async function handleSearchTool(
         // For cross-list searches, we need to be more careful about dependencies
         readyItemIds = new Set();
         for (const listId of listsSearched) {
-          const list = await todoListManager.getTaskList({
+          const list = await taskListManager.getTaskList({
             listId,
             includeCompleted: true,
           });

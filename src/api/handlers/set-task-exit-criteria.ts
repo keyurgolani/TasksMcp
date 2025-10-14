@@ -45,12 +45,12 @@ const SetTaskExitCriteriaSchema = z.object({
  * Sets exit criteria for a task, replacing any existing criteria.
  *
  * @param request - The MCP call tool request containing exit criteria parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated task details or error
  */
 export async function handleSetTaskExitCriteria(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing set_task_exit_criteria request', {
@@ -59,13 +59,16 @@ export async function handleSetTaskExitCriteria(
 
     const args = SetTaskExitCriteriaSchema.parse(request.params?.arguments);
 
+    // Default to empty array if exitCriteria is not provided (clears all exit criteria)
+    const exitCriteria = args.exitCriteria ?? [];
+
     // Update the task with new exit criteria
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
       itemData: {
-        exitCriteria: args.exitCriteria,
+        exitCriteria: exitCriteria,
       },
     });
 

@@ -71,7 +71,7 @@ describe('NotesManager', () => {
       };
 
       await expect(notesManager.createNote(input)).rejects.toThrow(
-        'Note content cannot be empty'
+        'Note validation failed'
       );
     });
 
@@ -84,7 +84,7 @@ describe('NotesManager', () => {
       };
 
       await expect(notesManager.createNote(input)).rejects.toThrow(
-        'Note content is too long'
+        'Note validation failed'
       );
     });
 
@@ -186,7 +186,7 @@ describe('NotesManager', () => {
         notesManager.updateNote(existingNote, {
           content: '',
         })
-      ).rejects.toThrow('Note content cannot be empty');
+      ).rejects.toThrow('Note validation failed');
     });
 
     it('should throw error for invalid updated type', async () => {

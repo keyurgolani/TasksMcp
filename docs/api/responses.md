@@ -89,8 +89,7 @@ Some tools (like `show_tasks`) return formatted text:
   "progress": 30,
   "lastUpdated": "2024-01-15T10:30:00Z",
   "projectTag": "web-development",
-  "createdAt": "2024-01-15T09:00:00Z",
-  "isArchived": false
+  "createdAt": "2024-01-15T09:00:00Z"
 }
 ```
 

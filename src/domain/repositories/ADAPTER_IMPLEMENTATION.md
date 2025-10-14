@@ -1,26 +1,26 @@
-# TodoListRepositoryAdapter Implementation
+# TaskListRepositoryAdapter Implementation
 
 ## Overview
 
-The `TodoListRepositoryAdapter` is a critical component that bridges the existing storage infrastructure with the new repository pattern. It wraps the existing `StorageBackend` to implement the `ITodoListRepository` interface, enabling the repository pattern while maintaining full backward compatibility.
+The `TaskListRepositoryAdapter` is a critical component that bridges the existing storage infrastructure with the new repository pattern. It wraps the existing `StorageBackend` to implement the `ITaskListRepository` interface, enabling the repository pattern while maintaining full backward compatibility.
 
 ## Implementation Details
 
 ### File Location
 
-- **Implementation**: `src/domain/repositories/todo-list-repository.adapter.ts`
-- **Tests**: `tests/unit/domain/repositories/todo-list-repository.adapter.test.ts`
+- **Implementation**: `src/domain/repositories/task-list-repository.adapter.ts`
+- **Tests**: `tests/unit/domain/repositories/task-list-repository.adapter.test.ts`
 
 ### Key Features
 
 1. **Complete Interface Implementation**
-   - Implements all 9 methods from `ITodoListRepository`
-   - `save()` - Saves TodoLists with backup and validation
+   - Implements all 9 methods from `ITaskListRepository`
+   - `save()` - Saves TaskLists with backup and validation
    - `findById()` - Retrieves lists with optional filtering/sorting/pagination
    - `findAll()` - Retrieves all lists matching criteria
-   - `search()` - Complex search with full TodoList objects
+   - `search()` - Complex search with full TaskList objects
    - `searchSummaries()` - Lightweight search returning summaries
-   - `delete()` - Supports both archiving and permanent deletion
+   - `delete()` - Supports permanent deletion
    - `exists()` - Checks list existence
    - `count()` - Counts lists matching query
    - `healthCheck()` - Verifies storage health
@@ -65,21 +65,21 @@ The `TodoListRepositoryAdapter` is a critical component that bridges the existin
 ```
 ┌─────────────────────────────────────┐
 │   Domain Layer (Managers)           │
-│   - TodoListManager                 │
+│   - TaskListManager                 │
 │   - DependencyManager               │
 │   - etc.                            │
 └──────────────┬──────────────────────┘
                │ uses
                ▼
 ┌─────────────────────────────────────┐
-│   ITodoListRepository (Interface)   │
+│   ITaskListRepository (Interface)   │
 │   - Defines contract                │
 │   - Domain layer interface          │
 └──────────────┬──────────────────────┘
                │ implemented by
                ▼
 ┌─────────────────────────────────────┐
-│   TodoListRepositoryAdapter         │
+│   TaskListRepositoryAdapter         │
 │   - Wraps StorageBackend            │
 │   - Implements filtering/sorting    │
 │   - Error handling & logging        │
@@ -122,7 +122,7 @@ The adapter has comprehensive test coverage with 28 tests covering:
 
 ### Delete Operations
 
-- ✅ Archive (soft delete)
+- ✅ Permanent delete
 - ✅ Permanent delete
 - ✅ Error handling
 
@@ -137,7 +137,7 @@ All tests pass with 100% success rate.
 ## Usage Example
 
 ```typescript
-import { TodoListRepositoryAdapter } from './domain/repositories/index.js';
+import { TaskListRepositoryAdapter } from './domain/repositories/index.js';
 import { FileStorageBackend } from './infrastructure/storage/file-storage.js';
 
 // Create storage backend
@@ -149,10 +149,10 @@ const storage = new FileStorageBackend({
 await storage.initialize();
 
 // Create repository adapter
-const repository = new TodoListRepositoryAdapter(storage);
+const repository = new TaskListRepositoryAdapter(storage);
 
 // Use repository in managers
-const todoListManager = new TodoListManager(
+const taskListManager = new TaskListManager(
   repository,
   dependencyManager,
   exitCriteriaManager,
@@ -185,7 +185,7 @@ const results = await repository.search({
 
 This adapter enables:
 
-- Task 3: Refactor TodoListManager to use repository
+- Task 3: Refactor TaskListManager to use repository
 - Task 4: Refactor other managers to use repository pattern
 - Future: Multi-source data aggregation
 - Future: PostgreSQL, MongoDB, and other backends

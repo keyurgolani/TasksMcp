@@ -2,11 +2,11 @@
 
 ## Overview
 
-The MCP Task Manager provides 17 focused, easy-to-use tools for managing todo lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
+The MCP Task Manager provides 17 focused, easy-to-use tools for managing task lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
 
 **Last Updated**: October 11, 2025  
 **Version**: 2.5.0  
-**Total Tools**: 17 organized in 5 categories
+**Total Tools**: 18 organized in 5 categories
 
 ## 🤖 Agent-Friendly Features
 
@@ -34,7 +34,7 @@ All existing integrations continue to work without changes. The preprocessing on
 
 ## Tool Categories
 
-- **List Management (4 tools)**: Create, retrieve, list, and delete todo lists
+- **List Management (5 tools)**: Create, retrieve, list, delete, and update task lists
 - **Task Management (6 tools)**: Add, update, remove, complete tasks and manage priorities/tags
 - **Search & Display (2 tools)**: Search, filter, and display tasks with formatting
 - **Exit Criteria Management (2 tools)**: Define and track detailed completion requirements
@@ -79,14 +79,14 @@ All existing integrations continue to work without changes. The preprocessing on
 
 ### 1. create_list
 
-Creates a new todo list with basic information.
+Creates a new task list with basic information.
 
 **Schema:**
 
 ```json
 {
   "name": "create_list",
-  "description": "Create a new todo list",
+  "description": "Create a new task list",
   "inputSchema": {
     "type": "object",
     "properties": {
@@ -94,7 +94,7 @@ Creates a new todo list with basic information.
         "type": "string",
         "minLength": 1,
         "maxLength": 200,
-        "description": "The title of the todo list"
+        "description": "The title of the task list"
       },
       "description": {
         "type": "string",
@@ -128,14 +128,14 @@ Creates a new todo list with basic information.
 
 ### 2. get_list
 
-Retrieves a specific todo list with its tasks.
+Retrieves a specific task list with its tasks.
 
 **Schema:**
 
 ```json
 {
   "name": "get_list",
-  "description": "Get a specific todo list with its tasks",
+  "description": "Get a specific task list with its tasks",
   "inputSchema": {
     "type": "object",
     "properties": {
@@ -170,14 +170,14 @@ Retrieves a specific todo list with its tasks.
 
 ### 3. list_all_lists
 
-Gets all todo lists with basic information.
+Gets all task lists with basic information.
 
 **Schema:**
 
 ```json
 {
   "name": "list_all_lists",
-  "description": "Get all todo lists with basic information",
+  "description": "Get all task lists with basic information",
   "inputSchema": {
     "type": "object",
     "properties": {
@@ -189,7 +189,7 @@ Gets all todo lists with basic information.
       "includeArchived": {
         "type": "boolean",
         "default": false,
-        "description": "Whether to include archived lists"
+        "description": "Whether to include all lists"
       },
       "limit": {
         "type": "number",
@@ -219,14 +219,14 @@ Gets all todo lists with basic information.
 
 ### 4. delete_list
 
-Deletes or archives a todo list.
+Deletes a task list permanently.
 
 **Schema:**
 
 ```json
 {
   "name": "delete_list",
-  "description": "Delete or archive a todo list",
+  "description": "Delete a task list permanently",
   "inputSchema": {
     "type": "object",
     "properties": {
@@ -238,7 +238,59 @@ Deletes or archives a todo list.
       "permanent": {
         "type": "boolean",
         "default": false,
-        "description": "Whether to permanently delete (true) or archive (false)"
+        "description": "Whether to permanently delete the list"
+      }
+    },
+    "required": ["listId"]
+  }
+}
+```
+
+**Example Usage:**
+
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000"
+}
+```
+
+**Response:** Returns a success confirmation message.
+
+---
+
+### 5. update_list_metadata
+
+Updates list metadata (title, description, projectTag) without affecting tasks.
+
+**Schema:**
+
+```json
+{
+  "name": "update_list_metadata",
+  "description": "Update list metadata (title, description, projectTag)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list to update"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000,
+        "description": "New title for the task list"
+      },
+      "description": {
+        "type": "string",
+        "maxLength": 5000,
+        "description": "New description for the task list"
+      },
+      "projectTag": {
+        "type": "string",
+        "maxLength": 250,
+        "description": "New project tag for organization (use lowercase with hyphens)"
       }
     },
     "required": ["listId"]
@@ -251,26 +303,30 @@ Deletes or archives a todo list.
 ```json
 {
   "listId": "123e4567-e89b-12d3-a456-426614174000",
-  "permanent": false
+  "title": "Updated Project Tasks",
+  "description": "Updated description for the project",
+  "projectTag": "updated-project"
 }
 ```
 
-**Response:** Returns a success confirmation message.
+**Response:** Returns an updated `ListResponse` object.
 
 ---
 
 ## Task Management Tools
 
-### 5. add_task
+**Enhanced Feature**: Tasks with dependencies automatically include a `blockReason` field showing why they're blocked and which tasks need to be completed first.
 
-Adds a new task to a todo list.
+### 6. add_task
+
+Adds a new task to a task list.
 
 **Schema:**
 
 ```json
 {
   "name": "add_task",
-  "description": "Add a new task to a todo list",
+  "description": "Add a new task to a task list",
   "inputSchema": {
     "type": "object",
     "properties": {

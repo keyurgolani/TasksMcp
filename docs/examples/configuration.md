@@ -55,11 +55,10 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "complete_task",
         "set_task_priority",
         "add_task_tags",
+        "remove_task_tags",
         "search_tasks",
         "filter_tasks",
         "show_tasks",
-        "analyze_task",
-        "get_task_suggestions",
         "set_task_dependencies",
         "get_ready_tasks",
         "analyze_task_dependencies"
@@ -97,11 +96,10 @@ For other MCP clients:
         "complete_task",
         "set_task_priority",
         "add_task_tags",
+        "remove_task_tags",
         "search_tasks",
         "filter_tasks",
         "show_tasks",
-        "analyze_task",
-        "get_task_suggestions",
         "set_task_dependencies",
         "get_ready_tasks",
         "analyze_task_dependencies"
@@ -389,8 +387,6 @@ npm install -g task-list-mcp
         "search_tasks",
         "filter_tasks",
         "show_tasks",
-        "analyze_task",
-        "get_task_suggestions",
         "get_ready_tasks",
         "analyze_task_dependencies"
       ],
@@ -403,6 +399,7 @@ npm install -g task-list-mcp
         "complete_task",
         "set_task_priority",
         "add_task_tags",
+        "remove_task_tags",
         "set_task_dependencies"
       ]
     }

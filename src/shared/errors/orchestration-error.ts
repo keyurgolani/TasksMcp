@@ -1,5 +1,5 @@
 /**
- * Orchestration error classes for comprehensive error handling
+ * Orchestration error classes for error handling
  * Provides detailed error information with context and actionable guidance
  */
 

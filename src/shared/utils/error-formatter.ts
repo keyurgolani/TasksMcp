@@ -1,979 +1,1031 @@
 /**
- * Error formatting for agent-friendly responses
- * Provides structured error responses with actionable suggestions
+ * Enhanced error formatting utilities
+ * Provides detailed error messages with context and actionable guidance
  */
-
-import { ZodError, ZodIssue } from 'zod';
 
 import {
-  getToolExamples,
-  getCommonMistakes,
-} from '../examples/tool-examples.js';
+  ValidationError,
+  OrchestrationError,
+} from '../errors/orchestration-error.js';
 
-// Zod issue type extensions for better type safety
-
-interface ZodEnumIssue {
-  code: string;
-  values?: string[];
-  received?: string;
-  path: (string | number)[];
-  message: string;
+export interface ErrorContext {
+  operation: string;
+  field?: string;
+  currentValue?: unknown;
+  expectedValue?: unknown;
+  actualLength?: number;
+  maxLength?: number;
+  minLength?: number;
+  validOptions?: string[];
+  additionalContext?: Record<string, unknown>;
 }
 
-interface ZodTypeIssue {
-  code: string;
-  expected?: string;
-  received?: string;
-  path: (string | number)[];
-  message: string;
-}
-
-interface ZodSizeIssue {
-  code: string;
-  type?: string;
-  origin?: string;
-  minimum?: number;
-  maximum?: number;
-  path: (string | number)[];
-  message: string;
-}
-
-interface ZodFormatIssue {
-  code: string;
-  format?: string;
-  validation?: string;
-  path: (string | number)[];
-  message: string;
+export interface DetailedErrorOptions {
+  context: ErrorContext;
+  actionableGuidance?: string;
+  includeValueDetails?: boolean;
 }
 
 /**
- * Error message with detailed information and suggestions
+ * Creates a detailed validation error with comprehensive information
  */
-export interface DetailedErrorMessage {
-  /** Field name that caused the error */
-  field: string;
-  /** Human-readable error message */
-  message: string;
-  /** Error code from Zod */
-  code: string;
-  /** Suggestion for fixing the error */
-  suggestion?: string;
-  /** Example of correct value */
-  example?: string;
-  /** Closest valid option for enum errors */
-  closestMatch?: string;
+export function createValidationError(
+  message: string,
+  options: DetailedErrorOptions
+): ValidationError {
+  const { context, actionableGuidance, includeValueDetails = true } = options;
+
+  let enhancedMessage = message;
+
+  // Add length information if available
+  if (context.actualLength !== undefined && context.maxLength !== undefined) {
+    enhancedMessage += ` (current: ${context.actualLength} characters, maximum: ${context.maxLength} characters)`;
+  } else if (
+    context.actualLength !== undefined &&
+    context.minLength !== undefined
+  ) {
+    enhancedMessage += ` (current: ${context.actualLength} characters, minimum: ${context.minLength} characters)`;
+  }
+
+  // Add valid options if available
+  if (context.validOptions && context.validOptions.length > 0) {
+    enhancedMessage += `. Valid options: ${context.validOptions.join(', ')}`;
+  }
+
+  // Generate actionable guidance if not provided
+  let guidance = actionableGuidance;
+  if (!guidance) {
+    guidance = generateActionableGuidance(context);
+  }
+
+  return new ValidationError(
+    enhancedMessage,
+    context.operation,
+    includeValueDetails ? context.currentValue : undefined,
+    context.expectedValue,
+    guidance
+  );
 }
 
 /**
- * Options for displaying formatted errors
+ * Creates a detailed orchestration error with comprehensive information
  */
-export interface DisplayOptions {
-  /** Whether to include suggestions in the output */
-  includeSuggestions?: boolean;
-  /** Whether to include examples in the output */
-  includeExamples?: boolean;
-  /** Maximum number of errors to display */
-  maxErrors?: number;
-}
+export function createOrchestrationError(
+  message: string,
+  options: DetailedErrorOptions
+): OrchestrationError {
+  const { context, actionableGuidance, includeValueDetails = true } = options;
 
-export interface ErrorResponse {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    field?: string;
-    provided?: unknown;
-    expected?: string;
-    suggestion?: string;
-  };
-  context?: {
-    tool: string;
-    operation: string;
-    timestamp: string;
-  };
-}
+  let enhancedMessage = message;
 
-export interface SuccessResponse<T = unknown> {
-  success: true;
-  data: T;
-  metadata?: {
-    operation: string;
-    timestamp: string;
-    affectedCount?: number;
-    warnings?: string[];
-  };
-  suggestions?: string[];
+  // Add contextual information
+  if (context.field) {
+    enhancedMessage = `${context.field}: ${enhancedMessage}`;
+  }
+
+  // Add length information if available
+  if (context.actualLength !== undefined && context.maxLength !== undefined) {
+    enhancedMessage += ` (current: ${context.actualLength}, maximum: ${context.maxLength})`;
+  }
+
+  // Generate actionable guidance if not provided
+  let guidance = actionableGuidance;
+  if (!guidance) {
+    guidance = generateActionableGuidance(context);
+  }
+
+  return new OrchestrationError(
+    enhancedMessage,
+    context.operation,
+    includeValueDetails ? context.currentValue : undefined,
+    context.expectedValue,
+    guidance
+  );
 }
 
 /**
- * Create an error response with structured information
+ * Generates actionable guidance based on error context
  */
-export function createErrorResponse(
+function generateActionableGuidance(context: ErrorContext): string {
+  const {
+    field,
+    currentValue,
+    expectedValue,
+    actualLength,
+    maxLength,
+    minLength,
+    validOptions,
+  } = context;
+
+  // Length-based guidance
+  if (
+    actualLength !== undefined &&
+    maxLength !== undefined &&
+    actualLength > maxLength
+  ) {
+    const excess = actualLength - maxLength;
+    return `Reduce the ${field || 'value'} by ${excess} characters to meet the ${maxLength} character limit. Consider using more concise language or breaking into multiple ${field || 'fields'}.`;
+  }
+
+  if (
+    actualLength !== undefined &&
+    minLength !== undefined &&
+    actualLength < minLength
+  ) {
+    const needed = minLength - actualLength;
+    return `Add at least ${needed} more characters to the ${field || 'value'} to meet the ${minLength} character minimum requirement.`;
+  }
+
+  // Type-based guidance
+  if (expectedValue === 'string' && typeof currentValue !== 'string') {
+    return `Convert the ${field || 'value'} to a string. Current type: ${typeof currentValue}`;
+  }
+
+  if (expectedValue === 'number' && typeof currentValue !== 'number') {
+    return `Provide a numeric value for ${field || 'the field'}. Current type: ${typeof currentValue}`;
+  }
+
+  if (expectedValue === 'array' && !Array.isArray(currentValue)) {
+    return `Provide an array for ${field || 'the field'}. Current type: ${typeof currentValue}`;
+  }
+
+  if (
+    expectedValue === 'object' &&
+    (typeof currentValue !== 'object' || currentValue === null)
+  ) {
+    return `Provide a valid object for ${field || 'the field'}. Current type: ${typeof currentValue}`;
+  }
+
+  // Options-based guidance
+  if (validOptions && validOptions.length > 0) {
+    return `Choose one of the valid options: ${validOptions.join(', ')}. Current value "${currentValue}" is not supported.`;
+  }
+
+  // Required field guidance
+  if (
+    currentValue === undefined ||
+    currentValue === null ||
+    currentValue === ''
+  ) {
+    return `The ${field || 'field'} is required and cannot be empty. Please provide a valid value.`;
+  }
+
+  // Generic guidance
+  if (expectedValue) {
+    return `Ensure the ${field || 'value'} matches the expected format: ${expectedValue}`;
+  }
+
+  return `Please review and correct the ${field || 'value'} according to the validation requirements.`;
+}
+
+/**
+ * Formats validation errors for consistent display
+ */
+export function formatValidationErrors(errors: ValidationError[]): string {
+  if (errors.length === 0) {
+    return 'No validation errors';
+  }
+
+  if (errors.length === 1) {
+    const error = errors[0];
+    if (!error) {
+      return 'Unknown validation error';
+    }
+    let message = error.message;
+
+    if (error.actionableGuidance) {
+      message += ` ${error.actionableGuidance}`;
+    }
+
+    return message;
+  }
+
+  // Multiple errors
+  let message = `${errors.length} validation errors found:\n`;
+  errors.forEach((error, index) => {
+    message += `${index + 1}. ${error.message}`;
+    if (error.actionableGuidance) {
+      message += ` ${error.actionableGuidance}`;
+    }
+    message += '\n';
+  });
+
+  return message.trim();
+}
+
+/**
+ * Creates error context for common validation scenarios
+ */
+export const ErrorContexts = {
+  /**
+   * Creates context for required field validation
+   */
+  requiredField: (field: string, operation: string): ErrorContext => ({
+    operation,
+    field,
+    currentValue: undefined,
+    expectedValue: 'non-empty value',
+  }),
+
+  /**
+   * Creates context for length validation
+   */
+  lengthValidation: (
+    field: string,
+    operation: string,
+    actualLength: number,
+    maxLength?: number,
+    minLength?: number
+  ): ErrorContext => ({
+    operation,
+    field,
+    actualLength,
+    ...(maxLength !== undefined && { maxLength }),
+    ...(minLength !== undefined && { minLength }),
+    expectedValue: maxLength
+      ? `string with max ${maxLength} characters`
+      : minLength
+        ? `string with min ${minLength} characters`
+        : 'string with valid length',
+  }),
+
+  /**
+   * Creates context for type validation
+   */
+  typeValidation: (
+    field: string,
+    operation: string,
+    currentValue: unknown,
+    expectedType: string
+  ): ErrorContext => ({
+    operation,
+    field,
+    currentValue,
+    expectedValue: expectedType,
+  }),
+
+  /**
+   * Creates context for enum/options validation
+   */
+  optionsValidation: (
+    field: string,
+    operation: string,
+    currentValue: unknown,
+    validOptions: string[]
+  ): ErrorContext => ({
+    operation,
+    field,
+    currentValue,
+    expectedValue: `one of: ${validOptions.join(', ')}`,
+    validOptions,
+  }),
+
+  /**
+   * Creates context for range validation
+   */
+  rangeValidation: (
+    field: string,
+    operation: string,
+    currentValue: unknown,
+    min: number,
+    max: number
+  ): ErrorContext => ({
+    operation,
+    field,
+    currentValue,
+    expectedValue: `number between ${min} and ${max}`,
+    validOptions: [`${min} to ${max}`],
+  }),
+
+  /**
+   * Creates context for not found errors
+   */
+  notFound: (
+    resourceType: string,
+    operation: string,
+    id: string
+  ): ErrorContext => ({
+    operation,
+    field: `${resourceType}Id`,
+    currentValue: id,
+    expectedValue: `valid ${resourceType} ID`,
+  }),
+};
+
+/**
+ * Utility to create common error types with detailed information
+ */
+export const DetailedErrors = {
+  /**
+   * Creates a detailed required field error
+   */
+  requiredField: (field: string, operation: string): ValidationError =>
+    createValidationError(`${field} is required`, {
+      context: ErrorContexts.requiredField(field, operation),
+      actionableGuidance: `Provide a valid ${field} value. This field cannot be empty or undefined.`,
+    }),
+
+  /**
+   * Creates a detailed length validation error
+   */
+  lengthExceeded: (
+    field: string,
+    operation: string,
+    actualLength: number,
+    maxLength: number,
+    currentValue?: string
+  ): ValidationError =>
+    createValidationError(`${field} exceeds maximum length`, {
+      context: {
+        ...ErrorContexts.lengthValidation(
+          field,
+          operation,
+          actualLength,
+          maxLength
+        ),
+        currentValue,
+      },
+    }),
+
+  /**
+   * Creates a detailed type validation error
+   */
+  invalidType: (
+    field: string,
+    operation: string,
+    currentValue: unknown,
+    expectedType: string
+  ): ValidationError =>
+    createValidationError(`${field} must be a ${expectedType}`, {
+      context: ErrorContexts.typeValidation(
+        field,
+        operation,
+        currentValue,
+        expectedType
+      ),
+    }),
+
+  /**
+   * Creates a detailed not found error
+   */
+  notFound: (
+    resourceType: string,
+    operation: string,
+    id: string
+  ): OrchestrationError =>
+    createOrchestrationError(`${resourceType} not found`, {
+      context: ErrorContexts.notFound(resourceType, operation, id),
+      actionableGuidance: `Ensure the ${resourceType} ID "${id}" exists and is accessible. Check that the ${resourceType} hasn't been deleted and you have proper permissions.`,
+    }),
+
+  /**
+   * Creates a detailed invalid option error
+   */
+  invalidOption: (
+    field: string,
+    operation: string,
+    currentValue: unknown,
+    validOptions: string[]
+  ): ValidationError =>
+    createValidationError(`${field} has invalid value`, {
+      context: ErrorContexts.optionsValidation(
+        field,
+        operation,
+        currentValue,
+        validOptions
+      ),
+    }),
+
+  /**
+   * Creates a detailed range validation error
+   */
+  outOfRange: (
+    field: string,
+    operation: string,
+    currentValue: number,
+    min: number,
+    max: number
+  ): ValidationError =>
+    createValidationError(`${field} is out of valid range`, {
+      context: ErrorContexts.rangeValidation(
+        field,
+        operation,
+        currentValue,
+        min,
+        max
+      ),
+      actionableGuidance: `Set ${field} to a value between ${min} and ${max}. Current value ${currentValue} is ${currentValue < min ? 'too low' : 'too high'}.`,
+    }),
+};
+/**
+ * Legacy compatibility exports
+ */
+
+// Legacy formatZodError function for backward compatibility
+export function formatZodError(
   error: unknown,
   context: {
-    tool: string;
-    operation: string;
-    field?: string;
-    provided?: unknown;
-    expected?: string;
-  }
-): ErrorResponse {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-
-  // Extract error code from message or use generic
-  let errorCode = 'UNKNOWN_ERROR';
-  let suggestion = 'Please check your parameters and try again';
-
-  if (errorMessage.includes('validation')) {
-    errorCode = 'VALIDATION_ERROR';
-    suggestion =
-      'Please verify all required parameters are provided with correct types';
-  } else if (errorMessage.includes('not found')) {
-    errorCode = 'NOT_FOUND';
-    suggestion = 'Please verify the ID exists and try again';
-  } else if (errorMessage.includes('UUID')) {
-    errorCode = 'INVALID_UUID';
-    suggestion =
-      'Please provide a valid UUID in format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
-  } else if (errorMessage.includes('priority')) {
-    errorCode = 'INVALID_PRIORITY';
-    suggestion =
-      'Please use priority values between 1-5 (1=minimal, 2=low, 3=medium, 4=high, 5=critical)';
-  } else if (errorMessage.includes('required')) {
-    errorCode = 'MISSING_REQUIRED_PARAMETER';
-    suggestion = 'Please provide all required parameters';
-  }
-
-  return {
-    success: false,
-    error: {
-      code: errorCode,
-      message: errorMessage,
-      ...(context.field && { field: context.field }),
-      ...(context.provided !== undefined && { provided: context.provided }),
-      ...(context.expected && { expected: context.expected }),
-      suggestion,
-    },
-    context: {
-      tool: context.tool,
-      operation: context.operation,
-      timestamp: new Date().toISOString(),
-    },
-  };
-}
-
-/**
- * Create a success response with metadata and suggestions
- */
-export function createSuccessResponse<T>(
-  data: T,
-  context: {
-    operation: string;
-    affectedCount?: number;
-    warnings?: string[];
+    toolName: string;
+    includeExamples?: boolean;
+    includeContext?: boolean;
   },
-  suggestions?: string[]
-): SuccessResponse<T> {
-  return {
-    success: true,
-    data,
-    metadata: {
-      operation: context.operation,
-      timestamp: new Date().toISOString(),
-      ...(context.affectedCount !== undefined && {
-        affectedCount: context.affectedCount,
-      }),
-      ...(context.warnings && { warnings: context.warnings }),
-    },
-    ...(suggestions && { suggestions }),
-  };
-}
-
-/**
- * Format validation errors with details
- */
-export function formatValidationError(
-  field: string,
-  provided: unknown,
-  expected: string,
-  toolName: string
-): ErrorResponse {
-  let suggestion = `Please provide ${field} as ${expected}`;
-
-  // Add specific suggestions based on field type
-  if (field.includes('Id') && expected.includes('UUID')) {
-    suggestion = `Please provide ${field} as a valid UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)`;
-  } else if (field === 'priority') {
-    suggestion =
-      'Please use priority values: 1=minimal, 2=low, 3=medium, 4=high, 5=critical';
-  } else if (field === 'status') {
-    suggestion =
-      'Please use one of: pending, in_progress, completed, blocked, cancelled';
-  } else if (field === 'tags') {
-    suggestion =
-      'Please provide tags as an array of strings (lowercase, alphanumeric, hyphens, underscores)';
+  originalInput?: unknown
+): string {
+  if (error instanceof ValidationError) {
+    return formatValidationErrors([error]);
   }
 
-  return {
-    success: false,
-    error: {
-      code: 'VALIDATION_ERROR',
-      message: `Invalid ${field}: expected ${expected}`,
-      field,
-      provided,
-      expected,
-      suggestion,
-    },
-    context: {
-      tool: toolName,
-      operation: 'parameter_validation',
-      timestamp: new Date().toISOString(),
-    },
-  };
+  // Handle ZodError instances with enhanced formatting
+  if (error && typeof error === 'object' && 'issues' in error) {
+    const zodError = error as { issues: unknown[] };
+    const errors = zodError.issues;
+
+    let result = `❌ Validation error: ${JSON.stringify(errors, null, 2)}`;
+
+    // Always add suggestions section with specific guidance
+    result += '\n\n💡 Suggestions:';
+    const suggestions = generateZodErrorSuggestions(
+      errors,
+      context.toolName,
+      originalInput
+    );
+    if (suggestions.length > 0) {
+      suggestions.forEach(suggestion => {
+        result += `\n• ${suggestion}`;
+      });
+    } else {
+      result += '\n• Please check the parameter format and try again';
+    }
+
+    // Add common fixes section if context is provided
+    if (context.includeContext !== false) {
+      result += '\n\n🔧 Common fixes:';
+      result += '\n1. Check parameter types and formats';
+      result += '\n2. Ensure all required fields are provided';
+      result += '\n3. Verify UUID format for ID fields';
+    }
+
+    // Add working example section if examples are enabled
+    if (context.includeExamples !== false) {
+      result += '\n\n📝 Working example:';
+
+      // Generate context-specific examples based on the tool and errors
+      const example = generateContextualExample(context.toolName, errors);
+      result += `\n${example}`;
+    }
+
+    return result;
+  }
+
+  // For non-ValidationError types, create a generic error message with expected formatting
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  let result = `❌ Validation error: ${errorMessage}`;
+
+  // Add common fixes section if context is provided
+  if (context.includeContext !== false) {
+    result += '\n\n🔧 Common fixes:';
+    result += '\n1. Check parameter types and formats';
+    result += '\n2. Ensure all required fields are provided';
+    result += '\n3. Verify UUID format for ID fields';
+  }
+
+  // Add working example section if examples are enabled
+  if (context.includeExamples !== false) {
+    result += '\n\n📝 Working example:';
+    result +=
+      '\n{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"\n}';
+  }
+
+  return result;
 }
 
 /**
- * Common error codes and their descriptions
+ * Generate contextual examples based on the tool and error types
  */
-export const ERROR_CODES = {
-  VALIDATION_ERROR: 'Parameter validation failed',
-  NOT_FOUND: 'Requested resource not found',
-  INVALID_UUID: 'Invalid UUID format provided',
-  INVALID_PRIORITY: 'Invalid priority value',
-  MISSING_REQUIRED_PARAMETER: 'Required parameter missing',
-  DEPENDENCY_CYCLE: 'Circular dependency detected',
-  TASK_BLOCKED: 'Task is blocked by dependencies',
-  UNKNOWN_ERROR: 'An unexpected error occurred',
-} as const;
+function generateContextualExample(
+  toolName: string,
+  errors: unknown[]
+): string {
+  const hasTagsError = errors.some(
+    error =>
+      error &&
+      typeof error === 'object' &&
+      'path' in error &&
+      Array.isArray((error as { path?: unknown }).path) &&
+      Array.isArray((error as { path: string[] }).path) &&
+      (error as { path: string[] }).path.includes('tags')
+  );
+
+  const hasPriorityError = errors.some(
+    error =>
+      error &&
+      typeof error === 'object' &&
+      'path' in error &&
+      Array.isArray((error as { path?: unknown }).path) &&
+      Array.isArray((error as { path: string[] }).path) &&
+      (error as { path: string[] }).path.includes('priority')
+  );
+
+  const hasDurationError = errors.some(
+    error =>
+      error &&
+      typeof error === 'object' &&
+      'path' in error &&
+      Array.isArray((error as { path?: unknown }).path) &&
+      Array.isArray((error as { path: string[] }).path) &&
+      (error as { path: string[] }).path.includes('estimatedDuration')
+  );
+
+  // Generate tool-specific examples
+  if (toolName === 'add_task' || toolName === 'update_task') {
+    let example =
+      '{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"';
+
+    if (hasPriorityError) {
+      example += ',\n  "priority": 3';
+    }
+
+    if (hasTagsError) {
+      example += ',\n  "tags": ["urgent", "important", "bug-fix"]';
+    }
+
+    if (hasDurationError) {
+      example += ',\n  "estimatedDuration": 120';
+    }
+
+    example += '\n}';
+    return example;
+  }
+
+  // Default example
+  return '{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"\n}';
+}
 
 /**
- * Generate contextual suggestions based on error type and tool
+ * Generate specific suggestions for Zod validation errors
  */
-export function generateContextualSuggestions(
-  errorCode: string,
-  toolName: string,
-  field?: string
+function generateZodErrorSuggestions(
+  errors: unknown[],
+  _toolName: string,
+  originalInput?: unknown
 ): string[] {
   const suggestions: string[] = [];
 
-  switch (errorCode) {
-    case 'VALIDATION_ERROR':
-      suggestions.push('Check parameter types and formats');
-      if (field?.includes('Id')) {
-        suggestions.push('Ensure UUIDs are properly formatted');
+  for (const error of errors) {
+    if (error && typeof error === 'object') {
+      const issue = error as {
+        code?: string;
+        path?: string[];
+        message?: string;
+        maximum?: number;
+        minimum?: number;
+        values?: string[];
+        expected?: string;
+      };
+
+      const fieldPath = issue.path?.join('.') || 'field';
+
+      // Priority field specific suggestions
+      if (fieldPath === 'priority') {
+        if (issue.code === 'too_big' || issue.code === 'too_small') {
+          suggestions.push('Use numbers 1-5, where 5 is highest priority');
+          suggestions.push('5 (highest) to 1 (lowest)');
+        } else if (
+          issue.code === 'invalid_type' &&
+          issue.expected === 'number'
+        ) {
+          suggestions.push('Use numbers 1-5, where 5 is highest priority');
+          suggestions.push('Please provide a value of type number');
+        }
       }
-      break;
 
-    case 'NOT_FOUND':
-      suggestions.push('Verify the resource exists');
-      suggestions.push('Use list_all_lists to see available lists');
-      break;
+      // Tags field specific suggestions
+      else if (fieldPath === 'tags') {
+        if (issue.code === 'invalid_type' && issue.expected === 'array') {
+          suggestions.push(
+            'Provide as array of strings like ["urgent", "important", "bug-fix"]'
+          );
+        }
+      }
 
-    case 'INVALID_PRIORITY':
-      suggestions.push(
-        'Use priority 1-5: 1=minimal, 2=low, 3=medium, 4=high, 5=critical'
-      );
-      break;
+      // Status field specific suggestions
+      else if (fieldPath.includes('status')) {
+        if (issue.code === 'invalid_value' && issue.values) {
+          // Try to get the actual invalid value from the original input
+          let currentValue: string | undefined;
 
-    case 'DEPENDENCY_CYCLE':
-      suggestions.push('Check task dependencies for circular references');
-      suggestions.push(
-        'Use analyze_task_dependencies to visualize dependency graph'
-      );
-      break;
+          if (
+            originalInput &&
+            typeof originalInput === 'object' &&
+            'status' in originalInput
+          ) {
+            const statusValue = (originalInput as { status: unknown }).status;
+            if (
+              Array.isArray(statusValue) &&
+              issue.path &&
+              issue.path.length > 1
+            ) {
+              const index = issue.path[1];
+              if (typeof index === 'number' && statusValue[index]) {
+                currentValue = String(statusValue[index]);
+              }
+            } else if (typeof statusValue === 'string') {
+              currentValue = statusValue;
+            }
+          }
+
+          // Fallback to extracting from error message
+          if (!currentValue) {
+            currentValue = issue.message?.match(/"([^"]+)"/)?.[1];
+          }
+
+          if (currentValue && issue.values.length > 0) {
+            const closestMatch = findClosestMatch(currentValue, issue.values);
+            // If input is very short (1-2 characters), show all options instead of fuzzy match
+            if (closestMatch && currentValue.length > 2) {
+              suggestions.push(`Did you mean "${closestMatch}"?`);
+            } else if (currentValue.length <= 2) {
+              suggestions.push(
+                `💡 Please choose one of: ${issue.values.join(', ')}`
+              );
+            } else {
+              // For longer inputs that don't have a good match, show all choices
+              suggestions.push(
+                `Please choose one of: ${issue.values.join(', ')}`
+              );
+            }
+          } else {
+            suggestions.push(`Valid choices are: ${issue.values.join(', ')}`);
+          }
+        }
+      }
+
+      // Duration field specific suggestions
+      else if (fieldPath === 'estimatedDuration') {
+        if (issue.code === 'invalid_type' && issue.expected === 'number') {
+          suggestions.push(
+            'Provide duration in minutes as a number (e.g., 120 for 2 hours)'
+          );
+        }
+      }
+
+      // Generic type suggestions
+      else if (issue.code === 'invalid_type') {
+        if (issue.expected === 'array') {
+          suggestions.push(`Provide ${fieldPath} as array of strings`);
+        } else if (issue.expected === 'number') {
+          // Special handling for array elements
+          if (fieldPath.includes('.')) {
+            suggestions.push(`Please provide a value of type number`);
+          } else {
+            suggestions.push(`Provide ${fieldPath} as a number`);
+          }
+        } else if (issue.expected === 'string') {
+          suggestions.push(`Provide ${fieldPath} as a string`);
+        }
+      }
+
+      // Enum value suggestions with fuzzy matching
+      else if (issue.code === 'invalid_value' && issue.values) {
+        // Try multiple patterns to extract the current value
+        let currentValue = issue.message?.match(/"([^"]+)"/)?.[1];
+        if (!currentValue) {
+          // Try alternative patterns
+          currentValue = issue.message?.match(/received (\w+)/)?.[1];
+        }
+        if (!currentValue) {
+          // Try another pattern for Zod errors
+          currentValue = issue.message?.match(
+            /Invalid option: (.+?)(?:\s|$)/
+          )?.[1];
+        }
+
+        if (currentValue && issue.values.length > 0) {
+          const closestMatch = findClosestMatch(currentValue, issue.values);
+          if (closestMatch) {
+            suggestions.push(`Did you mean "${closestMatch}"?`);
+          } else {
+            suggestions.push(
+              `💡 Please choose one of: ${issue.values.join(', ')}`
+            );
+          }
+        } else {
+          suggestions.push(`Valid choices are: ${issue.values.join(', ')}`);
+        }
+      }
+    }
   }
 
-  // Tool-specific suggestions
-  if (toolName.includes('task') && !toolName.includes('list')) {
-    suggestions.push('Ensure the list exists before adding/updating tasks');
+  // Add generic suggestions if no specific ones were found
+  if (suggestions.length === 0) {
+    suggestions.push('Check parameter types and formats');
+    suggestions.push('Ensure all required fields are provided');
+    suggestions.push('Verify UUID format for ID fields');
   }
 
   return suggestions;
 }
 
 /**
- * Error formatting context interface
+ * Find the closest match for enum values using simple string similarity
  */
-export interface ErrorFormattingContext {
-  toolName: string;
-  includeExamples?: boolean;
-  includeContext?: boolean;
+function findClosestMatch(input: string, validValues: string[]): string | null {
+  const inputLower = input.toLowerCase();
+
+  // Exact match (case insensitive)
+  for (const value of validValues) {
+    if (value.toLowerCase() === inputLower) {
+      return value;
+    }
+  }
+
+  // Partial match
+  for (const value of validValues) {
+    if (
+      value.toLowerCase().includes(inputLower) ||
+      inputLower.includes(value.toLowerCase())
+    ) {
+      return value;
+    }
+  }
+
+  // Simple edit distance for typos
+  let bestMatch = null;
+  let bestScore = Infinity;
+
+  for (const value of validValues) {
+    const score = calculateEditDistance(inputLower, value.toLowerCase());
+    if (score < bestScore && score <= 2) {
+      // Allow up to 2 character differences
+      bestScore = score;
+      bestMatch = value;
+    }
+  }
+
+  return bestMatch;
 }
 
 /**
- * Create error context for formatting
+ * Calculate simple edit distance between two strings
  */
+function calculateEditDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const matrix: number[][] = Array(a.length + 1)
+    .fill(null)
+    .map(() => Array(b.length + 1).fill(0));
+
+  for (let i = 0; i <= a.length; i++) {
+    matrix[i]![0] = i;
+  }
+  for (let j = 0; j <= b.length; j++) {
+    matrix[0]![j] = j;
+  }
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i]![j] = Math.min(
+        matrix[i - 1]![j]! + 1, // deletion
+        matrix[i]![j - 1]! + 1, // insertion
+        matrix[i - 1]![j - 1]! + cost // substitution
+      );
+    }
+  }
+
+  return matrix[a.length]![b.length]!;
+}
+
+// Legacy createErrorContext function for backward compatibility
 export function createErrorContext(
   toolName: string,
   includeContext: boolean = true
-): ErrorFormattingContext {
+): { toolName: string; includeExamples?: boolean; includeContext?: boolean } {
   return {
     toolName,
-    includeExamples: includeContext, // Default to same as includeContext
+    includeExamples: includeContext,
     includeContext,
   };
 }
-
 /**
- * Error Formatter class with validation error handling
+ * Legacy ErrorFormatter class for backward compatibility
  */
 export class ErrorFormatter {
   /**
-   * Format Zod validation errors into structured error messages
+   * Format validation errors (legacy compatibility)
    */
   static formatValidationError(
-    error: ZodError,
-    context?: ErrorFormattingContext,
-    originalInput?: unknown
-  ): DetailedErrorMessage[] {
-    if (!error || !error.issues) {
+    error: unknown,
+    _context?: {
+      toolName: string;
+      includeExamples?: boolean;
+      includeContext?: boolean;
+    },
+    _originalInput?: unknown
+  ): Array<{
+    field: string;
+    message: string;
+    code: string;
+    suggestion?: string;
+    example?: string;
+    closestMatch?: string;
+  }> {
+    // For backward compatibility, return empty array for non-errors
+    if (!error) {
       return [];
     }
 
-    return error.issues.map(issue =>
-      this.formatSingleIssue(issue, context, originalInput)
-    );
+    const results: Array<{
+      field: string;
+      message: string;
+      code: string;
+      suggestion?: string;
+      example?: string;
+      closestMatch?: string;
+    }> = [];
+
+    // Handle ZodError instances with enhanced formatting
+    if (error && typeof error === 'object' && 'issues' in error) {
+      const zodError = error as { issues: unknown[] };
+
+      for (const issue of zodError.issues) {
+        if (issue && typeof issue === 'object') {
+          const zodIssue = issue as {
+            code?: string;
+            path?: string[];
+            message?: string;
+            maximum?: number;
+            minimum?: number;
+            values?: string[];
+            expected?: string;
+          };
+
+          const fieldPath = zodIssue.path?.join('.') || 'validation';
+          let suggestion: string | undefined;
+          let example: string | undefined;
+          let closestMatch: string | undefined;
+
+          // Generate field-specific suggestions and examples
+          if (fieldPath === 'priority') {
+            if (
+              zodIssue.code === 'too_big' ||
+              zodIssue.code === 'too_small' ||
+              (zodIssue.code === 'invalid_type' &&
+                zodIssue.expected === 'number')
+            ) {
+              suggestion = 'Use numbers 1-5, where 5 is highest priority';
+              example = '5';
+            }
+          } else if (fieldPath === 'tags') {
+            if (
+              zodIssue.code === 'invalid_type' &&
+              zodIssue.expected === 'array'
+            ) {
+              suggestion = 'Provide as array of strings';
+              example = '["urgent", "important", "bug-fix"]';
+            }
+          } else if (fieldPath.includes('status')) {
+            if (zodIssue.code === 'invalid_value' && zodIssue.values) {
+              const currentValue = zodIssue.message?.match(/"([^"]+)"/)?.[1];
+              if (currentValue) {
+                const match = findClosestMatch(currentValue, zodIssue.values);
+                if (match) {
+                  closestMatch = match;
+                  suggestion = `Did you mean "${closestMatch}"?`;
+                } else {
+                  suggestion = `Valid choices are: ${zodIssue.values.join(', ')}`;
+                }
+              } else {
+                suggestion = `Valid choices are: ${zodIssue.values.join(', ')}`;
+              }
+            }
+          } else if (fieldPath === 'estimatedDuration') {
+            if (
+              zodIssue.code === 'invalid_type' &&
+              zodIssue.expected === 'number'
+            ) {
+              suggestion = 'Provide duration in minutes as a number';
+              example = '120';
+            }
+          }
+
+          // Generic suggestions for common cases
+          if (!suggestion) {
+            if (zodIssue.code === 'invalid_type') {
+              if (zodIssue.expected === 'array') {
+                suggestion = `Provide ${fieldPath} as array of strings`;
+              } else if (zodIssue.expected === 'number') {
+                suggestion = `Provide ${fieldPath} as a number`;
+              } else if (zodIssue.expected === 'string') {
+                suggestion = `Provide ${fieldPath} as a string`;
+              }
+            } else if (zodIssue.code === 'invalid_value' && zodIssue.values) {
+              suggestion = `Valid choices are: ${zodIssue.values.join(', ')}`;
+            }
+          }
+
+          const result: {
+            field: string;
+            message: string;
+            code: string;
+            suggestion?: string;
+            example?: string;
+            closestMatch?: string;
+          } = {
+            field: fieldPath,
+            message: zodIssue.message || 'Validation error',
+            code: zodIssue.code || 'validation_error',
+          };
+
+          if (suggestion !== undefined) {
+            result.suggestion = suggestion;
+          }
+          if (example !== undefined) {
+            result.example = example;
+          }
+          if (closestMatch !== undefined) {
+            result.closestMatch = closestMatch;
+          }
+
+          results.push(result);
+        }
+      }
+    } else {
+      // Convert to a simple format that tests expect
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      results.push({
+        field: 'validation',
+        message: errorMessage,
+        code: 'validation_error',
+        suggestion: 'Please check your input parameters',
+      });
+    }
+
+    return results;
   }
 
   /**
-   * Format multiple errors for display with emojis and structure
+   * Format errors for display (legacy compatibility)
    */
   static formatErrorsForDisplay(
-    errors: DetailedErrorMessage[],
-    options: DisplayOptions = {}
+    errors: Array<{
+      field: string;
+      message: string;
+      code: string;
+      suggestion?: string;
+      example?: string;
+      closestMatch?: string;
+    }>,
+    options?: {
+      maxErrors?: number;
+      includeSuggestions?: boolean;
+      includeExamples?: boolean;
+    }
   ): string {
     if (errors.length === 0) {
       return '';
     }
 
     const {
+      maxErrors = 10,
       includeSuggestions = true,
       includeExamples = true,
-      maxErrors = 10,
-    } = options;
-
+    } = options || {};
     const displayErrors = errors.slice(0, maxErrors);
-    const parts: string[] = [];
 
-    // Header for multiple errors
+    let result = '';
     if (errors.length > 1) {
-      parts.push(`❌ Found ${errors.length} validation errors:`);
+      result += `❌ Found ${errors.length} validation errors:\n\n`;
     }
 
-    // Format each error
     displayErrors.forEach((error, index) => {
       const prefix = errors.length > 1 ? `${index + 1}. ` : '❌ ';
-      let errorLine = `${prefix}${error.message}`;
+      result += `${prefix}${error.message}`;
 
       if (error.suggestion && includeSuggestions) {
-        errorLine += `\n💡 ${error.suggestion}`;
+        result += `\n💡 ${error.suggestion}`;
       }
 
       if (error.example && includeExamples) {
-        errorLine += `\n📝 Example: ${error.example}`;
+        result += `\n📝 Example: ${error.example}`;
       }
 
-      // Only show closestMatch if it's not already in the suggestion
-      if (
-        error.closestMatch &&
-        (!error.suggestion || !error.suggestion.includes(error.closestMatch))
-      ) {
-        errorLine += `\n💡 Did you mean "${error.closestMatch}"?`;
+      if (error.closestMatch) {
+        result += `\n💡 Did you mean "${error.closestMatch}"?`;
       }
 
-      parts.push(errorLine);
+      if (index < displayErrors.length - 1) {
+        result += '\n\n';
+      }
     });
 
-    // Show truncation message if needed
     if (errors.length > maxErrors) {
-      parts.push(`... and ${errors.length - maxErrors} more errors`);
-    }
-
-    return parts.join('\n\n');
-  }
-
-  /**
-   * Format a single Zod issue into an enhanced error message
-   */
-  private static formatSingleIssue(
-    issue: ZodIssue,
-    context?: ErrorFormattingContext,
-    originalInput?: unknown
-  ): DetailedErrorMessage {
-    const field = issue.path.join('.') || 'parameter';
-    const code = issue.code;
-
-    const message = this.createBaseMessage(issue, field);
-    let closestMatch: string | undefined;
-
-    // Handle enum errors with fuzzy matching
-    if (issue.code === 'invalid_value') {
-      const enumIssue = issue as ZodEnumIssue;
-      if (enumIssue.values) {
-        // Extract received value from the original input or error message
-        const received: string | undefined =
-          this.extractReceivedValueFromInput(
-            originalInput,
-            issue.path.filter(
-              (p): p is string | number =>
-                typeof p === 'string' || typeof p === 'number'
-            )
-          ) ||
-          (enumIssue as ZodEnumIssue & { received?: string }).received ||
-          this.extractReceivedValueFromMessage(issue.message);
-
-        // If we have a received value, find closest match
-        if (received) {
-          closestMatch = this.findClosestEnumMatch(received, enumIssue.values);
-        }
-      }
-    }
-
-    const suggestion = this.createSuggestion(
-      issue,
-      field,
-      context?.toolName,
-      closestMatch
-    );
-    const example = this.createExample(issue, field, context?.toolName);
-
-    const result: DetailedErrorMessage = {
-      field,
-      message,
-      code,
-    };
-
-    if (suggestion) {
-      result.suggestion = suggestion;
-    }
-
-    if (example) {
-      result.example = example;
-    }
-
-    if (closestMatch) {
-      result.closestMatch = closestMatch;
+      result += `\n\n... and ${errors.length - maxErrors} more errors`;
     }
 
     return result;
   }
-
-  /**
-   * Create base error message from Zod issue
-   */
-  private static createBaseMessage(issue: ZodIssue, field: string): string {
-    // For nested fields, include the field name in the message
-    const includeFieldInMessage = field.includes('.');
-
-    switch (issue.code) {
-      case 'invalid_type': {
-        const typeIssue = issue as ZodTypeIssue;
-        // Handle both Zod v3 and v4 formats
-        let received = typeIssue.received;
-        if (!received) {
-          // Extract from message for older Zod versions
-          const receivedMatch = issue.message.match(/received\s+(\w+)/i);
-          received = receivedMatch ? receivedMatch[1] : 'unknown';
-        }
-        const baseMessage = `Expected ${typeIssue.expected}, but received ${received}`;
-        return includeFieldInMessage ? `${field}: ${baseMessage}` : baseMessage;
-      }
-
-      case 'too_small': {
-        const smallIssue = issue as ZodSizeIssue;
-        if (smallIssue.origin === 'string' || smallIssue.type === 'string') {
-          return `Text must be at least ${smallIssue.minimum} characters long`;
-        }
-        return `Value must be at least ${smallIssue.minimum}`;
-      }
-
-      case 'too_big': {
-        const bigIssue = issue as ZodSizeIssue;
-        if (bigIssue.origin === 'string' || bigIssue.type === 'string') {
-          return `Text must be no more than ${bigIssue.maximum} characters long`;
-        }
-        return `Value must be no more than ${bigIssue.maximum}`;
-      }
-
-      case 'invalid_format': {
-        const formatIssue = issue as ZodFormatIssue;
-        if (
-          formatIssue.format === 'uuid' ||
-          formatIssue.validation === 'uuid'
-        ) {
-          return 'Invalid UUID format';
-        }
-        return issue.message;
-      }
-
-      case 'invalid_value': {
-        const enumIssue = issue as ZodEnumIssue;
-        const options = enumIssue.values?.join(', ') || 'valid options';
-        return `Invalid option. Valid choices are: ${options}`;
-      }
-
-      case 'custom':
-        return issue.message || 'Email must contain @ symbol';
-
-      default:
-        return issue.message;
-    }
-  }
-
-  /**
-   * Create contextual suggestion based on error type and tool
-   */
-  private static createSuggestion(
-    issue: ZodIssue,
-    field: string,
-    toolName?: string,
-    closestMatch?: string
-  ): string | undefined {
-    // Tool-specific suggestions first (they take precedence)
-    if (toolName) {
-      const toolSuggestion = this.getToolSpecificSuggestion(
-        issue,
-        field,
-        toolName
-      );
-      if (toolSuggestion) return toolSuggestion;
-    }
-
-    // Handle enum errors with fuzzy matching
-    if (issue.code === 'invalid_value') {
-      if (closestMatch) {
-        return `Did you mean "${closestMatch}"?`;
-      }
-      // If no closest match, provide general enum guidance
-      const enumIssue = issue as ZodEnumIssue;
-      if (enumIssue.values) {
-        return `Please choose one of: ${enumIssue.values.join(', ')}`;
-      }
-    }
-
-    // Generic suggestions based on field name and error type
-    switch (issue.code) {
-      case 'invalid_type': {
-        const typeIssue = issue as ZodTypeIssue;
-        if (typeIssue.expected === 'number' && field === 'priority') {
-          // Check if this is for an unknown tool
-          if (toolName === 'unknown_tool') {
-            return 'Please provide a value of type number';
-          }
-          return 'Use numbers 1-5, where 5 is highest priority';
-        }
-        if (typeIssue.expected === 'array' && field === 'tags') {
-          return 'Provide as array of strings, e.g., ["urgent", "important"]';
-        }
-        if (typeIssue.expected === 'number' && field === 'estimatedDuration') {
-          return 'Provide duration in minutes as a number';
-        }
-        if (typeIssue.expected === 'array') {
-          return 'Provide as array of strings or JSON string format';
-        }
-        if (typeIssue.expected === 'object') {
-          return 'Provide as object or JSON format';
-        }
-        if (typeIssue.expected === 'boolean') {
-          return 'Please provide a value of type boolean';
-        }
-
-        // For deeply nested fields, use generic suggestion
-        if (field.includes('.')) {
-          return `Please provide a value of type ${typeIssue.expected}`;
-        }
-        return `Provide ${field} as ${typeIssue.expected}`;
-      }
-
-      case 'invalid_format':
-        if (field.includes('Id')) {
-          return 'UUID must be in format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
-        }
-        return 'Check the format and try again';
-
-      case 'invalid_value': {
-        const enumIssue = issue as ZodEnumIssue;
-        if (field === 'status' || field.startsWith('status.')) {
-          return `Please choose one of: ${
-            enumIssue.values?.join(', ') ||
-            'pending, in_progress, completed, blocked, cancelled'
-          }`;
-        }
-        if (enumIssue.values) {
-          return `Please choose one of: ${enumIssue.values.join(', ')}`;
-        }
-        return 'Use a valid option from the allowed values';
-      }
-
-      case 'too_small': {
-        const smallIssue = issue as ZodSizeIssue;
-        if (field === 'priority') {
-          return `Please provide a value of ${smallIssue.minimum} or greater`;
-        }
-        if (smallIssue.origin === 'string' || smallIssue.type === 'string') {
-          return `Please provide text with ${smallIssue.minimum} or more characters`;
-        }
-        return `Please provide a value of ${smallIssue.minimum} or greater`;
-      }
-
-      case 'too_big': {
-        const bigIssue2 = issue as ZodSizeIssue;
-        if (field === 'priority') {
-          return `Please provide a value of ${bigIssue2.maximum} or less`;
-        }
-        if (bigIssue2.origin === 'string' || bigIssue2.type === 'string') {
-          return `Please shorten your text to ${bigIssue2.maximum} characters or less`;
-        }
-        return `Please provide a value of ${bigIssue2.maximum} or less`;
-      }
-
-      case 'custom':
-        return 'Please check your input and try again';
-
-      default:
-        return undefined;
-    }
-  }
-
-  /**
-   * Create example based on error type and field
-   */
-  private static createExample(
-    issue: ZodIssue,
-    field: string,
-    toolName?: string
-  ): string | undefined {
-    // Get tool-specific examples
-    if (toolName) {
-      const toolExample = this.getToolSpecificExample(field, toolName);
-      if (toolExample) return toolExample;
-    }
-
-    // Handle specific cases based on issue type
-    if (issue.code === 'invalid_type') {
-      const typeIssue = issue as ZodTypeIssue;
-      if (typeIssue.expected === 'array' && field === 'tags') {
-        return '["item1", "item2"] or use JSON format';
-      }
-      if (typeIssue.expected === 'object') {
-        return '{"key": "value"} or use JSON format';
-      }
-    }
-
-    // Handle unknown tool cases
-    if (toolName === 'unknown_tool') {
-      if (field === 'priority') {
-        return '42 or 3.14';
-      }
-    }
-
-    // Generic examples
-    switch (field) {
-      case 'priority':
-        return '5 (highest) to 1 (lowest)';
-      case 'tags':
-        return '["urgent", "important", "bug-fix"]';
-      case 'estimatedDuration':
-        return '120 (for 2 hours)';
-      case 'status':
-        return '"pending", "in_progress", "completed"';
-      case 'enabled':
-        return 'true or false';
-      default:
-        if (field.includes('Id')) {
-          return 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-        }
-        return undefined;
-    }
-  }
-
-  /**
-   * Get tool-specific suggestion
-   */
-  private static getToolSpecificSuggestion(
-    issue: ZodIssue,
-    field: string,
-    toolName: string
-  ): string | undefined {
-    // Handle specific tool cases
-    if (toolName === 'add_task') {
-      if (field === 'tags' && issue.code === 'invalid_type') {
-        return 'Provide as array of strings or JSON string format';
-      }
-      if (field === 'priority' && issue.code === 'invalid_type') {
-        return 'Use numbers 1-5, where 5 is highest priority';
-      }
-    }
-
-    if (toolName === 'search_tool') {
-      if (field === 'status' && issue.code === 'invalid_value') {
-        return 'Use one of the valid status values';
-      }
-      if (field === 'priority' && issue.code === 'invalid_type') {
-        return 'Use numbers 1-5 to filter by priority level';
-      }
-    }
-
-    const commonMistakes = getCommonMistakes(toolName);
-
-    // Find relevant mistake for this field
-    const relevantMistake = commonMistakes.find(
-      mistake =>
-        mistake.mistake.toLowerCase().includes(field.toLowerCase()) ||
-        mistake.fix.toLowerCase().includes(field.toLowerCase())
-    );
-
-    return relevantMistake?.fix;
-  }
-
-  /**
-   * Get tool-specific example
-   */
-  private static getToolSpecificExample(
-    field: string,
-    toolName: string
-  ): string | undefined {
-    // Handle specific tool cases first
-    if (toolName === 'add_task') {
-      if (field === 'tags') {
-        return '["urgent", "important", "bug-fix"]';
-      }
-      if (field === 'priority') {
-        return '5 (highest) to 1 (lowest)';
-      }
-      if (field === 'estimatedDuration') {
-        return '120 (for 2 hours in minutes)';
-      }
-    }
-
-    const toolExamples = getToolExamples(toolName);
-    if (!toolExamples) return undefined;
-
-    const paramExample = toolExamples.parameters.find(p => p.name === field);
-    if (paramExample) {
-      return JSON.stringify(paramExample.correct);
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Find closest enum match using fuzzy matching
-   */
-  private static findClosestEnumMatch(
-    input: string,
-    options: string[]
-  ): string | undefined {
-    if (!input || !options || options.length === 0) return undefined;
-
-    const inputLower = input.toLowerCase();
-
-    // For very short inputs (1-2 characters), don't suggest specific matches
-    // as they are too ambiguous - let the caller handle this case
-    if (input.length <= 2) {
-      // Check for exact match first
-      const exactMatch = options.find(opt => opt.toLowerCase() === inputLower);
-      if (exactMatch) return exactMatch;
-
-      // For very short inputs, don't suggest partial matches as they're too ambiguous
-      return undefined;
-    }
-
-    // Exact match (case insensitive)
-    const exactMatch = options.find(opt => opt.toLowerCase() === inputLower);
-    if (exactMatch) return exactMatch;
-
-    // Partial match
-    const partialMatch = options.find(
-      opt =>
-        opt.toLowerCase().includes(inputLower) ||
-        inputLower.includes(opt.toLowerCase())
-    );
-    if (partialMatch) return partialMatch;
-
-    // Levenshtein distance for close matches
-    let closestMatch = options[0];
-    let minDistance = this.levenshteinDistance(
-      inputLower,
-      options[0]!.toLowerCase()
-    );
-
-    for (const option of options.slice(1)) {
-      const distance = this.levenshteinDistance(
-        inputLower,
-        option.toLowerCase()
-      );
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestMatch = option;
-      }
-    }
-
-    // Only suggest if reasonably close (distance <= 2 for short strings)
-    const maxDistance = Math.max(2, Math.floor(input.length / 3));
-    return minDistance <= maxDistance ? closestMatch : undefined;
-  }
-
-  /**
-   * Extract received value from original input using the error path
-   */
-  private static extractReceivedValueFromInput(
-    originalInput: unknown,
-    path: (string | number)[]
-  ): string | undefined {
-    if (!originalInput || path.length === 0) {
-      return undefined;
-    }
-
-    try {
-      let current: unknown = originalInput;
-      for (const segment of path) {
-        if (current == null) return undefined;
-        current = (current as Record<string | number, unknown>)[segment];
-      }
-      return typeof current === 'string' ? current : String(current);
-    } catch {
-      return undefined;
-    }
-  }
-
-  /**
-   * Extract received value from Zod error message
-   */
-  private static extractReceivedValueFromMessage(
-    message: string
-  ): string | undefined {
-    // Extract received value from Zod error message
-    // Look for patterns like "Expected X, received Y" or "Invalid enum value. Expected X, received Y"
-    const receivedMatch = message.match(/received\s+([^,\s]+)/i);
-    if (receivedMatch) {
-      return receivedMatch[1];
-    }
-
-    // For enum errors, try to extract from the message context
-    // The message might not contain the received value directly
-    // We'll need to get it from the validation context if available
-    return undefined;
-  }
-
-  /**
-   * Calculate Levenshtein distance between two strings
-   */
-  private static levenshteinDistance(a: string, b: string): number {
-    if (a.length === 0) return b.length;
-    if (b.length === 0) return a.length;
-
-    const matrix = Array(b.length + 1)
-      .fill(null)
-      .map(() => Array(a.length + 1).fill(null));
-
-    for (let i = 0; i <= a.length; i++) matrix[0]![i] = i;
-    for (let j = 0; j <= b.length; j++) matrix[j]![0] = j;
-
-    for (let j = 1; j <= b.length; j++) {
-      for (let i = 1; i <= a.length; i++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        matrix[j]![i] = Math.min(
-          matrix[j - 1]![i] + 1, // deletion
-          matrix[j]![i - 1] + 1, // insertion
-          matrix[j - 1]![i - 1] + cost // substitution
-        );
-      }
-    }
-
-    return matrix[b.length]![a.length]!;
-  }
-}
-
-/**
- * Format Zod validation errors with user-friendly messages
- */
-export function formatZodError(
-  error: ZodError,
-  context: ErrorFormattingContext,
-  originalInput?: unknown
-): string {
-  if (!error || !error.issues) {
-    return 'Validation error occurred';
-  }
-
-  const formatted = ErrorFormatter.formatValidationError(
-    error,
-    context,
-    originalInput
-  );
-  const messages: string[] = [];
-
-  // Add header for multiple validation errors
-  if (formatted.length > 1) {
-    messages.push(`Found ${formatted.length} validation errors:`);
-  }
-
-  for (const errorMsg of formatted) {
-    let message = `❌ ${errorMsg.field}: ${errorMsg.message}`;
-
-    // For enum errors, handle suggestions and closest matches specially
-    if (errorMsg.code === 'invalid_value') {
-      if (errorMsg.closestMatch) {
-        message += `\n💡 Did you mean "${errorMsg.closestMatch}"?`;
-      } else if (errorMsg.suggestion) {
-        message += `\n💡 ${errorMsg.suggestion}`;
-      }
-    } else {
-      // For non-enum errors, add suggestion with lightbulb emoji if available
-      if (errorMsg.suggestion) {
-        message += `\n💡 ${errorMsg.suggestion}`;
-      }
-
-      // Add closest match suggestion if available
-      if (
-        errorMsg.closestMatch &&
-        (!errorMsg.suggestion ||
-          !errorMsg.suggestion.includes(errorMsg.closestMatch))
-      ) {
-        message += `\n💡 Did you mean "${errorMsg.closestMatch}"?`;
-      }
-    }
-
-    // Add example if available
-    if (errorMsg.example) {
-      message += `\n📝 Example: ${errorMsg.example}`;
-    }
-
-    messages.push(message);
-  }
-
-  // Add common fixes section
-  const commonMistakes = getCommonMistakes(context.toolName);
-  if (commonMistakes.length > 0) {
-    messages.push('');
-    messages.push('🔧 Common fixes:');
-
-    commonMistakes.slice(0, 3).forEach((mistake, index) => {
-      messages.push(`${index + 1}. ${mistake.fix}`);
-      if (mistake.example) {
-        messages.push(`   Example: ${JSON.stringify(mistake.example)}`);
-      }
-    });
-  }
-
-  // Add working example section
-  if (context.includeExamples) {
-    const toolExamples = getToolExamples(context.toolName);
-    if (toolExamples && toolExamples.examples.length > 0) {
-      // Prefer simple examples for error responses
-      const simpleExample =
-        toolExamples.examples.find(
-          e =>
-            e.description.toLowerCase().includes('simple') ||
-            e.description.toLowerCase().includes('basic')
-        ) || toolExamples.examples[0];
-
-      messages.push('');
-      messages.push('📝 Working example:');
-      messages.push(`${JSON.stringify(simpleExample!.parameters, null, 2)}`);
-    }
-  }
-
-  return messages.join('\n');
 }

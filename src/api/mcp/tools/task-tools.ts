@@ -9,7 +9,7 @@ export const TASK_TOOLS: Tool[] = [
   {
     name: 'mcp_tasks_add_task',
     description:
-      'Add a new task to a todo list with optional dependencies. 📋 BEST PRACTICE: Create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
+      'Add a new task to a task list with optional dependencies. 📋 BEST PRACTICE: Create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -17,7 +17,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         title: {
           type: 'string',
@@ -104,7 +104,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         taskId: {
           type: 'string',
@@ -160,7 +160,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         taskId: {
           type: 'string',
@@ -174,7 +174,7 @@ export const TASK_TOOLS: Tool[] = [
   },
   {
     name: 'mcp_tasks_remove_task',
-    description: 'Remove a task from a todo list',
+    description: 'Remove a task from a task list',
     inputSchema: {
       type: 'object',
       properties: {
@@ -182,7 +182,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         taskId: {
           type: 'string',
@@ -204,7 +204,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         taskId: {
           type: 'string',
@@ -234,7 +234,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         taskId: {
           type: 'string',
@@ -272,7 +272,7 @@ export const TASK_TOOLS: Tool[] = [
           type: 'string',
           format: 'uuid',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
         },
         taskId: {
           type: 'string',

@@ -21,10 +21,11 @@ describe('Task Management API Endpoints', () => {
   let server: RestApiServer;
   let app: Express;
   let testListId: string;
+  let storage: MemoryStorageBackend;
 
   beforeAll(async () => {
     // Create in-memory storage backend
-    const storage = new MemoryStorageBackend();
+    storage = new MemoryStorageBackend();
     await storage.initialize();
 
     // Create repository
@@ -57,6 +58,9 @@ describe('Task Management API Endpoints', () => {
   });
 
   beforeEach(async () => {
+    // Clear storage before each test to ensure isolation
+    await storage.clear();
+
     // Create a test list before each test
     const response = await request(app).post('/api/v1/lists').send({
       title: 'Test List for Tasks',

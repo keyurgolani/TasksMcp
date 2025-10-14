@@ -17,7 +17,7 @@ function createMockTaskList(): TaskList {
     createdAt: new Date(),
     updatedAt: new Date(),
     context: 'test',
-    isArchived: false,
+
     totalItems: 0,
     completedItems: 0,
     progress: 0,

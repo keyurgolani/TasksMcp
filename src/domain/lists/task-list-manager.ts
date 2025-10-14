@@ -1,10 +1,9 @@
 /**
- * Core business logic for todo list management
+ * Core business logic for task list management
  */
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { cacheManager } from '../../infrastructure/storage/cache-manager.js';
 import {
   TaskStatus,
   Priority,
@@ -19,13 +18,12 @@ import {
   type ActionPlan,
   type DependencyNode,
 } from '../../shared/types/task.js';
+import {
+  DetailedErrors,
+  createOrchestrationError,
+} from '../../shared/utils/error-formatter.js';
 import { FilteringUtils } from '../../shared/utils/filtering.js';
 import { logger } from '../../shared/utils/logger.js';
-import {
-  memoryCleanupManager,
-  MemoryUtils,
-} from '../../shared/utils/memory-cleanup.js';
-import { memoryLeakPrevention } from '../../shared/utils/memory-leak-prevention.js';
 import { PrettyPrintFormatter } from '../../shared/utils/pretty-print-formatter.js';
 import { ActionPlanManager } from '../tasks/action-plan-manager.js';
 import {
@@ -120,12 +118,11 @@ export interface ListTaskListsInput {
 
 export interface DeleteTaskListInput {
   listId: string;
-  permanent?: boolean;
 }
 
 export interface DeleteTaskListResult {
   success: boolean;
-  operation: 'archived' | 'deleted';
+  operation: 'deleted';
   message: string;
 }
 
@@ -138,11 +135,9 @@ export class TaskListManager {
 
   private readonly prettyPrintFormatter: PrettyPrintFormatter;
   private readonly projectManager: ProjectManager;
-  private readonly listCache = new Map<string, WeakRef<TaskList>>();
   private cleanupInterval: NodeJS.Timeout | undefined;
   private memoryCleanupInterval: NodeJS.Timeout | undefined;
   private isShuttingDown = false;
-  private readonly MAX_CACHE_SIZE = 10; // Very aggressive memory management
 
   // Keep storage reference for backward compatibility with ProjectManager
   private readonly storage: StorageBackend | undefined;
@@ -168,36 +163,22 @@ export class TaskListManager {
     // Repository health check instead of storage initialization
     const isHealthy = await this.repository.healthCheck();
     if (!isHealthy) {
-      throw new Error('Repository health check failed');
+      throw createOrchestrationError('Repository health check failed', {
+        context: {
+          operation: 'Health Check',
+          currentValue: false,
+          expectedValue: true,
+          additionalContext: { repositoryType: 'TaskListRepository' },
+        },
+        actionableGuidance:
+          'Check repository configuration and ensure data store is accessible. Verify file permissions and disk space if using file storage.',
+      });
     }
 
     // Initialize all components
     // Note: ProjectManager doesn't require async initialization
 
-    // Initialize cache manager (it's a singleton but ensure it's set up)
-    // The cache manager sets up its own memory management
-
-    // Start memory leak prevention system
-    memoryLeakPrevention.start();
-
-    // Register cache with memory leak prevention
-    memoryLeakPrevention.registerCache(
-      'todo-list-cache',
-      this.listCache as Map<unknown, unknown>
-    );
-
-    // Register cleanup tasks
-    memoryCleanupManager.registerCleanupTask({
-      name: 'todo-list-manager-cache',
-      cleanup: () => this.cleanupCache(),
-      priority: 'medium',
-    });
-
-    memoryCleanupManager.registerCleanupTask({
-      name: 'todo-list-manager-shutdown',
-      cleanup: () => this.shutdown(),
-      priority: 'high',
-    });
+    // Memory management removed - no longer supported
 
     logger.info('TaskListManager initialized successfully');
   }
@@ -230,7 +211,7 @@ export class TaskListManager {
       const now = new Date();
       const listId = uuidv4();
 
-      // Create todo items from input tasks
+      // Create task items from input tasks
       const items: Task[] = [];
       if (input.tasks) {
         for (const taskInput of input.tasks) {
@@ -301,7 +282,7 @@ export class TaskListManager {
       // Calculate initial analytics
       const analytics = this.calculateAnalytics(items);
 
-      const todoList: TaskList = {
+      const taskList: TaskList = {
         id: listId,
         title: input.title,
         ...(input.description !== undefined && {
@@ -311,7 +292,6 @@ export class TaskListManager {
         createdAt: now,
         updatedAt: now,
         context: input.projectTag ?? input.context ?? 'default',
-        isArchived: false,
         totalItems: analytics.totalItems,
         completedItems: analytics.completedItems,
         progress: analytics.progress,
@@ -331,7 +311,7 @@ export class TaskListManager {
               noteInput.content,
               noteInput.type
             );
-            todoList.implementationNotes.push(note);
+            taskList.implementationNotes.push(note);
           }
         } catch (error) {
           logger.warn('Failed to create implementation notes for list', {
@@ -344,21 +324,17 @@ export class TaskListManager {
       }
 
       // Save to repository
-      await this.repository.save(todoList);
+      await this.repository.save(taskList);
 
-      // Cache the list in both caches
-      cacheManager.setTodoList(listId, todoList);
-      this.addToCache(listId, todoList);
-
-      logger.info('Todo list created successfully', {
+      logger.info('Task list created successfully', {
         id: listId,
         title: input.title,
         itemCount: items.length,
       });
 
-      return todoList;
+      return taskList;
     } catch (error) {
-      logger.error('Failed to create todo list', { title: input.title, error });
+      logger.error('Failed to create task list', { title: input.title, error });
       throw error;
     }
   }
@@ -372,43 +348,15 @@ export class TaskListManager {
         hasPagination: !!input.pagination,
       });
 
-      // Check high-performance cache first
-      let todoList = cacheManager.getTaskList(input.listId) as TaskList | null;
+      const taskList = await this.repository.findById(input.listId);
 
-      // If we have a cached list but it's archived, don't return it (archived lists are not returned by default)
-      if (todoList?.isArchived === true) {
-        logger.debug('Todo list is archived, not returning', {
-          listId: input.listId,
-        });
+      if (taskList === null) {
+        logger.debug('Task list not found', { listId: input.listId });
         return null;
       }
 
-      if (!todoList) {
-        // Check legacy cache as fallback
-        const cachedRef = this.listCache.get(input.listId);
-        todoList = (cachedRef?.deref() ?? null) as TaskList | null;
-
-        if (!todoList) {
-          const loadedList = await this.repository.findById(input.listId);
-
-          if (loadedList === null) {
-            logger.debug('Task list not found', { listId: input.listId });
-            return null;
-          }
-
-          todoList = loadedList;
-
-          // Update both caches
-          cacheManager.setTodoList(input.listId, todoList);
-          this.addToCache(input.listId, todoList);
-        } else {
-          // Update high-performance cache from legacy cache
-          cacheManager.setTodoList(input.listId, todoList);
-        }
-      }
-
       // Start with all items
-      let processedItems = [...todoList.items];
+      let processedItems = [...taskList.items];
 
       // Apply legacy includeCompleted filter for backward compatibility
       if (input.includeCompleted === false) {
@@ -435,7 +383,7 @@ export class TaskListManager {
       );
 
       // Calculate analytics for the full list (before filtering)
-      const fullListAnalytics = this.calculateAnalytics(todoList.items);
+      const fullListAnalytics = this.calculateAnalytics(taskList.items);
 
       // Calculate analytics for filtered items if filtering was applied
       const displayedAnalytics =
@@ -445,7 +393,7 @@ export class TaskListManager {
 
       // Create the response with processed items
       const resultList: TaskList = {
-        ...todoList,
+        ...taskList,
         items: processingResult.items,
         totalItems: displayedAnalytics.totalItems, // Use analytics total items
         completedItems: displayedAnalytics.completedItems,
@@ -465,9 +413,9 @@ export class TaskListManager {
         },
         // Add processing metadata
         metadata: {
-          ...todoList.metadata,
+          ...taskList.metadata,
           processingInfo: {
-            originalItemCount: todoList.items.length,
+            originalItemCount: taskList.items.length,
             filteredItemCount: processingResult.filteredCount,
             displayedItemCount: processingResult.items.length,
             hasMore: processingResult.hasMore,
@@ -478,10 +426,10 @@ export class TaskListManager {
         },
       };
 
-      logger.info('Todo list retrieved successfully with advanced processing', {
-        id: todoList.id,
-        title: todoList.title,
-        originalCount: todoList.items.length,
+      logger.info('Task list retrieved successfully with advanced processing', {
+        id: taskList.id,
+        title: taskList.title,
+        originalCount: taskList.items.length,
         filteredCount: processingResult.filteredCount,
         displayedCount: processingResult.items.length,
         hasMore: processingResult.hasMore,
@@ -492,7 +440,7 @@ export class TaskListManager {
 
       return result;
     } catch (error) {
-      logger.error('Failed to retrieve todo list', {
+      logger.error('Failed to retrieve task list', {
         listId: input.listId,
         error,
       });
@@ -508,19 +456,15 @@ export class TaskListManager {
         itemId: input.itemId,
       });
 
-      // Load the existing todo list
-      const todoList = await this.repository.findById(input.listId);
+      // Load the existing task list
+      const taskList = await this.repository.findById(input.listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${input.listId}`);
       }
 
-      if (todoList.isArchived) {
-        throw new Error('Cannot update archived todo list');
-      }
-
       const now = new Date();
-      let updatedItems = [...(todoList.items ?? [])];
+      let updatedItems = [...(taskList.items ?? [])];
 
       switch (input.action) {
         case 'add_item':
@@ -529,7 +473,7 @@ export class TaskListManager {
 
         case 'update_item':
           if (input.itemId === undefined) {
-            throw new Error('itemId is required for update_item action');
+            throw DetailedErrors.requiredField('itemId', 'Update Item Action');
           }
           updatedItems = await this.updateItem(
             updatedItems,
@@ -541,17 +485,23 @@ export class TaskListManager {
 
         case 'remove_item':
           if (input.itemId === undefined) {
-            throw new Error('itemId is required for remove_item action');
+            throw DetailedErrors.requiredField('itemId', 'Remove Item Action');
           }
           updatedItems = this.removeItem(updatedItems, input.itemId);
           break;
 
         case 'update_status':
           if (input.itemId === undefined) {
-            throw new Error('itemId is required for update_status action');
+            throw DetailedErrors.requiredField(
+              'itemId',
+              'Update Status Action'
+            );
           }
           if (input.itemData?.status === undefined) {
-            throw new Error('status is required for update_status action');
+            throw DetailedErrors.requiredField(
+              'status',
+              'Update Status Action'
+            );
           }
           updatedItems = this.updateItemStatus(
             updatedItems,
@@ -611,13 +561,22 @@ export class TaskListManager {
 
         case 'add_task_note':
           if (input.itemId === undefined) {
-            throw new Error('itemId is required for add_task_note action');
+            throw DetailedErrors.requiredField(
+              'itemId',
+              'Add Task Note Action'
+            );
           }
           if (input.noteContent === undefined) {
-            throw new Error('noteContent is required for add_task_note action');
+            throw DetailedErrors.requiredField(
+              'noteContent',
+              'Add Task Note Action'
+            );
           }
           if (input.noteType === undefined) {
-            throw new Error('noteType is required for add_task_note action');
+            throw DetailedErrors.requiredField(
+              'noteType',
+              'Add Task Note Action'
+            );
           }
           updatedItems = await this.addTaskNote(
             updatedItems,
@@ -630,32 +589,51 @@ export class TaskListManager {
 
         case 'add_list_note': {
           if (input.noteContent === undefined) {
-            throw new Error('noteContent is required for add_list_note action');
+            throw DetailedErrors.requiredField(
+              'noteContent',
+              'Add List Note Action'
+            );
           }
           if (input.noteType === undefined) {
-            throw new Error('noteType is required for add_list_note action');
+            throw DetailedErrors.requiredField(
+              'noteType',
+              'Add List Note Action'
+            );
           }
-          // For list notes, we need to update the todoList directly
+          // For list notes, we need to update the taskList directly
           const listNote = await this.notesManager.addListNote(
             input.listId,
             input.noteContent,
             input.noteType
           );
-          todoList.implementationNotes.push(listNote);
-          todoList.updatedAt = now;
+          taskList.implementationNotes.push(listNote);
+          taskList.updatedAt = now;
           break;
         }
 
         default:
-          throw new Error(`Unknown action: ${String(input.action)}`);
+          throw DetailedErrors.invalidOption(
+            'action',
+            'List Action Processing',
+            input.action,
+            [
+              'update_item',
+              'remove_item',
+              'update_status',
+              'update_action_plan',
+              'update_step_progress',
+              'add_task_note',
+              'add_list_note',
+            ]
+          );
       }
 
       // Calculate updated analytics
       const analytics = this.calculateAnalytics(updatedItems);
 
-      // Update the todo list
-      const updatedTodoList: TaskList = {
-        ...todoList,
+      // Update the task list
+      const updatedTaskList: TaskList = {
+        ...taskList,
         items: updatedItems,
         updatedAt: now,
         totalItems: analytics.totalItems,
@@ -665,26 +643,17 @@ export class TaskListManager {
       };
 
       // Save to repository
-      await this.repository.save(updatedTodoList);
+      await this.repository.save(updatedTaskList);
 
-      // Update both caches with the new version
-      cacheManager.setTodoList(input.listId, updatedTodoList);
-      this.addToCache(input.listId, updatedTodoList);
-
-      // Invalidate summary and search caches since list data has changed
-      // (but keep the updated todo list in cache)
-      cacheManager.invalidateTodoList(input.listId);
-      cacheManager.setTodoList(input.listId, updatedTodoList); // Re-add the updated list
-
-      logger.info('Todo list updated successfully', {
+      logger.info('Task list updated successfully', {
         id: input.listId,
         action: input.action,
         itemCount: updatedItems.length,
       });
 
-      return updatedTodoList;
+      return updatedTaskList;
     } catch (error) {
-      logger.error('Failed to update todo list', {
+      logger.error('Failed to update task list', {
         listId: input.listId,
         action: input.action,
         error,
@@ -782,29 +751,8 @@ export class TaskListManager {
       throw error;
     }
 
-    // Check if we should suggest a task status update
-    const suggestedStatus =
-      this.actionPlanManager.suggestTaskStatusUpdate(updatedActionPlan);
-    let updatedTaskStatus = existingItem.status;
-
-    if (suggestedStatus && suggestedStatus !== existingItem.status) {
-      // Only auto-update if it's a logical progression
-      if (
-        (existingItem.status === TaskStatus.PENDING &&
-          suggestedStatus === 'in_progress') ||
-        (existingItem.status === TaskStatus.IN_PROGRESS &&
-          suggestedStatus === 'completed')
-      ) {
-        updatedTaskStatus = suggestedStatus as TaskStatus;
-        logger.info('Auto-updating task status based on action plan progress', {
-          itemId,
-          oldStatus: existingItem.status,
-          newStatus: updatedTaskStatus,
-          planProgress:
-            this.actionPlanManager.calculatePlanProgress(updatedActionPlan),
-        });
-      }
-    }
+    // Task status update removed - no longer supported
+    const updatedTaskStatus = existingItem.status;
 
     const updatedItem: Task = {
       ...existingItem,
@@ -1239,14 +1187,14 @@ export class TaskListManager {
     try {
       logger.debug('Getting dependency graph', { listId });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
       const graph = this.dependencyResolver.buildDependencyGraph(
-        todoList.items
+        taskList.items
       );
 
       logger.info('Dependency graph retrieved successfully', {
@@ -1277,16 +1225,16 @@ export class TaskListManager {
         dependencies,
       });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
       const validation = this.dependencyResolver.validateDependencies(
         itemId,
         dependencies,
-        todoList.items
+        taskList.items
       );
 
       logger.debug('Item dependencies validated', {
@@ -1314,17 +1262,17 @@ export class TaskListManager {
     try {
       logger.debug('Getting ready items', { listId });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
-      const readyItems = this.dependencyResolver.getReadyItems(todoList.items);
+      const readyItems = this.dependencyResolver.getReadyItems(taskList.items);
 
       logger.info('Ready items retrieved successfully', {
         listId,
-        totalItems: todoList.items.length,
+        totalItems: taskList.items.length,
         readyCount: readyItems.length,
       });
 
@@ -1344,19 +1292,19 @@ export class TaskListManager {
     try {
       logger.debug('Getting blocked items', { listId });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
       const blockedItems = this.dependencyResolver.getBlockedItems(
-        todoList.items
+        taskList.items
       );
 
       logger.info('Blocked items retrieved successfully', {
         listId,
-        totalItems: todoList.items.length,
+        totalItems: taskList.items.length,
         blockedCount: blockedItems.length,
       });
 
@@ -1374,14 +1322,14 @@ export class TaskListManager {
     try {
       logger.debug('Calculating critical path', { listId });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
       const criticalPath = this.dependencyResolver.calculateCriticalPath(
-        todoList.items
+        taskList.items
       );
 
       logger.info('Critical path calculated successfully', {
@@ -1412,13 +1360,13 @@ export class TaskListManager {
     try {
       logger.debug('Getting action plan progress', { listId, itemId });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
-      const item = todoList.items.find(item => item.id === itemId);
+      const item = taskList.items.find(item => item.id === itemId);
       if (!item) {
         throw new Error(`Item not found: ${itemId}`);
       }
@@ -1460,13 +1408,13 @@ export class TaskListManager {
     try {
       logger.debug('Getting tasks with action plans', { listId });
 
-      const todoList = await this.repository.findById(listId);
+      const taskList = await this.repository.findById(listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${listId}`);
       }
 
-      const tasksWithPlans = todoList.items
+      const tasksWithPlans = taskList.items
         .filter(item => item.actionPlan)
         .map(item => ({
           item,
@@ -1495,65 +1443,47 @@ export class TaskListManager {
         status: input.status,
       });
 
-      // Check cache first
       // Handle both projectTag and context for backward compatibility
       const contextParam = input.projectTag ?? input.context;
-      const cacheOptions = {
-        ...(contextParam !== undefined && { context: contextParam }),
-        ...(input.status !== undefined && { status: input.status }),
-        ...(input.limit !== undefined && { limit: input.limit }),
-        ...(input.offset !== undefined && { offset: input.offset }),
-      };
-      const cacheKey = cacheManager.generateSummaryKey(cacheOptions);
+      // Get list summaries from storage
+      const listOptions: ListOptions = {};
 
-      let summaries = cacheManager.getSummaryList(cacheKey) as
-        | TaskListSummary[]
-        | null;
+      // Handle both projectTag and context for backward compatibility
+      if (contextParam !== undefined) {
+        listOptions.context = contextParam;
+      }
+      if (input.limit !== undefined) {
+        listOptions.limit = input.limit;
+      }
+      if (input.offset !== undefined) {
+        listOptions.offset = input.offset;
+      }
 
-      if (!summaries) {
-        // Get list summaries from storage
-        const listOptions: ListOptions = {};
+      // Use repository to search for summaries
+      const searchQuery: Record<string, unknown> = {};
 
-        // Handle both projectTag and context for backward compatibility
-        if (contextParam !== undefined) {
-          listOptions.context = contextParam;
-        }
+      if (contextParam !== undefined) {
+        searchQuery['projectTag'] = contextParam;
+      }
+
+      if (input.status !== 'all' && input.status !== undefined) {
+        searchQuery['status'] = input.status;
+      }
+
+      if (input.limit !== undefined || input.offset !== undefined) {
+        const pagination: Record<string, number> = {};
         if (input.limit !== undefined) {
-          listOptions.limit = input.limit;
+          pagination['limit'] = input.limit;
         }
         if (input.offset !== undefined) {
-          listOptions.offset = input.offset;
+          pagination['offset'] = input.offset;
         }
-
-        // Use repository to search for summaries
-        const searchQuery: Record<string, unknown> = {};
-
-        if (contextParam !== undefined) {
-          searchQuery['projectTag'] = contextParam;
-        }
-
-        if (input.status !== 'all' && input.status !== undefined) {
-          searchQuery['status'] = input.status;
-        }
-
-        if (input.limit !== undefined || input.offset !== undefined) {
-          const pagination: Record<string, number> = {};
-          if (input.limit !== undefined) {
-            pagination['limit'] = input.limit;
-          }
-          if (input.offset !== undefined) {
-            pagination['offset'] = input.offset;
-          }
-          searchQuery['pagination'] = pagination;
-        }
-
-        const searchResult = await this.repository.searchSummaries(searchQuery);
-
-        summaries = searchResult.items;
-
-        // Cache the results
-        cacheManager.setSummaryList(cacheKey, summaries);
+        searchQuery['pagination'] = pagination;
       }
+
+      const searchResult = await this.repository.searchSummaries(searchQuery);
+
+      const summaries = searchResult.items;
 
       // Filter by status if specified
       let filteredSummaries = summaries;
@@ -1569,7 +1499,7 @@ export class TaskListManager {
         });
       }
 
-      logger.info('Todo lists listed successfully', {
+      logger.info('Task lists listed successfully', {
         totalCount: summaries.length,
         filteredCount: filteredSummaries.length,
         context: input.context,
@@ -1578,7 +1508,7 @@ export class TaskListManager {
 
       return filteredSummaries as TaskListSummary[];
     } catch (error) {
-      logger.error('Failed to list todo lists', {
+      logger.error('Failed to list task lists', {
         context: input.context,
         status: input.status,
         error,
@@ -1591,74 +1521,33 @@ export class TaskListManager {
     input: DeleteTaskListInput
   ): Promise<DeleteTaskListResult> {
     try {
-      logger.info('Deleting todo list', {
+      logger.info('Deleting task list', {
         listId: input.listId,
-        permanent: input.permanent,
       });
 
       // Check if the list exists
-      const todoList = await this.repository.findById(input.listId);
+      const taskList = await this.repository.findById(input.listId);
 
-      if (!todoList) {
+      if (!taskList) {
         throw new Error(`Task list not found: ${input.listId}`);
       }
 
-      if (input.permanent === true) {
-        // Permanently delete the list
-        await this.repository.delete(input.listId, true);
+      // Permanently delete the list
+      await this.repository.delete(input.listId);
 
-        // Remove from both caches
-        cacheManager.invalidateTodoList(input.listId);
-        this.listCache.delete(input.listId);
+      logger.info('Task list permanently deleted', {
+        id: input.listId,
+        title: taskList.title,
+      });
 
-        logger.info('Todo list permanently deleted', {
-          id: input.listId,
-          title: todoList.title,
-        });
-
-        return {
-          success: true,
-          operation: 'deleted',
-          message: `Todo list "${todoList.title}" has been permanently deleted`,
-        };
-      } else {
-        // Archive the list
-        const now = new Date();
-        const archivedList: TaskList = {
-          ...todoList,
-          isArchived: true,
-          updatedAt: now,
-        };
-
-        // Set completedAt only if the list is fully completed
-        if (todoList.progress === 100) {
-          archivedList.completedAt = todoList.completedAt ?? now;
-        }
-
-        await this.repository.save(archivedList);
-
-        // Invalidate summary and search caches since list status has changed
-        cacheManager.invalidateTodoList(input.listId);
-
-        // Update both caches with the archived version
-        cacheManager.setTodoList(input.listId, archivedList);
-        this.addToCache(input.listId, archivedList);
-
-        logger.info('Todo list archived', {
-          id: input.listId,
-          title: todoList.title,
-        });
-
-        return {
-          success: true,
-          operation: 'archived',
-          message: `Todo list "${todoList.title}" has been archived`,
-        };
-      }
+      return {
+        success: true,
+        operation: 'deleted',
+        message: `Task list "${taskList.title}" has been permanently deleted`,
+      };
     } catch (error) {
-      logger.error('Failed to delete todo list', {
+      logger.error('Failed to delete task list', {
         listId: input.listId,
-        permanent: input.permanent,
         error,
       });
       throw error;
@@ -1791,167 +1680,14 @@ export class TaskListManager {
   }
 
   /**
-   * Setup memory management and cleanup
+   * Setup memory management and cleanup - removed
    */
   private setupMemoryManagement(): void {
-    // More frequent cache cleanup to prevent memory buildup
-    this.cleanupInterval = setInterval(() => {
-      if (!this.isShuttingDown) {
-        this.performCacheCleanup();
-      }
-    }, 15000); // Every 15 seconds (was 60 seconds)
-
-    // Memory pressure cleanup
-    this.memoryCleanupInterval = setInterval(() => {
-      if (!this.isShuttingDown) {
-        this.performMemoryPressureCleanup();
-      }
-    }, 10000); // Every 10 seconds
-
-    // Register cleanup tasks with memory cleanup manager
-    memoryCleanupManager.registerCleanupTask({
-      name: 'todo-list-manager-cache-cleanup',
-      cleanup: () => this.performAggressiveCacheCleanup(),
-      priority: 'high',
-    });
-
-    memoryCleanupManager.registerCleanupTask({
-      name: 'todo-list-manager-shutdown',
-      cleanup: () => this.shutdown(),
-      priority: 'critical',
-    });
+    // Memory management removed - no longer supported
   }
 
   /**
-   * Add item to cache with size management
-   */
-  private addToCache(key: string, todoList: TaskList): void {
-    // Perform cleanup if cache is getting large or under memory pressure
-    if (
-      this.listCache.size >= this.MAX_CACHE_SIZE ||
-      MemoryUtils.isMemoryPressure()
-    ) {
-      this.performCacheCleanup();
-    }
-
-    // If still at capacity after cleanup, remove oldest entries
-    if (this.listCache.size >= this.MAX_CACHE_SIZE) {
-      const keysToRemove = Array.from(this.listCache.keys()).slice(
-        0,
-        Math.ceil(this.MAX_CACHE_SIZE / 3)
-      ); // Remove 1/3 of entries
-
-      for (const keyToRemove of keysToRemove) {
-        this.listCache.delete(keyToRemove);
-      }
-    }
-
-    this.listCache.set(key, new WeakRef(todoList));
-  }
-
-  /**
-   * Perform regular cache cleanup
-   */
-  private performCacheCleanup(): void {
-    // Clean up dead references
-    const deadKeys: string[] = [];
-    for (const [key, ref] of this.listCache.entries()) {
-      if (ref.deref() === undefined) {
-        deadKeys.push(key);
-      }
-    }
-
-    for (const key of deadKeys) {
-      this.listCache.delete(key);
-    }
-
-    // Aggressive size-based cleanup
-    if (this.listCache.size > this.MAX_CACHE_SIZE) {
-      const keysToRemove = Array.from(this.listCache.keys()).slice(
-        0,
-        Math.floor(this.listCache.size / 2)
-      );
-
-      for (const key of keysToRemove) {
-        this.listCache.delete(key);
-      }
-    }
-
-    // Cache cleanup completed
-
-    if (deadKeys.length > 0 || this.listCache.size > this.MAX_CACHE_SIZE) {
-      logger.debug('TaskListManager cache cleanup completed', {
-        deadReferencesRemoved: deadKeys.length,
-        cacheSize: this.listCache.size,
-        maxCacheSize: this.MAX_CACHE_SIZE,
-      });
-    }
-  }
-
-  /**
-   * Perform memory pressure-based cleanup
-   */
-  private performMemoryPressureCleanup(): void {
-    if (MemoryUtils.isMemoryPressure()) {
-      logger.warn('Memory pressure detected, performing aggressive cleanup');
-      this.performAggressiveCacheCleanup();
-
-      // Force garbage collection if available
-      if (global.gc) {
-        global.gc();
-        logger.debug('Forced garbage collection due to memory pressure');
-      }
-    }
-  }
-
-  /**
-   * Perform aggressive cache cleanup
-   */
-  private performAggressiveCacheCleanup(): void {
-    const initialSize = this.listCache.size;
-
-    // Clear all cache entries
-    this.listCache.clear();
-
-    logger.info('TaskListManager aggressive cache cleanup completed', {
-      clearedEntries: initialSize,
-      memoryPressure: MemoryUtils.isMemoryPressure(),
-    });
-  }
-
-  /**
-   * Public method for aggressive cleanup (used by tests and emergency situations)
-   */
-  aggressiveCleanup(): void {
-    this.performAggressiveCacheCleanup();
-
-    // Also clear the high-performance cache
-    cacheManager.invalidateAll();
-
-    // Force garbage collection if available
-    if (global.gc) {
-      global.gc();
-      logger.debug('Forced garbage collection during aggressive cleanup');
-    }
-  }
-
-  /**
-   * Clean up cache and remove dead references
-   */
-  private cleanupCache(): void {
-    this.performCacheCleanup();
-  }
-
-  /**
-   * Clear all caches (useful for testing)
-   */
-  clearAllCaches(): void {
-    this.listCache.clear();
-    cacheManager.invalidateAll();
-  }
-
-  /**
-   * Formats implementation notes for display in todo list responses
+   * Formats implementation notes for display in task list responses
    */
   private formatNotesForDisplay(
     notes: ImplementationNote[],
@@ -1997,16 +1733,16 @@ export class TaskListManager {
   }
 
   /**
-   * Enhances todo list with formatted notes for display
+   * Enhances task list with formatted notes for display
    */
-  private enhanceListWithNotes(todoList: TaskList): TaskList {
+  private enhanceListWithNotes(taskList: TaskList): TaskList {
     // Format list-level notes
     const formattedListNotes = this.formatNotesForDisplay(
-      todoList.implementationNotes || []
+      taskList.implementationNotes || []
     );
 
     // Format task-level notes for each item
-    const items = todoList.items.map(item => {
+    const items = taskList.items.map(item => {
       const formattedItemNotes = this.formatNotesForDisplay(
         item.implementationNotes || []
       );
@@ -2018,7 +1754,7 @@ export class TaskListManager {
     });
 
     return {
-      ...todoList,
+      ...taskList,
       implementationNotes: formattedListNotes,
       items: items,
     };
@@ -2045,12 +1781,6 @@ export class TaskListManager {
       clearInterval(this.memoryCleanupInterval);
       this.memoryCleanupInterval = undefined;
     }
-
-    // Shutdown cache manager
-    cacheManager.shutdown();
-
-    // Clear cache
-    this.listCache.clear();
 
     // Cleanup internal managers
     this.dependencyResolver.cleanup();
@@ -2101,14 +1831,6 @@ export class TaskListManager {
 
       // Save to repository
       await this.repository.save(updatedList);
-
-      // Update both caches
-      cacheManager.setTodoList(listId, updatedList);
-      this.addToCache(listId, updatedList);
-
-      // Invalidate summary cache
-      cacheManager.invalidateTodoList(listId);
-      cacheManager.setTodoList(listId, updatedList);
 
       logger.info('List metadata updated successfully', { listId });
 

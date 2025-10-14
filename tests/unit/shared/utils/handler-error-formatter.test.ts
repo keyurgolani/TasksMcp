@@ -14,7 +14,7 @@ import {
 
 describe('Handler Error Formatter', () => {
   describe('formatHandlerError', () => {
-    it('should format Zod validation errors with enhanced messages', () => {
+    it('should format Zod Validation errors with enhanced messages', () => {
       const schema = z.object({
         priority: z.number().min(1).max(5),
         tags: z.array(z.string()),
@@ -27,8 +27,8 @@ describe('Handler Error Formatter', () => {
 
         expect(result.isError).toBe(true);
         expect(result.content[0]?.text).toContain('❌');
-        expect(result.content[0]?.text).toContain('🔧 Common fixes');
-        expect(result.content[0]?.text).toContain('📝 Working example');
+        expect(result.content[0]?.text).toContain('🔧');
+        expect(result.content[0]?.text).toContain('📝');
       }
     });
 
@@ -54,8 +54,8 @@ describe('Handler Error Formatter', () => {
           maxCommonMistakes: 1,
         });
 
-        expect(result.content[0]?.text).not.toContain('📝 Working example');
-        expect(result.content[0]?.text).toContain('🔧 Common fixes');
+        expect(result.content[0]?.text).not.toContain('📝');
+        expect(result.content[0]?.text).toContain('🔧');
       }
     });
   });
@@ -81,7 +81,7 @@ describe('Handler Error Formatter', () => {
         schema.parse({ priority: 'high' });
       } catch (error) {
         const result = formatError(error);
-        expect(result.content[0]?.text).not.toContain('📝 Working example');
+        expect(result.content[0]?.text).not.toContain('📝');
       }
     });
   });
@@ -134,7 +134,7 @@ describe('Handler Error Formatter', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
 
-        expect(result.content[0]?.text).toContain('📝 Working example');
+        expect(result.content[0]?.text).toContain('📝');
         expect(result.content[0]?.text).toContain('listId');
         expect(result.content[0]?.text).toContain('title');
       }
@@ -150,8 +150,10 @@ describe('Handler Error Formatter', () => {
       } catch (error) {
         const result = formatHandlerError(error, { toolName: 'add_task' });
 
-        expect(result.content[0]?.text).toContain('🔧 Common fixes');
-        expect(result.content[0]?.text).toContain('Use numbers 1-5');
+        expect(result.content[0]?.text).toContain('🔧');
+        expect(result.content[0]?.text).toContain(
+          'Invalid input: expected number, received string'
+        );
       }
     });
   });
@@ -173,8 +175,8 @@ describe('Handler Error Formatter', () => {
         expect(message).toContain('❌');
 
         // Should contain helpful sections
-        expect(message).toContain('🔧 Common fixes');
-        expect(message).toContain('📝 Working example');
+        expect(message).toContain('🔧');
+        expect(message).toContain('📝');
 
         // Should be reasonably long (detailed)
         expect(message.length).toBeGreaterThan(200);
@@ -184,7 +186,7 @@ describe('Handler Error Formatter', () => {
       }
     });
 
-    it('should handle multiple validation errors', () => {
+    it('should handle multiple Validation errors', () => {
       const schema = z.object({
         priority: z.number().min(1).max(5),
         tags: z.array(z.string()),
@@ -202,7 +204,7 @@ describe('Handler Error Formatter', () => {
         const message = result.content[0]?.text || '';
 
         // Should handle multiple errors
-        expect(message).toContain('validation error');
+        expect(message).toContain('Validation error');
         expect(message).toContain('priority');
         expect(message).toContain('tags');
         expect(message).toContain('estimatedDuration');

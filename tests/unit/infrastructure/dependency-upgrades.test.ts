@@ -32,7 +32,7 @@ describe('Dependency Upgrades', () => {
       }
     });
 
-    it('should handle validation errors with new issues property', () => {
+    it('should handle Validation errors with new issues property', () => {
       const schema = z.object({
         name: z.string(),
         age: z.number(),

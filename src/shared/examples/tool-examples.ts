@@ -64,7 +64,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
 
   create_list: {
     description:
-      'Create a new todo list with a title and optional description and project tag',
+      'Create a new task list with a title and optional description and project tag',
     parameters: [
       {
         name: 'title',
@@ -133,7 +133,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
   },
 
   get_list: {
-    description: 'Retrieve a specific todo list by its UUID',
+    description: 'Retrieve a specific task list by its UUID',
     parameters: [
       {
         name: 'listId',
@@ -211,7 +211,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
 
   add_task: {
     description:
-      'Add a new task to a todo list with various optional properties',
+      'Add a new task to a task list with various optional properties',
     parameters: [
       {
         name: 'listId',
@@ -288,7 +288,7 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
     examples: [
       {
         tool: 'add_task',
-        description: 'Add a basic task',
+        description: 'Add a task with minimal information',
         parameters: {
           listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
           title: 'Write project documentation',
@@ -582,11 +582,22 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
       },
       {
         tool: 'set_task_dependencies',
-        description: 'Remove all dependencies',
+        description: 'Remove all dependencies (empty array)',
         parameters: {
           listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
           taskId: 'b2c3d4e5-f6a7-4901-8cde-f23456789012',
           dependencyIds: [],
+        },
+        outcome:
+          'All dependencies removed, task becomes ready if no other blocks',
+      },
+      {
+        tool: 'set_task_dependencies',
+        description: 'Remove all dependencies (omit parameter)',
+        parameters: {
+          listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
+          taskId: 'b2c3d4e5-f6a7-4901-8cde-f23456789012',
+          // dependencyIds parameter omitted - defaults to empty array
         },
         outcome: 'Task becomes ready to work on (no dependencies)',
       },
@@ -596,6 +607,112 @@ export const TOOL_EXAMPLES: Record<string, ToolExamples> = {
         mistake: 'Providing single dependency not in array',
         fix: 'Always use array format, even for single dependency',
         example: { dependencyIds: ['uuid-here'] },
+      },
+    ],
+  },
+
+  // ============================================================================
+  // Exit Criteria Management Tools
+  // ============================================================================
+
+  set_task_exit_criteria: {
+    description:
+      'Set exit criteria for a task (replaces all existing exit criteria)',
+    parameters: [
+      {
+        name: 'listId',
+        correct: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
+        description: 'Valid UUID format for list identification',
+        incorrect: [
+          {
+            value: 'invalid-uuid',
+            reason: 'Must be valid UUID format',
+          },
+          {
+            value: '',
+            reason: 'Cannot be empty string',
+          },
+        ],
+      },
+      {
+        name: 'taskId',
+        correct: 'b2c3d4e5-f6a7-4901-8cde-f23456789012',
+        description: 'Valid UUID format for task identification',
+        incorrect: [
+          {
+            value: 'task-123',
+            reason: 'Must be valid UUID format',
+          },
+        ],
+      },
+      {
+        name: 'exitCriteria',
+        correct: [
+          'All unit tests pass',
+          'Code review completed and approved',
+          'Documentation updated',
+        ],
+        description: 'Array of specific, measurable completion requirements',
+        incorrect: [
+          {
+            value: 'Complete the task',
+            reason: 'Must be array, not string',
+          },
+          {
+            value: [''],
+            reason: 'Criteria descriptions cannot be empty',
+          },
+        ],
+      },
+    ],
+    examples: [
+      {
+        tool: 'set_task_exit_criteria',
+        description: 'Set multiple exit criteria for quality control',
+        parameters: {
+          listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
+          taskId: 'b2c3d4e5-f6a7-4901-8cde-f23456789012',
+          exitCriteria: [
+            'All unit tests pass with 95% coverage',
+            'Code review completed and approved',
+            'Documentation updated with new features',
+            'Performance benchmarks meet requirements',
+          ],
+        },
+        outcome: 'Task will require all 4 criteria to be met before completion',
+      },
+      {
+        tool: 'set_task_exit_criteria',
+        description: 'Remove all exit criteria (empty array)',
+        parameters: {
+          listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
+          taskId: 'b2c3d4e5-f6a7-4901-8cde-f23456789012',
+          exitCriteria: [],
+        },
+        outcome:
+          'All exit criteria removed, task can be completed without specific requirements',
+      },
+      {
+        tool: 'set_task_exit_criteria',
+        description: 'Remove all exit criteria (omit parameter)',
+        parameters: {
+          listId: 'a1b2c3d4-e5f6-4890-8bcd-ef1234567890',
+          taskId: 'b2c3d4e5-f6a7-4901-8cde-f23456789012',
+          // exitCriteria parameter omitted - defaults to empty array
+        },
+        outcome: 'Task becomes completable without specific exit criteria',
+      },
+    ],
+    commonMistakes: [
+      {
+        mistake: 'Providing vague or unmeasurable criteria',
+        fix: 'Use specific, measurable completion requirements',
+        example: { exitCriteria: ['All unit tests pass with 95% coverage'] },
+      },
+      {
+        mistake: 'Forgetting to clear criteria when no longer needed',
+        fix: 'Use empty array or omit parameter to clear all criteria',
+        example: { exitCriteria: [] },
       },
     ],
   },

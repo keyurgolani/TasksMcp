@@ -111,7 +111,7 @@ describe('List Management API Endpoints', () => {
       expect(response.body.data.items[0].priority).toBe(5);
     });
 
-    it('should return validation error for missing title', async () => {
+    it('should return Validation error for missing title', async () => {
       const response = await request(app)
         .post('/api/v1/lists')
         .send({
@@ -275,26 +275,24 @@ describe('List Management API Endpoints', () => {
       expect(response.body.error.code).toBe('NOT_FOUND');
     });
 
-    it('should return 409 for archived list', async () => {
+    it('should return 404 for deleted list', async () => {
       const list = await taskListManager.createTaskList({ title: 'Test List' });
       await taskListManager.deleteTaskList({
         listId: list.id,
-        permanent: false,
       });
 
       const response = await request(app)
         .put(`/api/v1/lists/${list.id}`)
         .send({ title: 'New Title' });
 
-      // Note: Due to a known issue with archived list retrieval, this currently returns 404
-      // instead of 409. This will be fixed in a future task.
+      // List is permanently deleted, so should return 404
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
     });
   });
 
   describe('DELETE /api/v1/lists/:id', () => {
-    it('should archive a list by default', async () => {
+    it('should permanently delete a list', async () => {
       const list = await taskListManager.createTaskList({ title: 'Test List' });
 
       const response = await request(app)
@@ -302,11 +300,11 @@ describe('List Management API Endpoints', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.operation).toBe('archived');
-      expect(response.body.data.message).toContain('archived');
+      expect(response.body.data.operation).toBe('deleted');
+      expect(response.body.data.message).toContain('deleted');
 
-      // Note: There's a known issue where archived lists can't be retrieved
-      // This will be fixed in a future task when we improve archive handling
+      // Verify the list is permanently deleted
+      await request(app).get(`/api/v1/lists/${list.id}`).expect(404);
     });
 
     it('should permanently delete when permanent=true', async () => {
@@ -323,7 +321,6 @@ describe('List Management API Endpoints', () => {
       // Verify list is deleted
       const deletedList = await taskListManager.getTaskList({
         listId: list.id,
-        includeArchived: true,
       });
       expect(deletedList).toBeNull();
     });

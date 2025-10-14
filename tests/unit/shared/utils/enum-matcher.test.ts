@@ -305,22 +305,6 @@ describe('EnumMatcher', () => {
       expect(result1).toEqual(result2);
     });
 
-    it('should provide cache statistics', () => {
-      matcher.findClosestEnumValue('pending', testEnums);
-      const stats = matcher.getCacheStats();
-
-      expect(stats.size).toBeGreaterThan(0);
-      expect(typeof stats.size).toBe('number');
-    });
-
-    it('should clear cache when requested', () => {
-      matcher.findClosestEnumValue('pending', testEnums);
-      expect(matcher.getCacheStats().size).toBeGreaterThan(0);
-
-      matcher.clearCache();
-      expect(matcher.getCacheStats().size).toBe(0);
-    });
-
     it('should handle large enum sets efficiently', () => {
       const largeEnumSet = Array.from(
         { length: 1000 },

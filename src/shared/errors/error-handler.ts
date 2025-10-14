@@ -257,55 +257,6 @@ export class ErrorHandler extends EventEmitter {
   }
 
   /**
-   * Get error statistics
-   */
-  getErrorStatistics(timeWindowMs = 3600000): {
-    totalErrors: number;
-    errorsByCategory: Record<string, number>;
-    errorsBySeverity: Record<string, number>;
-    topErrors: Array<{ message: string; count: number }>;
-    recoveryRate: number;
-  } {
-    const cutoffTime = Date.now() - timeWindowMs;
-    const recentErrors = this.errorReports.filter(
-      e => e.timestamp > cutoffTime
-    );
-
-    const errorsByCategory: Record<string, number> = {};
-    const errorsBySeverity: Record<string, number> = {};
-    const errorCounts: Record<string, number> = {};
-
-    let recoveredCount = 0;
-
-    for (const report of recentErrors) {
-      errorsByCategory[report.category] =
-        (errorsByCategory[report.category] ?? 0) + 1;
-      errorsBySeverity[report.severity] =
-        (errorsBySeverity[report.severity] ?? 0) + 1;
-      errorCounts[report.error.message] =
-        (errorCounts[report.error.message] ?? 0) + 1;
-
-      if (report.handled) {
-        recoveredCount++;
-      }
-    }
-
-    const topErrors = Object.entries(errorCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([message, count]) => ({ message, count }));
-
-    return {
-      totalErrors: recentErrors.length,
-      errorsByCategory,
-      errorsBySeverity,
-      topErrors,
-      recoveryRate:
-        recentErrors.length > 0 ? recoveredCount / recentErrors.length : 0,
-    };
-  }
-
-  /**
    * Get circuit breaker states
    */
   getCircuitBreakerStates(): CircuitBreakerState[] {
@@ -387,11 +338,7 @@ export class ErrorHandler extends EventEmitter {
     ) {
       return 'formatting';
     }
-    if (
-      message.includes('cleanup') ||
-      message.includes('cleanup suggestion') ||
-      message.includes('cleanup operation')
-    ) {
+    if (message.includes('cleanup') || message.includes('cleanup operation')) {
       return 'cleanup';
     }
     if (

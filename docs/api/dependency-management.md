@@ -29,11 +29,11 @@ Set all dependencies for a task, replacing any existing dependencies.
 
 #### Parameters
 
-| Parameter       | Type           | Required | Description                                                              |
-| --------------- | -------------- | -------- | ------------------------------------------------------------------------ |
-| `listId`        | string (UUID)  | Yes      | UUID of the list containing the task                                     |
-| `taskId`        | string (UUID)  | Yes      | UUID of the task to set dependencies for                                 |
-| `dependencyIds` | array of UUIDs | Yes      | Array of task IDs this task depends on (max 10, empty array removes all) |
+| Parameter       | Type           | Required | Description                                                                         |
+| --------------- | -------------- | -------- | ----------------------------------------------------------------------------------- |
+| `listId`        | string (UUID)  | Yes      | UUID of the list containing the task                                                |
+| `taskId`        | string (UUID)  | Yes      | UUID of the task to set dependencies for                                            |
+| `dependencyIds` | array of UUIDs | No       | Array of task IDs this task depends on (max 50, empty array or omitted removes all) |
 
 #### Example Request
 

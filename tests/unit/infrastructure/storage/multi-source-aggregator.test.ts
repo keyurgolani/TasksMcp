@@ -34,7 +34,7 @@ describe('MultiSourceAggregator', () => {
     progress,
     totalItems: 10,
     completedItems: progress / 10,
-    isArchived: false,
+
     implementationNotes: [],
     metadata: {},
     analytics: {

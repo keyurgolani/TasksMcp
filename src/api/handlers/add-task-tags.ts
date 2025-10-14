@@ -5,6 +5,10 @@
 import { z } from 'zod';
 
 import {
+  DetailedErrors,
+  createOrchestrationError,
+} from '../../shared/utils/error-formatter.js';
+import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
@@ -26,7 +30,7 @@ const AddTaskTagsSchema = z.object({
 
 export async function handleAddTaskTags(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing add_task_tags request', {
@@ -34,24 +38,24 @@ export async function handleAddTaskTags(
     });
 
     const args = AddTaskTagsSchema.parse(request.params?.arguments);
-    const currentList = await todoListManager.getTaskList({
+    const currentList = await taskListManager.getTaskList({
       listId: args.listId,
     });
 
     if (!currentList) {
-      throw new Error('Task list not found');
+      throw DetailedErrors.notFound('Task list', 'Add Task Tags', args.listId);
     }
 
     const currentTask = currentList.items.find(
       (item: Task) => item.id === args.taskId
     );
     if (!currentTask) {
-      throw new Error('Task not found');
+      throw DetailedErrors.notFound('Task', 'Add Task Tags', args.taskId);
     }
 
     const existingTags = currentTask.tags || [];
     const newTags = [...new Set([...existingTags, ...args.tags])];
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,
@@ -64,7 +68,17 @@ export async function handleAddTaskTags(
       (item: Task) => item.id === args.taskId
     );
     if (!updatedTask) {
-      throw new Error('Task not found after tag update');
+      throw createOrchestrationError('Task not found after tag update', {
+        context: {
+          operation: 'Add Task Tags',
+          field: 'taskId',
+          currentValue: args.taskId,
+          expectedValue: 'valid task ID',
+          additionalContext: { operation: 'post-update-verification' },
+        },
+        actionableGuidance:
+          'This indicates a data consistency issue. The task existed before the update but not after. Check for concurrent modifications or data store issues.',
+      });
     }
 
     const addedTags = args.tags.filter(tag => updatedTask.tags.includes(tag));

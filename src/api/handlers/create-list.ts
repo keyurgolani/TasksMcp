@@ -1,5 +1,5 @@
 /**
- * MCP handler for creating todo lists
+ * MCP handler for creating task lists
  * Handles the create_list tool request with validation and error handling
  */
 
@@ -33,15 +33,15 @@ const CreateListSchema = z.object({
 
 /**
  * Handles MCP create_list tool requests
- * Creates a new todo list with the provided title, description, and project tag
+ * Creates a new task list with the provided title, description, and project tag
  *
  * @param request - The MCP call tool request containing list creation parameters
- * @param todoListManager - The todo list manager instance for list operations
+ * @param taskListManager - The task list manager instance for list operations
  * @returns Promise<CallToolResult> - MCP response with created list details or error
  */
 export async function handleCreateList(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing create_list request', {
@@ -62,7 +62,7 @@ export async function handleCreateList(
       createInput.context = args.projectTag;
     }
 
-    const result = await todoListManager.createTaskList(createInput);
+    const result = await taskListManager.createTaskList(createInput);
 
     // Format response
     const response: ListResponse = {
@@ -80,7 +80,7 @@ export async function handleCreateList(
       response.projectTag = result.projectTag;
     }
 
-    logger.info('Todo list created successfully', {
+    logger.info('Task list created successfully', {
       id: result.id,
       title: result.title,
     });

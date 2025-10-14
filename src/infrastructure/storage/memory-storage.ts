@@ -49,7 +49,7 @@ export class MemoryStorageBackend extends StorageBackend {
 
       // Validate data if requested
       if (options?.validate === true) {
-        this.validateTodoList(data);
+        this.validateTaskList(data);
       }
 
       // Create backup if requested (but limit backup retention)
@@ -66,7 +66,7 @@ export class MemoryStorageBackend extends StorageBackend {
 
       // Deep clone to prevent mutations
       const clonedData = JSON.parse(JSON.stringify(data)) as TaskList;
-      this.validateTodoList(clonedData);
+      this.validateTaskList(clonedData);
       this.data.set(key, clonedData);
 
       logger.debug('MemoryStorage data size after save', {
@@ -76,14 +76,14 @@ export class MemoryStorageBackend extends StorageBackend {
         keys: Array.from(this.data.keys()),
       });
 
-      logger.debug('Todo list saved to memory storage', {
+      logger.debug('Task list saved to memory storage', {
         key,
         title: data.title,
       });
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('Failed to save todo list to memory storage', {
+      logger.error('Failed to save task list to memory storage', {
         key,
         error,
       });
@@ -169,13 +169,13 @@ export class MemoryStorageBackend extends StorageBackend {
         }
       });
 
-      logger.debug('Todo list loaded from memory storage', {
+      logger.debug('Task list loaded from memory storage', {
         key,
         title: clonedData.title,
       });
       return Promise.resolve(clonedData);
     } catch (error) {
-      logger.error('Failed to load todo list from memory storage', {
+      logger.error('Failed to load task list from memory storage', {
         key,
         error,
       });
@@ -183,7 +183,7 @@ export class MemoryStorageBackend extends StorageBackend {
     }
   }
 
-  async delete(key: string, permanent = false): Promise<void> {
+  async delete(key: string): Promise<void> {
     if (!this.initialized) {
       throw new Error('Storage backend not initialized');
     }
@@ -194,20 +194,12 @@ export class MemoryStorageBackend extends StorageBackend {
         throw new Error(`Task list not found: ${key}`);
       }
 
-      if (permanent) {
-        this.data.delete(key);
-        logger.info('Todo list permanently deleted from memory storage', {
-          key,
-        });
-      } else {
-        // Archive instead of delete
-        data.isArchived = true;
-        data.updatedAt = new Date();
-        this.data.set(key, data);
-        logger.info('Todo list archived in memory storage', { key });
-      }
+      this.data.delete(key);
+      logger.info('Task list permanently deleted from memory storage', {
+        key,
+      });
     } catch (error) {
-      logger.error('Failed to delete todo list from memory storage', {
+      logger.error('Failed to delete task list from memory storage', {
         key,
         error,
       });
@@ -277,14 +269,14 @@ export class MemoryStorageBackend extends StorageBackend {
         result = result.slice(0, options.limit);
       }
 
-      logger.debug('Todo list summaries retrieved from memory storage', {
+      logger.debug('Task list summaries retrieved from memory storage', {
         count: result.length,
         total: summaries.length,
       });
 
       return Promise.resolve(result);
     } catch (error) {
-      logger.error('Failed to list todo lists from memory storage', { error });
+      logger.error('Failed to list task lists from memory storage', { error });
       throw error;
     }
   }
@@ -299,40 +291,16 @@ export class MemoryStorageBackend extends StorageBackend {
   }
 
   // Helper method for data validation
-  private validateTodoList(data: TaskList): void {
+  private validateTaskList(data: TaskList): void {
     if (!data.id || typeof data.id !== 'string') {
-      throw new Error('Invalid todo list: missing or invalid id');
+      throw new Error('Invalid task list: missing or invalid id');
     }
     if (!data.title || typeof data.title !== 'string') {
-      throw new Error('Invalid todo list: missing or invalid title');
+      throw new Error('Invalid task list: missing or invalid title');
     }
     if (!Array.isArray(data.items)) {
-      throw new Error('Invalid todo list: items must be an array');
+      throw new Error('Invalid task list: items must be an array');
     }
-  }
-
-  // Helper method to get storage statistics (useful for testing)
-  getStats(): {
-    totalLists: number;
-    archivedLists: number;
-    totalItems: number;
-  } {
-    let totalLists = 0;
-    let archivedLists = 0;
-    let totalItems = 0;
-
-    for (const [key, data] of this.data.entries()) {
-      if (key.includes('_backup_')) {
-        continue;
-      }
-      totalLists++;
-      if (data.isArchived) {
-        archivedLists++;
-      }
-      totalItems += data.items.length;
-    }
-
-    return { totalLists, archivedLists, totalItems };
   }
 
   /**
@@ -415,17 +383,17 @@ export class MemoryStorageBackend extends StorageBackend {
   async loadAllData(): Promise<
     import('../../shared/types/storage.js').StorageData
   > {
-    const todoLists: TaskList[] = [];
+    const taskLists: TaskList[] = [];
 
     for (const [key, data] of this.data.entries()) {
       if (!key.includes('_backup_')) {
-        todoLists.push(data);
+        taskLists.push(data);
       }
     }
 
     return {
       version: '1.0',
-      todoLists,
+      taskLists,
     };
   }
 
@@ -434,8 +402,16 @@ export class MemoryStorageBackend extends StorageBackend {
   ): Promise<void> {
     this.data.clear();
 
-    for (const list of data.todoLists) {
+    for (const list of data.taskLists) {
       this.data.set(list.id, list);
     }
+  }
+
+  /**
+   * Clear all data from memory storage
+   * Useful for testing to ensure clean state between tests
+   */
+  async clear(): Promise<void> {
+    this.data.clear();
   }
 }

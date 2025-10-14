@@ -1,7 +1,7 @@
 /**
- * Utility functions for filtering, sorting, and paginating todo items
+ * Utility functions for filtering, sorting, and paginating tasks
  *
- * Provides comprehensive data processing capabilities for todo items including:
+ * Provides data processing capabilities for tasks including:
  * - Multi-criteria filtering (status, priority, tags, dates, text search)
  * - Flexible sorting by various fields with ascending/descending order
  * - Pagination with offset and limit support
@@ -22,7 +22,7 @@ import type { SortOptions } from '../../domain/repositories/task-list.repository
 
 export class FilteringUtils {
   /**
-   * Apply comprehensive filters to a list of todo items
+   * Apply filters to a list of tasks
    *
    * Supports multiple filter types:
    * - Status and priority filtering (single or multiple values)
@@ -32,9 +32,9 @@ export class FilteringUtils {
    * - Boolean filters (has description, has dependencies)
    * - Duration range filtering
    *
-   * @param items - Array of todo items to filter
+   * @param items - Array of tasks to filter
    * @param filters - Filter criteria object
-   * @returns Task[] - Filtered array of todo items
+   * @returns Task[] - Filtered array of tasks
    */
   static applyFilters(items: Task[], filters: GetTaskListFilters): Task[] {
     try {
@@ -187,7 +187,7 @@ export class FilteringUtils {
    * - hasMore flag to indicate if more items are available
    * - Input validation for reasonable limits
    *
-   * @param items - Array of todo items to paginate
+   * @param items - Array of tasks to paginate
    * @param pagination - Pagination parameters (limit and offset)
    * @returns Object containing paginated items, counts, and hasMore flag
    */
@@ -311,11 +311,11 @@ export class FilteringUtils {
   }
 
   /**
-   * Apply sorting to a list of todo items
+   * Apply sorting to a list of tasks
    *
-   * @param items - Array of todo items to sort
+   * @param items - Array of tasks to sort
    * @param sorting - Sort options (field and direction)
-   * @returns Task[] - Sorted array of todo items
+   * @returns Task[] - Sorted array of tasks
    */
   static applySorting(items: Task[], sorting: SortOptions): Task[] {
     try {

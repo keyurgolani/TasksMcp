@@ -1,12 +1,10 @@
 /**
  * Pretty Print Formatter for Human-Readable Task and List Display
  *
- * Provides comprehensive formatting capabilities for todo lists and tasks with:
- * - Multiple output formats (compact, detailed, grouped)
- * - Progress visualization with bars and statistics
+ * Provides formatting capabilities for task lists and tasks with:
+ * - Single detailed output format
+ * - Progress visualization
  * - Color support for terminal output
- * - Caching for performance optimization
- * - Lazy loading for large datasets
  * - Customizable formatting options
  *
  * Key Features:
@@ -14,7 +12,6 @@
  * - Action plan step-by-step formatting
  * - Implementation notes with type indicators
  * - Flexible grouping (by status, priority, project)
- * - Performance optimization and caching
  * - Responsive width handling
  */
 
@@ -46,9 +43,6 @@ export interface FormatOptions {
   showIds: boolean; // Whether to display entity IDs
   truncateNotes: number; // Maximum characters for notes display
   maxItems?: number; // Maximum number of items to format (for performance)
-  lazyLoad?: boolean; // Enable lazy loading for large datasets
-  chunkSize?: number; // Size of chunks for processing large datasets
-  enableCaching?: boolean; // Enable result caching for performance
 }
 
 /**
@@ -64,22 +58,15 @@ export interface FormattedOutput {
     itemCount: number; // Number of items formatted
     processingTime?: number; // Time taken to process in milliseconds
     wasTruncated?: boolean; // Whether the output was truncated due to limits
-    cacheHits?: number; // Number of cache hits during processing
   };
-  chunks?: Array<{
-    content: string; // Content of this chunk
-    itemCount: number; // Number of items in this chunk
-    startIndex: number; // Starting index in the original array
-    endIndex: number; // Ending index in the original array
-  }>; // Chunks for lazy loading large datasets
 }
 
 /**
  * Main formatter class for creating human-readable output
- * Handles formatting of todo lists, tasks, and summaries with extensive customization options
+ * Handles formatting of task lists, tasks, and summaries with customization options
  */
 export class PrettyPrintFormatter {
-  /** Default formatting options optimized for readability and compatibility */
+  /** Default formatting options optimized for readability */
   private readonly defaultOptions: FormatOptions = {
     includeNotes: true,
     includeActionPlans: true,
@@ -93,20 +80,11 @@ export class PrettyPrintFormatter {
     truncateNotes: 200,
   };
 
-  /** Cache for formatted results to improve performance on repeated requests */
-  private cache = new Map<
-    string,
-    { result: FormattedOutput; timestamp: number }
-  >();
-  private cacheHits = 0;
-  private cacheMisses = 0;
-  private readonly cacheTimeout = 5 * 60 * 1000; // 5 minutes cache timeout
-
   /**
-   * Formats a complete todo list with all its tasks and metadata
-   * Supports grouping, filtering, caching, and lazy loading for large datasets
+   * Formats a complete task list with all its tasks and metadata
+   * Supports grouping and filtering
    *
-   * @param list - The todo list to format
+   * @param list - The task list to format
    * @param options - Formatting options to customize the output
    * @returns FormattedOutput - The formatted content with metadata
    */
@@ -118,26 +96,9 @@ export class PrettyPrintFormatter {
     const opts = { ...this.defaultOptions, ...options };
 
     try {
-      // Check cache if enabled
-      if (opts.enableCaching) {
-        const cacheKey = this.generateCacheKey(list, opts);
-        const cached = this.getFromCache(cacheKey);
-        if (cached) {
-          this.cacheHits++;
-          cached.metadata.cacheHits = this.cacheHits;
-          return cached;
-        }
-      }
-
       const lines: string[] = [];
       let itemsToProcess = list.items;
       let wasTruncated = false;
-      let chunks: Array<{
-        content: string;
-        itemCount: number;
-        startIndex: number;
-        endIndex: number;
-      }> = [];
 
       // Apply maxItems limit
       if (opts.maxItems && list.items.length > opts.maxItems) {
@@ -164,19 +125,13 @@ export class PrettyPrintFormatter {
         lines.push('');
       }
 
-      // Tasks section with chunking support
+      // Tasks section
       if (itemsToProcess.length > 0) {
-        if (opts.lazyLoad && opts.chunkSize) {
-          chunks = this.formatTasksInChunks(itemsToProcess, opts);
-          const allChunkContent = chunks.map(chunk => chunk.content).join('\n');
-          lines.push(allChunkContent);
-        } else {
-          const formattedTasks = this.formatTasksWithGrouping(
-            itemsToProcess,
-            opts
-          );
-          lines.push(...formattedTasks);
-        }
+        const formattedTasks = this.formatTasksWithGrouping(
+          itemsToProcess,
+          opts
+        );
+        lines.push(...formattedTasks);
       } else {
         lines.push(this.formatEmptyState(opts));
       }
@@ -193,16 +148,8 @@ export class PrettyPrintFormatter {
           itemCount: itemsToProcess.length,
           processingTime,
           wasTruncated,
-          cacheHits: this.cacheHits,
         },
-        ...(chunks.length > 0 && { chunks }),
       };
-
-      // Cache result if enabled
-      if (opts.enableCaching) {
-        const cacheKey = this.generateCacheKey(list, opts);
-        this.setInCache(cacheKey, result);
-      }
 
       return result;
     } catch (error) {
@@ -281,23 +228,38 @@ export class PrettyPrintFormatter {
       const opts = { ...this.defaultOptions, ...options };
       const lines: string[] = [];
 
-      // Calculate statistics
-      const stats = this.calculateTaskStatistics(tasks);
+      // Calculate basic counts
+      const total = tasks.length;
+      const completed = tasks.filter(
+        t => t.status === TaskStatus.COMPLETED
+      ).length;
+      const progressPercentage =
+        total > 0 ? Math.round((completed / total) * 100) : 0;
 
       lines.push(this.formatSectionHeader('Task Summary', opts));
-      lines.push(`Total Tasks: ${stats.total}`);
+      lines.push(`Total Tasks: ${total}`);
 
       if (opts.includeProgress) {
-        lines.push(this.formatProgressBar(stats.completed, stats.total, opts));
-        lines.push(
-          `Progress: ${stats.completed}/${stats.total} (${stats.progressPercentage}%)`
-        );
+        lines.push(this.formatProgressBar(completed, total, opts));
+        lines.push(`Progress: ${completed}/${total} (${progressPercentage}%)`);
       }
 
       // Status breakdown
+      const statusCounts: Record<TaskStatus, number> = {} as Record<
+        TaskStatus,
+        number
+      >;
+      Object.values(TaskStatus).forEach(status => {
+        statusCounts[status] = 0;
+      });
+
+      tasks.forEach(task => {
+        statusCounts[task.status]++;
+      });
+
       lines.push('');
       lines.push('Status Breakdown:');
-      Object.entries(stats.byStatus).forEach(([status, count]) => {
+      Object.entries(statusCounts).forEach(([status, count]) => {
         if (count > 0) {
           const icon = this.getStatusIcon(status as TaskStatus, opts);
           lines.push(
@@ -307,10 +269,16 @@ export class PrettyPrintFormatter {
       });
 
       // Priority breakdown
-      if (stats.byPriority.size > 0) {
+      const priorityCounts = new Map<Priority, number>();
+      tasks.forEach(task => {
+        const currentCount = priorityCounts.get(task.priority) || 0;
+        priorityCounts.set(task.priority, currentCount + 1);
+      });
+
+      if (priorityCounts.size > 0) {
         lines.push('');
         lines.push('Priority Breakdown:');
-        Array.from(stats.byPriority.entries())
+        Array.from(priorityCounts.entries())
           .sort(([a], [b]) => b - a) // Sort by priority (high to low)
           .forEach(([priority, count]) => {
             const icon = this.getPriorityIcon(priority, opts);
@@ -833,7 +801,7 @@ export class PrettyPrintFormatter {
       }
     }
 
-    // For colorized output, use simpler symbols that work better with colors
+    // For colorized output, use cleaner symbols that work better with colors
     switch (type) {
       case 'general':
         return '\x1b[34m•\x1b[0m';
@@ -881,39 +849,6 @@ export class PrettyPrintFormatter {
     });
 
     return groups;
-  }
-
-  private calculateTaskStatistics(tasks: Task[]) {
-    const stats = {
-      total: tasks.length,
-      completed: 0,
-      byStatus: {} as Record<TaskStatus, number>,
-      byPriority: new Map<Priority, number>(),
-      progressPercentage: 0,
-    };
-
-    // Initialize status counts
-    Object.values(TaskStatus).forEach(status => {
-      stats.byStatus[status] = 0;
-    });
-
-    tasks.forEach(task => {
-      // Count by status
-      stats.byStatus[task.status]++;
-
-      if (task.status === TaskStatus.COMPLETED) {
-        stats.completed++;
-      }
-
-      // Count by priority
-      const currentCount = stats.byPriority.get(task.priority) || 0;
-      stats.byPriority.set(task.priority, currentCount + 1);
-    });
-
-    stats.progressPercentage =
-      stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-
-    return stats;
   }
 
   private calculateGroupCount(
@@ -968,103 +903,5 @@ export class PrettyPrintFormatter {
     }
 
     return text.substring(0, maxLength - 3) + '...';
-  }
-
-  /**
-   * Generate cache key for a list and options
-   */
-  private generateCacheKey(
-    list: TaskList,
-    options: Partial<FormatOptions>
-  ): string {
-    const optionsStr = JSON.stringify(options);
-    return `${list.id}-${list.updatedAt.getTime()}-${optionsStr}`;
-  }
-
-  /**
-   * Get result from cache
-   */
-  private getFromCache(key: string): FormattedOutput | null {
-    const cached = this.cache.get(key);
-    if (!cached) {
-      this.cacheMisses++;
-      return null;
-    }
-
-    // Check if expired
-    if (Date.now() - cached.timestamp > this.cacheTimeout) {
-      this.cache.delete(key);
-      this.cacheMisses++;
-      return null;
-    }
-
-    return cached.result;
-  }
-
-  /**
-   * Set result in cache
-   */
-  private setInCache(key: string, result: FormattedOutput): void {
-    this.cache.set(key, {
-      result,
-      timestamp: Date.now(),
-    });
-  }
-
-  /**
-   * Format tasks in chunks for lazy loading
-   */
-  private formatTasksInChunks(
-    items: Task[],
-    options: FormatOptions
-  ): Array<{
-    content: string;
-    itemCount: number;
-    startIndex: number;
-    endIndex: number;
-  }> {
-    const chunks = [];
-    const chunkSize = options.chunkSize || 50;
-
-    for (let i = 0; i < items.length; i += chunkSize) {
-      const chunkItems = items.slice(i, i + chunkSize);
-      const chunkLines = this.formatTasksWithGrouping(chunkItems, options);
-
-      chunks.push({
-        content: chunkLines.join('\n'),
-        itemCount: chunkItems.length,
-        startIndex: i,
-        endIndex: Math.min(i + chunkSize - 1, items.length - 1),
-      });
-    }
-
-    return chunks;
-  }
-
-  /**
-   * Clear the formatter cache
-   */
-  clearCache(): void {
-    this.cache.clear();
-    this.cacheHits = 0;
-    this.cacheMisses = 0;
-  }
-
-  /**
-   * Get cache statistics
-   */
-  getCacheStats(): {
-    size: number;
-    hits: number;
-    misses: number;
-    hitRate: number;
-  } {
-    const total = this.cacheHits + this.cacheMisses;
-    return {
-      size: this.cache.size,
-      hits: this.cacheHits,
-      misses: this.cacheMisses,
-      hitRate: total > 0 ? this.cacheHits / total : 0,
-    };
   }
 }

@@ -145,11 +145,11 @@ tests/
 Example test:
 
 ```typescript
-describe('TodoListManager', () => {
+describe('TaskListManager', () => {
   describe('createList', () => {
     it('should create a list with valid parameters', async () => {
       // Arrange
-      const manager = new TodoListManager(storage);
+      const manager = new TaskListManager(storage);
       const listData = { title: 'Test List' };
 
       // Act

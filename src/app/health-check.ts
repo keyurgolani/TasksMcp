@@ -97,7 +97,7 @@ export class HealthChecker {
     try {
       storage = await StorageFactory.createStorage(this.config.storage);
 
-      // Test basic storage operations
+      // Test storage operations
       const testKey = `health-check-${Date.now()}`;
       const testData = {
         id: testKey,
@@ -107,7 +107,6 @@ export class HealthChecker {
         createdAt: new Date(),
         updatedAt: new Date(),
         context: 'health-check',
-        isArchived: false,
         totalItems: 0,
         completedItems: 0,
         progress: 0,
@@ -144,7 +143,7 @@ export class HealthChecker {
       }
 
       // Test delete operation
-      await storage.delete(testKey, true);
+      await storage.delete(testKey);
 
       return {
         name: 'storage',

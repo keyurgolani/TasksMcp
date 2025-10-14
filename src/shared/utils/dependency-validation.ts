@@ -40,7 +40,7 @@ export interface DependencyValidationResult {
 
 /**
  * Validates dependency IDs for a task
- * Performs comprehensive validation including existence, circular dependencies, and self-dependencies
+ * Performs validation including existence, circular dependencies, and self-dependencies
  *
  * @param taskId - The ID of the task to validate dependencies for
  * @param dependencyIds - Array of dependency IDs to validate
@@ -140,7 +140,7 @@ export function validateDependencyIds(
  * Creates user-friendly error messages for dependency validation failures
  *
  * @param validation - The validation result to format
- * @returns Formatted error message with suggestions
+ * @returns Formatted error message with suggestion
  */
 export function formatDependencyValidationError(
   validation: DependencyValidationResult
@@ -168,7 +168,7 @@ export function formatDependencyValidationError(
     });
   }
 
-  // Add suggestions for common issues
+  // Add suggestion for common issues
   if (validation.errors.some(e => e.includes('Invalid dependencies'))) {
     messages.push('');
     messages.push('Suggestions:');
@@ -275,13 +275,13 @@ export function detectCircularDependencies(
 }
 
 /**
- * Centralized dependency validation function with comprehensive error handling
+ * Centralized dependency validation function with error handling
  * This is the main validation function that should be used by all dependency management tools
  *
  * @param taskId - The ID of the task to validate dependencies for
  * @param dependencyIds - Array of dependency IDs to validate
  * @param allTasks - All tasks in the list for validation context
- * @returns Comprehensive validation result with detailed error information
+ * @returns Validation result with detailed error information
  */
 export function validateTaskDependencies(
   taskId: string,
@@ -299,7 +299,7 @@ export function validateTaskDependencies(
       };
     }
 
-    logger.info('Starting comprehensive dependency validation', {
+    logger.info('Starting dependency validation', {
       taskId,
       dependencyCount: dependencyIds?.length ?? 0,
       totalTasks: allTasks.length,
@@ -357,11 +357,11 @@ export function validateTaskDependencies(
 }
 
 /**
- * Creates user-friendly error responses with suggestions for fixing issues
+ * Creates user-friendly error responses with suggestion for fixing issues
  *
  * @param validation - The validation result to format
  * @param taskId - The task ID for context in error messages
- * @returns Formatted error response with actionable suggestions
+ * @returns Formatted error response with actionable suggestion
  */
 export function createDependencyErrorResponse(
   validation: DependencyValidationResult,

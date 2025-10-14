@@ -1,39 +1,18 @@
 /**
- * List validator for comprehensive task list data validation
- * Implements all list validation rules and business constraints
+ * List validator for orchestration layer
+ * Validates list data according to domain rules
  */
 
 import {
-  TASK_LIST_TITLE_MAX_LENGTH,
-  TASK_LIST_DESCRIPTION_MAX_LENGTH,
-  PROJECT_TAG_MAX_LENGTH,
-  PROJECT_TAG_PATTERN,
-} from '../../../domain/models/task-list';
-import {
   ValidationResult,
   ValidationError,
-  ValidationSchema,
-} from '../../../shared/types/validation';
+  ValidationWarning,
+} from '../../../shared/types/validation.js';
 
 export class ListValidator {
-  private readonly listSchema: ValidationSchema = {
-    title: {
-      required: true,
-      minLength: 1,
-      maxLength: TASK_LIST_TITLE_MAX_LENGTH,
-    },
-    description: {
-      maxLength: TASK_LIST_DESCRIPTION_MAX_LENGTH,
-    },
-    projectTag: {
-      maxLength: PROJECT_TAG_MAX_LENGTH,
-      pattern: PROJECT_TAG_PATTERN,
-    },
-  };
-
   validate(data: unknown): ValidationResult {
     const errors: ValidationError[] = [];
-    const warnings: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     if (!data || typeof data !== 'object') {
       errors.push({
@@ -41,72 +20,68 @@ export class ListValidator {
         message: 'List data must be an object',
         currentValue: data,
         expectedValue: 'object',
-        actionableGuidance: 'Provide a valid list data object',
+        actionableGuidance: 'Provide a valid list object with required fields',
       });
-      return { isValid: false, errors, warnings };
+      return {
+        isValid: false,
+        errors,
+        warnings,
+      };
     }
 
     const listData = data as Record<string, unknown>;
 
-    // Validate each field according to schema
-    for (const [fieldName, validation] of Object.entries(this.listSchema)) {
-      const value = listData[fieldName];
+    // Validate required title field
+    if (!listData['title']) {
+      errors.push({
+        field: 'title',
+        message: 'title is required',
+        currentValue: listData['title'],
+        expectedValue: 'string',
+        actionableGuidance: 'Provide a non-empty string title',
+      });
+    } else if (typeof listData['title'] !== 'string') {
+      errors.push({
+        field: 'title',
+        message: 'title must be a string',
+        currentValue: listData['title'],
+        expectedValue: 'string',
+        actionableGuidance: 'Provide a string value for title',
+      });
+    } else if (listData['title'].length > 1000) {
+      errors.push({
+        field: 'title',
+        message: 'title must be at most 1000 characters',
+        currentValue: listData['title'],
+        expectedValue: 'string with max 1000 characters',
+        actionableGuidance: 'Shorten the title to 1000 characters or less',
+      });
+    }
 
-      // Check required fields
-      if (
-        validation.required &&
-        (value === undefined || value === null || value === '')
-      ) {
+    // Validate description length
+    if (
+      listData['description'] &&
+      typeof listData['description'] === 'string'
+    ) {
+      if (listData['description'].length > 5000) {
         errors.push({
-          field: fieldName,
-          message: `${fieldName} is required`,
-          currentValue: value,
-          expectedValue: 'non-empty value',
-          actionableGuidance: `Provide a valid ${fieldName}`,
+          field: 'description',
+          message: 'description must be at most 5000 characters',
+          currentValue: listData['description'],
+          expectedValue: 'string with max 5000 characters',
+          actionableGuidance:
+            'Shorten the description to 5000 characters or less',
         });
-        continue;
       }
+    }
 
-      // Skip validation if field is not provided and not required
-      if (value === undefined || value === null) {
-        continue;
-      }
-
-      // String validation
-      if (typeof value === 'string') {
-        if (validation.minLength && value.length < validation.minLength) {
-          errors.push({
-            field: fieldName,
-            message: `${fieldName} must be at least ${validation.minLength} characters`,
-            currentValue: value.length,
-            expectedValue: `>= ${validation.minLength}`,
-            actionableGuidance: `Provide a ${fieldName} with at least ${validation.minLength} characters`,
-          });
-        }
-
-        if (validation.maxLength && value.length > validation.maxLength) {
-          errors.push({
-            field: fieldName,
-            message: `${fieldName} must be at most ${validation.maxLength} characters`,
-            currentValue: value.length,
-            expectedValue: `<= ${validation.maxLength}`,
-            actionableGuidance: `Reduce ${fieldName} to ${validation.maxLength} characters or less`,
-          });
-        }
-
-        if (validation.pattern && !validation.pattern.test(value)) {
-          errors.push({
-            field: fieldName,
-            message: `${fieldName} format is invalid`,
-            currentValue: value,
-            expectedValue: validation.pattern.toString(),
-            actionableGuidance: this.getPatternGuidance(
-              fieldName,
-              validation.pattern
-            ),
-          });
-        }
-      }
+    // Validate project tag
+    if (listData['projectTag']) {
+      const projectTagValidation = this.validateProjectTag(
+        listData['projectTag']
+      );
+      errors.push(...projectTagValidation.errors);
+      warnings.push(...projectTagValidation.warnings);
     }
 
     return {
@@ -116,11 +91,50 @@ export class ListValidator {
     };
   }
 
-  private getPatternGuidance(fieldName: string, pattern: RegExp): string {
-    if (fieldName === 'projectTag') {
-      return 'Project tag must use lowercase letters, numbers, and hyphens only (e.g., "web-app", "mobile-project")';
+  private validateProjectTag(projectTag: unknown): ValidationResult {
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
+
+    if (typeof projectTag !== 'string') {
+      errors.push({
+        field: 'projectTag',
+        message: 'projectTag must be a string',
+        currentValue: projectTag,
+        expectedValue: 'string',
+        actionableGuidance: 'Provide a string value for projectTag',
+      });
+      return { isValid: false, errors, warnings };
     }
 
-    return `Ensure ${fieldName} matches the required format: ${pattern.toString()}`;
+    if (projectTag.length > 250) {
+      errors.push({
+        field: 'projectTag',
+        message: 'projectTag must be at most 250 characters',
+        currentValue: projectTag,
+        expectedValue: 'string with max 250 characters',
+        actionableGuidance: 'Shorten the project tag to 250 characters or less',
+      });
+      return { isValid: false, errors, warnings };
+    }
+
+    // Validate project tag pattern (lowercase with hyphens)
+    const validPattern = /^[a-z0-9-]+$/;
+    if (!validPattern.test(projectTag)) {
+      errors.push({
+        field: 'projectTag',
+        message: 'projectTag format is invalid',
+        currentValue: projectTag,
+        expectedValue: 'lowercase alphanumeric with hyphens (e.g., "web-app")',
+        actionableGuidance:
+          'Use lowercase letters, numbers, and hyphens only (e.g., "web-app" or "mobile-project")',
+      });
+      return { isValid: false, errors, warnings };
+    }
+
+    return {
+      isValid: true,
+      errors,
+      warnings,
+    };
   }
 }

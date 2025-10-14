@@ -33,11 +33,11 @@ describe('Dependency Tool Registration', () => {
   });
 
   describe('Tool Discovery', () => {
-    it('should include all 18 MCP tools in the registry', () => {
-      expect(MCP_TOOLS).toHaveLength(18);
+    it('should include all 19 MCP tools in the registry', () => {
+      expect(MCP_TOOLS).toHaveLength(19);
 
       const toolNames = getToolNames();
-      expect(toolNames).toHaveLength(18);
+      expect(toolNames).toHaveLength(19);
     });
 
     it('should include the 3 new dependency management tools', () => {
@@ -88,11 +88,7 @@ describe('Dependency Tool Registration', () => {
       const inputSchema = schema?.inputSchema;
       expect(inputSchema).toBeDefined();
       expect(inputSchema.type).toBe('object');
-      expect(inputSchema.required).toEqual([
-        'listId',
-        'taskId',
-        'dependencyIds',
-      ]);
+      expect(inputSchema.required).toEqual(['listId', 'taskId']);
 
       // Validate parameter schemas
       const properties = inputSchema.properties;

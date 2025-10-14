@@ -48,7 +48,7 @@ export interface SourceMetadata {
 /**
  * TaskList with source metadata
  */
-export interface TodoListWithMetadata extends TaskList {
+export interface TaskListWithMetadata extends TaskList {
   _sourceMetadata?: SourceMetadata;
 }
 
@@ -57,7 +57,7 @@ export interface TodoListWithMetadata extends TaskList {
  */
 interface ConflictContext {
   listId: string;
-  versions: TodoListWithMetadata[];
+  versions: TaskListWithMetadata[];
   strategy: ConflictResolutionStrategy;
 }
 
@@ -252,7 +252,7 @@ export class MultiSourceAggregator {
       priority: number;
     }>,
     query: SearchQuery
-  ): Promise<TodoListWithMetadata[]> {
+  ): Promise<TaskListWithMetadata[]> {
     const queryPromises = sources.map(async source => {
       try {
         const lists = await this.querySourceWithTimeout(source.backend, query);
@@ -282,11 +282,11 @@ export class MultiSourceAggregator {
       return results
         .filter(r => r.status === 'fulfilled')
         .flatMap(
-          r => (r as PromiseFulfilledResult<TodoListWithMetadata[]>).value
+          r => (r as PromiseFulfilledResult<TaskListWithMetadata[]>).value
         );
     } else {
       // Execute queries sequentially
-      const results: TodoListWithMetadata[] = [];
+      const results: TaskListWithMetadata[] = [];
       for (const promise of queryPromises) {
         try {
           const lists = await promise;
@@ -413,10 +413,10 @@ export class MultiSourceAggregator {
    * Deduplicate lists and resolve conflicts
    */
   private async deduplicateAndResolve(
-    lists: TodoListWithMetadata[]
+    lists: TaskListWithMetadata[]
   ): Promise<TaskList[]> {
     // Group lists by ID
-    const grouped = new Map<string, TodoListWithMetadata[]>();
+    const grouped = new Map<string, TaskListWithMetadata[]>();
 
     for (const list of lists) {
       if (!grouped.has(list.id)) {
@@ -457,7 +457,7 @@ export class MultiSourceAggregator {
   }
 
   /**
-   * Deduplicate summaries (simpler than full lists)
+   * Deduplicate summaries
    */
   private deduplicateSummaries(
     summaries: Array<TaskListSummary & { _sourceMetadata: SourceMetadata }>
@@ -552,7 +552,7 @@ export class MultiSourceAggregator {
   /**
    * Resolve conflict by using the most recently updated version
    */
-  private resolveByLatest(versions: TodoListWithMetadata[]): TaskList {
+  private resolveByLatest(versions: TaskListWithMetadata[]): TaskList {
     const sorted = [...versions].sort((a, b) => {
       const aTime = a.updatedAt.getTime();
       const bTime = b.updatedAt.getTime();
@@ -578,7 +578,7 @@ export class MultiSourceAggregator {
   /**
    * Resolve conflict by using the version from highest priority source
    */
-  private resolveByPriority(versions: TodoListWithMetadata[]): TaskList {
+  private resolveByPriority(versions: TaskListWithMetadata[]): TaskList {
     const sorted = [...versions].sort((a, b) => {
       const aPriority = a._sourceMetadata?.priority ?? 0;
       const bPriority = b._sourceMetadata?.priority ?? 0;

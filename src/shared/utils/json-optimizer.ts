@@ -1,5 +1,5 @@
 /**
- * Optimized JSON serialization/deserialization for large objects
+ * JSON serialization/deserialization for large objects
  */
 
 import { logger } from './logger.js';
@@ -23,15 +23,14 @@ export class JsonOptimizer {
     'createdAt',
     'updatedAt',
     'completedAt',
-    'archivedAt',
     'dueDate',
   ];
 
   /**
-   * Optimized serialization for TaskList objects
+   * Serialization for TaskList objects
    */
-  static serializeTodoList(
-    todoList: TaskList,
+  static serializeTaskList(
+    taskList: TaskList,
     options: SerializationOptions = {}
   ): string {
     const startTime = performance.now();
@@ -39,11 +38,11 @@ export class JsonOptimizer {
     try {
       // Create a copy to avoid modifying the original
       const serializable: TaskList = this.prepareForSerialization(
-        todoList,
+        taskList,
         options
       );
 
-      // Use optimized JSON.stringify with replacer for large objects
+      // Use JSON.stringify with replacer for large objects
       const result =
         options.prettyPrint === true
           ? JSON.stringify(serializable, this.createReplacer(options), 2)
@@ -54,8 +53,8 @@ export class JsonOptimizer {
       if (duration > 10) {
         // Log slow serializations
         logger.debug('Slow JSON serialization detected', {
-          listId: todoList.id,
-          itemCount: todoList.items.length,
+          listId: taskList.id,
+          itemCount: taskList.items.length,
           duration: `${duration.toFixed(2)}ms`,
           size: `${(result.length / 1024).toFixed(1)}KB`,
         });
@@ -64,7 +63,7 @@ export class JsonOptimizer {
       return result;
     } catch (error) {
       logger.error('JSON serialization failed', {
-        listId: todoList.id,
+        listId: taskList.id,
         error,
       });
       throw error;
@@ -72,9 +71,9 @@ export class JsonOptimizer {
   }
 
   /**
-   * Optimized deserialization for TaskList objects
+   * Deserialization for TaskList objects
    */
-  static deserializeTodoList(
+  static deserializeTaskList(
     jsonString: string,
     options: DeserializationOptions = {}
   ): TaskList {
@@ -91,7 +90,7 @@ export class JsonOptimizer {
 
       // Validate schema if requested
       if (options.validateSchema === true) {
-        this.validateTodoListSchema(parsed);
+        this.validateTaskListSchema(parsed);
       }
 
       // Ensure dates are properly converted
@@ -137,17 +136,17 @@ export class JsonOptimizer {
   }
 
   /**
-   * Batch serialize multiple TodoLists efficiently
+   * Batch serialize multiple TaskLists efficiently
    */
-  static serializeTodoLists(
-    todoLists: TaskList[],
+  static serializeTaskLists(
+    taskLists: TaskList[],
     options: SerializationOptions = {}
   ): string {
     const startTime = performance.now();
 
     try {
       // Prepare all lists for serialization
-      const serializable = todoLists.map(list =>
+      const serializable = taskLists.map(list =>
         this.prepareForSerialization(list, options)
       );
 
@@ -157,23 +156,23 @@ export class JsonOptimizer {
           : JSON.stringify(serializable, this.createReplacer(options));
 
       const duration = performance.now() - startTime;
-      const totalItems = todoLists.reduce(
+      const totalItems = taskLists.reduce(
         (sum, list) => sum + list.items.length,
         0
       );
 
       logger.debug('Batch JSON serialization completed', {
-        listCount: todoLists.length,
+        listCount: taskLists.length,
         totalItems,
         duration: `${duration.toFixed(2)}ms`,
         size: `${(result.length / 1024).toFixed(1)}KB`,
-        avgPerList: `${(duration / todoLists.length).toFixed(2)}ms`,
+        avgPerList: `${(duration / taskLists.length).toFixed(2)}ms`,
       });
 
       return result;
     } catch (error) {
       logger.error('Batch JSON serialization failed', {
-        listCount: todoLists.length,
+        listCount: taskLists.length,
         error,
       });
       throw error;
@@ -183,15 +182,15 @@ export class JsonOptimizer {
   /**
    * Migrate data structure for backward compatibility
    */
-  private static migrateDataStructure(todoList: TaskList): void {
+  private static migrateDataStructure(taskList: TaskList): void {
     // Ensure list-level fields exist
-    if (!todoList.implementationNotes) {
-      todoList.implementationNotes = [];
+    if (!taskList.implementationNotes) {
+      taskList.implementationNotes = [];
     }
 
     // Ensure item-level fields exist
-    if (todoList.items) {
-      for (const item of todoList.items) {
+    if (taskList.items) {
+      for (const item of taskList.items) {
         if (!item.implementationNotes) {
           item.implementationNotes = [];
         }
@@ -203,9 +202,9 @@ export class JsonOptimizer {
   }
 
   /**
-   * Batch deserialize multiple TodoLists efficiently
+   * Batch deserialize multiple TaskLists efficiently
    */
-  static deserializeTodoLists(
+  static deserializeTaskLists(
     jsonString: string,
     options: DeserializationOptions = {}
   ): TaskList[] {
@@ -220,13 +219,13 @@ export class JsonOptimizer {
       ) as TaskList[];
 
       if (!Array.isArray(parsed)) {
-        throw new Error('Expected array of TodoLists');
+        throw new Error('Expected array of TaskLists');
       }
 
       // Process each list
       for (const list of parsed) {
         if (options.validateSchema === true) {
-          this.validateTodoListSchema(list);
+          this.validateTaskListSchema(list);
         }
 
         if (
@@ -332,10 +331,10 @@ export class JsonOptimizer {
   // Private helper methods
 
   private static prepareForSerialization(
-    todoList: TaskList,
+    taskList: TaskList,
     options: SerializationOptions
   ): TaskList {
-    const result: Partial<TaskList> = { ...todoList };
+    const result: Partial<TaskList> = { ...taskList };
 
     // Remove excluded fields
     if (options.excludeFields) {
@@ -447,9 +446,9 @@ export class JsonOptimizer {
     };
   }
 
-  private static convertDates(todoList: TaskList): void {
+  private static convertDates(taskList: TaskList): void {
     // Convert list-level dates
-    const listRecord = todoList as unknown as Record<string, unknown>;
+    const listRecord = taskList as unknown as Record<string, unknown>;
     for (const field of this.DATE_FIELDS) {
       const value = listRecord[field];
       if (typeof value === 'string') {
@@ -462,17 +461,17 @@ export class JsonOptimizer {
 
     // Convert dates in list-level implementation notes
     if (
-      todoList.implementationNotes &&
-      Array.isArray(todoList.implementationNotes)
+      taskList.implementationNotes &&
+      Array.isArray(taskList.implementationNotes)
     ) {
-      for (const note of todoList.implementationNotes) {
+      for (const note of taskList.implementationNotes) {
         this.convertDatesInObject(note);
       }
     }
 
     // Convert item-level dates
-    if (todoList.items !== null && todoList.items !== undefined) {
-      for (const item of todoList.items) {
+    if (taskList.items !== null && taskList.items !== undefined) {
+      for (const item of taskList.items) {
         const itemRecord = item as unknown as Record<string, unknown>;
         for (const field of this.DATE_FIELDS) {
           const value = itemRecord[field];
@@ -525,16 +524,16 @@ export class JsonOptimizer {
     }
   }
 
-  private static validateTodoListSchema(todoList: unknown): void {
+  private static validateTaskListSchema(taskList: unknown): void {
     if (
-      todoList === null ||
-      todoList === undefined ||
-      typeof todoList !== 'object'
+      taskList === null ||
+      taskList === undefined ||
+      typeof taskList !== 'object'
     ) {
       throw new Error('Invalid TaskList: not an object');
     }
 
-    const list = todoList as Record<string, unknown>;
+    const list = taskList as Record<string, unknown>;
 
     if (typeof list['id'] !== 'string' || list['id'] === '') {
       throw new Error('Invalid TaskList: missing or invalid id');
@@ -548,19 +547,19 @@ export class JsonOptimizer {
       throw new Error('Invalid TaskList: items must be an array');
     }
 
-    // Validate a sample of items for performance
+    // Validate a subset of items for performance
     const items = list['items'] as unknown[];
-    const sampleSize = Math.min(10, items.length);
-    for (let i = 0; i < sampleSize; i++) {
+    const subsetSize = Math.min(10, items.length);
+    for (let i = 0; i < subsetSize; i++) {
       const item = items[i];
       if (item === null || item === undefined || typeof item !== 'object') {
         throw new Error(`Invalid Task at index ${i}: not an object`);
       }
-      const todoItem = item as Record<string, unknown>;
-      if (typeof todoItem['id'] !== 'string' || todoItem['id'] === '') {
+      const taskItem = item as Record<string, unknown>;
+      if (typeof taskItem['id'] !== 'string' || taskItem['id'] === '') {
         throw new Error(`Invalid Task at index ${i}: missing or invalid id`);
       }
-      if (typeof todoItem['title'] !== 'string' || todoItem['title'] === '') {
+      if (typeof taskItem['title'] !== 'string' || taskItem['title'] === '') {
         throw new Error(`Invalid Task at index ${i}: missing or invalid title`);
       }
     }
@@ -572,8 +571,8 @@ export class JsonOptimizer {
   static estimateSerializedSize(obj: unknown): number {
     try {
       // Quick estimation without full serialization
-      const sample = JSON.stringify(obj).length;
-      return sample * 2; // Rough estimate for UTF-16 encoding
+      const estimate = JSON.stringify(obj).length;
+      return estimate * 2; // Rough estimate for UTF-16 encoding
     } catch {
       return 0;
     }

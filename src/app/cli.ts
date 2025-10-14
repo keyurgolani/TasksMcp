@@ -158,16 +158,16 @@ FEATURES:
   ✓ Action Plans          - Detailed step-by-step task breakdowns
   ✓ Implementation Notes  - Rich contextual notes for tasks and lists
   ✓ Pretty Print Display  - Human-readable formatted task views
-  ✓ Cleanup Suggestions  - Proactive cleanup of completed lists
+  ✓ Cleanup Management   - Management of completed lists
   ✓ Project Organization  - Tag-based project management
   ✓ Progress Tracking     - Advanced progress tracking
 
 MCP TOOLS AVAILABLE:
   LIST MANAGEMENT:
-  • create_list           Create new todo lists
+  • create_list           Create new task lists
   • get_list              Retrieve a specific list
-  • list_all_lists        List all todo lists
-  • delete_list           Delete or archive lists
+  • list_all_lists        List all task lists
+  • delete_list           Delete lists permanently
 
   TASK MANAGEMENT:
   • add_task              Add tasks to lists
@@ -176,6 +176,7 @@ MCP TOOLS AVAILABLE:
   • complete_task         Mark tasks as completed
   • set_task_priority     Change task priority
   • add_task_tags         Add tags to tasks
+  • remove_task_tags      Remove tags from tasks
 
   SEARCH & DISPLAY:
   • search_tasks          Search tasks by text
@@ -204,7 +205,7 @@ ENVIRONMENT VARIABLES:
   # Features Configuration (always enabled)
   MAX_ACTION_PLAN_STEPS          Maximum steps per action plan (default: 250)
   MAX_IMPLEMENTATION_NOTES_PER_ENTITY  Max notes per task/list (default: 500)
-  CLEANUP_SUGGESTION_DAYS        Days before suggesting cleanup (default: 7)
+  CLEANUP_MANAGEMENT_DAYS        Days for cleanup management (default: 7)
   PRETTY_PRINT_MAX_WIDTH         Max width for formatted output (default: 120)
 
 
@@ -223,7 +224,7 @@ async function showVersion(): Promise<void> {
     cliOutput.print('  ✓ Action Plans & Progress Tracking');
     cliOutput.print('  ✓ Implementation Notes & Context');
     cliOutput.print('  ✓ Pretty Print Formatting');
-    cliOutput.print('  ✓ Proactive Cleanup Suggestions');
+    cliOutput.print('  ✓ Cleanup Management');
     cliOutput.print('  ✓ Project-Based Organization');
     cliOutput.print('  ✓ Advanced Filtering & Search');
   } catch (_error) {

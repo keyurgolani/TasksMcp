@@ -60,7 +60,7 @@ describe('Data Delegation Layer Integration Tests', () => {
       updatedAt: overrides.updatedAt ?? now,
       completedAt: overrides.completedAt,
       context: '',
-      isArchived: overrides.isArchived ?? false,
+
       totalItems: overrides.totalItems ?? 0,
       completedItems: overrides.completedItems ?? 0,
       projectTag: overrides.projectTag ?? '',

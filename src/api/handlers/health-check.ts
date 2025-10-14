@@ -86,7 +86,7 @@ export async function healthCheckHandler(
  */
 async function checkStorage(): Promise<HealthCheckStatus> {
   // For now, just return pass
-  // This will be enhanced when storage backends are implemented
+  // This will be updated when storage backends are implemented
   return {
     status: 'pass',
     message: 'Storage is operational',

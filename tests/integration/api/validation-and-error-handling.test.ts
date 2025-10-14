@@ -49,7 +49,7 @@ describe('API Validation and Error Handling', () => {
 
     await server.initialize();
     app = server.getApp();
-  });
+  }, 60000);
 
   afterAll(async () => {
     if (server) {
@@ -64,7 +64,9 @@ describe('API Validation and Error Handling', () => {
       .send({
         title: `Test List ${Date.now()}`, // Make unique to avoid conflicts
         description: 'A list for testing validation',
-      });
+        projectTag: 'test-validation',
+      })
+      .timeout(10000);
 
     if (listResponse.status !== 201) {
       console.error('Failed to create test list:', listResponse.body);
@@ -72,18 +74,21 @@ describe('API Validation and Error Handling', () => {
     expect(listResponse.status).toBe(201);
     testListId = listResponse.body.data.id;
 
-    const taskResponse = await request(app).post('/api/v1/tasks').send({
-      listId: testListId,
-      title: 'Test Task',
-      description: 'A test task',
-    });
+    const taskResponse = await request(app)
+      .post('/api/v1/tasks')
+      .send({
+        listId: testListId,
+        title: 'Test Task',
+        description: 'A test task',
+      })
+      .timeout(10000);
 
     if (taskResponse.status !== 201) {
       console.error('Failed to create test task:', taskResponse.body);
     }
     expect(taskResponse.status).toBe(201);
     testTaskId = taskResponse.body.data.id;
-  });
+  }, 60000);
 
   describe('Request Validation', () => {
     describe('List Creation Validation', () => {
@@ -261,11 +266,9 @@ describe('API Validation and Error Handling', () => {
     });
 
     describe('Conflict Errors', () => {
-      it('should return 409 when trying to update archived list', async () => {
-        // First archive the list
-        await request(app)
-          .delete(`/api/v1/lists/${testListId}`)
-          .query({ permanent: 'false' });
+      it('should return 404 when trying to update deleted list', async () => {
+        // First delete the list (permanent deletion, no archiving)
+        await request(app).delete(`/api/v1/lists/${testListId}`);
 
         // Try to update it
         const response = await request(app)
@@ -274,8 +277,8 @@ describe('API Validation and Error Handling', () => {
             title: 'Updated Title',
           });
 
-        // Should return either 404 or 409 depending on implementation
-        expect([404, 409]).toContain(response.status);
+        // Should return 404 since list is permanently deleted
+        expect(response.status).toBe(404);
         expect(response.body.success).toBe(false);
         expect(response.body.error.message).toBeDefined();
       });

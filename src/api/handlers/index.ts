@@ -5,7 +5,7 @@
  * Handlers are organized by functionality:
  *
  * List Management:
- * - Create, retrieve, list, and delete todo lists
+ * - Create, retrieve, list, and delete task lists
  *
  * Task Management:
  * - Add, update, remove, and complete tasks
@@ -32,6 +32,7 @@ export { handleRemoveTask } from './remove-task.js';
 export { handleCompleteTask } from './complete-task.js';
 export { handleSetTaskPriority } from './set-task-priority.js';
 export { handleAddTaskTags } from './add-task-tags.js';
+export { handleRemoveTaskTags } from './remove-task-tags.js';
 
 // Search and display handlers
 export { handleSearchTool } from './search-tool.js';

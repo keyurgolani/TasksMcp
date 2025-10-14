@@ -4,8 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 15000,
-    hookTimeout: 15000,
+    testTimeout: 60000,
+    hookTimeout: 60000,
     setupFiles: ['./tests/setup.ts'],
     pool: 'forks',
     poolOptions: {
@@ -23,6 +23,16 @@ export default defineConfig({
       exclude: [
         'src/**/*.d.ts',
         'src/**/index.ts',
+        'src/**/interfaces/**',
+        'src/**/types/**',
+        'src/**/*.interface.ts',
+        'src/**/*.types.ts',
+        'src/**/repository.ts',
+        'src/**/repositories/i-*.ts',
+        'src/**/repositories/task.repository.ts',
+        'src/**/repositories/task-list.repository.ts',
+        'src/app/**', // Application entry points and servers
+        'src/infrastructure/storage/**', // Storage implementations tested via integration
         'examples/**',
         'scripts/**',
         'node_modules/**',

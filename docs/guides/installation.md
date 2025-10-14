@@ -92,6 +92,7 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "complete_task",
         "set_task_priority",
         "add_task_tags",
+        "remove_task_tags",
         "search_tool",
         "show_tasks",
 
@@ -465,7 +466,7 @@ npm test
 - **Response Time**: ~5ms for create operations, ~2ms for read operations
 - **Throughput**: ~900 operations per second sustained
 - **Memory Usage**: Stable under load, ~145MB typical usage
-- **Data Volume**: Supports 1000+ items per todo list, unlimited lists
+- **Data Volume**: Supports 1000+ items per task list, unlimited lists
 
 ## 🎯 Next Steps
 

@@ -1,49 +1,22 @@
 /**
- * Task validator for comprehensive task data validation
- * Implements all task validation rules and business constraints
+ * Enhanced task validator for orchestration layer
+ * Validates task data according to domain rules with detailed error messages
  */
 
 import {
   TAG_VALIDATION_PATTERN,
   TAG_MAX_LENGTH,
-  PRIORITY_MIN,
-  PRIORITY_MAX,
-  AGENT_PROMPT_TEMPLATE_MAX_LENGTH,
-} from '../../../domain/models/task';
+} from '../../../domain/models/task.js';
 import {
   ValidationResult,
   ValidationError,
-  ValidationSchema,
-} from '../../../shared/types/validation';
+  ValidationWarning,
+} from '../../../shared/types/validation.js';
 
 export class TaskValidator {
-  private readonly taskSchema: ValidationSchema = {
-    title: {
-      required: true,
-      minLength: 1,
-      maxLength: 1000,
-    },
-    description: {
-      maxLength: 5000,
-    },
-    priority: {
-      customValidator: (value: unknown) => this.validatePriority(value),
-    },
-    estimatedDuration: {
-      customValidator: (value: unknown) =>
-        this.validateEstimatedDuration(value),
-    },
-    tags: {
-      customValidator: (value: unknown) => this.validateTags(value),
-    },
-    agentPromptTemplate: {
-      maxLength: AGENT_PROMPT_TEMPLATE_MAX_LENGTH,
-    },
-  };
-
   validate(data: unknown): ValidationResult {
     const errors: ValidationError[] = [];
-    const warnings: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     if (!data || typeof data !== 'object') {
       errors.push({
@@ -51,78 +24,110 @@ export class TaskValidator {
         message: 'Task data must be an object',
         currentValue: data,
         expectedValue: 'object',
-        actionableGuidance: 'Provide a valid task data object',
+        actionableGuidance: `Provide a valid task object with required fields. Current type: ${typeof data}`,
       });
-      return { isValid: false, errors, warnings };
+      return {
+        isValid: false,
+        errors,
+        warnings,
+      };
     }
 
     const taskData = data as Record<string, unknown>;
 
-    // Validate each field according to schema
-    for (const [fieldName, validation] of Object.entries(this.taskSchema)) {
-      const value = taskData[fieldName];
+    // Validate required title field
+    if (!taskData['title']) {
+      errors.push({
+        field: 'title',
+        message: 'title is required',
+        currentValue: taskData['title'],
+        expectedValue: 'non-empty string',
+        actionableGuidance:
+          'Provide a valid title value. This field cannot be empty or undefined.',
+      });
+    } else if (typeof taskData['title'] !== 'string') {
+      errors.push({
+        field: 'title',
+        message: 'title must be a string',
+        currentValue: taskData['title'],
+        expectedValue: 'string',
+        actionableGuidance: `Convert the title to a string. Current type: ${typeof taskData['title']}`,
+      });
+    } else if (taskData['title'].length > 1000) {
+      const excess = taskData['title'].length - 1000;
+      errors.push({
+        field: 'title',
+        message: `title exceeds maximum length (current: ${taskData['title'].length} characters, maximum: 1000 characters)`,
+        currentValue: taskData['title'],
+        expectedValue: 'string with max 1000 characters',
+        actionableGuidance: `Reduce the title by ${excess} characters to meet the 1000 character limit. Consider using more concise language.`,
+      });
+    }
 
-      // Check required fields
-      if (
-        validation.required &&
-        (value === undefined || value === null || value === '')
-      ) {
+    // Validate description length
+    if (
+      taskData['description'] &&
+      typeof taskData['description'] === 'string'
+    ) {
+      if (taskData['description'].length > 5000) {
+        const excess = taskData['description'].length - 5000;
         errors.push({
-          field: fieldName,
-          message: `${fieldName} is required`,
-          currentValue: value,
-          expectedValue: 'non-empty value',
-          actionableGuidance: `Provide a valid ${fieldName}`,
+          field: 'description',
+          message: `description exceeds maximum length (current: ${taskData['description'].length} characters, maximum: 5000 characters)`,
+          currentValue: taskData['description'],
+          expectedValue: 'string with max 5000 characters',
+          actionableGuidance: `Reduce the description by ${excess} characters to meet the 5000 character limit. Consider using more concise language or breaking into multiple sections.`,
         });
-        continue;
       }
+    }
 
-      // Skip validation if field is not provided and not required
-      if (value === undefined || value === null) {
-        continue;
+    // Validate agent prompt template length
+    if (
+      taskData['agentPromptTemplate'] &&
+      typeof taskData['agentPromptTemplate'] === 'string'
+    ) {
+      if (taskData['agentPromptTemplate'].length > 10000) {
+        const excess = taskData['agentPromptTemplate'].length - 10000;
+        errors.push({
+          field: 'agentPromptTemplate',
+          message: `agentPromptTemplate exceeds maximum length (current: ${taskData['agentPromptTemplate'].length} characters, maximum: 10000 characters)`,
+          currentValue: taskData['agentPromptTemplate'],
+          expectedValue: 'string with max 10000 characters',
+          actionableGuidance: `Reduce the agent prompt template by ${excess} characters to meet the 10000 character limit. Consider using more concise instructions or breaking into multiple templates.`,
+        });
       }
+    }
 
-      // String length validation
-      if (typeof value === 'string') {
-        if (validation.minLength && value.length < validation.minLength) {
-          errors.push({
-            field: fieldName,
-            message: `${fieldName} must be at least ${validation.minLength} characters`,
-            currentValue: value.length,
-            expectedValue: `>= ${validation.minLength}`,
-            actionableGuidance: `Provide a ${fieldName} with at least ${validation.minLength} characters`,
-          });
-        }
+    // Validate tags if present
+    if (taskData['tags']) {
+      const tagValidation = this.validateTags(taskData['tags'] as string[]);
+      errors.push(...tagValidation.errors);
+      warnings.push(...tagValidation.warnings);
+    }
 
-        if (validation.maxLength && value.length > validation.maxLength) {
-          errors.push({
-            field: fieldName,
-            message: `${fieldName} must be at most ${validation.maxLength} characters`,
-            currentValue: value.length,
-            expectedValue: `<= ${validation.maxLength}`,
-            actionableGuidance: `Reduce ${fieldName} to ${validation.maxLength} characters or less`,
-          });
-        }
+    // Validate priority if present
+    if (taskData['priority'] !== undefined) {
+      const priorityValidation = this.validatePriority(taskData['priority']);
+      errors.push(...priorityValidation.errors);
+      warnings.push(...priorityValidation.warnings);
+    }
 
-        if (validation.pattern && !validation.pattern.test(value)) {
-          errors.push({
-            field: fieldName,
-            message: `${fieldName} format is invalid`,
-            currentValue: value,
-            expectedValue: validation.pattern.toString(),
-            actionableGuidance: `Ensure ${fieldName} matches the required format`,
-          });
-        }
-      }
+    // Validate estimated duration if present
+    if (taskData['estimatedDuration'] !== undefined) {
+      const durationValidation = this.validateEstimatedDuration(
+        taskData['estimatedDuration']
+      );
+      errors.push(...durationValidation.errors);
+      warnings.push(...durationValidation.warnings);
+    }
 
-      // Custom validation
-      if (validation.customValidator) {
-        const customResult = validation.customValidator(value);
-        if (!customResult.isValid) {
-          errors.push(...customResult.errors);
-          warnings.push(...customResult.warnings);
-        }
-      }
+    // Validate blockReason if present
+    if (taskData['blockReason'] !== undefined) {
+      const blockReasonValidation = this.validateBlockReason(
+        taskData['blockReason']
+      );
+      errors.push(...blockReasonValidation.errors);
+      warnings.push(...blockReasonValidation.warnings);
     }
 
     return {
@@ -134,17 +139,21 @@ export class TaskValidator {
 
   validateTags(tags: unknown): ValidationResult {
     const errors: ValidationError[] = [];
-    const warnings: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     if (!Array.isArray(tags)) {
       errors.push({
         field: 'tags',
         message: 'Tags must be an array',
-        currentValue: typeof tags,
-        expectedValue: 'array',
-        actionableGuidance: 'Provide tags as an array of strings',
+        currentValue: tags,
+        expectedValue: 'array of strings',
+        actionableGuidance: `Provide an array of tag strings. Current type: ${typeof tags}`,
       });
-      return { isValid: false, errors, warnings };
+      return {
+        isValid: false,
+        errors,
+        warnings,
+      };
     }
 
     for (let i = 0; i < tags.length; i++) {
@@ -154,43 +163,46 @@ export class TaskValidator {
         errors.push({
           field: `tags[${i}]`,
           message: 'Each tag must be a string',
-          currentValue: typeof tag,
+          currentValue: tag,
           expectedValue: 'string',
-          actionableGuidance: 'Ensure all tags are strings',
+          actionableGuidance: `Ensure all tags are string values. Tag at index ${i} is ${typeof tag}.`,
         });
         continue;
       }
 
-      if (tag.length === 0) {
+      if (tag.trim() === '') {
         errors.push({
           field: `tags[${i}]`,
           message: 'Tags cannot be empty',
-          currentValue: tag.length,
-          expectedValue: '> 0',
-          actionableGuidance: 'Remove empty tags or provide valid tag content',
+          currentValue: tag,
+          expectedValue: 'non-empty string',
+          actionableGuidance:
+            'Provide non-empty tag values. Remove empty tags from the array.',
         });
         continue;
       }
 
       if (tag.length > TAG_MAX_LENGTH) {
+        const excess = tag.length - TAG_MAX_LENGTH;
         errors.push({
           field: `tags[${i}]`,
-          message: `Tag must be at most ${TAG_MAX_LENGTH} characters`,
-          currentValue: tag.length,
-          expectedValue: `<= ${TAG_MAX_LENGTH}`,
-          actionableGuidance: `Shorten tag "${tag}" to ${TAG_MAX_LENGTH} characters or less`,
+          message: `Tag exceeds maximum length (current: ${tag.length} characters, maximum: ${TAG_MAX_LENGTH} characters)`,
+          currentValue: tag,
+          expectedValue: `string with max ${TAG_MAX_LENGTH} characters`,
+          actionableGuidance: `Shorten the tag by ${excess} characters to meet the ${TAG_MAX_LENGTH} character limit.`,
         });
         continue;
       }
 
+      // Validate tag format using modern character support pattern
       if (!TAG_VALIDATION_PATTERN.test(tag)) {
         errors.push({
           field: `tags[${i}]`,
           message: 'Tag contains invalid characters',
           currentValue: tag,
-          expectedValue: 'Letters, numbers, emoji, hyphens, underscores only',
-          actionableGuidance:
-            'Use only letters, numbers, emoji, hyphens (-), and underscores (_) in tags',
+          expectedValue:
+            'string with letters, numbers, emoji, hyphens, or underscores only',
+          actionableGuidance: `Tag "${tag}" contains invalid characters. Use only letters (including unicode), numbers, emoji, hyphens (-), and underscores (_). Spaces and special characters like @!<>:"|?* are not allowed. Consider replacing spaces with hyphens or underscores.`,
         });
       }
     }
@@ -201,9 +213,7 @@ export class TaskValidator {
       warnings.push({
         field: 'tags',
         message: 'Duplicate tags found',
-        currentValue: tags.length,
-        expectedValue: uniqueTags.size,
-        actionableGuidance: 'Remove duplicate tags',
+        suggestion: 'Remove duplicate tags for better organization',
       });
     }
 
@@ -216,16 +226,17 @@ export class TaskValidator {
 
   private validatePriority(priority: unknown): ValidationResult {
     const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     if (typeof priority !== 'number') {
       errors.push({
         field: 'priority',
         message: 'Priority must be a number',
-        currentValue: typeof priority,
-        expectedValue: 'number',
-        actionableGuidance: 'Provide priority as a number between 1 and 5',
+        currentValue: priority,
+        expectedValue: 'number between 1 and 5',
+        actionableGuidance: `Provide a numeric priority value between 1 (minimal) and 5 (critical/urgent). Current type: ${typeof priority}`,
       });
-      return { isValid: false, errors, warnings: [] };
+      return { isValid: false, errors, warnings };
     }
 
     if (!Number.isInteger(priority)) {
@@ -233,42 +244,44 @@ export class TaskValidator {
         field: 'priority',
         message: 'Priority must be an integer',
         currentValue: priority,
-        expectedValue: 'integer',
-        actionableGuidance:
-          'Provide priority as a whole number between 1 and 5',
+        expectedValue: 'integer between 1 and 5',
+        actionableGuidance: `Round the priority value to the nearest integer. Current value ${priority} should be rounded to ${Math.round(priority)}.`,
       });
+      return { isValid: false, errors, warnings };
     }
 
-    if (priority < PRIORITY_MIN || priority > PRIORITY_MAX) {
+    if (priority < 1 || priority > 5) {
       errors.push({
         field: 'priority',
-        message: `Priority must be between ${PRIORITY_MIN} and ${PRIORITY_MAX}`,
+        message: `Priority must be between 1 and 5 (current: ${priority})`,
         currentValue: priority,
-        expectedValue: `${PRIORITY_MIN}-${PRIORITY_MAX}`,
-        actionableGuidance: `Set priority to a value between ${PRIORITY_MIN} (minimal) and ${PRIORITY_MAX} (critical)`,
+        expectedValue: 'integer between 1 and 5',
+        actionableGuidance:
+          'Set priority to: 1 (minimal), 2 (low), 3 (medium), 4 (high), or 5 (critical/urgent)',
       });
+      return { isValid: false, errors, warnings };
     }
 
     return {
-      isValid: errors.length === 0,
+      isValid: true,
       errors,
-      warnings: [],
+      warnings,
     };
   }
 
   private validateEstimatedDuration(duration: unknown): ValidationResult {
     const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     if (typeof duration !== 'number') {
       errors.push({
         field: 'estimatedDuration',
         message: 'Estimated duration must be a number',
-        currentValue: typeof duration,
-        expectedValue: 'number',
-        actionableGuidance:
-          'Provide estimated duration in minutes as a positive number',
+        currentValue: duration,
+        expectedValue: 'positive number (minutes)',
+        actionableGuidance: `Provide a numeric duration in minutes (e.g., 30 for 30 minutes, 120 for 2 hours). Current type: ${typeof duration}`,
       });
-      return { isValid: false, errors, warnings: [] };
+      return { isValid: false, errors, warnings };
     }
 
     if (duration <= 0) {
@@ -276,27 +289,177 @@ export class TaskValidator {
         field: 'estimatedDuration',
         message: 'Estimated duration must be positive',
         currentValue: duration,
-        expectedValue: '> 0',
-        actionableGuidance:
-          'Provide a positive number of minutes for estimated duration',
+        expectedValue: 'positive number (minutes)',
+        actionableGuidance: `Duration must be greater than 0. Current value ${duration} is ${duration === 0 ? 'zero' : 'negative'}. Provide a positive duration in minutes.`,
       });
+      return { isValid: false, errors, warnings };
     }
 
-    if (!Number.isFinite(duration)) {
+    if (!isFinite(duration)) {
       errors.push({
         field: 'estimatedDuration',
         message: 'Estimated duration must be a finite number',
         currentValue: duration,
-        expectedValue: 'finite number',
-        actionableGuidance:
-          'Provide a valid finite number for estimated duration',
+        expectedValue: 'finite positive number (minutes)',
+        actionableGuidance: `Duration cannot be infinite or NaN. Current value is ${duration}. Provide a realistic duration estimate in minutes.`,
       });
+      return { isValid: false, errors, warnings };
+    }
+
+    // Add helpful warnings for unusual durations
+    if (duration > 10080) {
+      // More than a week (7 * 24 * 60)
+      warnings.push({
+        field: 'estimatedDuration',
+        message: 'Duration is unusually long (more than a week)',
+        suggestion:
+          'Consider breaking this task into smaller subtasks for better management',
+      });
+    } else if (duration < 1) {
+      warnings.push({
+        field: 'estimatedDuration',
+        message: 'Duration is very short (less than 1 minute)',
+        suggestion:
+          'Consider if this task needs an estimated duration or if it can be combined with other tasks',
+      });
+    }
+
+    return {
+      isValid: true,
+      errors,
+      warnings,
+    };
+  }
+
+  private validateBlockReason(blockReason: unknown): ValidationResult {
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
+
+    if (!blockReason || typeof blockReason !== 'object') {
+      errors.push({
+        field: 'blockReason',
+        message: 'blockReason must be an object',
+        currentValue: blockReason,
+        expectedValue: 'BlockReason object',
+        actionableGuidance:
+          'Provide a valid BlockReason object with blockedBy and details fields',
+      });
+      return { isValid: false, errors, warnings };
+    }
+
+    const blockReasonData = blockReason as Record<string, unknown>;
+
+    // Validate blockedBy field
+    if (!Array.isArray(blockReasonData['blockedBy'])) {
+      errors.push({
+        field: 'blockReason.blockedBy',
+        message: 'blockedBy must be an array of task IDs',
+        currentValue: blockReasonData['blockedBy'],
+        expectedValue: 'array of strings',
+        actionableGuidance:
+          'Provide an array of task ID strings that are blocking this task',
+      });
+    } else {
+      const blockedBy = blockReasonData['blockedBy'] as unknown[];
+      for (let i = 0; i < blockedBy.length; i++) {
+        if (typeof blockedBy[i] !== 'string') {
+          errors.push({
+            field: `blockReason.blockedBy[${i}]`,
+            message: 'Each blocked by task ID must be a string',
+            currentValue: blockedBy[i],
+            expectedValue: 'string',
+            actionableGuidance:
+              'Ensure all task IDs in blockedBy are string values',
+          });
+        }
+      }
+    }
+
+    // Validate details field
+    if (!Array.isArray(blockReasonData['details'])) {
+      errors.push({
+        field: 'blockReason.details',
+        message: 'details must be an array of task detail objects',
+        currentValue: blockReasonData['details'],
+        expectedValue: 'array of task detail objects',
+        actionableGuidance:
+          'Provide an array of objects with taskId, taskTitle, and status fields',
+      });
+    } else {
+      const details = blockReasonData['details'] as unknown[];
+      for (let i = 0; i < details.length; i++) {
+        const detail = details[i];
+        if (!detail || typeof detail !== 'object') {
+          errors.push({
+            field: `blockReason.details[${i}]`,
+            message: 'Each detail must be an object',
+            currentValue: detail,
+            expectedValue: 'object with taskId, taskTitle, and status',
+            actionableGuidance:
+              'Provide objects with taskId, taskTitle, and status fields',
+          });
+          continue;
+        }
+
+        const detailData = detail as Record<string, unknown>;
+
+        // Validate taskId
+        if (typeof detailData['taskId'] !== 'string') {
+          errors.push({
+            field: `blockReason.details[${i}].taskId`,
+            message: 'taskId must be a string',
+            currentValue: detailData['taskId'],
+            expectedValue: 'string',
+            actionableGuidance: 'Provide a valid task ID string',
+          });
+        }
+
+        // Validate taskTitle
+        if (typeof detailData['taskTitle'] !== 'string') {
+          errors.push({
+            field: `blockReason.details[${i}].taskTitle`,
+            message: 'taskTitle must be a string',
+            currentValue: detailData['taskTitle'],
+            expectedValue: 'string',
+            actionableGuidance: 'Provide a valid task title string',
+          });
+        }
+
+        // Validate status
+        if (typeof detailData['status'] !== 'string') {
+          errors.push({
+            field: `blockReason.details[${i}].status`,
+            message: 'status must be a string',
+            currentValue: detailData['status'],
+            expectedValue: 'TaskStatus string',
+            actionableGuidance:
+              'Provide a valid TaskStatus value (pending, in_progress, completed, blocked, cancelled)',
+          });
+        }
+
+        // Validate estimatedCompletion if present
+        if (detailData['estimatedCompletion'] !== undefined) {
+          if (
+            !(detailData['estimatedCompletion'] instanceof Date) &&
+            typeof detailData['estimatedCompletion'] !== 'string'
+          ) {
+            errors.push({
+              field: `blockReason.details[${i}].estimatedCompletion`,
+              message: 'estimatedCompletion must be a Date or ISO string',
+              currentValue: detailData['estimatedCompletion'],
+              expectedValue: 'Date object or ISO date string',
+              actionableGuidance:
+                'Provide a valid Date object or ISO date string',
+            });
+          }
+        }
+      }
     }
 
     return {
       isValid: errors.length === 0,
       errors,
-      warnings: [],
+      warnings,
     };
   }
 }

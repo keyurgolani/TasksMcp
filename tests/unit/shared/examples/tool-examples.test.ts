@@ -131,7 +131,7 @@ describe('Tool Examples Library', () => {
       expect(addTaskExamples.examples.length).toBeGreaterThan(1);
 
       const basicExample = addTaskExamples.examples.find(e =>
-        e.description.toLowerCase().includes('basic')
+        e.description.toLowerCase().includes('minimal')
       );
       const detailedExample = addTaskExamples.examples.find(e =>
         e.description.toLowerCase().includes('detailed')

@@ -137,7 +137,7 @@ export interface Task {
 
 /**
  * Task list container
- * Groups related tasks with comprehensive analytics and project management features
+ * Groups related tasks with analytics and project management features
  */
 export interface TaskList {
   id: string;
@@ -148,17 +148,16 @@ export interface TaskList {
   updatedAt: Date;
   completedAt?: Date; // When all tasks were completed
   context: string; // Deprecated in favor of projectTag
-  isArchived: boolean; // Whether list is archived
-  totalItems: number; // Cached count for performance
-  completedItems: number; // Cached count for performance
+  totalItems: number; // Total count of items
+  completedItems: number; // Count of completed items
   progress: number; // Completion percentage (0-100)
-  analytics: ListAnalytics; // Comprehensive analytics data
+  analytics: ListAnalytics; // Analytics data
   metadata: Record<string, unknown>; // Extensible metadata
 
   // v2 fields - Project management features
   projectTag: string; // Project/context identifier (replaces context)
   implementationNotes: ImplementationNote[]; // List-level notes
-  cleanupSuggested?: Date; // When cleanup was last suggested
+  cleanupRecommended?: Date; // When cleanup was last recommended
   cleanupDeclined?: Date; // When cleanup was last declined
 }
 
@@ -171,7 +170,6 @@ export interface TaskListSummary {
   lastUpdated: Date;
   context: string; // Deprecated, use projectTag
   projectTag: string; // v2 field
-  isArchived?: boolean;
 }
 
 export interface ListAnalytics {

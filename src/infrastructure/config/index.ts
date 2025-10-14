@@ -7,6 +7,8 @@ import { z } from 'zod';
 // Export data source configuration modules
 export * from './data-source-config.js';
 export * from './data-source-loader.js';
+export * from './file-config-loader.js';
+export * from './system-configuration.js';
 import { logger } from '../../shared/utils/logger.js';
 import {
   StorageFactory,

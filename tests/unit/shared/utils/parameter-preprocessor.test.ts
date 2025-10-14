@@ -345,26 +345,6 @@ describe('ParameterPreprocessor', () => {
     });
   });
 
-  describe('Statistics', () => {
-    it('should provide accurate preprocessing statistics', () => {
-      const result = preprocessor.preprocessParameters({
-        priority: '5',
-        enabled: 'true',
-        tags: '["tag1", "tag2"]',
-        description: 'unchanged',
-      });
-
-      const stats = preprocessor.getStats(result);
-
-      expect(stats.totalParameters).toBe(4);
-      expect(stats.convertedParameters).toBe(3);
-      expect(stats.conversionsByType['string->number']).toBe(1);
-      expect(stats.conversionsByType['string->boolean']).toBe(1);
-      expect(stats.conversionsByType['json->array']).toBe(1);
-      expect(stats.errorCount).toBe(0);
-    });
-  });
-
   describe('Utility Functions', () => {
     it('should work with the global preprocessParameters function', () => {
       const result = preprocessParameters({

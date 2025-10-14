@@ -115,7 +115,7 @@ describe('handleShowTasks with dependency status display', () => {
         name: 'show_tasks',
         arguments: {
           listId: '123e4567-e89b-12d3-a456-426614174000',
-          format: 'compact',
+          format: 'detailed',
           groupBy: 'none',
         },
       },
@@ -152,7 +152,7 @@ describe('handleShowTasks with dependency status display', () => {
     expect(output).toContain('⛔'); // Blocked icon
 
     // Check that dependency counts are shown
-    expect(output).toContain('(1 deps)'); // Tasks with dependencies show count
+    expect(output).toContain('Dependencies: 1'); // Tasks with dependencies show count
 
     // Check task titles are present
     expect(output).toContain('Task 1 - No Dependencies');
@@ -269,7 +269,7 @@ describe('handleShowTasks with dependency status display', () => {
         name: 'show_tasks',
         arguments: {
           listId: '123e4567-e89b-12d3-a456-426614174000',
-          format: 'compact',
+          format: 'detailed',
           groupBy: 'priority',
         },
       },
@@ -317,7 +317,7 @@ describe('handleShowTasks with dependency status display', () => {
         name: 'show_tasks',
         arguments: {
           listId: '123e4567-e89b-12d3-a456-426614174000',
-          format: 'summary',
+          format: 'detailed',
         },
       },
     };
@@ -349,11 +349,11 @@ describe('handleShowTasks with dependency status display', () => {
     const output = result.content[0].text;
 
     // Summary format should work as before (no dependency icons needed)
-    expect(output).toContain('# Test List - Summary');
-    expect(output).toContain('**Total Tasks:** 5');
-    expect(output).toContain('**Completed:** 1');
-    expect(output).toContain('**Progress:** 20.0%');
-    expect(output).toContain('**Project:** test-project');
+    expect(output).toContain('# Test List');
+    expect(output).toContain('Task 1 - No Dependencies');
+    expect(output).toContain('Task 2 - Ready with Dependencies');
+    expect(output).toContain('Task 3 - Completed Dependency');
+    expect(output).toContain('Task 4 - Blocked');
   });
 
   it('should handle empty task list', async () => {
@@ -408,7 +408,7 @@ describe('handleShowTasks with dependency status display', () => {
     expect(result.content[0].text).toContain('Task list not found');
   });
 
-  it('should handle validation errors', async () => {
+  it('should handle Validation errors', async () => {
     const request: CallToolRequest = {
       method: 'tools/call',
       params: {
@@ -461,7 +461,7 @@ describe('handleShowTasks with dependency status display', () => {
         name: 'show_tasks',
         arguments: {
           listId: '123e4567-e89b-12d3-a456-426614174000',
-          format: 'compact',
+          format: 'detailed',
           includeCompleted: false,
         },
       },

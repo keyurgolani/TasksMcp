@@ -1,6 +1,6 @@
 /**
- * MCP handler for adding tasks to todo lists
- * Handles the add_task tool request with comprehensive validation and error handling
+ * MCP handler for adding tasks to task lists
+ * Handles the add_task tool request with validation and error handling
  */
 
 import { z } from 'zod';
@@ -47,15 +47,15 @@ const AddTaskSchema = z.object({
 
 /**
  * Handles MCP add_task tool requests
- * Adds a new task to an existing todo list with specified properties
+ * Adds a new task to an existing task list with specified properties
  *
  * @param request - The MCP call tool request containing task creation parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with created task details or error
  */
 export async function handleAddTask(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing add_task request', {
@@ -67,7 +67,7 @@ export async function handleAddTask(
 
     // Validate dependencies if provided
     if (args.dependencies.length > 0) {
-      const existingList = await todoListManager.getTaskList({
+      const existingList = await taskListManager.getTaskList({
         listId: args.listId,
         includeCompleted: true,
       });
@@ -116,7 +116,7 @@ export async function handleAddTask(
       dependencyResolver.cleanup();
     }
 
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'add_item',
       itemData: {

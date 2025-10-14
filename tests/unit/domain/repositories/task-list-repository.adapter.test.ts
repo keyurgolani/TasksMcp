@@ -31,29 +31,15 @@ class MockStorageBackend extends StorageBackend {
     return this.data.get(key) ?? null;
   }
 
-  async delete(key: string, permanent?: boolean): Promise<void> {
-    if (permanent) {
-      this.data.delete(key);
-    } else {
-      const list = this.data.get(key);
-      if (list) {
-        list.isArchived = true;
-        this.data.set(key, list);
-      }
-    }
+  async delete(key: string): Promise<void> {
+    this.data.delete(key);
   }
 
-  async list(options?: {
-    projectTag?: string;
-    includeArchived?: boolean;
-  }): Promise<TaskListSummary[]> {
+  async list(options?: { projectTag?: string }): Promise<TaskListSummary[]> {
     const summaries: TaskListSummary[] = [];
     for (const [id, list] of this.data.entries()) {
       // Apply filters
       if (options?.projectTag && list.projectTag !== options.projectTag) {
-        continue;
-      }
-      if (!options?.includeArchived && list.isArchived) {
         continue;
       }
 
@@ -66,7 +52,6 @@ class MockStorageBackend extends StorageBackend {
         lastUpdated: list.updatedAt,
         context: list.context,
         projectTag: list.projectTag,
-        isArchived: list.isArchived,
       });
     }
     return summaries;
@@ -119,7 +104,6 @@ function createTestList(id: string, overrides?: Partial<TaskList>): TaskList {
     updatedAt: now,
     context: 'test',
     projectTag: 'test-project',
-    isArchived: false,
     totalItems: 0,
     completedItems: 0,
     progress: 0,
@@ -400,21 +384,11 @@ describe('TaskListRepositoryAdapter', () => {
   });
 
   describe('delete', () => {
-    it('should archive a TaskList when permanent is false', async () => {
-      const list = createTestList('list-1');
-      await storage.save('list-1', list);
-
-      await adapter.delete('list-1', false);
-
-      const loaded = await storage.load('list-1');
-      expect(loaded?.isArchived).toBe(true);
-    });
-
     it('should permanently delete a TaskList', async () => {
       const list = createTestList('list-1');
       await storage.save('list-1', list);
 
-      await adapter.delete('list-1', true);
+      await adapter.delete('list-1');
 
       const loaded = await storage.load('list-1');
       expect(loaded).toBeNull();
@@ -423,7 +397,7 @@ describe('TaskListRepositoryAdapter', () => {
     it('should throw error if delete fails', async () => {
       vi.spyOn(storage, 'delete').mockRejectedValue(new Error('Delete failed'));
 
-      await expect(adapter.delete('list-1', true)).rejects.toThrow(
+      await expect(adapter.delete('list-1')).rejects.toThrow(
         'Failed to delete TaskList list-1'
       );
     });

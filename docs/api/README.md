@@ -54,7 +54,7 @@ Configure your MCP client to connect to the task manager:
 
 The MCP Task Manager provides **20 focused tools** organized in 6 categories:
 
-- **[List Management](tools.md#list-management-tools)** (4 tools): Create, retrieve, list, delete todo lists
+- **[List Management](tools.md#list-management-tools)** (4 tools): Create, retrieve, list, delete task lists
 - **[Task Management](tools.md#task-management-tools)** (6 tools): Add, update, remove, complete tasks and manage priorities/tags
 - **[Search & Display](tools.md#search--display-tools)** (3 tools): Search, filter, and display tasks with formatting
 - **[Advanced Features](tools.md#advanced-features-tools)** (2 tools): Task analysis and AI-generated suggestions
@@ -77,7 +77,7 @@ The MCP Task Manager provides **20 focused tools** organized in 6 categories:
 - `analyze_task_dependencies` - Project management insights
 - `bulk_task_operations` - Batch efficiency
 - `set_task_exit_criteria` - Quality control
-- **Task Management (6 tools)**: `add_task`, `update_task`, `remove_task`, `complete_task`, `set_task_priority`, `add_task_tags`
+- **Task Management (7 tools)**: `add_task`, `update_task`, `remove_task`, `complete_task`, `set_task_priority`, `add_task_tags`, `remove_task_tags`
 - **Search & Display (3 tools)**: `search_tasks`, `filter_tasks`, `show_tasks`
 - **Advanced Features (2 tools)**: `analyze_task`, `get_task_suggestions`
 
@@ -85,13 +85,13 @@ The MCP Task Manager provides **20 focused tools** organized in 6 categories:
 
 The original complex tools are still available but not recommended for new integrations:
 
-1. **[create_todo_list](./mcp-tools.md#create_todo_list)** - Create new todo lists with optional initial tasks
-2. **[get_todo_list](./mcp-tools.md#get_todo_list)** - Retrieve todo lists with advanced filtering and pagination
-3. **[update_todo_list](./mcp-tools.md#update_todo_list)** - Update lists with add/modify/remove operations
-4. **[list_todo_lists](./mcp-tools.md#list_todo_lists)** - List all todo lists with filtering options
-5. **[delete_todo_list](./mcp-tools.md#delete_todo_list)** - Delete or archive todo lists
-6. **[analyze_task_complexity](./mcp-tools.md#analyze_task_complexity)** - AI-powered task complexity analysis and breakdown
-7. **[search_todo_lists](./mcp-tools.md#search_todo_lists)** - Search across all lists with relevance scoring
+1. **[create_task_list](./mcp-tools.md#create_task_list)** - Create new task lists with optional initial tasks
+2. **[get_task_list](./mcp-tools.md#get_task_list)** - Retrieve task lists with advanced filtering and pagination
+3. **[update_task_list](./mcp-tools.md#update_task_list)** - Update lists with add/modify/remove operations
+4. **[list_task_lists](./mcp-tools.md#list_task_lists)** - List all task lists with filtering options
+5. **[delete_task_list](./mcp-tools.md#delete_task_list)** - Delete task lists permanently
+
+6. **[search_task_lists](./mcp-tools.md#search_task_lists)** - Search across all lists with relevance scoring
 
 ## Response Format
 
@@ -220,7 +220,6 @@ interface ListAnalytics {
 - **Basic CRUD operations**: ~5ms for create, ~2ms for read
 - **Complex queries with filtering**: < 500ms
 - **Bulk operations**: < 5 seconds
-- **AI complexity analysis**: < 2 seconds
 
 ### Scalability Limits
 

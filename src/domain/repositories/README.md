@@ -4,14 +4,14 @@ This directory contains repository interfaces that define the contract for data 
 
 ## Overview
 
-Repositories provide a collection-like interface for accessing domain aggregates (TodoLists and Tasks). They abstract away the details of data storage, allowing the domain layer to remain independent of infrastructure concerns.
+Repositories provide a collection-like interface for accessing domain aggregates (TaskLists and Tasks). They abstract away the details of data storage, allowing the domain layer to remain independent of infrastructure concerns.
 
 ## Key Principles
 
 ### 1. Domain-Driven Design
 
 - Repositories are defined in the domain layer
-- They work with domain entities (TodoList, TodoItem)
+- They work with domain entities (TaskList, Task)
 - They enforce business rules and invariants
 - They provide collection-like semantics
 
@@ -31,11 +31,11 @@ Repositories provide a collection-like interface for accessing domain aggregates
 
 ## Repository Interfaces
 
-### ITodoListRepository
+### ITaskListRepository
 
-The primary repository for TodoList aggregates. Provides operations for:
+The primary repository for TaskList aggregates. Provides operations for:
 
-- **CRUD Operations**: Create, read, update, delete TodoLists
+- **CRUD Operations**: Create, read, update, delete TaskLists
 - **Search & Query**: Complex queries with filtering, sorting, pagination
 - **Summaries**: Lightweight list views without full task details
 - **Health Checks**: Verify repository operational status
@@ -43,11 +43,11 @@ The primary repository for TodoList aggregates. Provides operations for:
 **Key Methods:**
 
 ```typescript
-save(list: TodoList): Promise<void>
-findById(id: string, options?: FindOptions): Promise<TodoList | null>
-findAll(options?: FindOptions): Promise<TodoList[]>
-search(query: SearchQuery): Promise<SearchResult<TodoList>>
-searchSummaries(query: SearchQuery): Promise<SearchResult<TodoListSummary>>
+save(list: TaskList): Promise<void>
+findById(id: string, options?: FindOptions): Promise<TaskList | null>
+findAll(options?: FindOptions): Promise<TaskList[]>
+search(query: SearchQuery): Promise<SearchResult<TaskList>>
+searchSummaries(query: SearchQuery): Promise<SearchResult<TaskListSummary>>
 delete(id: string, permanent: boolean): Promise<void>
 exists(id: string): Promise<boolean>
 count(query?: SearchQuery): Promise<number>
@@ -58,7 +58,7 @@ healthCheck(): Promise<boolean>
 
 Task-centric repository for operations that span multiple lists. Provides:
 
-- **Cross-List Search**: Find tasks across all TodoLists
+- **Cross-List Search**: Find tasks across all TaskLists
 - **Dependency Analysis**: Find dependents and dependencies
 - **Ready Tasks**: Find tasks ready to work on
 - **Bulk Operations**: Efficient batch updates and deletes
@@ -84,7 +84,7 @@ bulkDelete(taskIds: Array<{listId: string; taskId: string}>): Promise<BulkOperat
 
 ### FindOptions
 
-Options for finding TodoLists with filtering and pagination:
+Options for finding TaskLists with filtering and pagination:
 
 ```typescript
 interface FindOptions {
@@ -121,7 +121,7 @@ interface TaskFilters {
 
 ### SearchQuery
 
-Complex search queries for TodoLists:
+Complex search queries for TaskLists:
 
 ```typescript
 interface SearchQuery {
@@ -194,14 +194,14 @@ interface SearchResult<T> {
 Create an adapter that implements the repository interface:
 
 ```typescript
-export class TodoListRepositoryAdapter implements ITodoListRepository {
+export class TaskListRepositoryAdapter implements ITaskListRepository {
   constructor(private readonly storage: StorageBackend) {}
 
-  async save(list: TodoList): Promise<void> {
+  async save(list: TaskList): Promise<void> {
     await this.storage.save(list.id, list, { validate: true });
   }
 
-  async findById(id: string, options?: FindOptions): Promise<TodoList | null> {
+  async findById(id: string, options?: FindOptions): Promise<TaskList | null> {
     return await this.storage.load(id, {
       includeArchived: options?.includeArchived,
     });
@@ -216,13 +216,13 @@ export class TodoListRepositoryAdapter implements ITodoListRepository {
 For aggregating data from multiple sources:
 
 ```typescript
-export class MultiSourceTodoListRepository implements ITodoListRepository {
+export class MultiSourceTaskListRepository implements ITaskListRepository {
   constructor(
     private readonly router: DataSourceRouter,
     private readonly aggregator: MultiSourceAggregator
   ) {}
 
-  async search(query: SearchQuery): Promise<SearchResult<TodoList>> {
+  async search(query: SearchQuery): Promise<SearchResult<TaskList>> {
     return await this.aggregator.aggregateLists(query);
   }
 
@@ -235,14 +235,14 @@ export class MultiSourceTodoListRepository implements ITodoListRepository {
 Create mock implementations for testing:
 
 ```typescript
-export class MockTodoListRepository implements ITodoListRepository {
-  private lists = new Map<string, TodoList>();
+export class MockTaskListRepository implements ITaskListRepository {
+  private lists = new Map<string, TaskList>();
 
-  async save(list: TodoList): Promise<void> {
+  async save(list: TaskList): Promise<void> {
     this.lists.set(list.id, list);
   }
 
-  async findById(id: string): Promise<TodoList | null> {
+  async findById(id: string): Promise<TaskList | null> {
     return this.lists.get(id) ?? null;
   }
 
@@ -255,20 +255,20 @@ export class MockTodoListRepository implements ITodoListRepository {
 ### Current Architecture
 
 ```
-TodoListManager → StorageBackend (direct coupling)
+TaskListManager → StorageBackend (direct coupling)
 ```
 
 ### Target Architecture
 
 ```
-TodoListManager → ITodoListRepository → StorageBackend (via adapter)
+TaskListManager → ITaskListRepository → StorageBackend (via adapter)
 ```
 
 ### Migration Steps
 
 1. ✅ Define repository interfaces (this step)
 2. Create repository adapter wrapping existing StorageBackend
-3. Update TodoListManager to accept ITodoListRepository
+3. Update TaskListManager to accept ITaskListRepository
 4. Replace direct storage calls with repository methods
 5. Verify backward compatibility with existing tests
 6. Implement multi-source repository for data aggregation
@@ -304,4 +304,4 @@ TodoListManager → ITodoListRepository → StorageBackend (via adapter)
 - [Design Document](../../../.kiro/specs/multi-interface-access/design.md) - Overall architecture
 - [Requirements](../../../.kiro/specs/multi-interface-access/requirements.md) - Feature requirements
 - [Storage Types](../../shared/types/storage.ts) - Current storage interfaces
-- [Todo Types](../../shared/types/todo.ts) - Domain entity definitions
+- [Task Types](../../shared/types/task.ts) - Domain entity definitions

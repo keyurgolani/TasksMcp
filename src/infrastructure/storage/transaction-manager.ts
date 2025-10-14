@@ -108,11 +108,7 @@ export class TransactionManager {
   /**
    * Add a delete operation to the transaction
    */
-  async addDeleteOperation(
-    transactionId: string,
-    key: string,
-    permanent = false
-  ): Promise<void> {
+  async addDeleteOperation(transactionId: string, key: string): Promise<void> {
     const transaction = this.getActiveTransaction(transactionId);
 
     // Create backup of existing data
@@ -125,13 +121,11 @@ export class TransactionManager {
       type: 'delete',
       key,
       backup,
-      permanent,
     });
 
     logger.debug('Delete operation added to transaction', {
       transactionId,
       key,
-      permanent,
       operationCount: transaction.operations.length,
     });
   }
@@ -164,7 +158,7 @@ export class TransactionManager {
               backup: true,
             });
           } else if (operation.type === 'delete') {
-            await this.storage.delete(operation.key, operation.permanent);
+            await this.storage.delete(operation.key);
           }
         } catch (error) {
           // Rollback all completed operations
@@ -307,7 +301,7 @@ export class TransactionManager {
           }
           await this.addSaveOperation(transactionId, op.key, op.data);
         } else if (op.type === 'delete') {
-          await this.addDeleteOperation(transactionId, op.key, op.permanent);
+          await this.addDeleteOperation(transactionId, op.key);
         }
       }
 
@@ -347,7 +341,7 @@ export class TransactionManager {
               validate: true,
             });
           } else {
-            await this.storage.delete(operation.key, true);
+            await this.storage.delete(operation.key);
           }
         } else if (operation.type === 'delete') {
           // Restore deleted item

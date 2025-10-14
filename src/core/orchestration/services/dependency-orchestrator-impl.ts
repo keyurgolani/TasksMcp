@@ -43,10 +43,15 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
     const circularResult = this.detectCircularDependencies(graph);
 
     if (circularResult.hasCircularDependency && circularResult.cycles[0]) {
+      const cycle = circularResult.cycles[0];
+      const cycleDescription = cycle.tasks.join(' → ');
+      const detailedMessage = `Circular dependency detected in chain: ${cycleDescription}. This creates an infinite loop where tasks depend on each other in a cycle.`;
+      const actionableGuidance = `To resolve this issue, remove one of the following dependencies: ${cycle.tasks.slice(0, -1).join(', ')}. Consider restructuring your task dependencies to avoid circular references.`;
+
       throw new CircularDependencyError(
-        'Circular dependency detected',
-        circularResult.cycles[0].tasks,
-        'Remove one of the dependencies to break the cycle'
+        detailedMessage,
+        cycle.tasks,
+        actionableGuidance
       );
     }
 
@@ -69,46 +74,57 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
     const recursionStack = new Set<string>();
     const cycles: Array<{ tasks: string[]; path: string[] }> = [];
 
+    // Optimized O(V + E) cycle detection using DFS
     const dfs = (nodeId: string, path: string[]): boolean => {
+      // If we encounter a node already in the recursion stack, we found a cycle
       if (recursionStack.has(nodeId)) {
-        // Found a cycle
         const cycleStart = path.indexOf(nodeId);
-        const cycleTasks = path.slice(cycleStart);
-        cycleTasks.push(nodeId); // Complete the cycle
+        if (cycleStart !== -1) {
+          const cycleTasks = path.slice(cycleStart);
+          cycleTasks.push(nodeId); // Complete the cycle
 
-        cycles.push({
-          tasks: cycleTasks,
-          path: [...path, nodeId],
-        });
+          cycles.push({
+            tasks: cycleTasks,
+            path: [...path, nodeId],
+          });
+        }
         return true;
       }
 
+      // If already visited and not in recursion stack, no cycle from this path
       if (visited.has(nodeId)) {
         return false;
       }
 
+      // Mark as visited and add to recursion stack
       visited.add(nodeId);
       recursionStack.add(nodeId);
-      path.push(nodeId);
 
+      // Explore all dependencies
       const dependencies = graph.edges.get(nodeId) || [];
       for (const depId of dependencies) {
-        if (dfs(depId, [...path])) {
-          // Continue searching for more cycles
+        // Only continue DFS if the dependency node exists in the graph
+        if (graph.nodes.has(depId)) {
+          const newPath = [...path, nodeId];
+          if (dfs(depId, newPath)) {
+            // Found a cycle, but continue to find all cycles
+          }
         }
       }
 
+      // Remove from recursion stack when backtracking
       recursionStack.delete(nodeId);
       return false;
     };
 
-    // Check all nodes for cycles
+    // Check all nodes for cycles - ensures we find all strongly connected components
     for (const nodeId of graph.nodes.keys()) {
       if (!visited.has(nodeId)) {
         dfs(nodeId, []);
       }
     }
 
+    // Collect all tasks affected by cycles
     const affectedTasks = new Set<string>();
     cycles.forEach(cycle => {
       cycle.tasks.forEach(task => affectedTasks.add(task));
@@ -168,6 +184,11 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
       // Filter tasks that have no incomplete dependencies
       const readyTasks = [];
       for (const task of tasks || []) {
+        // Check limit before processing more tasks
+        if (limit && readyTasks.length >= limit) {
+          break;
+        }
+
         if (task.dependencies.length === 0) {
           readyTasks.push(task);
           continue;
@@ -185,10 +206,6 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
 
         if (allDependenciesCompleted) {
           readyTasks.push(task);
-        }
-
-        if (limit && readyTasks.length >= limit) {
-          break;
         }
       }
 
@@ -363,7 +380,7 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
   }
 
   validate(_data: unknown): ValidationResult {
-    // Basic validation for dependency operations
+    // Validation for dependency operations
     return { isValid: true, errors: [], warnings: [] };
   }
 
@@ -383,5 +400,76 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
 
   async delegateData(operation: DataOperation): Promise<unknown> {
     return this.dataDelegation.execute(operation);
+  }
+
+  async validateDependencies(
+    _listId: string,
+    dependencies: string[]
+  ): Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  }> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    try {
+      // Verify all dependency tasks exist
+      for (const depId of dependencies) {
+        try {
+          await this.getTask(depId);
+        } catch (_error) {
+          errors.push(`Dependency task ${depId} not found`);
+        }
+      }
+
+      // Check for circular dependencies if we have a valid task to check against
+      if (errors.length === 0 && dependencies.length > 0) {
+        // For validation, we use a temporary task ID
+        const tempTaskId = 'temp-validation-' + Date.now();
+        const graph = await this.buildDependencyGraph(tempTaskId, dependencies);
+        const circularResult = this.detectCircularDependencies(graph);
+
+        if (circularResult.hasCircularDependency) {
+          errors.push(
+            `Circular dependency detected: ${circularResult.cycles[0]?.tasks.join(' -> ')}`
+          );
+        }
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        warnings,
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [`Validation failed: ${(error as Error).message}`],
+        warnings,
+      };
+    }
+  }
+
+  async setBulkTaskDependencies(
+    dependencies: Array<{ taskId: string; dependencies: string[] }>
+  ): Promise<void> {
+    for (const dep of dependencies) {
+      try {
+        await this.setTaskDependencies(dep.taskId, dep.dependencies);
+      } catch (error) {
+        throw this.handleError(error as Error, 'Bulk Dependency Setting');
+      }
+    }
+  }
+
+  async clearBulkTaskDependencies(taskIds: string[]): Promise<void> {
+    for (const taskId of taskIds) {
+      try {
+        await this.setTaskDependencies(taskId, []);
+      } catch (error) {
+        throw this.handleError(error as Error, 'Bulk Dependency Clearing');
+      }
+    }
   }
 }

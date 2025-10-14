@@ -27,7 +27,6 @@ export enum ErrorCode {
   CONFLICT = 'CONFLICT',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   DEPENDENCY_ERROR = 'DEPENDENCY_ERROR',
-  ARCHIVED_RESOURCE = 'ARCHIVED_RESOURCE',
   CIRCULAR_DEPENDENCY = 'CIRCULAR_DEPENDENCY',
   INCOMPLETE_DEPENDENCIES = 'INCOMPLETE_DEPENDENCIES',
   UNMET_EXIT_CRITERIA = 'UNMET_EXIT_CRITERIA',
@@ -78,14 +77,6 @@ function categorizeError(err: Error): {
     return {
       statusCode: 404,
       errorCode: ErrorCode.NOT_FOUND,
-      message: err.message,
-    };
-  }
-
-  if (message.includes('archived')) {
-    return {
-      statusCode: 409,
-      errorCode: ErrorCode.ARCHIVED_RESOURCE,
       message: err.message,
     };
   }

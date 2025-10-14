@@ -353,7 +353,7 @@ describe('handleGetList with dependency information', () => {
     expect(result.content[0].text).toContain('Task list not found');
   });
 
-  it('should handle validation errors', async () => {
+  it('should handle Validation errors', async () => {
     const request: CallToolRequest = {
       method: 'tools/call',
       params: {

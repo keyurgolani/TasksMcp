@@ -63,7 +63,9 @@ describe('Backward Compatibility Tests', () => {
     const firstListId = jsonFiles[0].replace('.json', '');
 
     // Load the list
-    const list = await taskListManager.getTaskList({ listId: firstListId });
+    const list = await taskListManager.getTaskList({
+      listId: firstListId,
+    });
 
     expect(list).toBeDefined();
     expect(list?.id).toBe(firstListId);

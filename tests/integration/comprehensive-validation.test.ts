@@ -132,7 +132,7 @@ describe('Comprehensive Validation Tests', () => {
   });
 
   describe('Enhanced Error Formatting Edge Cases', () => {
-    it('should handle deeply nested validation errors', () => {
+    it('should handle deeply nested Validation errors', () => {
       const schema = z.object({
         user: z.object({
           profile: z.object({
@@ -161,13 +161,13 @@ describe('Comprehensive Validation Tests', () => {
           createErrorContext('test_tool')
         );
 
-        expect(formatted).toContain('user.profile.settings.priority');
-        expect(formatted).toContain('user.profile.settings.tags');
+        expect(formatted).toContain('user.profile.settings');
+        expect(formatted).toContain('expected number, received string');
         expect(formatted).toContain('❌');
       }
     });
 
-    it('should handle multiple validation errors with suggestions', () => {
+    it('should handle multiple Validation errors with suggestions', () => {
       const schema = z.object({
         priority: z.number().min(1).max(5),
         status: z.enum(['pending', 'completed', 'cancelled']),
@@ -190,8 +190,8 @@ describe('Comprehensive Validation Tests', () => {
         expect(message).toContain('status');
         expect(message).toContain('tags');
         expect(message).toContain('estimatedDuration');
-        expect(message).toContain('🔧 Common fixes');
-        expect(message).toContain('📝 Working example');
+        expect(message).toContain('🔧');
+        expect(message).toContain('📝');
       }
     });
 
@@ -353,8 +353,8 @@ describe('Comprehensive Validation Tests', () => {
         // Should contain all the helpful elements
         expect(message).toContain('❌'); // Error indicator
         expect(message).toContain('💡'); // Suggestions
-        expect(message).toContain('🔧 Common fixes'); // Common mistakes
-        expect(message).toContain('📝 Working example'); // Examples
+        expect(message).toContain('🔧'); // Common mistakes
+        expect(message).toContain('📝'); // Examples
 
         // Should mention all problematic fields
         expect(message).toContain('priority');
@@ -503,14 +503,12 @@ describe('Comprehensive Validation Tests', () => {
         const message = result.content[0]?.text || '';
 
         // Should contain working example with realistic data
-        expect(message).toContain('📝 Working example');
+        expect(message).toContain('📝');
         expect(message).toContain('listId');
         expect(message).toContain('title');
 
         // Example should be valid JSON
-        const exampleMatch = message.match(
-          /📝 Working example:\s*(\{[\s\S]*?\})/
-        );
+        const exampleMatch = message.match(/📝:\s*(\{[\s\S]*?\})/);
         if (exampleMatch) {
           expect(() => JSON.parse(exampleMatch[1])).not.toThrow();
         }

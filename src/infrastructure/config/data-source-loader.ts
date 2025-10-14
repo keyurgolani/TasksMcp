@@ -173,7 +173,7 @@ export class DataSourceConfigLoader {
 
     if (isYaml) {
       // For YAML support, we would need a YAML parser library
-      // For now, we'll throw an error suggesting JSON
+      // For now, we'll throw an error recommending JSON
       throw new Error(
         'YAML configuration not yet supported. Please use JSON format or convert your YAML to JSON.'
       );

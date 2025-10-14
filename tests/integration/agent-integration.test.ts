@@ -2,7 +2,7 @@
  * Agent Integration Tests
  *
  * Tests the improved MCP server with real agent interactions to validate that
- * the changes effectively reduce validation errors and improve usability.
+ * the changes effectively reduce Validation errors and improve usability.
  *
  * This test suite simulates common agent mistakes and validates that the
  * preprocessing and enhanced error handling provide better user experience.
@@ -94,7 +94,7 @@ describe('Agent Integration Tests', () => {
       });
 
       expect(result.content[0].text).not.toContain('❌');
-      // Should successfully filter without validation errors
+      // Should successfully filter without Validation errors
     });
 
     it('should handle mixed type coercion in single request', async () => {
@@ -178,7 +178,7 @@ describe('Agent Integration Tests', () => {
       );
     });
 
-    it('should handle multiple validation errors with clear formatting', async () => {
+    it('should handle multiple Validation errors with clear formatting', async () => {
       const result = await simulateToolCall(server, 'add_task', {
         listId: testListId,
         title: 'hi', // Too short
@@ -188,7 +188,7 @@ describe('Agent Integration Tests', () => {
       });
 
       expect(result.content[0].text).toContain('❌');
-      expect(result.content[0].text).toContain('validation error');
+      expect(result.content[0].text).toContain('Validation error');
       expect(result.content[0].text).toContain('title');
       expect(result.content[0].text).toContain('priority');
       expect(result.content[0].text).toContain('tags');
@@ -507,7 +507,7 @@ describe('Agent Integration Tests', () => {
     });
 
     it('should limit error message length for readability', async () => {
-      // Create a request with many validation errors
+      // Create a request with many Validation errors
       const result = await simulateToolCall(server, 'add_task', {
         listId: 'invalid-uuid',
         title: '', // Too short

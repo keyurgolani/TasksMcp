@@ -1,11 +1,15 @@
 /**
- * TaskList domain model (formerly TodoList)
+ * TaskList domain model
  * Represents a collection of tasks with metadata and progress tracking
  */
 
 import { Task } from './task';
 import { ImplementationNote } from './task';
 
+/**
+ * TaskList domain model
+ * Represents a collection of tasks with metadata and progress tracking
+ */
 export interface TaskList {
   id: string;
   title: string;

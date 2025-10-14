@@ -157,7 +157,7 @@ Add to your Claude Desktop `mcp.json` configuration file:
 1. Save the configuration file
 2. Restart Claude Desktop
 3. Verify the task-manager server appears in available tools
-4. Test with: "Create a simple todo list to test the connection"
+4. Test with: "Create a simple task list to test the connection"
 
 ### Kiro IDE Configuration
 
@@ -186,11 +186,10 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "complete_task",
         "set_task_priority",
         "add_task_tags",
+        "remove_task_tags",
         "search_tasks",
         "filter_tasks",
-        "show_tasks",
-        "analyze_task",
-        "get_task_suggestions"
+        "show_tasks"
       ]
     }
   }
@@ -210,7 +209,7 @@ Add to your workspace `.kiro/settings/mcp.json`:
 1. Save the configuration file to `.kiro/settings/mcp.json`
 2. Check the MCP Server view in the Kiro feature panel
 3. Verify the task-manager server shows as "Connected"
-4. Test with: "Create a todo list for testing the MCP connection"
+4. Test with: "Create a task list for testing the MCP connection"
 
 ### Direct Command Line Usage
 
@@ -432,7 +431,7 @@ ls -la /path/to/data/directory
 5. **Test MCP Client Connection**
    - Restart your MCP client after configuration changes
    - Look for the task-manager server in available tools
-   - Try creating a simple todo list to verify functionality
+   - Try creating a simple task list to verify functionality
 
 ## 🛠️ Available MCP Tools
 
@@ -440,10 +439,10 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 
 ### List Management (4 tools)
 
-1. **`create_list`** - Create new todo lists with simple parameters
-2. **`get_list`** - Retrieve a specific todo list by ID with optional filtering
-3. **`list_all_lists`** - Get all todo lists with basic information and filtering
-4. **`delete_list`** - Delete or archive a todo list (reversible by default)
+1. **`create_list`** - Create new task lists with simple parameters
+2. **`get_list`** - Retrieve a specific task list by ID with optional filtering
+3. **`list_all_lists`** - Get all task lists with basic information and filtering
+4. **`delete_list`** - Delete or archive a task list (reversible by default)
 
 ### Task Management (6 tools)
 
@@ -453,6 +452,8 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 8. **`complete_task`** - Mark tasks as completed with automatic progress tracking
 9. **`set_task_priority`** - Change task priority levels (1-5 scale)
 10. **`add_task_tags`** - Add organizational tags to tasks
+11. **`remove_task_tags`** - Remove organizational tags from tasks
+    - **Automatic Blocking Detection**: Tasks automatically show why they're blocked by dependencies
 
 ### Search & Display (3 tools)
 
@@ -460,10 +461,9 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 12. **`filter_tasks`** - Filter tasks by status, priority, tags, and other criteria
 13. **`show_tasks`** - Display formatted task lists with grouping and styling options
 
-### Advanced Features (2 tools)
+### Advanced Features - Removed
 
-14. **`analyze_task`** - AI-powered task complexity analysis with breakdown suggestions
-15. **`get_task_suggestions`** - Generate AI-powered task recommendations for lists
+Intelligence features have been removed from the system.
 
 ### Multi-Agent Orchestration (3 tools)
 
@@ -475,7 +475,7 @@ The MCP Task Manager provides **18 focused MCP tools** organized into 5 categori
 
 #### `create_list`
 
-Creates a new todo list with simple parameters.
+Creates a new task list with simple parameters.
 
 ```json
 {
@@ -490,7 +490,7 @@ Creates a new todo list with simple parameters.
 
 #### `add_task`
 
-Adds a new task to a todo list.
+Adds a new task to a task list.
 
 ```json
 {
@@ -508,7 +508,7 @@ Adds a new task to a todo list.
 
 #### `get_list`
 
-Retrieves a specific todo list by ID.
+Retrieves a specific task list by ID.
 
 ```json
 {
@@ -655,28 +655,28 @@ npm test -- --testPathPattern=integration
 
 ## 📋 Usage Examples
 
-### Creating Your First Todo List
+### Creating Your First Task List
 
 Once configured in your MCP client, you can use natural language:
 
 **In Claude Desktop:**
 
-> "Create a todo list called 'Website Redesign' with tasks for planning, design, and development"
+> "Create a task list called 'Website Redesign' with tasks for planning, design, and development"
 
 **In Kiro IDE:**
 
-> "I need a todo list for my API project with initial setup tasks"
+> "I need a task list for my API project with initial setup tasks"
 
 The MCP server will automatically:
 
-- Create structured todo lists with proper metadata
+- Create structured task lists with proper metadata
 - Generate unique IDs for tracking
 - Calculate progress and completion statistics
 - Store data persistently using file-based storage with atomic operations
 
-### Retrieving Todo Lists
+### Retrieving Task Lists
 
-> "Show me the todo list with ID abc-123-def"
+> "Show me the task list with ID abc-123-def"
 > "Get my project tasks but exclude completed items"
 
 ## 🔧 Development
@@ -705,7 +705,7 @@ src/
 ├── managers/         # Business logic and system managers
 ├── core/            # Core functionality and utilities
 ├── storage/         # Data persistence backends (file/memory)
-├── intelligence/    # AI-powered analysis and suggestions
+
 ├── monitoring/      # Performance and health monitoring
 ├── types/           # TypeScript interfaces and schemas
 ├── utils/           # Pure utility functions
@@ -844,7 +844,7 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 - **Complex operations**: ~10-50ms for AI analysis and bulk operations
 - **Concurrent operations**: Supports 100+ simultaneous requests
 - **Memory usage**: Stable under load, ~145MB typical usage
-- **Data volume**: Supports 1000+ items per todo list, unlimited lists
+- **Data volume**: Supports 1000+ items per task list, unlimited lists
 - **Throughput**: ~900 operations per second sustained
 - **Storage**: Atomic file operations with backup and recovery
 
@@ -853,15 +853,16 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 ### Current Status (v1.0.0) ✅
 
 - **Complete**: 15 focused MCP tools for comprehensive task management
-- **Complete**: AI-powered complexity analysis and task suggestions
+
 - **Complete**: File-based storage with atomic operations and backup
 - **Complete**: Comprehensive error handling and recovery systems
 - **Complete**: Performance monitoring and health checking
 - **Complete**: Production-ready CLI interface and configuration
 
-### Phase 2: Enhanced Intelligence (Planned)
+### Phase 2: Enhanced Intelligence - Removed
 
-- Advanced natural language processing for task analysis
+Intelligence features have been removed from the system.
+
 - Improved complexity scoring algorithms with machine learning
 - Better task generation with context awareness
 - Predictive task completion estimates
@@ -894,7 +895,7 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 - ✅ **MCP Protocol**: Fully compliant with MCP SDK 1.0.0+
 - ✅ **CLI Interface**: Complete command-line interface with help and version
 - ✅ **Storage Systems**: File and memory storage with atomic operations
-- ✅ **AI Intelligence**: Task complexity analysis and intelligent suggestions
+
 - ✅ **Error Handling**: Comprehensive error handling with recovery mechanisms
 - ✅ **Monitoring**: Performance monitoring, health checks, and metrics
 - ✅ **TypeScript**: Strict TypeScript with zero `any` types

@@ -55,14 +55,6 @@ export interface SearchResponse {
   query: SearchQuery;
 }
 
-export interface IndexStats {
-  totalNotes: number;
-  totalTerms: number;
-  averageTermsPerNote: number;
-  indexSize: number;
-  typeDistribution: Record<string, number>;
-}
-
 export class NotesSearchIndexManager {
   private index: SearchIndex;
 
@@ -269,36 +261,6 @@ export class NotesSearchIndexManager {
       termCount: this.index.termIndex.size,
       indexSize: this.calculateIndexSize(),
     });
-  }
-
-  /**
-   * Get index statistics
-   */
-  getStats(): IndexStats {
-    const totalNotes = this.index.noteMetadata.size;
-    const totalTerms = this.index.termIndex.size;
-
-    let totalTermsInNotes = 0;
-    for (const metadata of this.index.noteMetadata.values()) {
-      totalTermsInNotes += metadata.termCount;
-    }
-
-    const averageTermsPerNote =
-      totalNotes > 0 ? totalTermsInNotes / totalNotes : 0;
-
-    // Calculate type distribution
-    const typeDistribution: Record<string, number> = {};
-    for (const [type, noteIds] of this.index.typeIndex) {
-      typeDistribution[type] = noteIds.size;
-    }
-
-    return {
-      totalNotes,
-      totalTerms,
-      averageTermsPerNote,
-      indexSize: this.calculateIndexSize(),
-      typeDistribution,
-    };
   }
 
   /**

@@ -3,7 +3,7 @@
  * Tests comprehensive task data validation and business constraints
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import { TaskValidator } from '../../../../../src/core/orchestration/validators/task-validator';
 import { Priority } from '../../../../../src/domain/models/task';
@@ -67,7 +67,7 @@ describe('TaskValidator', () => {
       expect(
         result.errors.some(
           e =>
-            e.field === 'title' && e.message.includes('at most 1000 characters')
+            e.field === 'title' && e.message.includes('exceeds maximum length')
         )
       ).toBe(true);
     });
@@ -85,7 +85,7 @@ describe('TaskValidator', () => {
         result.errors.some(
           e =>
             e.field === 'description' &&
-            e.message.includes('at most 5000 characters')
+            e.message.includes('exceeds maximum length')
         )
       ).toBe(true);
     });
@@ -103,7 +103,7 @@ describe('TaskValidator', () => {
         result.errors.some(
           e =>
             e.field === 'agentPromptTemplate' &&
-            e.message.includes('at most 10000 characters')
+            e.message.includes('exceeds maximum length')
         )
       ).toBe(true);
     });
@@ -117,6 +117,33 @@ describe('TaskValidator', () => {
       const result = validator.validate(taskData);
 
       expect(result.isValid).toBe(true);
+    });
+
+    it('should validate blockReason field when present', () => {
+      const taskDataWithBlockReason = {
+        title: 'Valid Title',
+        blockReason: {
+          blockedBy: ['task-1', 'task-2'],
+          details: [
+            {
+              taskId: 'task-1',
+              taskTitle: 'Blocking Task 1',
+              status: 'in_progress',
+              estimatedCompletion: new Date(),
+            },
+            {
+              taskId: 'task-2',
+              taskTitle: 'Blocking Task 2',
+              status: 'pending',
+            },
+          ],
+        },
+      };
+
+      const result = validator.validate(taskDataWithBlockReason);
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
   });
 
@@ -182,7 +209,8 @@ describe('TaskValidator', () => {
       expect(
         result.errors.some(
           e =>
-            e.field === 'tags[1]' && e.message.includes('at most 50 characters')
+            e.field === 'tags[1]' &&
+            e.message.includes('exceeds maximum length')
         )
       ).toBe(true);
     });
@@ -309,6 +337,203 @@ describe('TaskValidator', () => {
       expect(result.errors[0].message).toBe(
         'Estimated duration must be a finite number'
       );
+    });
+  });
+
+  describe('validateBlockReason', () => {
+    it('should validate valid blockReason successfully', () => {
+      const validBlockReason = {
+        blockedBy: ['task-1', 'task-2'],
+        details: [
+          {
+            taskId: 'task-1',
+            taskTitle: 'Blocking Task 1',
+            status: 'in_progress',
+            estimatedCompletion: new Date(),
+          },
+          {
+            taskId: 'task-2',
+            taskTitle: 'Blocking Task 2',
+            status: 'pending',
+          },
+        ],
+      };
+
+      const result = validator['validateBlockReason'](validBlockReason);
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should reject non-object blockReason', () => {
+      const result = validator['validateBlockReason']('invalid');
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0].field).toBe('blockReason');
+      expect(result.errors[0].message).toBe('blockReason must be an object');
+    });
+
+    it('should reject invalid blockedBy field', () => {
+      const invalidBlockReason = {
+        blockedBy: 'not-an-array',
+        details: [],
+      };
+
+      const result = validator['validateBlockReason'](invalidBlockReason);
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.blockedBy' &&
+            e.message === 'blockedBy must be an array of task IDs'
+        )
+      ).toBe(true);
+    });
+
+    it('should reject non-string task IDs in blockedBy', () => {
+      const invalidBlockReason = {
+        blockedBy: ['task-1', 123, 'task-3'],
+        details: [],
+      };
+
+      const result = validator['validateBlockReason'](invalidBlockReason);
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.blockedBy[1]' &&
+            e.message === 'Each blocked by task ID must be a string'
+        )
+      ).toBe(true);
+    });
+
+    it('should reject invalid details field', () => {
+      const invalidBlockReason = {
+        blockedBy: ['task-1'],
+        details: 'not-an-array',
+      };
+
+      const result = validator['validateBlockReason'](invalidBlockReason);
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.details' &&
+            e.message === 'details must be an array of task detail objects'
+        )
+      ).toBe(true);
+    });
+
+    it('should reject invalid detail objects', () => {
+      const invalidBlockReason = {
+        blockedBy: ['task-1'],
+        details: [
+          {
+            taskId: 123, // Should be string
+            taskTitle: 'Valid Title',
+            status: 'pending',
+          },
+          {
+            taskId: 'task-2',
+            taskTitle: null, // Should be string
+            status: 'in_progress',
+          },
+          {
+            taskId: 'task-3',
+            taskTitle: 'Valid Title',
+            status: 123, // Should be string
+          },
+        ],
+      };
+
+      const result = validator['validateBlockReason'](invalidBlockReason);
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.details[0].taskId' &&
+            e.message === 'taskId must be a string'
+        )
+      ).toBe(true);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.details[1].taskTitle' &&
+            e.message === 'taskTitle must be a string'
+        )
+      ).toBe(true);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.details[2].status' &&
+            e.message === 'status must be a string'
+        )
+      ).toBe(true);
+    });
+
+    it('should validate optional estimatedCompletion field', () => {
+      const blockReasonWithValidDate = {
+        blockedBy: ['task-1'],
+        details: [
+          {
+            taskId: 'task-1',
+            taskTitle: 'Blocking Task',
+            status: 'in_progress',
+            estimatedCompletion: new Date(),
+          },
+        ],
+      };
+
+      const blockReasonWithValidString = {
+        blockedBy: ['task-1'],
+        details: [
+          {
+            taskId: 'task-1',
+            taskTitle: 'Blocking Task',
+            status: 'in_progress',
+            estimatedCompletion: '2024-01-01T00:00:00Z',
+          },
+        ],
+      };
+
+      const resultDate = validator['validateBlockReason'](
+        blockReasonWithValidDate
+      );
+      const resultString = validator['validateBlockReason'](
+        blockReasonWithValidString
+      );
+
+      expect(resultDate.isValid).toBe(true);
+      expect(resultString.isValid).toBe(true);
+    });
+
+    it('should reject invalid estimatedCompletion field', () => {
+      const invalidBlockReason = {
+        blockedBy: ['task-1'],
+        details: [
+          {
+            taskId: 'task-1',
+            taskTitle: 'Blocking Task',
+            status: 'in_progress',
+            estimatedCompletion: 123, // Should be Date or string
+          },
+        ],
+      };
+
+      const result = validator['validateBlockReason'](invalidBlockReason);
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some(
+          e =>
+            e.field === 'blockReason.details[0].estimatedCompletion' &&
+            e.message === 'estimatedCompletion must be a Date or ISO string'
+        )
+      ).toBe(true);
     });
   });
 });

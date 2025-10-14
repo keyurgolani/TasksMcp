@@ -30,7 +30,7 @@ describe('Test Cleanup System Verification', () => {
       progress: 0,
       totalItems: 0,
       completedItems: 0,
-      isArchived: false,
+
       context: 'test',
     };
 

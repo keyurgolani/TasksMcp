@@ -1,5 +1,5 @@
 /**
- * MCP handler for updating basic task properties
+ * MCP handler for updating task properties
  *
  * Handles the update_task tool request to modify existing task properties
  * such as title, description, and estimated duration. Validates input
@@ -49,16 +49,16 @@ const UpdateTaskSchema = z.object({
 /**
  * Handles MCP update_task tool requests
  *
- * Updates an existing task's properties within a todo list. Validates that at least
+ * Updates an existing task's properties within a task list. Validates that at least
  * one field is provided for update and returns the updated task information.
  *
  * @param request - The MCP call tool request containing update parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated task details or error
  */
 export async function handleUpdateTask(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing update_task request', {
@@ -81,7 +81,7 @@ export async function handleUpdateTask(
     }
 
     // Update the task with provided fields
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,

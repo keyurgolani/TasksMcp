@@ -12,7 +12,7 @@ These examples follow the three core principles:
 
 ## 🚀 Getting Started Examples
 
-### Creating Your First Todo List
+### Creating Your First Task List
 
 **Scenario**: You want to organize tasks for a new project.
 
@@ -400,6 +400,19 @@ _Research similar completed tasks for context and learnings_
 }
 ```
 
+**Remove tags from a task:**
+
+```json
+{
+  "tool": "remove_task_tags",
+  "parameters": {
+    "listId": "123e4567-e89b-12d3-a456-426614174000",
+    "taskId": "456e7890-e89b-12d3-a456-426614174001",
+    "tags": ["client-review"]
+  }
+}
+```
+
 **Update task details:**
 
 ```json
@@ -607,8 +620,7 @@ _Research similar completed tasks for context and learnings_
 {
   "tool": "delete_list",
   "parameters": {
-    "listId": "completed-project-id",
-    "permanent": false
+    "listId": "completed-project-id"
   }
 }
 ```

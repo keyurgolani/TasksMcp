@@ -16,29 +16,12 @@ export interface ProjectSummary {
   completionRate: number; // Percentage (0-100)
 }
 
-export interface ProjectStats {
-  tag: string;
-  totalLists: number;
-  activeLists: number;
-
-  totalTasks: number;
-  completedTasks: number;
-  inProgressTasks: number;
-  pendingTasks: number;
-  completionRate: number; // Percentage (0-100)
-  averageListProgress: number; // Percentage (0-100)
-  lastActivity: Date;
-  oldestList: Date;
-  newestList: Date;
-}
-
 /**
- * Manages project-level operations and statistics for task lists
+ * Manages project-level operations for task lists
  *
  * Provides functionality for:
  * - Project tag validation and normalization
- * - Project-level statistics and summaries
- * - Cross-project analytics
+ * - Cross-project management
  *
  * @example
  * ```typescript
@@ -193,146 +176,6 @@ export class ProjectManager {
       return projects;
     } catch (error) {
       logger.error('Failed to list projects', { error });
-      throw error;
-    }
-  }
-
-  /**
-   * Get detailed statistics for a specific project
-   */
-  async getProjectStatistics(projectTag: string): Promise<ProjectStats> {
-    try {
-      logger.debug('Getting project statistics', { projectTag });
-
-      if (!this.validateProjectTag(projectTag)) {
-        throw new Error(
-          `Invalid project tag: "${projectTag}". Project tags must be 1-50 characters long and contain only letters, numbers, hyphens, and underscores.`
-        );
-      }
-
-      const allListSummaries = await this.storage.list({
-        context: projectTag, // Use context parameter since storage interface uses context
-      });
-
-      // Load full list data for each summary
-      const allLists: TaskList[] = [];
-      for (const summary of allListSummaries) {
-        // Handle both real summaries and mocked full objects
-        if (
-          'items' in summary &&
-          Array.isArray((summary as { items: unknown[] }).items)
-        ) {
-          // This is a full TaskList object (from mocked tests)
-          allLists.push(summary as unknown as TaskList);
-        } else {
-          // This is a real summary, load the full list
-          const fullList = await this.storage.load(summary.id, {});
-          if (fullList) {
-            allLists.push(fullList);
-          }
-        }
-      }
-
-      // Filter lists by project tag (in case storage doesn't support projectTag filtering)
-      const projectLists = allLists.filter(
-        list =>
-          (list.projectTag || list.context || this.DEFAULT_PROJECT_TAG) ===
-          projectTag
-      );
-
-      if (projectLists.length === 0) {
-        // Return empty stats for non-existent project
-        return {
-          tag: projectTag,
-          totalLists: 0,
-          activeLists: 0,
-          totalTasks: 0,
-          completedTasks: 0,
-          inProgressTasks: 0,
-          pendingTasks: 0,
-          completionRate: 0,
-          averageListProgress: 0,
-          lastActivity: new Date(0),
-          oldestList: new Date(),
-          newestList: new Date(0),
-        };
-      }
-
-      // Calculate statistics
-      let totalTasks = 0;
-      let completedTasks = 0;
-      let inProgressTasks = 0;
-      let pendingTasks = 0;
-      let totalProgress = 0;
-      const activeLists = projectLists.length;
-      let lastActivity = new Date(0);
-      let oldestList = new Date();
-      let newestList = new Date(0);
-
-      for (const list of projectLists) {
-        // Accumulate task counts
-        totalTasks += list.totalItems || 0;
-        completedTasks += list.completedItems || 0;
-        totalProgress += list.progress || 0;
-
-        // Count task statuses from items
-        for (const item of list.items || []) {
-          switch (item.status) {
-            case 'in_progress':
-              inProgressTasks++;
-              break;
-            case 'pending':
-              pendingTasks++;
-              break;
-            // completed tasks are already counted in completedTasks
-          }
-        }
-
-        // Track activity dates
-        if (list.updatedAt > lastActivity) {
-          lastActivity = list.updatedAt;
-        }
-        if (list.createdAt < oldestList) {
-          oldestList = list.createdAt;
-        }
-        if (list.createdAt > newestList) {
-          newestList = list.createdAt;
-        }
-      }
-
-      const completionRate =
-        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-      const averageListProgress =
-        projectLists.length > 0
-          ? Math.round(totalProgress / projectLists.length)
-          : 0;
-
-      const stats: ProjectStats = {
-        tag: projectTag,
-        totalLists: projectLists.length,
-        activeLists,
-        totalTasks,
-        completedTasks,
-        inProgressTasks,
-        pendingTasks,
-        completionRate,
-        averageListProgress,
-        lastActivity,
-        oldestList,
-        newestList,
-      };
-
-      logger.info('Project statistics calculated', {
-        projectTag,
-        totalLists: stats.totalLists,
-        totalTasks: stats.totalTasks,
-        completionRate: stats.completionRate,
-      });
-
-      return stats;
-    } catch (error) {
-      logger.error('Failed to get project statistics', { projectTag, error });
       throw error;
     }
   }

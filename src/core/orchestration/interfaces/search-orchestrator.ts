@@ -10,23 +10,25 @@ import {
   SearchResult,
   UnifiedSearchCriteria,
   UnifiedSearchResult,
+  AdvancedSearchOptions,
+  SearchResultWithMetrics,
 } from '../../../shared/types/search';
 
 import { BaseOrchestrator } from './base-orchestrator';
 
 export interface SearchOrchestrator extends BaseOrchestrator {
   /**
-   * Searches tasks with comprehensive criteria
+   * Searches tasks with enhanced criteria and filtering
    */
   searchTasks(criteria: SearchCriteria): Promise<SearchResult<Task>>;
 
   /**
-   * Searches task lists with comprehensive criteria
+   * Searches task lists with enhanced criteria and filtering
    */
   searchLists(criteria: SearchCriteria): Promise<SearchResult<TaskList>>;
 
   /**
-   * Unified search across both tasks and lists
+   * Unified search across both tasks and lists with performance metrics
    */
   unifiedSearch(criteria: UnifiedSearchCriteria): Promise<UnifiedSearchResult>;
 
@@ -37,4 +39,45 @@ export interface SearchOrchestrator extends BaseOrchestrator {
     listId: string,
     hasTemplate: boolean
   ): Promise<Task[]>;
+
+  /**
+   * Gets tasks for display with formatting options
+   */
+  getTasksForDisplay(
+    listId: string,
+    options: {
+      format: string;
+      groupBy: string;
+      includeCompleted: boolean;
+    }
+  ): Promise<Task[]>;
+
+  /**
+   * Advanced search with enhanced options and performance metrics
+   */
+  advancedSearch(
+    criteria: SearchCriteria,
+    options?: AdvancedSearchOptions
+  ): Promise<SearchResultWithMetrics<Task>>;
+
+  /**
+   * Search with fuzzy matching capabilities
+   */
+  fuzzySearch(
+    query: string,
+    options?: {
+      threshold?: number;
+      searchFields?: ('title' | 'description' | 'tags')[];
+      limit?: number;
+    }
+  ): Promise<SearchResult<Task>>;
+
+  /**
+   * Validate search criteria
+   */
+  validateSearchCriteria(criteria: SearchCriteria): Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  }>;
 }

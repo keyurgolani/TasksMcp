@@ -93,7 +93,7 @@ export async function getTaskExitCriteriaHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTaskList({
+  const list = await context.taskListManager.getTaskList({
     listId,
   });
 
@@ -173,20 +173,12 @@ export async function addExitCriteriaHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId,
     });
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-
-    if (list.isArchived) {
-      throw new ApiError(
-        'CONFLICT',
-        'Cannot add exit criteria to task in archived list',
-        409
-      );
     }
 
     // Find the task
@@ -208,7 +200,7 @@ export async function addExitCriteriaHandler(
     const updatedExitCriteria = [...(task.exitCriteria || []), newCriteria];
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTaskList({
+    const updatedList = await context.taskListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -300,20 +292,12 @@ export async function updateExitCriteriaHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId,
     });
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-
-    if (list.isArchived) {
-      throw new ApiError(
-        'CONFLICT',
-        'Cannot update exit criteria in archived list',
-        409
-      );
     }
 
     // Find the task
@@ -325,7 +309,7 @@ export async function updateExitCriteriaHandler(
 
     // Find the exit criteria
     const criteriaIndex = (task.exitCriteria || []).findIndex(
-      c => c.id === criteriaId
+      (c: ExitCriteria) => c.id === criteriaId
     );
 
     if (criteriaIndex === -1) {
@@ -361,7 +345,7 @@ export async function updateExitCriteriaHandler(
     updatedExitCriteria[criteriaIndex] = updatedCriteria;
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTaskList({
+    const updatedList = await context.taskListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -440,7 +424,7 @@ export async function getActionPlanHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTaskList({
+  const list = await context.taskListManager.getTaskList({
     listId,
   });
 
@@ -534,20 +518,12 @@ export async function createActionPlanHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId,
     });
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-
-    if (list.isArchived) {
-      throw new ApiError(
-        'CONFLICT',
-        'Cannot create action plan for task in archived list',
-        409
-      );
     }
 
     // Find the task
@@ -573,7 +549,7 @@ export async function createActionPlanHandler(
     });
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTaskList({
+    const updatedList = await context.taskListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -666,20 +642,12 @@ export async function updateActionPlanHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId,
     });
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-
-    if (list.isArchived) {
-      throw new ApiError(
-        'CONFLICT',
-        'Cannot update action plan in archived list',
-        409
-      );
     }
 
     // Find the task
@@ -718,7 +686,7 @@ export async function updateActionPlanHandler(
     );
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTaskList({
+    const updatedList = await context.taskListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -804,7 +772,7 @@ export async function getTaskNotesHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTaskList({
+  const list = await context.taskListManager.getTaskList({
     listId,
   });
 
@@ -893,20 +861,12 @@ export async function addTaskNoteHandler(
     });
 
     // Get the list
-    const list = await context.todoListManager.getTaskList({
+    const list = await context.taskListManager.getTaskList({
       listId,
     });
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-    }
-
-    if (list.isArchived) {
-      throw new ApiError(
-        'CONFLICT',
-        'Cannot add note to task in archived list',
-        409
-      );
     }
 
     // Find the task
@@ -928,7 +888,7 @@ export async function addTaskNoteHandler(
     const updatedNotes = [...(task.implementationNotes || []), newNote];
 
     // Update the task
-    const updatedList = await context.todoListManager.updateTaskList({
+    const updatedList = await context.taskListManager.updateTaskList({
       listId,
       action: 'update_item',
       itemId: taskId,
@@ -1027,20 +987,12 @@ export async function completeStepHandler(
   });
 
   // Get the list
-  const list = await context.todoListManager.getTaskList({
+  const list = await context.taskListManager.getTaskList({
     listId,
   });
 
   if (!list) {
     throw new ApiError('NOT_FOUND', `List not found: ${listId}`, 404);
-  }
-
-  if (list.isArchived) {
-    throw new ApiError(
-      'CONFLICT',
-      'Cannot complete step in archived list',
-      409
-    );
   }
 
   // Find the task
@@ -1090,7 +1042,7 @@ export async function completeStepHandler(
   );
 
   // Update the task
-  const updatedList = await context.todoListManager.updateTaskList({
+  const updatedList = await context.taskListManager.updateTaskList({
     listId,
     action: 'update_item',
     itemId: taskId,

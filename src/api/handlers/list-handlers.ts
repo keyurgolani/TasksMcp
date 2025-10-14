@@ -154,7 +154,7 @@ export async function createListHandler(
       createInput.implementationNotes = input.implementationNotes;
     }
     logger.debug('About to create list with input', { createInput });
-    const list = await context.todoListManager.createTaskList(createInput);
+    const list = await context.taskListManager.createTaskList(createInput);
     logger.debug('Created list', { id: list.id, title: list.title });
 
     const duration = Date.now() - startTime;
@@ -207,15 +207,15 @@ export async function listAllListsHandler(
     });
 
     // Get lists using TaskListManager
-    // Note: listTodoLists returns TaskListSummary[], not TaskList[]
-    logger.debug('About to call listTodoLists with query', { query });
-    const summaries = await context.todoListManager.listTaskLists({
+    // Note: listTaskLists returns TaskListSummary[], not TaskList[]
+    logger.debug('About to call listTaskLists with query', { query });
+    const summaries = await context.taskListManager.listTaskLists({
       projectTag: query.projectTag,
       status: query.status,
       limit: query.limit,
       offset: query.offset,
     });
-    logger.debug('listTodoLists returned items', { count: summaries.length });
+    logger.debug('listTaskLists returned items', { count: summaries.length });
 
     const duration = Date.now() - startTime;
 
@@ -275,7 +275,7 @@ export async function getListHandler(
     if (query.includeCompleted !== undefined) {
       getInput.includeCompleted = query.includeCompleted;
     }
-    const list = await context.todoListManager.getTaskList(getInput);
+    const list = await context.taskListManager.getTaskList(getInput);
 
     if (!list) {
       throw new ApiError('NOT_FOUND', `List not found: ${id}`, 404);
@@ -336,14 +336,10 @@ export async function updateListHandler(
 
     // First, get the existing list to verify it exists (including archived)
     const getInput: GetTaskListInput = { listId: id };
-    const existingList = await context.todoListManager.getTaskList(getInput);
+    const existingList = await context.taskListManager.getTaskList(getInput);
 
     if (!existingList) {
       throw new ApiError('NOT_FOUND', `List not found: ${id}`, 404);
-    }
-
-    if (existingList.isArchived) {
-      throw new ApiError('CONFLICT', 'Cannot update archived list', 409);
     }
 
     // Update list metadata using the new updateListMetadata method
@@ -361,7 +357,7 @@ export async function updateListHandler(
     if (updates.projectTag !== undefined) {
       updateInput.projectTag = updates.projectTag;
     }
-    const list = await context.todoListManager.updateListMetadata(
+    const list = await context.taskListManager.updateListMetadata(
       id,
       updateInput
     );
@@ -421,10 +417,7 @@ export async function deleteListHandler(
 
     // Delete the list using TaskListManager
     const deleteInput: DeleteTaskListInput = { listId: id };
-    if (query.permanent !== undefined) {
-      deleteInput.permanent = query.permanent;
-    }
-    const result = await context.todoListManager.deleteTaskList(deleteInput);
+    const result = await context.taskListManager.deleteTaskList(deleteInput);
 
     const duration = Date.now() - startTime;
 

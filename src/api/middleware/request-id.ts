@@ -17,8 +17,8 @@ export function requestIdMiddleware(
 ): void {
   const apiReq = req as ApiRequest;
 
-  // Generate unique request ID
-  apiReq.id = randomUUID();
+  // Use provided request ID or generate a new one
+  apiReq.id = (req.headers['x-request-id'] as string) || randomUUID();
   apiReq.startTime = Date.now();
 
   // Add request ID to response headers

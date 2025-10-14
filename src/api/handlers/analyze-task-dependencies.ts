@@ -1,6 +1,6 @@
 /**
  * MCP handler for analyzing task dependencies
- * Provides simple, user-friendly analysis of dependency structure and recommendations
+ * Provides user-friendly analysis of dependency structure and recommendations
  */
 
 import { z } from 'zod';
@@ -223,15 +223,15 @@ const AnalyzeTaskDependenciesSchema = z.object({
 
 /**
  * Handles MCP analyze_task_dependencies tool requests
- * Provides comprehensive analysis of task dependencies with user-friendly recommendations
+ * Provides analysis of task dependencies with user-friendly recommendations
  *
  * @param request - The MCP call tool request containing analysis parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with dependency analysis or error
  */
 export async function handleAnalyzeTaskDependencies(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   const dependencyResolver = new DependencyResolver();
 
@@ -242,13 +242,13 @@ export async function handleAnalyzeTaskDependencies(
 
     const args = AnalyzeTaskDependenciesSchema.parse(request.params?.arguments);
 
-    // Get the todo list with all tasks (including completed ones for proper analysis)
-    const todoList = await todoListManager.getTaskList({
+    // Get the task list with all tasks (including completed ones for proper analysis)
+    const taskList = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
 
-    if (!todoList) {
+    if (!taskList) {
       return {
         content: [
           {
@@ -260,31 +260,31 @@ export async function handleAnalyzeTaskDependencies(
       };
     }
 
-    // Build dependency graph for comprehensive analysis
+    // Build dependency graph for analysis
     const dependencyGraph = dependencyResolver.buildDependencyGraph(
-      todoList.items
+      taskList.items
     );
 
     // Calculate critical path
     const criticalPath = dependencyResolver.calculateCriticalPath(
-      todoList.items
+      taskList.items
     );
 
     // Get ready and blocked tasks
-    const readyTasks = dependencyResolver.getReadyItems(todoList.items);
-    const blockedTasksData = dependencyResolver.getBlockedItems(todoList.items);
+    const readyTasks = dependencyResolver.getReadyItems(taskList.items);
+    const blockedTasksData = dependencyResolver.getBlockedItems(taskList.items);
 
-    // Calculate summary statistics
-    const totalTasks = todoList.items.length;
-    const completedTasks = todoList.items.filter(
+    // Calculate summary data
+    const totalTasks = taskList.items.length;
+    const completedTasks = taskList.items.filter(
       task => task.status === TaskStatus.COMPLETED
     );
-    const activeTasks = todoList.items.filter(
+    const activeTasks = taskList.items.filter(
       task =>
         task.status !== TaskStatus.COMPLETED &&
         task.status !== TaskStatus.CANCELLED
     );
-    const tasksWithDependencies = todoList.items.filter(
+    const tasksWithDependencies = taskList.items.filter(
       task => task.dependencies.length > 0
     );
 
@@ -302,7 +302,7 @@ export async function handleAnalyzeTaskDependencies(
     // Critical path recommendations
     if (criticalPath.length > 0) {
       const criticalPathTasks = criticalPath
-        .map(id => todoList.items.find((task: Task) => task.id === id))
+        .map(id => taskList.items.find((task: Task) => task.id === id))
         .filter(
           (task: Task | undefined): task is Task =>
             task !== undefined && task.status !== TaskStatus.COMPLETED
@@ -339,7 +339,7 @@ export async function handleAnalyzeTaskDependencies(
         )[0];
 
         if (topBlocker) {
-          const blockerTask = todoList.items.find(
+          const blockerTask = taskList.items.find(
             task => task.id === topBlocker[0]
           );
           if (blockerTask) {
@@ -375,7 +375,7 @@ export async function handleAnalyzeTaskDependencies(
     // Bottleneck recommendations
     if (bottlenecks.length > 0) {
       const bottleneckTasks = bottlenecks
-        .map(id => todoList.items.find((task: Task) => task.id === id))
+        .map(id => taskList.items.find((task: Task) => task.id === id))
         .filter((task: Task | undefined): task is Task => task !== undefined);
 
       if (bottleneckTasks.length > 0) {
@@ -416,14 +416,14 @@ export async function handleAnalyzeTaskDependencies(
       // Generate DAG visualization only
       switch (args.dagStyle) {
         case 'dot':
-          responseContent = generateDotDAG(todoList.items);
+          responseContent = generateDotDAG(taskList.items);
           break;
         case 'mermaid':
-          responseContent = generateMermaidDAG(todoList.items);
+          responseContent = generateMermaidDAG(taskList.items);
           break;
         case 'ascii':
         default:
-          responseContent = generateAsciiDAG(todoList.items, dependencyGraph);
+          responseContent = generateAsciiDAG(taskList.items, dependencyGraph);
           break;
       }
     } else {
@@ -449,12 +449,12 @@ export async function handleAnalyzeTaskDependencies(
         const dagVisualization = (() => {
           switch (args.dagStyle) {
             case 'dot':
-              return generateDotDAG(todoList.items);
+              return generateDotDAG(taskList.items);
             case 'mermaid':
-              return generateMermaidDAG(todoList.items);
+              return generateMermaidDAG(taskList.items);
             case 'ascii':
             default:
-              return generateAsciiDAG(todoList.items, dependencyGraph);
+              return generateAsciiDAG(taskList.items, dependencyGraph);
           }
         })();
 

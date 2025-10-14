@@ -320,30 +320,6 @@ export class ParameterPreprocessor {
         return null;
     }
   }
-
-  /**
-   * Get preprocessing statistics
-   */
-  getStats(result: PreprocessingResult): {
-    totalParameters: number;
-    convertedParameters: number;
-    conversionsByType: Record<string, number>;
-    errorCount: number;
-  } {
-    const conversionsByType: Record<string, number> = {};
-
-    result.conversions.forEach(conversion => {
-      conversionsByType[conversion.conversionType] =
-        (conversionsByType[conversion.conversionType] || 0) + 1;
-    });
-
-    return {
-      totalParameters: Object.keys(result.parameters).length,
-      convertedParameters: result.conversions.length,
-      conversionsByType,
-      errorCount: result.errors.length,
-    };
-  }
 }
 
 /**

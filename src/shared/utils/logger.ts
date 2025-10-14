@@ -103,7 +103,7 @@ if (!isMcpMode()) {
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple()
+        winston.format.printf(({ level, message }) => `${level}: ${message}`)
       ),
     })
   );
@@ -255,7 +255,10 @@ if (
           level: 'error', // Only log errors to avoid interfering with MCP protocol
           format: winston.format.combine(
             winston.format.timestamp(),
-            winston.format.simple()
+            winston.format.printf(
+              ({ timestamp, level, message }) =>
+                `${timestamp} ${level}: ${message}`
+            )
           ),
           silent: false,
         })

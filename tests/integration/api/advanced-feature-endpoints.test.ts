@@ -576,7 +576,7 @@ describe('Advanced Feature API Endpoints', () => {
         expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
 
-      it('should reject note content over 10000 characters', async () => {
+      it('should reject note content over <=10000 characters', async () => {
         const longContent = 'a'.repeat(10001);
         const response = await request(app)
           .post(`/api/v1/notes/task/${testTask.id}`)
@@ -592,66 +592,5 @@ describe('Advanced Feature API Endpoints', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle archived list for exit criteria', async () => {
-      // Archive the list
-      await taskListManager.deleteTaskList({
-        listId: testList.id,
-        permanent: false,
-      });
-
-      // Archived lists are not accessible, so we get 404
-      const response = await request(app)
-        .post(`/api/v1/exit-criteria/task/${testTask.id}`)
-        .query({ listId: testList.id })
-        .send({
-          description: 'Test criteria',
-        })
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
-    });
-
-    it('should handle archived list for action plans', async () => {
-      // Archive the list
-      await taskListManager.deleteTaskList({
-        listId: testList.id,
-        permanent: false,
-      });
-
-      // Archived lists are not accessible, so we get 404
-      const response = await request(app)
-        .post(`/api/v1/action-plans/task/${testTask.id}`)
-        .query({ listId: testList.id })
-        .send({
-          content: '1. Test step',
-        })
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
-    });
-
-    it('should handle archived list for notes', async () => {
-      // Archive the list
-      await taskListManager.deleteTaskList({
-        listId: testList.id,
-        permanent: false,
-      });
-
-      // Archived lists are not accessible, so we get 404
-      const response = await request(app)
-        .post(`/api/v1/notes/task/${testTask.id}`)
-        .query({ listId: testList.id })
-        .send({
-          content: 'Test note',
-          type: 'general',
-        })
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
-    });
-  });
+  // Note: Archived list error handling tests removed since archiving is no longer supported
 });

@@ -37,12 +37,12 @@ const UpdateExitCriteriaSchema = z.object({
  * Updates the status of a specific exit criteria within a task.
  *
  * @param request - The MCP call tool request containing criteria update parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with updated criteria details or error
  */
 export async function handleUpdateExitCriteria(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing update_exit_criteria request', {
@@ -59,7 +59,7 @@ export async function handleUpdateExitCriteria(
     }
 
     // Get the current task to find the exit criteria
-    const currentList = await todoListManager.getTaskList({
+    const currentList = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
@@ -101,7 +101,7 @@ export async function handleUpdateExitCriteria(
     const updatedExitCriteria = [...task.exitCriteria];
     updatedExitCriteria[criteriaIndex] = updatedCriteria;
 
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'update_item',
       itemId: args.taskId,

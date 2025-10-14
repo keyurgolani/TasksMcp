@@ -80,7 +80,7 @@ describe('Agent Integration Tests - Simplified', () => {
 
       // Should succeed after preprocessing
       expect(result.content[0].text).not.toContain('❌');
-      // Should successfully filter without validation errors
+      // Should successfully filter without Validation errors
     });
 
     it('should handle mixed type coercion in single request', async () => {
@@ -129,7 +129,7 @@ describe('Agent Integration Tests - Simplified', () => {
       expect(result.content[0].text).toContain('📝');
     });
 
-    it('should handle multiple validation errors with clear formatting', async () => {
+    it('should handle multiple Validation errors with clear formatting', async () => {
       const result = await simulateToolCall(server, 'add_task', {
         listId: testListId,
         title: 'hi', // Too short
@@ -138,7 +138,7 @@ describe('Agent Integration Tests - Simplified', () => {
       });
 
       expect(result.content[0].text).toContain('❌');
-      expect(result.content[0].text).toContain('validation error');
+      expect(result.content[0].text).toContain('Validation error');
       expect(result.content[0].text).toContain('💡');
       // Should contain multiple error details
     });
@@ -175,7 +175,7 @@ describe('Agent Integration Tests - Simplified', () => {
       });
 
       expect(result.content[0].text).toContain('❌');
-      expect(result.content[0].text).toContain('Valid choices are:');
+      expect(result.content[0].text).toContain('Please choose one of:');
       expect(result.content[0].text).toContain('pending');
       expect(result.content[0].text).toContain('completed');
     });

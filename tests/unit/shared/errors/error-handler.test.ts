@@ -269,29 +269,6 @@ describe('Error Handler', () => {
       expect(result).toBe('completed');
     });
   });
-
-  describe('Error Statistics', () => {
-    it('should track error statistics', () => {
-      const errors = [
-        new Error('Error 1'),
-        new Error('Error 2'),
-        new ActionPlanParseError('Parse error', 'parse failed'),
-      ];
-
-      errors.forEach((error, index) => {
-        errorHandler.handleError(error, {
-          operation: `test_op_${index}`,
-          timestamp: Date.now(),
-        });
-      });
-
-      const stats = errorHandler.getErrorStatistics();
-
-      expect(stats.totalErrors).toBe(3);
-      expect(stats.errorsByCategory['unknown']).toBe(2);
-      expect(stats.errorsByCategory['action_plan']).toBe(1);
-    });
-  });
 });
 
 describe('Enhanced Validation', () => {

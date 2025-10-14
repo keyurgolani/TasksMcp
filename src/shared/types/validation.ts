@@ -1,6 +1,6 @@
 /**
  * Validation types for orchestration layer
- * Provides comprehensive validation result structures
+ * Provides validation result structures
  */
 
 export interface ValidationResult {

@@ -53,7 +53,7 @@ describe('ActionPlanManager', () => {
       };
 
       await expect(manager.createActionPlan(input)).rejects.toThrow(
-        'Action plan content is too long'
+        'Action plan validation failed'
       );
     });
   });
@@ -307,7 +307,7 @@ describe('ActionPlanManager', () => {
 
       await expect(
         manager.updateStepProgress(samplePlan, input)
-      ).rejects.toThrow('Step not found: non-existent');
+      ).rejects.toThrow('Step not found');
     });
   });
 
@@ -360,103 +360,6 @@ describe('ActionPlanManager', () => {
 
       const progress = manager.calculatePlanProgress(plan);
       expect(progress).toBe(100);
-    });
-  });
-
-  describe('suggestTaskStatusUpdate', () => {
-    test('suggests completed when all steps are completed', () => {
-      const plan: ActionPlan = {
-        id: 'plan-123',
-        content: 'test',
-        steps: [
-          { id: '1', content: 'Step 1', status: 'completed' },
-          { id: '2', content: 'Step 2', status: 'completed' },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-      };
-
-      const suggestion = manager.suggestTaskStatusUpdate(plan);
-      expect(suggestion).toBe('completed');
-    });
-
-    test('suggests in_progress when some steps are completed or in progress', () => {
-      const plan: ActionPlan = {
-        id: 'plan-123',
-        content: 'test',
-        steps: [
-          { id: '1', content: 'Step 1', status: 'completed' },
-          { id: '2', content: 'Step 2', status: 'pending' },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-      };
-
-      const suggestion = manager.suggestTaskStatusUpdate(plan);
-      expect(suggestion).toBe('in_progress');
-    });
-
-    test('suggests in_progress when steps are in progress', () => {
-      const plan: ActionPlan = {
-        id: 'plan-123',
-        content: 'test',
-        steps: [
-          { id: '1', content: 'Step 1', status: 'in_progress' },
-          { id: '2', content: 'Step 2', status: 'pending' },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-      };
-
-      const suggestion = manager.suggestTaskStatusUpdate(plan);
-      expect(suggestion).toBe('in_progress');
-    });
-
-    test('suggests pending when no progress has been made', () => {
-      const plan: ActionPlan = {
-        id: 'plan-123',
-        content: 'test',
-        steps: [
-          { id: '1', content: 'Step 1', status: 'pending' },
-          { id: '2', content: 'Step 2', status: 'pending' },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-      };
-
-      const suggestion = manager.suggestTaskStatusUpdate(plan);
-      expect(suggestion).toBe('pending');
-    });
-  });
-
-  describe('getActionPlanStats', () => {
-    test('returns correct statistics', () => {
-      const plan: ActionPlan = {
-        id: 'plan-123',
-        content: 'test',
-        steps: [
-          { id: '1', content: 'Step 1', status: 'completed' },
-          { id: '2', content: 'Step 2', status: 'completed' },
-          { id: '3', content: 'Step 3', status: 'in_progress' },
-          { id: '4', content: 'Step 4', status: 'pending' },
-          { id: '5', content: 'Step 5', status: 'pending' },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-      };
-
-      const stats = manager.getActionPlanStats(plan);
-
-      expect(stats.totalSteps).toBe(5);
-      expect(stats.completedSteps).toBe(2);
-      expect(stats.inProgressSteps).toBe(1);
-      expect(stats.pendingSteps).toBe(2);
-      expect(stats.progress).toBe(40); // 2/5 = 40%
     });
   });
 

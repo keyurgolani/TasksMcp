@@ -1,5 +1,5 @@
 /**
- * MCP handler for listing all todo lists
+ * MCP handler for listing all task lists
  */
 
 import { z } from 'zod';
@@ -24,7 +24,7 @@ const ListAllListsSchema = z.object({
 
 export async function handleListAllLists(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing list_all_lists request', {
@@ -38,7 +38,7 @@ export async function handleListAllLists(
       context: args.projectTag,
     };
 
-    const result = await todoListManager.listTaskLists(listInput);
+    const result = await taskListManager.listTaskLists(listInput);
 
     const response: ListResponse[] = result.map(list => {
       const listResponse: ListResponse = {
@@ -57,7 +57,7 @@ export async function handleListAllLists(
       return listResponse;
     });
 
-    logger.info('Todo lists retrieved successfully', {
+    logger.info('Task lists retrieved successfully', {
       count: response.length,
       projectTag: args.projectTag,
     });

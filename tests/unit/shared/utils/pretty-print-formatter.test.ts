@@ -132,7 +132,7 @@ describe('PrettyPrintFormatter', () => {
       updatedAt: new Date('2024-01-01'),
       context: 'test-project',
       projectTag: 'test-project',
-      isArchived: false,
+
       totalItems: 3,
       completedItems: 1,
       progress: 33,

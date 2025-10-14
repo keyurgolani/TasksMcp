@@ -1,5 +1,5 @@
 /**
- * MCP handler for removing tasks from todo lists
+ * MCP handler for removing tasks from task lists
  */
 
 import { z } from 'zod';
@@ -23,7 +23,7 @@ const RemoveTaskSchema = z.object({
 
 export async function handleRemoveTask(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing remove_task request', {
@@ -31,7 +31,7 @@ export async function handleRemoveTask(
     });
 
     const args = RemoveTaskSchema.parse(request.params?.arguments);
-    const result = await todoListManager.updateTaskList({
+    const result = await taskListManager.updateTaskList({
       listId: args.listId,
       action: 'remove_item',
       itemId: args.taskId,

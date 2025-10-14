@@ -11,6 +11,7 @@ import {
 } from '../../domain/models/task';
 
 export interface CreateTaskData {
+  listId: string;
   title: string;
   description?: string;
   priority?: Priority;
@@ -59,4 +60,15 @@ export interface TaskSearchOptions {
   offset?: number;
   sortBy?: 'createdAt' | 'updatedAt' | 'priority' | 'title';
   sortOrder?: 'asc' | 'desc';
+}
+
+export interface SearchTasksData {
+  listId?: string;
+  status?: TaskStatus;
+  priority?: Priority;
+  tags?: string[];
+  query?: string;
+  includeCompleted?: boolean;
+  limit?: number;
+  offset?: number;
 }

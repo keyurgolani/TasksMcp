@@ -46,7 +46,6 @@ describe('handleAddTask', () => {
       createdAt: new Date('2023-01-01T00:00:00Z'),
       updatedAt: new Date('2023-01-02T00:00:00Z'),
       context: 'test-context',
-      isArchived: false,
       totalItems: 1,
       completedItems: 0,
       progress: 0,
@@ -168,7 +167,7 @@ describe('handleAddTask', () => {
       const result = await handleAddTask(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('10000 characters');
+      expect(result.content[0].text).toContain('<=10000 characters');
     });
 
     it('should handle complex agentPromptTemplate with multiple variables', async () => {
@@ -230,7 +229,7 @@ Please work on this task according to the requirements.
     });
   });
 
-  describe('validation errors', () => {
+  describe('Validation errors', () => {
     it('should return error for invalid listId format', async () => {
       const request: CallToolRequest = {
         method: 'tools/call',
@@ -246,7 +245,7 @@ Please work on this task according to the requirements.
       const result = await handleAddTask(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Invalid UUID format');
+      expect(result.content[0].text).toContain('Invalid UUID');
     });
 
     it('should return error for missing title', async () => {
@@ -264,7 +263,7 @@ Please work on this task according to the requirements.
       const result = await handleAddTask(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Expected string');
+      expect(result.content[0].text).toContain('expected string');
     });
 
     it('should return error for empty title', async () => {
@@ -282,7 +281,7 @@ Please work on this task according to the requirements.
       const result = await handleAddTask(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('at least 1 characters');
+      expect(result.content[0].text).toContain('>=1 characters');
     });
 
     it('should return error for title too long', async () => {
@@ -300,7 +299,7 @@ Please work on this task according to the requirements.
       const result = await handleAddTask(request, mockTaskListManager);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('200 characters');
+      expect(result.content[0].text).toContain('<=200 characters');
     });
   });
 

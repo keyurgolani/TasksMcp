@@ -115,6 +115,7 @@ npm run health
         "complete_task",
         "set_task_priority",
         "add_task_tags",
+        "remove_task_tags",
         "search_tool",
         "show_tasks",
 

@@ -4,7 +4,7 @@
 
 ### Q: What is the MCP Task Manager?
 
-**A:** The MCP Task Manager is an intelligent Model Context Protocol (MCP) server that provides sophisticated task management capabilities for AI agents. It offers 20 focused tools for creating, managing, and analyzing todo lists and tasks, with advanced features like dependency management, exit criteria, and multi-agent orchestration support.
+**A:** The MCP Task Manager is an intelligent Model Context Protocol (MCP) server that provides sophisticated task management capabilities for AI agents. It offers 20 focused tools for creating, managing, and analyzing task lists and tasks, with advanced features like dependency management, exit criteria, and multi-agent orchestration support.
 
 ### Q: Which AI agents work with the MCP Task Manager?
 
@@ -231,7 +231,7 @@ Example:
 
 **A:** Currently, the system provides:
 
-- **Soft Delete**: Lists are archived by default (not permanently deleted)
+- **Permanent Delete**: Lists are permanently deleted when requested
 - **Backup System**: Automatic backups for data recovery
 - **Task Removal**: Tasks are removed but lists maintain history
 

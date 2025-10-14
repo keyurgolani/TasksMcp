@@ -25,6 +25,7 @@ export interface ListFilters {
   createdBefore?: Date;
   updatedAfter?: Date;
   updatedBefore?: Date;
+  limit?: number;
 }
 
 export interface ListSearchOptions {

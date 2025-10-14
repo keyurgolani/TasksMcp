@@ -57,7 +57,7 @@ export class RestApiServer {
 
   constructor(
     config: Partial<ApiConfig>,
-    todoListManager: TaskListManager,
+    taskListManager: TaskListManager,
     dependencyManager: DependencyResolver,
     exitCriteriaManager: ExitCriteriaManager,
     actionPlanManager: ActionPlanManager,
@@ -68,7 +68,7 @@ export class RestApiServer {
 
     // Store manager context
     this.context = {
-      todoListManager,
+      taskListManager,
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,

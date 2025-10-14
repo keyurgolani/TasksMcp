@@ -217,13 +217,12 @@ export interface ITaskListRepository {
   searchSummaries(query: SearchQuery): Promise<SearchResult<TaskListSummary>>;
 
   /**
-   * Deletes a TaskList from the repository
+   * Deletes a TaskList from the repository permanently
    *
    * @param id - The unique identifier of the list to delete
-   * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
    */
-  delete(id: string, permanent?: boolean): Promise<void>;
+  delete(id: string): Promise<void>;
 
   /**
    * Checks if a TaskList exists in the repository

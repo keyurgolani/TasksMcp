@@ -1,7 +1,7 @@
 /**
  * Enum Fuzzy Matching Algorithm
  *
- * Provides fuzzy matching capabilities to suggest the closest valid enum value
+ * Provides fuzzy matching capabilities to find the closest valid enum value
  * when agents provide invalid options. Helps agents quickly correct enum validation errors.
  */
 
@@ -13,14 +13,16 @@ import { logger } from './logger.js';
 export interface EnumMatchingConfig {
   /** Enable case-insensitive matching */
   caseSensitive: boolean;
-  /** Maximum Levenshtein distance for suggestions */
+  /** Maximum Levenshtein distance for matches */
   maxDistance: number;
   /** Enable partial matching */
   enablePartialMatch: boolean;
   /** Enable phonetic matching (future enhancement) */
   enablePhoneticMatch: boolean;
-  /** Maximum number of suggestions to return */
-  maxSuggestions: number;
+  /** Maximum number of matches to return */
+  maxMatches: number;
+  /** @deprecated Use maxMatches instead */
+  maxSuggestions?: number;
 }
 
 /**
@@ -59,7 +61,7 @@ const DEFAULT_CONFIG: EnumMatchingConfig = {
   maxDistance: 3,
   enablePartialMatch: true,
   enablePhoneticMatch: false, // Future enhancement
-  maxSuggestions: 3,
+  maxMatches: 3,
 };
 
 /**
@@ -67,10 +69,16 @@ const DEFAULT_CONFIG: EnumMatchingConfig = {
  */
 export class EnumMatcher {
   private readonly config: EnumMatchingConfig;
-  private readonly cache: Map<string, EnumMatchResult> = new Map();
-
   constructor(config: Partial<EnumMatchingConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    // Support backward compatibility for maxSuggestions
+    const normalizedConfig = { ...config };
+    if (
+      config.maxSuggestions !== undefined &&
+      config.maxMatches === undefined
+    ) {
+      normalizedConfig.maxMatches = config.maxSuggestions;
+    }
+    this.config = { ...DEFAULT_CONFIG, ...normalizedConfig };
   }
 
   /**
@@ -78,7 +86,7 @@ export class EnumMatcher {
    *
    * @param input - Input value to match
    * @param validOptions - Array of valid enum values
-   * @returns EnumMatchResult with best match and suggestions
+   * @returns EnumMatchResult with best match and alternatives
    */
   findClosestEnumValue(input: string, validOptions: string[]): EnumMatchResult {
     if (validOptions.length === 0) {
@@ -90,18 +98,7 @@ export class EnumMatcher {
       };
     }
 
-    // Create cache key
-    const cacheKey = this.createCacheKey(input, validOptions);
-
-    // Check cache first
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey)!;
-    }
-
     const result = this.performMatching(input, validOptions);
-
-    // Cache result for performance
-    this.cache.set(cacheKey, result);
 
     // Log matching attempt for debugging
     logger.debug('Enum fuzzy matching performed', {
@@ -166,7 +163,7 @@ export class EnumMatcher {
 
     // 4. Sort suggestions by confidence and remove duplicates
     const uniqueSuggestions = this.deduplicateAndSort(suggestions);
-    let topSuggestions = uniqueSuggestions.slice(0, this.config.maxSuggestions);
+    let topSuggestions = uniqueSuggestions.slice(0, this.config.maxMatches);
 
     // Return best match, but only if it has reasonable confidence
     const bestMatch = topSuggestions[0];
@@ -190,7 +187,7 @@ export class EnumMatcher {
     // If no suggestions found or best match has very low confidence, provide fallback suggestions
     if (topSuggestions.length === 0 && validOptions.length > 0) {
       topSuggestions = validOptions
-        .slice(0, this.config.maxSuggestions)
+        .slice(0, this.config.maxMatches)
         .map(option => ({
           value: option,
           confidence: 0.1, // Very low confidence
@@ -382,32 +379,6 @@ export class EnumMatcher {
   }
 
   /**
-   * Create cache key for memoization
-   */
-  private createCacheKey(input: string, validOptions: string[]): string {
-    const normalizedInput = this.normalizeString(input);
-    const sortedOptions = [...validOptions].sort().join('|');
-    return `${normalizedInput}:${sortedOptions}`;
-  }
-
-  /**
-   * Clear the internal cache
-   */
-  clearCache(): void {
-    this.cache.clear();
-  }
-
-  /**
-   * Get cache statistics
-   */
-  getCacheStats(): { size: number; hitRate?: number } {
-    return {
-      size: this.cache.size,
-      // Hit rate would need to be tracked separately
-    };
-  }
-
-  /**
    * Find multiple suggestions for an input
    */
   findSuggestions(
@@ -416,7 +387,7 @@ export class EnumMatcher {
     maxSuggestions?: number
   ): EnumSuggestion[] {
     const result = this.findClosestEnumValue(input, validOptions);
-    const limit = maxSuggestions || this.config.maxSuggestions;
+    const limit = maxSuggestions || this.config.maxMatches;
     return result.suggestions.slice(0, limit);
   }
 

@@ -191,7 +191,7 @@ export const ERROR_CONFIGS = {
   /** Configuration for search and display tools */
   searchDisplay: {
     maxCommonMistakes: 2,
-    includeExamples: false, // Usually simpler, don't need examples
+    includeExamples: false, // Usually cleaner, don't need examples
     includeContext: true,
   },
 
@@ -199,6 +199,6 @@ export const ERROR_CONFIGS = {
   advanced: {
     maxCommonMistakes: 1,
     includeExamples: true,
-    includeContext: false, // Keep it simple for complex tools
+    includeContext: false, // Keep it clean for complex tools
   },
 } as const;

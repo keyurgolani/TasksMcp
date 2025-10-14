@@ -145,6 +145,46 @@ describe('SetTaskDependenciesHandler', () => {
       expect(responseData.dependencies).toEqual([]);
     });
 
+    test('removes all dependencies when dependencyIds parameter is omitted', async () => {
+      // First set some dependencies
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
+          },
+        },
+        manager
+      );
+
+      // Then remove them by omitting dependencyIds parameter
+      const request: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task2.id,
+            // dependencyIds parameter is omitted - should default to empty array
+          },
+        },
+      };
+
+      const result = await handleSetTaskDependencies(request, manager);
+
+      expect(result.isError).toBeFalsy();
+      const responseData = JSON.parse(result.content[0]?.text as string);
+      expect(responseData.dependencies).toEqual([]);
+      expect(responseData.message).toContain(
+        'Dependencies updated successfully'
+      );
+    });
+
     test('replaces existing dependencies', async () => {
       // First set initial dependencies
       await handleSetTaskDependencies(
@@ -333,6 +373,229 @@ describe('SetTaskDependenciesHandler', () => {
     });
   });
 
+  describe('Optional dependencyIds parameter handling', () => {
+    test('handles undefined dependencyIds parameter correctly', async () => {
+      // First set some dependencies
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id, task3.id],
+            },
+          },
+        },
+        manager
+      );
+
+      // Verify dependencies were set
+      const listWithDeps = await manager.getTaskList({ listId: testList.id });
+      const taskWithDeps = listWithDeps?.items.find(t => t.id === task2.id);
+      expect(taskWithDeps?.dependencies).toEqual([task1.id, task3.id]);
+
+      // Now clear dependencies by omitting the parameter
+      const request: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task2.id,
+            // dependencyIds parameter is undefined/omitted
+          },
+        },
+      };
+
+      const result = await handleSetTaskDependencies(request, manager);
+
+      expect(result.isError).toBeFalsy();
+      const responseData = JSON.parse(result.content[0]?.text as string);
+      expect(responseData.dependencies).toEqual([]);
+      expect(responseData.message).toContain(
+        'Dependencies updated successfully'
+      );
+    });
+
+    test('handles empty array dependencyIds parameter correctly', async () => {
+      // First set some dependencies
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task3.id,
+              dependencyIds: [task1.id, task2.id],
+            },
+          },
+        },
+        manager
+      );
+
+      // Verify dependencies were set
+      const listWithDeps = await manager.getTaskList({ listId: testList.id });
+      const taskWithDeps = listWithDeps?.items.find(t => t.id === task3.id);
+      expect(taskWithDeps?.dependencies).toEqual([task1.id, task2.id]);
+
+      // Now clear dependencies with explicit empty array
+      const request: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task3.id,
+            dependencyIds: [], // Explicit empty array
+          },
+        },
+      };
+
+      const result = await handleSetTaskDependencies(request, manager);
+
+      expect(result.isError).toBeFalsy();
+      const responseData = JSON.parse(result.content[0]?.text as string);
+      expect(responseData.dependencies).toEqual([]);
+      expect(responseData.message).toContain(
+        'Dependencies updated successfully'
+      );
+    });
+
+    test('validates that both undefined and empty array clear all dependencies equally', async () => {
+      // Set up two tasks with the same dependencies
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task2.id,
+              dependencyIds: [task1.id],
+            },
+          },
+        },
+        manager
+      );
+
+      await handleSetTaskDependencies(
+        {
+          method: 'tools/call',
+          params: {
+            name: 'set_task_dependencies',
+            arguments: {
+              listId: testList.id,
+              taskId: task3.id,
+              dependencyIds: [task1.id],
+            },
+          },
+        },
+        manager
+      );
+
+      // Clear task2 dependencies with undefined parameter
+      const undefinedRequest: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task2.id,
+            // dependencyIds is undefined
+          },
+        },
+      };
+
+      // Clear task3 dependencies with empty array
+      const emptyArrayRequest: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task3.id,
+            dependencyIds: [],
+          },
+        },
+      };
+
+      const undefinedResult = await handleSetTaskDependencies(
+        undefinedRequest,
+        manager
+      );
+      const emptyArrayResult = await handleSetTaskDependencies(
+        emptyArrayRequest,
+        manager
+      );
+
+      // Both should succeed
+      expect(undefinedResult.isError).toBeFalsy();
+      expect(emptyArrayResult.isError).toBeFalsy();
+
+      // Both should result in empty dependencies
+      const undefinedResponseData = JSON.parse(
+        undefinedResult.content[0]?.text as string
+      );
+      const emptyArrayResponseData = JSON.parse(
+        emptyArrayResult.content[0]?.text as string
+      );
+
+      expect(undefinedResponseData.dependencies).toEqual([]);
+      expect(emptyArrayResponseData.dependencies).toEqual([]);
+    });
+
+    test('validates optional parameter with schema validation', async () => {
+      // Test that the schema correctly validates when dependencyIds is omitted
+      const requestWithoutDependencyIds: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task1.id,
+            // No dependencyIds parameter
+          },
+        },
+      };
+
+      const result = await handleSetTaskDependencies(
+        requestWithoutDependencyIds,
+        manager
+      );
+
+      // Should not fail validation
+      expect(result.isError).toBeFalsy();
+      const responseData = JSON.parse(result.content[0]?.text as string);
+      expect(responseData.dependencies).toEqual([]);
+    });
+
+    test('validates that optional parameter still enforces array constraints when provided', async () => {
+      // Test that when dependencyIds is provided, it still validates as an array
+      const requestWithInvalidDependencyIds: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task1.id,
+            dependencyIds: 'not-an-array' as any, // Invalid type
+          },
+        },
+      };
+
+      const result = await handleSetTaskDependencies(
+        requestWithInvalidDependencyIds,
+        manager
+      );
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0]?.text).toContain('❌');
+    });
+  });
+
   describe('Input validation', () => {
     test('validates UUID format for listId', async () => {
       const request: CallToolRequest = {
@@ -398,7 +661,7 @@ describe('SetTaskDependenciesHandler', () => {
           name: 'set_task_dependencies',
           arguments: {
             listId: testList.id,
-            // Missing taskId and dependencyIds
+            // Missing taskId (dependencyIds is now optional)
           },
         },
       };
@@ -407,6 +670,26 @@ describe('SetTaskDependenciesHandler', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0]?.text).toContain('❌');
+    });
+
+    test('accepts only required parameters when dependencyIds is omitted', async () => {
+      const request: CallToolRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'set_task_dependencies',
+          arguments: {
+            listId: testList.id,
+            taskId: task1.id,
+            // dependencyIds is omitted - should work fine
+          },
+        },
+      };
+
+      const result = await handleSetTaskDependencies(request, manager);
+
+      expect(result.isError).toBeFalsy();
+      const responseData = JSON.parse(result.content[0]?.text as string);
+      expect(responseData.dependencies).toEqual([]);
     });
   });
 

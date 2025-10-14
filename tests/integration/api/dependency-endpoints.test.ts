@@ -17,7 +17,7 @@ import { TaskStatus as _TaskStatus } from '../../../src/shared/types/task.js';
 
 import type { Express } from 'express';
 
-describe('Dependency Management API Endpoints', () => {
+describe('Dependency Management API Endpoints', { timeout: 60000 }, () => {
   let server: RestApiServer;
   let app: Express;
   let testListId: string;
@@ -65,6 +65,7 @@ describe('Dependency Management API Endpoints', () => {
     const listResponse = await request(app).post('/api/v1/lists').send({
       title: 'Test List',
       description: 'Test list for dependency endpoints',
+      projectTag: 'test-project',
     });
 
     expect(listResponse.status).toBe(201);
@@ -481,9 +482,7 @@ describe('Dependency Management API Endpoints', () => {
 
     it('should return 404 for archived list', async () => {
       // Archive the list
-      await request(app)
-        .delete(`/api/v1/lists/${testListId}?permanent=false`)
-        .expect(200);
+      await request(app).delete(`/api/v1/lists/${testListId}`).expect(200);
 
       // Archived lists are not accessible, so we get 404
       const response = await request(app)

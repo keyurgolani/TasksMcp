@@ -28,7 +28,6 @@ export interface ListAllListsParams {
 
 export interface DeleteListParams {
   listId: string;
-  permanent?: boolean;
 }
 
 export interface AddTaskParams {
@@ -132,7 +131,7 @@ export interface AnalyzeTaskDependenciesParams {
 export interface SetTaskExitCriteriaParams {
   listId: string;
   taskId: string;
-  exitCriteria: string[];
+  exitCriteria?: string[];
 }
 
 export interface UpdateExitCriteriaParams {
@@ -152,21 +151,21 @@ export const MCP_TOOLS: Tool[] = [
   {
     name: 'create_list',
     description:
-      'Create a new todo list with required parameters. 🎯 BEST PRACTICE: Before creating, use list_all_lists to check for similar existing projects and learn from their structure.',
+      'Create a new task list with required parameters. 🎯 BEST PRACTICE: Before creating, use list_all_lists to check for similar existing projects and learn from their structure.',
     inputSchema: {
       type: 'object',
       properties: {
         title: {
           type: 'string',
           description:
-            'Title of the todo list (provide as a string, e.g., "My Project Tasks")',
+            'Title of the task list (provide as a string, e.g., "My Project Tasks")',
           minLength: 1,
           maxLength: 1000,
         },
         description: {
           type: 'string',
           description:
-            'Optional description of the todo list (provide as a string)',
+            'Optional description of the task list (provide as a string)',
           maxLength: 5000,
         },
         projectTag: {
@@ -183,13 +182,13 @@ export const MCP_TOOLS: Tool[] = [
   {
     name: 'get_list',
     description:
-      "Retrieve a specific todo list by ID. 🔍 METHODOLOGY: Use this to research task context and understand project structure before starting work (Use Tools, Don't Guess principle).",
+      "Retrieve a specific task list by ID. 🔍 METHODOLOGY: Use this to research task context and understand project structure before starting work (Use Tools, Don't Guess principle).",
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to retrieve',
+          description: 'UUID of the task list to retrieve',
           format: 'uuid',
           pattern:
             '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
@@ -208,7 +207,7 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'list_all_lists',
-    description: 'Get all todo lists with metadata information',
+    description: 'Get all task lists with metadata information',
     inputSchema: {
       type: 'object',
       properties: {
@@ -231,23 +230,17 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'delete_list',
-    description: 'Delete or archive a todo list',
+    description: 'Delete a task list permanently',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
-          description: 'UUID of the todo list to delete',
+          description: 'UUID of the task list to delete',
           format: 'uuid',
           pattern:
             '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
           example: '123e4567-e89b-12d3-a456-426614174000',
-        },
-        permanent: {
-          type: 'boolean',
-          description:
-            'Whether to permanently delete (true) or archive (false) - provide as boolean',
-          default: false,
         },
       },
       required: ['listId'],
@@ -258,14 +251,14 @@ export const MCP_TOOLS: Tool[] = [
   {
     name: 'add_task',
     description:
-      'Add a new task to a todo list with optional dependencies. 📋 BEST PRACTICE: Create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
+      'Add a new task to a task list with optional dependencies. 📋 BEST PRACTICE: Create detailed action plans in description with specific exit criteria. Follow Plan and Reflect methodology.',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         title: {
@@ -353,7 +346,7 @@ export const MCP_TOOLS: Tool[] = [
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
@@ -410,7 +403,7 @@ export const MCP_TOOLS: Tool[] = [
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
@@ -432,14 +425,14 @@ export const MCP_TOOLS: Tool[] = [
 
   {
     name: 'remove_task',
-    description: 'Remove a task from a todo list',
+    description: 'Remove a task from a task list',
     inputSchema: {
       type: 'object',
       properties: {
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
@@ -463,7 +456,7 @@ export const MCP_TOOLS: Tool[] = [
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
@@ -486,7 +479,7 @@ export const MCP_TOOLS: Tool[] = [
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
@@ -517,7 +510,7 @@ export const MCP_TOOLS: Tool[] = [
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         taskId: {
@@ -530,6 +523,45 @@ export const MCP_TOOLS: Tool[] = [
           type: 'array',
           description:
             'Tags to add (lowercase, alphanumeric, hyphens, underscores recommended)',
+          items: {
+            type: 'string',
+            maxLength: 50,
+            pattern: '^[a-z0-9-_]+$',
+          },
+          minItems: 1,
+          maxItems: 10,
+          examples: [
+            ['urgent', 'frontend'],
+            ['review-needed', 'critical'],
+          ],
+        },
+      },
+      required: ['listId', 'taskId', 'tags'],
+    },
+  },
+
+  {
+    name: 'remove_task_tags',
+    description: 'Remove tags from a task',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        listId: {
+          type: 'string',
+          description:
+            'UUID of the task list (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        taskId: {
+          type: 'string',
+          description:
+            'UUID of the task (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+          format: 'uuid',
+        },
+        tags: {
+          type: 'array',
+          description:
+            'Tags to remove (lowercase, alphanumeric, hyphens, underscores recommended)',
           items: {
             type: 'string',
             maxLength: 50,
@@ -702,14 +734,13 @@ export const MCP_TOOLS: Tool[] = [
         listId: {
           type: 'string',
           description:
-            'UUID of the todo list to display (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+            'UUID of the task list to display (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
           format: 'uuid',
         },
         format: {
           type: 'string',
-          description:
-            'Display format style - use one of: "compact", "detailed", "summary"',
-          enum: ['compact', 'detailed', 'summary'],
+          description: 'Display format style - use "detailed"',
+          enum: ['detailed'],
           default: 'detailed',
         },
         groupBy: {
@@ -761,7 +792,7 @@ export const MCP_TOOLS: Tool[] = [
           maxItems: 50,
         },
       },
-      required: ['listId', 'taskId', 'dependencyIds'],
+      required: ['listId', 'taskId'],
     },
   },
 
@@ -912,27 +943,25 @@ export const MCP_TOOLS: Tool[] = [
 export function validateToolParameters(
   toolName: string,
   parameters: Record<string, unknown>
-): { valid: boolean; errors: string[]; suggestions?: string[] } {
+): { valid: boolean; errors: string[]; suggestion?: string[] } {
   const tool = MCP_TOOLS.find(t => t.name === toolName);
   if (!tool) {
     return {
       valid: false,
       errors: [`Unknown tool: ${toolName}`],
-      suggestions: [
-        `Available tools: ${MCP_TOOLS.map(t => t.name).join(', ')}`,
-      ],
+      suggestion: [`Available tools: ${MCP_TOOLS.map(t => t.name).join(', ')}`],
     };
   }
 
   const errors: string[] = [];
-  const suggestions: string[] = [];
+  const suggestion: string[] = [];
   const schema = tool.inputSchema;
 
   if (schema.type !== 'object' || !schema.properties) {
     return { valid: false, errors: ['Invalid schema structure'] };
   }
 
-  // Check required parameters with suggestions
+  // Check required parameters with suggestion
   if (schema.required) {
     for (const requiredParam of schema.required) {
       if (!(requiredParam in parameters)) {
@@ -944,7 +973,7 @@ export function validateToolParameters(
           'description' in paramSchema &&
           paramSchema.description
         ) {
-          suggestions.push(`${requiredParam}: ${paramSchema.description}`);
+          suggestion.push(`${requiredParam}: ${paramSchema.description}`);
         }
         if (
           paramSchema &&
@@ -952,7 +981,7 @@ export function validateToolParameters(
           'example' in paramSchema &&
           paramSchema.example
         ) {
-          suggestions.push(`Example ${requiredParam}: ${paramSchema.example}`);
+          suggestion.push(`Example ${requiredParam}: ${paramSchema.example}`);
         }
       }
     }
@@ -964,7 +993,7 @@ export function validateToolParameters(
     if (!paramSchema) {
       errors.push(`Unknown parameter: ${paramName}`);
       const validParams = Object.keys(schema.properties);
-      suggestions.push(`Valid parameters: ${validParams.join(', ')}`);
+      suggestion.push(`Valid parameters: ${validParams.join(', ')}`);
       continue;
     }
 
@@ -984,12 +1013,12 @@ export function validateToolParameters(
       paramSchema as ParameterSchema
     );
     errors.push(...validationResult.errors);
-    if (validationResult.suggestions) {
-      suggestions.push(...validationResult.suggestions);
+    if (validationResult.suggestion) {
+      suggestion.push(...validationResult.suggestion);
     }
   }
 
-  return { valid: errors.length === 0, errors, suggestions };
+  return { valid: errors.length === 0, errors, suggestion };
 }
 
 /**
@@ -1025,48 +1054,48 @@ function validateParameter(
   name: string,
   value: unknown,
   schema: ParameterSchema
-): { valid: boolean; errors: string[]; suggestions?: string[] } {
+): { valid: boolean; errors: string[]; suggestion?: string[] } {
   const errors: string[] = [];
-  const suggestions: string[] = [];
+  const suggestion: string[] = [];
 
-  // Type validation with suggestions
+  // Type validation with suggestion
   if (schema.type === 'string' && typeof value !== 'string') {
     errors.push(`Parameter ${name} must be a string`);
-    suggestions.push(`Provide ${name} as a string value`);
-    return { valid: false, errors, suggestions };
+    suggestion.push(`Provide ${name} as a string value`);
+    return { valid: false, errors, suggestion };
   }
 
   if (schema.type === 'number' && typeof value !== 'number') {
     errors.push(`Parameter ${name} must be a number`);
     if (schema.minimum !== undefined && schema.maximum !== undefined) {
-      suggestions.push(
+      suggestion.push(
         `Provide ${name} as a number between ${schema.minimum} and ${schema.maximum}`
       );
     }
-    return { valid: false, errors, suggestions };
+    return { valid: false, errors, suggestion };
   }
 
   if (schema.type === 'boolean' && typeof value !== 'boolean') {
     errors.push(`Parameter ${name} must be a boolean`);
-    suggestions.push(`Use true or false for ${name}`);
-    return { valid: false, errors, suggestions };
+    suggestion.push(`Use true or false for ${name}`);
+    return { valid: false, errors, suggestion };
   }
 
   if (schema.type === 'array' && !Array.isArray(value)) {
     errors.push(`Parameter ${name} must be an array`);
     if (schema.examples) {
-      suggestions.push(`Example: ${JSON.stringify(schema.examples[0])}`);
+      suggestion.push(`Example: ${JSON.stringify(schema.examples[0])}`);
     }
-    return { valid: false, errors, suggestions };
+    return { valid: false, errors, suggestion };
   }
 
-  // String constraints with suggestions
+  // String constraints with suggestion
   if (schema.type === 'string' && typeof value === 'string') {
     if (schema.minLength && value.length < schema.minLength) {
       errors.push(
         `Parameter ${name} must be at least ${schema.minLength} characters`
       );
-      suggestions.push(
+      suggestion.push(
         `Current length: ${value.length}, required: ${schema.minLength}+`
       );
     }
@@ -1074,7 +1103,7 @@ function validateParameter(
       errors.push(
         `Parameter ${name} must be at most ${schema.maxLength} characters`
       );
-      suggestions.push(
+      suggestion.push(
         `Current length: ${value.length}, maximum: ${schema.maxLength}`
       );
     }
@@ -1082,19 +1111,19 @@ function validateParameter(
       errors.push(
         `Parameter ${name} must be one of: ${schema.enum.join(', ')}`
       );
-      suggestions.push(`Valid options: ${schema.enum.join(', ')}`);
+      suggestion.push(`Valid options: ${schema.enum.join(', ')}`);
       if (schema.enumDescriptions) {
         const descriptions = Object.entries(schema.enumDescriptions)
           .map(([key, desc]) => `${key}: ${desc}`)
           .join(', ');
-        suggestions.push(`Descriptions: ${descriptions}`);
+        suggestion.push(`Descriptions: ${descriptions}`);
       }
     }
     if (schema.format === 'uuid' && !isValidUUID(value)) {
       errors.push(`Parameter ${name} must be a valid UUID`);
-      suggestions.push(`UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`);
+      suggestion.push(`UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`);
       if (schema.example) {
-        suggestions.push(`Example: ${schema.example}`);
+        suggestion.push(`Example: ${schema.example}`);
       }
     }
   }
@@ -1103,27 +1132,27 @@ function validateParameter(
   if (schema.type === 'number' && typeof value === 'number') {
     if (schema.minimum !== undefined && value < schema.minimum) {
       errors.push(`Parameter ${name} must be at least ${schema.minimum}`);
-      suggestions.push(`Current value: ${value}, minimum: ${schema.minimum}`);
+      suggestion.push(`Current value: ${value}, minimum: ${schema.minimum}`);
       if (schema.examples) {
-        suggestions.push(`Valid examples: ${schema.examples.join(', ')}`);
+        suggestion.push(`Valid examples: ${schema.examples.join(', ')}`);
       }
     }
     if (schema.maximum !== undefined && value > schema.maximum) {
       errors.push(`Parameter ${name} must be at most ${schema.maximum}`);
-      suggestions.push(`Current value: ${value}, maximum: ${schema.maximum}`);
+      suggestion.push(`Current value: ${value}, maximum: ${schema.maximum}`);
       if (schema.examples) {
-        suggestions.push(`Valid examples: ${schema.examples.join(', ')}`);
+        suggestion.push(`Valid examples: ${schema.examples.join(', ')}`);
       }
     }
   }
 
-  // Array constraints with suggestions
+  // Array constraints with suggestion
   if (schema.type === 'array' && Array.isArray(value)) {
     if (schema.minItems && value.length < schema.minItems) {
       errors.push(
         `Parameter ${name} must have at least ${schema.minItems} items`
       );
-      suggestions.push(
+      suggestion.push(
         `Current count: ${value.length}, minimum: ${schema.minItems}`
       );
     }
@@ -1131,7 +1160,7 @@ function validateParameter(
       errors.push(
         `Parameter ${name} must have at most ${schema.maxItems} items`
       );
-      suggestions.push(
+      suggestion.push(
         `Current count: ${value.length}, maximum: ${schema.maxItems}`
       );
     }
@@ -1145,14 +1174,14 @@ function validateParameter(
           schema.items!
         );
         errors.push(...itemValidation.errors);
-        if (itemValidation.suggestions) {
-          suggestions.push(...itemValidation.suggestions);
+        if (itemValidation.suggestion) {
+          suggestion.push(...itemValidation.suggestion);
         }
       });
     }
   }
 
-  return { valid: errors.length === 0, errors, suggestions };
+  return { valid: errors.length === 0, errors, suggestion };
 }
 
 /**

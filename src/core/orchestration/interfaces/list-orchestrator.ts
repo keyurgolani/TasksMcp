@@ -37,4 +37,22 @@ export interface ListOrchestrator extends BaseOrchestrator {
    * Deletes a task list permanently
    */
   deleteList(id: string): Promise<void>;
+
+  // Bulk operations (not available in MCP)
+  /**
+   * Creates multiple task lists in bulk
+   */
+  createBulkLists(lists: CreateListData[]): Promise<TaskList[]>;
+
+  /**
+   * Updates multiple task lists in bulk
+   */
+  updateBulkLists(
+    updates: Array<{ id: string; data: UpdateListData }>
+  ): Promise<TaskList[]>;
+
+  /**
+   * Deletes multiple task lists in bulk
+   */
+  deleteBulkLists(listIds: string[]): Promise<number>;
 }

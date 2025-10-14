@@ -3,6 +3,11 @@
  * Handles environment variables and configuration files for different deployment scenarios
  */
 
+import {
+  FileConfigLoader,
+  type FileConfiguration,
+} from './file-config-loader.js';
+
 export interface SystemConfiguration {
   dataStore: {
     type: 'filesystem' | 'database' | 'memory';
@@ -97,8 +102,8 @@ export class ConfigurationManager {
         },
         rest: {
           port: restConfig.port || 3000,
-          host: restConfig.host,
-          cors: restConfig.cors,
+          host: restConfig.host || 'localhost',
+          cors: restConfig.cors ?? true,
         },
         ui: {
           port: uiConfig.port || 3001,
@@ -106,18 +111,13 @@ export class ConfigurationManager {
         },
       },
       features: {
-        agentPromptTemplates: this.parseBooleanEnv(
-          'FEATURE_AGENT_PROMPT_TEMPLATES',
-          true
-        ),
-        dependencyValidation: this.parseBooleanEnv(
-          'FEATURE_DEPENDENCY_VALIDATION',
-          true
-        ),
-        circularDependencyDetection: this.parseBooleanEnv(
-          'FEATURE_CIRCULAR_DEPENDENCY_DETECTION',
-          true
-        ),
+        agentPromptTemplates:
+          this.parseBooleanEnv('FEATURE_AGENT_PROMPT_TEMPLATES', true) ?? true,
+        dependencyValidation:
+          this.parseBooleanEnv('FEATURE_DEPENDENCY_VALIDATION', true) ?? true,
+        circularDependencyDetection:
+          this.parseBooleanEnv('FEATURE_CIRCULAR_DEPENDENCY_DETECTION', true) ??
+          true,
       },
       performance: {
         templateRenderTimeout:
@@ -144,20 +144,49 @@ export class ConfigurationManager {
   }
 
   private loadRestConfiguration() {
-    // In a real implementation, this would load from JSON/YAML files
-    // For now, we'll use environment variables with defaults
+    // Load from JSON/YAML configuration files
+    const fileConfig = this.loadFileConfiguration();
+
+    // Merge file configuration with environment variables (env vars take precedence)
     return {
-      port: this.parseNumberEnv('REST_PORT', 3000),
-      host: process.env['REST_HOST'] || 'localhost',
-      cors: this.parseBooleanEnv('REST_CORS', true),
+      port: this.parseNumberEnv('REST_PORT') || fileConfig.rest?.port || 3000,
+      host: process.env['REST_HOST'] || fileConfig.rest?.host || 'localhost',
+      cors:
+        this.parseBooleanEnv('REST_CORS') !== undefined
+          ? this.parseBooleanEnv('REST_CORS', true)
+          : fileConfig.rest?.cors !== undefined
+            ? fileConfig.rest.cors
+            : true,
     };
   }
 
   private loadUiConfiguration() {
+    // Load from JSON/YAML configuration files
+    const fileConfig = this.loadFileConfiguration();
+
+    // Merge file configuration with environment variables (env vars take precedence)
     return {
-      port: this.parseNumberEnv('UI_PORT', 3001),
-      host: process.env['UI_HOST'] || 'localhost',
+      port: this.parseNumberEnv('UI_PORT') || fileConfig.ui?.port || 3001,
+      host: process.env['UI_HOST'] || fileConfig.ui?.host || 'localhost',
     };
+  }
+
+  private loadFileConfiguration(): FileConfiguration {
+    // Try to load configuration from various file locations
+    const configPaths = [
+      process.env['CONFIG_FILE'], // Explicit config file path
+      './config/server.json',
+      './config/server.yaml',
+      './config/server.yml',
+      './server.json',
+      './server.yaml',
+      './server.yml',
+    ].filter(Boolean) as string[];
+
+    return FileConfigLoader.loadConfig({
+      fallbackPaths: configPaths,
+      required: false, // File configuration is optional
+    });
   }
 
   private getDataStoreLocation(): string {
@@ -191,7 +220,10 @@ export class ConfigurationManager {
     return parsed;
   }
 
-  private parseBooleanEnv(key: string, defaultValue: boolean): boolean {
+  private parseBooleanEnv(
+    key: string,
+    defaultValue?: boolean
+  ): boolean | undefined {
     const value = process.env[key];
     if (!value) {
       return defaultValue;

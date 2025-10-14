@@ -15,7 +15,7 @@ export interface McpError {
   details?: Record<string, unknown>;
 }
 
-export interface CreateTodoListParams {
+export interface CreateTaskListParams {
   title: string;
   description?: string;
   tasks?: Array<{
@@ -33,14 +33,9 @@ export interface GetTaskListParams {
   includeCompleted?: boolean;
 }
 
-export interface UpdateTodoListParams {
+export interface UpdateTaskListParams {
   listId: string;
-  action:
-    | 'add_item'
-    | 'update_item'
-    | 'remove_item'
-    | 'update_status'
-    | 'reorder';
+  action: 'add_item' | 'update_item' | 'remove_item' | 'update_status';
   itemData?: {
     title?: string;
     description?: string;
@@ -51,7 +46,6 @@ export interface UpdateTodoListParams {
     dependencies?: string[];
   };
   itemId?: string;
-  newOrder?: string[];
 }
 
 export interface AnalyzeTaskComplexityParams {

@@ -29,8 +29,8 @@ export interface TemplateResult {
 
 export interface TemplateValidationResult {
   isValid: boolean;
-  errors: TemplateError[];
-  warnings: TemplateWarning[];
+  errors: string[];
+  warnings: string[];
   variablesFound: string[];
   complexity: 'simple' | 'complex';
 }
@@ -49,5 +49,5 @@ export interface TemplateWarning {
 }
 
 // Template performance requirements
-export const SIMPLE_TEMPLATE_MAX_RENDER_TIME = 10; // milliseconds
-export const COMPLEX_TEMPLATE_MAX_RENDER_TIME = 50; // milliseconds
+export const TEMPLATE_MAX_RENDER_TIME = 10; // milliseconds
+export const TEMPLATE_MAX_RENDER_TIME_COMPLEX = 50; // milliseconds

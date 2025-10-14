@@ -1,10 +1,16 @@
 /**
- * Task domain model (formerly TodoItem)
+ * Task domain model
  * Represents a single task with all its properties and metadata
  */
 
+/**
+ * Represents a single task with all its properties and metadata
+ *
+ * @interface Task
+ */
 export interface Task {
   id: string;
+  listId: string;
   title: string;
   description?: string;
   status: TaskStatus;
@@ -17,11 +23,14 @@ export interface Task {
   tags: string[];
   metadata: Record<string, unknown>;
 
-  // Enhanced fields for agent prompt system
+  // Agent prompt system fields
   agentPromptTemplate?: string; // Max 10,000 characters
   actionPlan?: ActionPlan;
   implementationNotes: ImplementationNote[];
   exitCriteria: ExitCriteria[];
+
+  // Dependency blocking information
+  blockReason?: BlockReason;
 }
 
 export enum TaskStatus {
@@ -40,12 +49,18 @@ export enum Priority {
   CRITICAL = 5,
 }
 
+/**
+ * Represents an action plan for a task with steps and complexity
+ */
 export interface ActionPlan {
   steps: ActionStep[];
   estimatedDuration?: number;
-  complexity?: 'simple' | 'moderate' | 'complex';
+  complexity?: 'low' | 'moderate' | 'high';
 }
 
+/**
+ * Represents a single step in an action plan
+ */
 export interface ActionStep {
   id: string;
   description: string;
@@ -53,20 +68,39 @@ export interface ActionStep {
   estimatedDuration?: number;
 }
 
+/**
+ * Represents an implementation note attached to a task or list
+ */
 export interface ImplementationNote {
   id: string;
   content: string;
   createdAt: Date;
   author?: string;
-  type: 'note' | 'warning' | 'todo' | 'decision';
+  type: 'note' | 'warning' | 'task' | 'decision';
 }
 
+/**
+ * Represents exit criteria that must be met to complete a task
+ */
 export interface ExitCriteria {
   id: string;
   description: string;
   isMet: boolean;
   notes?: string;
   updatedAt: Date;
+}
+
+/**
+ * Represents the reason why a task is blocked by dependencies
+ */
+export interface BlockReason {
+  blockedBy: string[];
+  details: Array<{
+    taskId: string;
+    taskTitle: string;
+    status: TaskStatus;
+    estimatedCompletion?: Date;
+  }>;
 }
 
 // Status transition rules
@@ -82,8 +116,9 @@ export const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   [TaskStatus.CANCELLED]: [TaskStatus.PENDING], // Can be reactivated
 };
 
-// Tag validation pattern - supports emoji, unicode, uppercase, numbers, hyphens, underscores
-export const TAG_VALIDATION_PATTERN = /^[\p{L}\p{N}\p{Emoji}_-]+$/u;
+// Tag validation pattern - supports emoji, unicode (including combining marks), uppercase, numbers, hyphens, underscores
+export const TAG_VALIDATION_PATTERN =
+  /^[\p{L}\p{M}\p{N}\p{Emoji_Presentation}_-]+$/u;
 export const TAG_MAX_LENGTH = 50;
 
 // Priority validation

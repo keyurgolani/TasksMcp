@@ -30,8 +30,7 @@ const createTestList = (
   projectTag: string,
   context?: string,
   totalTasks = 5,
-  completedTasks = 2,
-  isArchived = false
+  completedTasks = 2
 ): TaskList => ({
   id,
   title: `Test List ${id}`,
@@ -51,7 +50,6 @@ const createTestList = (
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-02'),
   context: context || projectTag,
-  isArchived,
   totalItems: totalTasks,
   completedItems: completedTasks,
   progress: Math.round((completedTasks / totalTasks) * 100),
@@ -178,7 +176,6 @@ describe('ProjectManager', () => {
           lastUpdated: list.updatedAt,
           context: list.context,
           projectTag: list.projectTag,
-          isArchived: list.isArchived,
         }))
       );
 
@@ -261,80 +258,6 @@ describe('ProjectManager', () => {
         'project-c',
         'project-a',
       ]);
-    });
-  });
-
-  describe('getProjectStatistics', () => {
-    it('should reject invalid project tags', async () => {
-      await expect(
-        projectManager.getProjectStatistics('invalid tag')
-      ).rejects.toThrow('Invalid project tag');
-    });
-
-    it('should return empty stats for non-existent project', async () => {
-      vi.mocked(mockStorage.list).mockResolvedValue([]);
-
-      const stats = await projectManager.getProjectStatistics('non-existent');
-
-      expect(stats).toEqual({
-        tag: 'non-existent',
-        totalLists: 0,
-        activeLists: 0,
-        totalTasks: 0,
-        completedTasks: 0,
-        inProgressTasks: 0,
-        pendingTasks: 0,
-        completionRate: 0,
-        averageListProgress: 0,
-        lastActivity: new Date(0),
-        oldestList: expect.any(Date),
-        newestList: new Date(0),
-      });
-    });
-
-    it('should calculate detailed statistics for existing project', async () => {
-      const testLists = [
-        createTestList('1', 'test-project', undefined, 10, 5, false),
-        createTestList('2', 'test-project', undefined, 8, 8, true), // archived
-        createTestList('3', 'other-project', undefined, 5, 2, false),
-      ];
-
-      // Add some in-progress tasks to the first list
-      testLists[0].items[5].status = TaskStatus.IN_PROGRESS;
-      testLists[0].items[6].status = TaskStatus.IN_PROGRESS;
-
-      vi.mocked(mockStorage.list).mockResolvedValue(testLists);
-
-      const stats = await projectManager.getProjectStatistics('test-project');
-
-      expect(stats).toEqual({
-        tag: 'test-project',
-        totalLists: 2,
-        activeLists: 2,
-        totalTasks: 18,
-        completedTasks: 13,
-        inProgressTasks: 2,
-        pendingTasks: 3,
-        completionRate: 72, // 13/18 * 100 rounded
-        averageListProgress: 75, // (50 + 100) / 2 = 75
-        lastActivity: new Date('2024-01-02'),
-        oldestList: new Date('2024-01-01'),
-        newestList: new Date('2024-01-01'),
-      });
-    });
-
-    it('should handle projects with no tasks', async () => {
-      const testLists = [
-        createTestList('1', 'empty-project', undefined, 0, 0, false),
-      ];
-
-      vi.mocked(mockStorage.list).mockResolvedValue(testLists);
-
-      const stats = await projectManager.getProjectStatistics('empty-project');
-
-      expect(stats.completionRate).toBe(0);
-      expect(stats.totalTasks).toBe(0);
-      expect(stats.completedTasks).toBe(0);
     });
   });
 

@@ -350,19 +350,18 @@ export class TaskListRepository implements ITaskListRepository {
   }
 
   /**
-   * Deletes a TaskList from the appropriate data source
+   * Deletes a TaskList from the appropriate data source permanently
    *
    * The router will select the appropriate writable source.
    * Note: This only deletes from one source. If the list exists in
    * multiple sources, it will only be deleted from the primary source.
    *
    * @param id - The unique identifier of the list to delete
-   * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
    */
-  async delete(id: string, permanent?: boolean): Promise<void> {
+  async delete(id: string): Promise<void> {
     try {
-      logger.debug('Deleting TaskList via router', { listId: id, permanent });
+      logger.debug('Deleting TaskList via router', { listId: id });
 
       const context: OperationContext = {
         listId: id,
@@ -373,7 +372,6 @@ export class TaskListRepository implements ITaskListRepository {
         {
           type: 'delete',
           key: id,
-          permanent: permanent ?? false,
         },
         context
       );

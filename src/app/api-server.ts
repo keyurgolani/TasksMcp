@@ -6,7 +6,7 @@
  * Features:
  * - Configurable port from environment variables
  * - Graceful shutdown on SIGINT/SIGTERM
- * - Comprehensive startup logging
+ * - Startup logging
  * - Health check verification
  * - Error handling and recovery
  */
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
     // Create domain managers
     logger.info('Creating domain managers...');
 
-    const todoListManager = new TaskListManager(initResult.repository);
+    const taskListManager = new TaskListManager(initResult.repository);
 
     const dependencyManager = new DependencyResolver(initResult.repository);
 
@@ -118,7 +118,7 @@ async function main(): Promise<void> {
 
     apiServer = new RestApiServer(
       apiConfig,
-      todoListManager,
+      taskListManager,
       dependencyManager,
       exitCriteriaManager,
       actionPlanManager,

@@ -10,7 +10,7 @@ Simple task and list management operations for getting started.
 
 **Key Topics:**
 
-- Creating and managing todo lists
+- Creating and managing task lists
 - Adding and updating tasks
 - Basic search and filtering
 - Task completion workflows

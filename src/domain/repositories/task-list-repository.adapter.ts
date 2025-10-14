@@ -304,23 +304,21 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
   }
 
   /**
-   * Deletes a TaskList from storage
+   * Deletes a TaskList from storage permanently
    *
    * @param id - The unique identifier of the list to delete
-   * @param permanent - If false, archives the list; if true, permanently deletes
    * @throws Error if the delete operation fails or list doesn't exist
    */
-  async delete(id: string, permanent?: boolean): Promise<void> {
+  async delete(id: string): Promise<void> {
     try {
-      logger.debug('Deleting TaskList', { listId: id, permanent });
+      logger.debug('Deleting TaskList', { listId: id });
 
-      await this.storage.delete(id, permanent);
+      await this.storage.delete(id);
 
-      logger.info('TaskList deleted successfully', { listId: id, permanent });
+      logger.info('TaskList deleted successfully', { listId: id });
     } catch (error) {
       logger.error('Failed to delete TaskList', {
         listId: id,
-        permanent,
         error,
       });
       throw new Error(
@@ -378,9 +376,9 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
 
       return result.totalCount;
     } catch (error) {
-      logger.error('Failed to count TodoLists', { query, error });
+      logger.error('Failed to count TaskLists', { query, error });
       throw new Error(
-        `Failed to count TodoLists: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to count TaskLists: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -580,7 +578,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
   }
 
   /**
-   * Applies filters to a list of TodoLists
+   * Applies filters to a list of TaskLists
    */
   private applyListFilters(lists: TaskList[], query: SearchQuery): TaskList[] {
     return lists.filter(list => {
@@ -656,7 +654,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
   }
 
   /**
-   * Applies sorting to a list of TodoLists
+   * Applies sorting to a list of TaskLists
    */
   private applyListSorting(
     lists: TaskList[],
@@ -703,7 +701,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
   }
 
   /**
-   * Applies sorting to a list of TodoListSummaries
+   * Applies sorting to a list of TaskListSummaries
    */
   private applySummarySorting(
     summaries: TaskListSummary[],

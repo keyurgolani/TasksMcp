@@ -39,7 +39,7 @@ export interface ListOptions {
  */
 export interface StorageData {
   version: string; // Data format version for migration compatibility
-  todoLists: TaskList[]; // All todo lists in storage
+  taskLists: TaskList[]; // All task lists in storage
 }
 
 /**
@@ -53,9 +53,9 @@ export interface StorageData {
  */
 export abstract class StorageBackend {
   /**
-   * Saves a todo list to storage
+   * Saves a task list to storage
    * @param key - Unique identifier for the list
-   * @param data - Todo list data to save
+   * @param data - Task list data to save
    * @param options - Save options (backup, validation)
    */
   abstract save(
@@ -65,7 +65,7 @@ export abstract class StorageBackend {
   ): Promise<void>;
 
   /**
-   * Loads a todo list from storage
+   * Loads a task list from storage
    * @param key - Unique identifier for the list
    * @param options - Load options (include archived)
    * @returns Promise<TaskList | null> - The loaded list or null if not found
@@ -73,14 +73,13 @@ export abstract class StorageBackend {
   abstract load(key: string, options?: LoadOptions): Promise<TaskList | null>;
 
   /**
-   * Deletes a todo list from storage
+   * Deletes a task list from storage
    * @param key - Unique identifier for the list
-   * @param permanent - Whether to permanently delete (vs archive)
    */
-  abstract delete(key: string, permanent?: boolean): Promise<void>;
+  abstract delete(key: string): Promise<void>;
 
   /**
-   * Lists all todo lists with optional filtering
+   * Lists all task lists with optional filtering
    * @param options - List options (filtering, pagination)
    * @returns Promise<TaskListSummary[]> - Array of list summaries
    */

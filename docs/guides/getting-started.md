@@ -10,11 +10,11 @@ Before starting, ensure you have:
 - ✅ **Configured your MCP client** - Claude Desktop, Kiro IDE, or custom client
 - ✅ **Verified the connection** - Server appears in available tools
 
-## 🚀 Your First Todo List
+## 🚀 Your First Task List
 
-Let's start by creating your first todo list and adding some tasks.
+Let's start by creating your first task list and adding some tasks.
 
-### Step 1: Create a Todo List
+### Step 1: Create a Task List
 
 ```json
 {
@@ -42,7 +42,7 @@ Let's start by creating your first todo list and adding some tasks.
 }
 ```
 
-Great! You've created your first todo list. Note the `id` - you'll use this to add tasks.
+Great! You've created your first task list. Note the `id` - you'll use this to add tasks.
 
 ### Step 2: Add Your First Task
 
@@ -113,7 +113,7 @@ Excellent! You've added your first task. Let's add a few more to build a complet
 }
 ```
 
-### Step 4: View Your Todo List
+### Step 4: View Your Task List
 
 ```json
 {
@@ -551,7 +551,7 @@ Get AI-powered insights about task complexity:
 2. **Archive old projects**:
 
    ```json
-   { "tool": "delete_list", "parameters": { "permanent": false } }
+   { "tool": "delete_list", "parameters": { "listId": "your-list-id" } }
    ```
 
 3. **Update priorities**:

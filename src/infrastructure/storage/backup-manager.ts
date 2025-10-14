@@ -61,7 +61,7 @@ export class BackupManager {
 
       const storage = await this.getStorage();
 
-      // Get all todo lists
+      // Get all task lists
       const lists = await storage.list();
       const allLists: TaskList[] = [];
 
@@ -84,7 +84,7 @@ export class BackupManager {
         lists: allLists,
       };
 
-      // Calculate statistics
+      // Calculate total items for backup metadata
       const totalItems = allLists.reduce(
         (sum, list) => sum + list.items.length,
         0
@@ -405,7 +405,12 @@ export class BackupManager {
   }
 }
 
-// Scheduled backup functionality
+/**
+ * Manages scheduled automatic backups of task lists
+ *
+ * Provides functionality to start and stop automatic backup processes
+ * based on configuration settings.
+ */
 export class ScheduledBackupManager {
   private readonly backupManager = new BackupManager();
   private readonly config = ConfigManager.getInstance().getConfig();

@@ -135,7 +135,7 @@ The MCP Task Manager provides a comprehensive set of tools for task and list man
 
 ### Task Management Tools
 
-- `add_task` - Add new tasks to lists with complexity analysis
+- `add_task` - Add new tasks to lists
 - `complete_task` - Mark tasks as completed
 - `remove_task` - Remove tasks from lists
 - `update_task` - Update task properties and metadata
@@ -154,12 +154,13 @@ The MCP Task Manager provides a comprehensive set of tools for task and list man
 - `set_task_dependencies` - Define task relationships and prerequisites
 - `get_ready_tasks` - Find tasks ready for execution
 - `analyze_task_dependencies` - Generate dependency graphs and critical path analysis
-- `get_task_suggestions` - Get AI-powered task recommendations
+
 - `bulk_task_operations` - Perform batch operations on multiple tasks
 
 ### Task Enhancement Tools
 
 - `add_task_tags` - Add metadata tags to tasks
+- `remove_task_tags` - Remove metadata tags from tasks
 - `set_task_priority` - Set task priority levels
 - `set_task_exit_criteria` - Define completion criteria
 - `update_exit_criteria` - Modify task completion requirements

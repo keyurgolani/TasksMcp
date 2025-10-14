@@ -51,12 +51,12 @@ interface AgentPromptResponse {
  * with support for variable substitution and fallback to default templates.
  *
  * @param request - The MCP call tool request containing prompt retrieval parameters
- * @param todoListManager - The todo list manager instance for task operations
+ * @param taskListManager - The task list manager instance for task operations
  * @returns Promise<CallToolResult> - MCP response with rendered prompt or error
  */
 export async function handleGetAgentPrompt(
   request: CallToolRequest,
-  todoListManager: TaskListManager
+  taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
     logger.debug('Processing get_agent_prompt request', {
@@ -65,17 +65,17 @@ export async function handleGetAgentPrompt(
 
     const args = GetAgentPromptSchema.parse(request.params?.arguments);
 
-    // Get the todo list and task
-    const todoList = await todoListManager.getTaskList({
+    // Get the task list and task
+    const taskList = await taskListManager.getTaskList({
       listId: args.listId,
       includeCompleted: true,
     });
 
-    if (!todoList) {
+    if (!taskList) {
       throw new Error(`Task list not found: ${args.listId}`);
     }
 
-    const task = todoList.items.find((item: Task) => item.id === args.taskId);
+    const task = taskList.items.find((item: Task) => item.id === args.taskId);
     if (!task) {
       throw new Error(`Task not found: ${args.taskId}`);
     }
@@ -89,7 +89,7 @@ export async function handleGetAgentPrompt(
     // Check if task has a custom template
     if (task.agentPromptTemplate) {
       hasCustomTemplate = true;
-      const context = TemplateEngine.createTemplateContext(task, todoList);
+      const context = TemplateEngine.createTemplateContext(task, taskList);
       const result = await TemplateEngine.renderTemplate(
         task.agentPromptTemplate,
         context
@@ -102,7 +102,7 @@ export async function handleGetAgentPrompt(
     } else if (args.useDefault) {
       // Use default template
       const defaultTemplate = getDefaultTemplate();
-      const context = TemplateEngine.createTemplateContext(task, todoList);
+      const context = TemplateEngine.createTemplateContext(task, taskList);
       const result = await TemplateEngine.renderTemplate(
         defaultTemplate,
         context

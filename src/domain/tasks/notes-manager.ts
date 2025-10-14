@@ -4,6 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { createOrchestrationError } from '../../shared/utils/error-formatter.js';
 import { logger } from '../../shared/utils/logger.js';
 
 import type { ImplementationNote } from '../../shared/types/task.js';
@@ -237,7 +238,16 @@ export class NotesManager {
     };
 
     if (!result.isValid) {
-      throw new Error(`Note validation failed: ${errors.join(', ')}`);
+      throw createOrchestrationError('Note validation failed', {
+        context: {
+          operation: 'Note Validation',
+          field: 'note',
+          currentValue: errors,
+          expectedValue: 'valid note content',
+          additionalContext: { errorCount: errors.length },
+        },
+        actionableGuidance: `Fix the following validation errors: ${errors.join('; ')}. Ensure note content is within length limits and contains valid characters.`,
+      });
     }
 
     if (warnings.length > 0) {
@@ -262,9 +272,16 @@ export class NotesManager {
     ];
 
     if (!validTypes.includes(type)) {
-      throw new Error(
-        `Invalid note type: ${type}. Valid types are: ${validTypes.join(', ')}`
-      );
+      throw createOrchestrationError('Invalid note type', {
+        context: {
+          operation: 'Note Type Validation',
+          field: 'type',
+          currentValue: type,
+          expectedValue: `one of: ${validTypes.join(', ')}`,
+          validOptions: validTypes,
+        },
+        actionableGuidance: `Choose a valid note type from: ${validTypes.join(', ')}. Current value "${type}" is not supported.`,
+      });
     }
   }
 
