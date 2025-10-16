@@ -3,7 +3,7 @@
  * Tests comprehensive task list data validation and business constraints
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import { ListValidator } from '../../../../../src/core/orchestration/validators/list-validator';
 

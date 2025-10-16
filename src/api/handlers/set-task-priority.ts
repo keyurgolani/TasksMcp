@@ -9,7 +9,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -30,7 +30,7 @@ export async function handleSetTaskPriority(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing set_task_priority request', {
+    LOGGER.debug('Processing set_task_priority request', {
       params: request.params?.arguments,
     });
 
@@ -76,7 +76,7 @@ export async function handleSetTaskPriority(
       estimatedDuration: updatedTask.estimatedDuration,
     };
 
-    logger.info('Task priority updated successfully', {
+    LOGGER.info('Task priority updated successfully', {
       listId: args.listId,
       taskId: args.taskId,
       title: updatedTask.title,

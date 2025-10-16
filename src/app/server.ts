@@ -40,14 +40,14 @@ import {
   type ServerConfig,
 } from '../infrastructure/config/index.js';
 import {
-  errorHandler,
+  ERROR_HANDLER,
   type ErrorReport,
 } from '../shared/errors/error-manager.js';
 import {
   formatZodError,
   createErrorContext,
 } from '../shared/utils/error-formatter.js';
-import { logger } from '../shared/utils/logger.js';
+import { LOGGER } from '../shared/utils/logger.js';
 import {
   preprocessParameters,
   type PreprocessingResult,
@@ -94,10 +94,10 @@ class McpTaskManagerServer {
    */
   private setupErrorHandling(): void {
     // Remove existing listeners to prevent duplicates
-    errorHandler.removeAllListeners('error');
+    ERROR_HANDLER.removeAllListeners('error');
 
-    errorHandler.on('error', (errorReport: ErrorReport) => {
-      logger.error('Application error handled', {
+    ERROR_HANDLER.on('error', (errorReport: ErrorReport) => {
+      LOGGER.error('Application error handled', {
         errorId: errorReport.id,
         category: errorReport.category,
         severity: errorReport.severity,
@@ -105,7 +105,7 @@ class McpTaskManagerServer {
       });
     });
 
-    logger.debug('Error handling configured');
+    LOGGER.debug('Error handling configured');
   }
 
   /**
@@ -418,7 +418,7 @@ class McpTaskManagerServer {
 
     // Log preprocessing actions for debugging
     if (result.conversions.length > 0) {
-      logger.debug('Parameter preprocessing applied', {
+      LOGGER.debug('Parameter preprocessing applied', {
         toolName,
         conversionsCount: result.conversions.length,
         conversions: result.conversions.map(c => ({
@@ -432,7 +432,7 @@ class McpTaskManagerServer {
 
     // Log any preprocessing errors
     if (result.errors.length > 0) {
-      logger.warn('Parameter preprocessing errors', {
+      LOGGER.warn('Parameter preprocessing errors', {
         toolName,
         errors: result.errors,
       });
@@ -462,7 +462,7 @@ class McpTaskManagerServer {
         originalInput
       );
 
-      logger.warn('Tool validation error with formatting', {
+      LOGGER.warn('Tool validation error with formatting', {
         toolName,
         originalError: (error as unknown as Error).message,
         formattedError,
@@ -475,7 +475,7 @@ class McpTaskManagerServer {
     // Handle other errors
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    logger.error('Tool execution error', {
+    LOGGER.error('Tool execution error', {
       toolName,
       error: errorMessage,
       parameters: (request['params'] as { arguments?: Record<string, unknown> })
@@ -540,7 +540,7 @@ class McpTaskManagerServer {
         enableAggregation: true,
       });
 
-      logger.info('Data delegation layer initialized', {
+      LOGGER.info('Data delegation layer initialized', {
         healthySources: initResult.healthStatus.healthy,
         totalSources: initResult.healthStatus.total,
         aggregationEnabled: initResult.config.aggregationEnabled,
@@ -566,7 +566,7 @@ class McpTaskManagerServer {
 
       // Log health status of all sources
       const routerStatus = initResult.router.getStatus();
-      logger.info('Data source health status', {
+      LOGGER.info('Data source health status', {
         sources: routerStatus.sources.map(s => ({
           id: s.id,
           name: s.name,
@@ -581,7 +581,7 @@ class McpTaskManagerServer {
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
 
-      logger.info('MCP Task Manager server started successfully', {
+      LOGGER.info('MCP Task Manager server started successfully', {
         storage: this.config.storage.type,
         dataSources: routerStatus.total,
         healthySources: routerStatus.healthy,
@@ -589,7 +589,7 @@ class McpTaskManagerServer {
         transport: 'stdio',
       });
     } catch (error) {
-      logger.error('Failed to start MCP Task Manager server', { error });
+      LOGGER.error('Failed to start MCP Task Manager server', { error });
       throw error;
     }
   }
@@ -601,7 +601,7 @@ class McpTaskManagerServer {
     try {
       return await this.ensureTaskListManager().healthCheck();
     } catch (error) {
-      logger.error('Server health check failed', { error });
+      LOGGER.error('Server health check failed', { error });
       return false;
     }
   }
@@ -616,9 +616,9 @@ class McpTaskManagerServer {
         this.taskListManager = null;
       }
 
-      logger.info('MCP Task Manager server closed successfully');
+      LOGGER.info('MCP Task Manager server closed successfully');
     } catch (error) {
-      logger.error('Error during server shutdown', { error });
+      LOGGER.error('Error during server shutdown', { error });
       throw error;
     }
   }
@@ -633,17 +633,17 @@ if (
   const server = new McpTaskManagerServer();
 
   server.start().catch((error: unknown) => {
-    logger.error('Failed to start server', { error });
+    LOGGER.error('Failed to start server', { error });
     process.exit(1);
   });
 
   process.on('SIGINT', () => {
-    logger.info('Received SIGINT, shutting down gracefully');
+    LOGGER.info('Received SIGINT, shutting down gracefully');
     process.exit(0);
   });
 
   process.on('SIGTERM', () => {
-    logger.info('Received SIGTERM, shutting down gracefully');
+    LOGGER.info('Received SIGTERM, shutting down gracefully');
     process.exit(0);
   });
 }

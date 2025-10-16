@@ -118,7 +118,7 @@ if (nodeEnv === 'test' && transports.length === 0) {
   );
 }
 
-export const logger = winston.createLogger({
+export const LOGGER = winston.createLogger({
   level: enableDebugLogging ? 'debug' : logLevel,
   format: debugFormat,
   defaultMeta: {
@@ -148,7 +148,7 @@ if (
       // Fallback: derive from current file location
       const currentFileUrl = import.meta.url;
       const currentFilePath = fileURLToPath(currentFileUrl);
-      // Current file is at src/shared/utils/logger.ts
+      // Current file is at src/shared/utils/LOGGER.ts
       // Go up 3 levels: utils -> shared -> src -> project root
       const utilsDir = dirname(currentFilePath);
       const sharedDir = dirname(utilsDir);
@@ -166,7 +166,7 @@ if (
     // Verify directory was created successfully
     if (existsSync(logsDir)) {
       // Error log
-      logger.add(
+      LOGGER.add(
         new winston.transports.File({
           filename: join(logsDir, 'error.log'),
           level: 'error',
@@ -177,7 +177,7 @@ if (
       );
 
       // Combined log
-      logger.add(
+      LOGGER.add(
         new winston.transports.File({
           filename: join(logsDir, 'combined.log'),
           format: debugFormat,
@@ -188,7 +188,7 @@ if (
 
       // Debug log (if debug logging is enabled)
       if (enableDebugLogging) {
-        logger.add(
+        LOGGER.add(
           new winston.transports.File({
             filename: join(logsDir, 'debug.log'),
             level: 'debug',
@@ -201,7 +201,7 @@ if (
 
       // Performance log (if performance logging is enabled)
       if (enablePerformanceLogging) {
-        logger.add(
+        LOGGER.add(
           new winston.transports.File({
             filename: join(logsDir, 'performance.log'),
             level: 'info',
@@ -249,8 +249,8 @@ if (
 
     // If file logging fails and we're in MCP mode (no console transport),
     // add a minimal console transport to prevent Winston warnings
-    if (isMcpMode() && logger.transports.length === 0) {
-      logger.add(
+    if (isMcpMode() && LOGGER.transports.length === 0) {
+      LOGGER.add(
         new winston.transports.Console({
           level: 'error', // Only log errors to avoid interfering with MCP protocol
           format: winston.format.combine(
@@ -300,9 +300,9 @@ export class DebugLogger {
     correlationId: string,
     meta: Record<string, unknown> = {}
   ): void {
-    const logMethod = (logger as unknown as Record<string, unknown>)[level];
+    const logMethod = (LOGGER as unknown as Record<string, unknown>)[level];
     if (typeof logMethod === 'function') {
-      logMethod.call(logger, message, { correlationId, ...meta });
+      logMethod.call(LOGGER, message, { correlationId, ...meta });
     }
   }
 
@@ -315,7 +315,7 @@ export class DebugLogger {
     meta: Record<string, unknown> = {}
   ): void {
     if (enablePerformanceLogging) {
-      logger.info('Performance metric', {
+      LOGGER.info('Performance metric', {
         operation,
         duration,
         ...meta,
@@ -332,9 +332,9 @@ export class DebugLogger {
     meta: Record<string, unknown> = {}
   ): void {
     const { stack } = new Error();
-    const logMethod = (logger as unknown as Record<string, unknown>)[level];
+    const logMethod = (LOGGER as unknown as Record<string, unknown>)[level];
     if (typeof logMethod === 'function') {
-      logMethod.call(logger, message, {
+      logMethod.call(LOGGER, message, {
         ...meta,
         stack: stack?.split('\n').slice(2, 6), // Include relevant stack frames
       });
@@ -352,7 +352,7 @@ export class DebugLogger {
       const memUsage = process.memoryUsage();
       const cpuUsage = process.cpuUsage();
 
-      logger.debug('System state snapshot', {
+      LOGGER.debug('System state snapshot', {
         context,
         memory: {
           heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
@@ -381,13 +381,13 @@ export class DebugLogger {
     const startTime = Date.now();
     const correlationId = this.generateCorrelationId();
 
-    logger.debug('Operation started', { operation, correlationId, ...meta });
+    LOGGER.debug('Operation started', { operation, correlationId, ...meta });
 
     try {
       const result = await fn();
       const duration = Date.now() - startTime;
 
-      logger.info('Operation completed', {
+      LOGGER.info('Operation completed', {
         operation,
         duration,
         correlationId,
@@ -401,7 +401,7 @@ export class DebugLogger {
     } catch (error) {
       const duration = Date.now() - startTime;
 
-      logger.error('Operation failed', {
+      LOGGER.error('Operation failed', {
         operation,
         duration,
         correlationId,
@@ -422,7 +422,7 @@ export class DebugLogger {
     details: Record<string, unknown> = {},
     shouldLog = true
   ): void {
-    logger.error('Critical system event', {
+    LOGGER.error('Critical system event', {
       event,
       critical: true,
       shouldLog,
@@ -439,7 +439,7 @@ export class DebugLogger {
     severity: 'low' | 'medium' | 'high' | 'critical',
     details: Record<string, unknown> = {}
   ): void {
-    logger.warn('Security event', {
+    LOGGER.warn('Security event', {
       event,
       severity,
       security: true,
@@ -455,7 +455,7 @@ export class DebugLogger {
     event: string,
     details: Record<string, unknown> = {}
   ): void {
-    logger.info('Business event', {
+    LOGGER.info('Business event', {
       event,
       business: true,
       timestamp: new Date().toISOString(),

@@ -3,8 +3,8 @@
  * Handles multi-criteria search, filtering, and pagination
  */
 
-import { Task } from '../../../domain/models/task';
-import { TaskList } from '../../../domain/models/task-list';
+import { TaskList } from '../../../domain/models/task-list.js';
+import { Task } from '../../../domain/models/task.js';
 import {
   SearchCriteria,
   SearchResult,
@@ -14,16 +14,16 @@ import {
   SearchResultWithMetrics,
 } from '../../../shared/types/search';
 
-import { BaseOrchestrator } from './base-orchestrator';
+import { BaseOrchestrator } from './base-orchestrator.js';
 
 export interface SearchOrchestrator extends BaseOrchestrator {
   /**
-   * Searches tasks with enhanced criteria and filtering
+   * Searches tasks with criteria and filtering
    */
   searchTasks(criteria: SearchCriteria): Promise<SearchResult<Task>>;
 
   /**
-   * Searches task lists with enhanced criteria and filtering
+   * Searches task lists with criteria and filtering
    */
   searchLists(criteria: SearchCriteria): Promise<SearchResult<TaskList>>;
 
@@ -53,7 +53,7 @@ export interface SearchOrchestrator extends BaseOrchestrator {
   ): Promise<Task[]>;
 
   /**
-   * Advanced search with enhanced options and performance metrics
+   * Advanced search with options and performance metrics
    */
   advancedSearch(
     criteria: SearchCriteria,
@@ -79,5 +79,6 @@ export interface SearchOrchestrator extends BaseOrchestrator {
     isValid: boolean;
     errors: string[];
     warnings: string[];
+    suggestions: string[];
   }>;
 }

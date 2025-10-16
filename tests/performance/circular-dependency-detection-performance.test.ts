@@ -249,40 +249,4 @@ describe('Circular Dependency Detection Performance Tests', () => {
     // Verify all cycles are detected
     expect(result.affectedTasks.length).toBe(numCycles * cycleSize);
   });
-
-  it.skip('should maintain consistent performance across different graph topologies', () => {
-    // This test is skipped due to system performance variations that make it flaky
-    // The functionality is tested by other tests, this was only checking performance consistency
-    const nodeCount = 500;
-    const graphs = [
-      { name: 'Linear', graph: createLinearGraph(nodeCount) },
-      { name: 'Star', graph: createStarGraph(nodeCount) },
-      { name: 'Cyclic', graph: createCompleteGraphWithCycle(nodeCount) },
-    ];
-
-    const results = graphs.map(({ name, graph }) => {
-      const startTime = performance.now();
-      const result = orchestrator.detectCircularDependencies(graph);
-      const endTime = performance.now();
-
-      return {
-        name,
-        executionTime: endTime - startTime,
-        hasCycles: result.hasCircularDependency,
-        cycleCount: result.cycles.length,
-      };
-    });
-
-    // All should complete in reasonable time
-    results.forEach(result => {
-      expect(result.executionTime).toBeLessThan(100);
-    });
-
-    // Performance should be consistent across topologies (within 5x factor)
-    const minTime = Math.min(...results.map(r => r.executionTime));
-    const maxTime = Math.max(...results.map(r => r.executionTime));
-    const performanceRatio = maxTime / minTime;
-
-    expect(performanceRatio).toBeLessThan(30); // Allow more variance for different topologies and system conditions
-  });
 });

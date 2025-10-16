@@ -50,12 +50,11 @@ export enum Priority {
 }
 
 /**
- * Represents an action plan for a task with steps and complexity
+ * Represents an action plan for a task with steps
  */
 export interface ActionPlan {
   steps: ActionStep[];
   estimatedDuration?: number;
-  complexity?: 'low' | 'moderate' | 'high';
 }
 
 /**

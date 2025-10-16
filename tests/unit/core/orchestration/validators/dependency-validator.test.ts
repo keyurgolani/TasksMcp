@@ -3,7 +3,7 @@
  * Tests dependency validation in orchestration layer
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import { DependencyValidator } from '../../../../../src/core/orchestration/validators/dependency-validator.js';
 

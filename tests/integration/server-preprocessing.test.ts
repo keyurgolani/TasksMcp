@@ -22,7 +22,9 @@ describe('Server Parameter Preprocessing Integration', () => {
   });
 
   afterEach(async () => {
-    // Cleanup is handled automatically by test setup
+    if (server) {
+      await server.close();
+    }
   });
 
   describe('Parameter Type Coercion', () => {

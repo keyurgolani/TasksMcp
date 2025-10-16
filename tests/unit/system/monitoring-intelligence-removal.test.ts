@@ -190,7 +190,7 @@ describe('Monitoring and Intelligence Removal Verification', () => {
 
   describe('Documentation Verification', () => {
     test('README should not contain intelligence feature references', () => {
-      const readmeFile = join(process.cwd(), 'README.md');
+      const readmeFile = join(process.cwd(), 'readme.md');
 
       if (existsSync(readmeFile)) {
         const readmeContent = readFileSync(readmeFile, 'utf-8');

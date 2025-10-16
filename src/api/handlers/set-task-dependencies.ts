@@ -10,7 +10,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -45,7 +45,7 @@ export async function handleSetTaskDependencies(
   const dependencyResolver = new DependencyResolver();
 
   try {
-    logger.debug('Processing set_task_dependencies request', {
+    LOGGER.debug('Processing set_task_dependencies request', {
       params: request.params?.arguments,
     });
 
@@ -95,7 +95,7 @@ export async function handleSetTaskDependencies(
 
     if (!validationResult.isValid) {
       const errorMessage = validationResult.errors.join('; ');
-      logger.warn('Dependency validation failed', {
+      LOGGER.warn('Dependency validation failed', {
         taskId: args.taskId,
         dependencyIds: dependencyIds,
         errors: validationResult.errors,
@@ -114,7 +114,7 @@ export async function handleSetTaskDependencies(
 
     // Log warnings if any
     if (validationResult.warnings.length > 0) {
-      logger.warn('Dependency validation warnings', {
+      LOGGER.warn('Dependency validation warnings', {
         taskId: args.taskId,
         warnings: validationResult.warnings,
       });
@@ -152,7 +152,7 @@ export async function handleSetTaskDependencies(
       estimatedDuration: updatedTask.estimatedDuration,
     };
 
-    logger.info('Task dependencies updated successfully', {
+    LOGGER.info('Task dependencies updated successfully', {
       listId: args.listId,
       taskId: args.taskId,
       dependencyCount: dependencyIds.length,

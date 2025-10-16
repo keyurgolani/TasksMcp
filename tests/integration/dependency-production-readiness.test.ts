@@ -16,7 +16,7 @@ import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { DependencyResolver } from '../../src/domain/tasks/dependency-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
 import { TaskStatus as _TaskStatus } from '../../src/shared/types/task.js';
-import { logger } from '../../src/shared/utils/logger.js';
+import { LOGGER as logger } from '../../src/shared/utils/logger.js';
 import { createTaskListManager } from '../utils/test-helpers.js';
 
 import type { CallToolRequest } from '../../src/shared/types/mcp-types.js';

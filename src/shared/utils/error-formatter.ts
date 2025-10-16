@@ -1,5 +1,5 @@
 /**
- * Enhanced error formatting utilities
+ * Error formatting utilities
  * Provides detailed error messages with context and actionable guidance
  */
 
@@ -7,6 +7,8 @@ import {
   ValidationError,
   OrchestrationError,
 } from '../errors/orchestration-error.js';
+
+import { ENUM_MATCHER } from './enum-matcher.js';
 
 export interface ErrorContext {
   operation: string;
@@ -27,7 +29,7 @@ export interface DetailedErrorOptions {
 }
 
 /**
- * Creates a detailed validation error with comprehensive information
+ * Creates a detailed validation error with complete information
  */
 export function createValidationError(
   message: string,
@@ -35,21 +37,21 @@ export function createValidationError(
 ): ValidationError {
   const { context, actionableGuidance, includeValueDetails = true } = options;
 
-  let enhancedMessage = message;
+  let detailedMessage = message;
 
   // Add length information if available
   if (context.actualLength !== undefined && context.maxLength !== undefined) {
-    enhancedMessage += ` (current: ${context.actualLength} characters, maximum: ${context.maxLength} characters)`;
+    detailedMessage += ` (current: ${context.actualLength} characters, maximum: ${context.maxLength} characters)`;
   } else if (
     context.actualLength !== undefined &&
     context.minLength !== undefined
   ) {
-    enhancedMessage += ` (current: ${context.actualLength} characters, minimum: ${context.minLength} characters)`;
+    detailedMessage += ` (current: ${context.actualLength} characters, minimum: ${context.minLength} characters)`;
   }
 
   // Add valid options if available
   if (context.validOptions && context.validOptions.length > 0) {
-    enhancedMessage += `. Valid options: ${context.validOptions.join(', ')}`;
+    detailedMessage += `. Valid options: ${context.validOptions.join(', ')}`;
   }
 
   // Generate actionable guidance if not provided
@@ -59,7 +61,7 @@ export function createValidationError(
   }
 
   return new ValidationError(
-    enhancedMessage,
+    detailedMessage,
     context.operation,
     includeValueDetails ? context.currentValue : undefined,
     context.expectedValue,
@@ -68,7 +70,7 @@ export function createValidationError(
 }
 
 /**
- * Creates a detailed orchestration error with comprehensive information
+ * Creates a detailed orchestration error with complete information
  */
 export function createOrchestrationError(
   message: string,
@@ -76,16 +78,16 @@ export function createOrchestrationError(
 ): OrchestrationError {
   const { context, actionableGuidance, includeValueDetails = true } = options;
 
-  let enhancedMessage = message;
+  let detailedMessage = message;
 
   // Add contextual information
   if (context.field) {
-    enhancedMessage = `${context.field}: ${enhancedMessage}`;
+    detailedMessage = `${context.field}: ${detailedMessage}`;
   }
 
   // Add length information if available
   if (context.actualLength !== undefined && context.maxLength !== undefined) {
-    enhancedMessage += ` (current: ${context.actualLength}, maximum: ${context.maxLength})`;
+    detailedMessage += ` (current: ${context.actualLength}, maximum: ${context.maxLength})`;
   }
 
   // Generate actionable guidance if not provided
@@ -95,7 +97,7 @@ export function createOrchestrationError(
   }
 
   return new OrchestrationError(
-    enhancedMessage,
+    detailedMessage,
     context.operation,
     includeValueDetails ? context.currentValue : undefined,
     context.expectedValue,
@@ -216,7 +218,7 @@ export function formatValidationErrors(errors: ValidationError[]): string {
 /**
  * Creates error context for common validation scenarios
  */
-export const ErrorContexts = {
+export const ERROR_CONTEXTS = {
   /**
    * Creates context for required field validation
    */
@@ -315,13 +317,13 @@ export const ErrorContexts = {
 /**
  * Utility to create common error types with detailed information
  */
-export const DetailedErrors = {
+export const DETAILED_ERRORS = {
   /**
    * Creates a detailed required field error
    */
   requiredField: (field: string, operation: string): ValidationError =>
     createValidationError(`${field} is required`, {
-      context: ErrorContexts.requiredField(field, operation),
+      context: ERROR_CONTEXTS.requiredField(field, operation),
       actionableGuidance: `Provide a valid ${field} value. This field cannot be empty or undefined.`,
     }),
 
@@ -337,7 +339,7 @@ export const DetailedErrors = {
   ): ValidationError =>
     createValidationError(`${field} exceeds maximum length`, {
       context: {
-        ...ErrorContexts.lengthValidation(
+        ...ERROR_CONTEXTS.lengthValidation(
           field,
           operation,
           actualLength,
@@ -357,7 +359,7 @@ export const DetailedErrors = {
     expectedType: string
   ): ValidationError =>
     createValidationError(`${field} must be a ${expectedType}`, {
-      context: ErrorContexts.typeValidation(
+      context: ERROR_CONTEXTS.typeValidation(
         field,
         operation,
         currentValue,
@@ -374,7 +376,7 @@ export const DetailedErrors = {
     id: string
   ): OrchestrationError =>
     createOrchestrationError(`${resourceType} not found`, {
-      context: ErrorContexts.notFound(resourceType, operation, id),
+      context: ERROR_CONTEXTS.notFound(resourceType, operation, id),
       actionableGuidance: `Ensure the ${resourceType} ID "${id}" exists and is accessible. Check that the ${resourceType} hasn't been deleted and you have proper permissions.`,
     }),
 
@@ -388,7 +390,7 @@ export const DetailedErrors = {
     validOptions: string[]
   ): ValidationError =>
     createValidationError(`${field} has invalid value`, {
-      context: ErrorContexts.optionsValidation(
+      context: ERROR_CONTEXTS.optionsValidation(
         field,
         operation,
         currentValue,
@@ -407,7 +409,7 @@ export const DetailedErrors = {
     max: number
   ): ValidationError =>
     createValidationError(`${field} is out of valid range`, {
-      context: ErrorContexts.rangeValidation(
+      context: ERROR_CONTEXTS.rangeValidation(
         field,
         operation,
         currentValue,
@@ -417,86 +419,159 @@ export const DetailedErrors = {
       actionableGuidance: `Set ${field} to a value between ${min} and ${max}. Current value ${currentValue} is ${currentValue < min ? 'too low' : 'too high'}.`,
     }),
 };
+
 /**
- * Legacy compatibility exports
+ * Generate enhanced error messages with agent-friendly guidance
  */
-
-// Legacy formatZodError function for backward compatibility
-export function formatZodError(
-  error: unknown,
-  context: {
-    toolName: string;
-    includeExamples?: boolean;
-    includeContext?: boolean;
-  },
+function generateEnhancedErrorMessages(
+  errors: unknown[],
   originalInput?: unknown
-): string {
-  if (error instanceof ValidationError) {
-    return formatValidationErrors([error]);
-  }
+): string[] {
+  const messages: string[] = [];
 
-  // Handle ZodError instances with enhanced formatting
-  if (error && typeof error === 'object' && 'issues' in error) {
-    const zodError = error as { issues: unknown[] };
-    const errors = zodError.issues;
+  for (const error of errors) {
+    if (error && typeof error === 'object') {
+      const zodIssue = error as {
+        code?: string;
+        path?: string[];
+        message?: string;
+        maximum?: number;
+        minimum?: number;
+        values?: string[];
+        expected?: string;
+        received?: unknown;
+      };
 
-    let result = `❌ Validation error: ${JSON.stringify(errors, null, 2)}`;
+      const fieldPath = zodIssue.path?.join('.') || 'field';
+      let enhancedMessage = '';
 
-    // Always add suggestions section with specific guidance
-    result += '\n\n💡 Suggestions:';
-    const suggestions = generateZodErrorSuggestions(
-      errors,
-      context.toolName,
-      originalInput
-    );
-    if (suggestions.length > 0) {
-      suggestions.forEach(suggestion => {
-        result += `\n• ${suggestion}`;
-      });
-    } else {
-      result += '\n• Please check the parameter format and try again';
+      // Priority field errors
+      if (fieldPath === 'priority') {
+        if (zodIssue.code === 'too_big' && zodIssue.maximum !== undefined) {
+          enhancedMessage = `Priority must be between 1-5. Use numbers 1-5, where 5 (highest) to 1 (lowest).`;
+        } else if (
+          zodIssue.code === 'too_small' &&
+          zodIssue.minimum !== undefined
+        ) {
+          enhancedMessage = `Priority must be between 1-5. Use numbers 1-5, where 5 (highest) to 1 (lowest).`;
+        } else if (
+          zodIssue.code === 'invalid_type' &&
+          zodIssue.expected === 'number'
+        ) {
+          enhancedMessage = `Priority must be a number. Use numbers 1-5, where 5 is highest priority and 1 is lowest.`;
+        }
+      }
+      // Tags field errors
+      else if (fieldPath === 'tags') {
+        if (zodIssue.code === 'invalid_type' && zodIssue.expected === 'array') {
+          enhancedMessage = `Tags must be provided as array of strings. Provide as array of strings. Example: ["urgent", "important", "bug-fix"]`;
+        }
+      }
+      // Status field errors
+      else if (fieldPath.includes('status')) {
+        // Handle various enum error codes and property names
+        const enumValues = zodIssue.values ||
+          (zodIssue as unknown as { options?: string[] }).options || [
+            'pending',
+            'in_progress',
+            'completed',
+            'blocked',
+            'cancelled',
+          ];
+        const isEnumError =
+          zodIssue.code === 'invalid_value' ||
+          zodIssue.code === 'invalid_enum_value' ||
+          zodIssue.code === 'invalid_literal' ||
+          zodIssue.message?.includes('Invalid enum value') ||
+          fieldPath.includes('status'); // Assume status fields are enums
+
+        if (isEnumError && enumValues) {
+          enhancedMessage = `Invalid status value. 💡 Please choose one of: ${enumValues.join(', ')}`;
+
+          // Apply fuzzy matching for enum values
+          if (originalInput && typeof originalInput === 'object') {
+            const inputObj = originalInput as Record<string, unknown>;
+            let invalidValue: string | undefined;
+
+            // Extract the invalid value from the original input based on the path
+            if (zodIssue.path && zodIssue.path.length > 0) {
+              let current: unknown = inputObj;
+              for (const pathSegment of zodIssue.path) {
+                if (
+                  current &&
+                  typeof current === 'object' &&
+                  pathSegment in current
+                ) {
+                  current = (current as Record<string, unknown>)[pathSegment];
+                } else {
+                  current = undefined;
+                  break;
+                }
+              }
+              if (typeof current === 'string') {
+                invalidValue = current;
+              }
+            } else if (fieldPath.includes('status') && 'status' in inputObj) {
+              // Handle direct status field
+              const statusValue = inputObj['status'];
+              if (
+                Array.isArray(statusValue) &&
+                statusValue.length > 0 &&
+                typeof statusValue[0] === 'string'
+              ) {
+                invalidValue = statusValue[0];
+              } else if (typeof statusValue === 'string') {
+                invalidValue = statusValue;
+              }
+            }
+
+            // Also check if zodIssue has received value directly
+            if (
+              !invalidValue &&
+              zodIssue.received &&
+              typeof zodIssue.received === 'string'
+            ) {
+              invalidValue = zodIssue.received;
+            }
+
+            // Apply fuzzy matching if we found the invalid value
+            if (invalidValue && Array.isArray(enumValues)) {
+              const matchResult = ENUM_MATCHER.findClosestEnumValue(
+                invalidValue,
+                enumValues
+              );
+              if (matchResult.match && matchResult.confidence > 0.2) {
+                enhancedMessage += `\nDid you mean "${matchResult.match}"?`;
+              }
+            }
+          }
+        }
+      }
+      // Duration field errors
+      else if (fieldPath === 'estimatedDuration') {
+        if (
+          zodIssue.code === 'invalid_type' &&
+          zodIssue.expected === 'number'
+        ) {
+          enhancedMessage = `Duration must be a number. Please provide a value of type number. Provide duration in minutes as a number (e.g., 120 for 2 hours).`;
+        }
+      }
+      // Generic type errors (but not for deeply nested paths)
+      else if (
+        zodIssue.code === 'invalid_type' &&
+        zodIssue.expected === 'number' &&
+        (!zodIssue.path || zodIssue.path.length <= 2)
+      ) {
+        enhancedMessage = `${fieldPath} must be a number. Please provide a value of type number.`;
+      }
+
+      if (enhancedMessage) {
+        messages.push(enhancedMessage);
+      }
     }
-
-    // Add common fixes section if context is provided
-    if (context.includeContext !== false) {
-      result += '\n\n🔧 Common fixes:';
-      result += '\n1. Check parameter types and formats';
-      result += '\n2. Ensure all required fields are provided';
-      result += '\n3. Verify UUID format for ID fields';
-    }
-
-    // Add working example section if examples are enabled
-    if (context.includeExamples !== false) {
-      result += '\n\n📝 Working example:';
-
-      // Generate context-specific examples based on the tool and errors
-      const example = generateContextualExample(context.toolName, errors);
-      result += `\n${example}`;
-    }
-
-    return result;
   }
 
-  // For non-ValidationError types, create a generic error message with expected formatting
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  let result = `❌ Validation error: ${errorMessage}`;
-
-  // Add common fixes section if context is provided
-  if (context.includeContext !== false) {
-    result += '\n\n🔧 Common fixes:';
-    result += '\n1. Check parameter types and formats';
-    result += '\n2. Ensure all required fields are provided';
-    result += '\n3. Verify UUID format for ID fields';
-  }
-
-  // Add working example section if examples are enabled
-  if (context.includeExamples !== false) {
-    result += '\n\n📝 Working example:';
-    result +=
-      '\n{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"\n}';
-  }
-
-  return result;
+  return messages;
 }
 
 /**
@@ -539,7 +614,7 @@ function generateContextualExample(
   // Generate tool-specific examples
   if (toolName === 'add_task' || toolName === 'update_task') {
     let example =
-      '{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"';
+      '{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "New task"';
 
     if (hasPriorityError) {
       example += ',\n  "priority": 3';
@@ -558,243 +633,144 @@ function generateContextualExample(
   }
 
   // Default example
-  return '{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"\n}';
+  return '{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "New task"\n}';
 }
 
 /**
- * Generate specific suggestions for Zod validation errors
+ * Legacy compatibility exports
  */
-function generateZodErrorSuggestions(
-  errors: unknown[],
-  _toolName: string,
-  originalInput?: unknown
-): string[] {
-  const suggestions: string[] = [];
 
-  for (const error of errors) {
-    if (error && typeof error === 'object') {
-      const issue = error as {
-        code?: string;
-        path?: string[];
-        message?: string;
-        maximum?: number;
-        minimum?: number;
-        values?: string[];
-        expected?: string;
-      };
+// Legacy formatZodError function for backward compatibility
+export function formatZodError(
+  error: unknown,
+  context: {
+    toolName: string;
+    includeExamples?: boolean;
+    includeContext?: boolean;
+  },
+  _originalInput?: unknown
+): string {
+  if (error instanceof ValidationError) {
+    return formatValidationErrors([error]);
+  }
 
-      const fieldPath = issue.path?.join('.') || 'field';
+  // Handle ZodError instances with detailed formatting
+  if (error && typeof error === 'object' && 'issues' in error) {
+    const zodError = error as { issues: unknown[] };
+    const errors = zodError.issues;
 
-      // Priority field specific suggestions
-      if (fieldPath === 'priority') {
-        if (issue.code === 'too_big' || issue.code === 'too_small') {
-          suggestions.push('Use numbers 1-5, where 5 is highest priority');
-          suggestions.push('5 (highest) to 1 (lowest)');
-        } else if (
-          issue.code === 'invalid_type' &&
-          issue.expected === 'number'
-        ) {
-          suggestions.push('Use numbers 1-5, where 5 is highest priority');
-          suggestions.push('Please provide a value of type number');
-        }
-      }
+    // Check if we should provide enhanced error messages
+    const enhancedMessages = generateEnhancedErrorMessages(
+      errors,
+      _originalInput
+    );
+    if (enhancedMessages.length > 0) {
+      let result = '❌ Validation error:\n';
 
-      // Tags field specific suggestions
-      else if (fieldPath === 'tags') {
-        if (issue.code === 'invalid_type' && issue.expected === 'array') {
-          suggestions.push(
-            'Provide as array of strings like ["urgent", "important", "bug-fix"]'
-          );
-        }
-      }
-
-      // Status field specific suggestions
-      else if (fieldPath.includes('status')) {
-        if (issue.code === 'invalid_value' && issue.values) {
-          // Try to get the actual invalid value from the original input
-          let currentValue: string | undefined;
-
-          if (
-            originalInput &&
-            typeof originalInput === 'object' &&
-            'status' in originalInput
-          ) {
-            const statusValue = (originalInput as { status: unknown }).status;
-            if (
-              Array.isArray(statusValue) &&
-              issue.path &&
-              issue.path.length > 1
-            ) {
-              const index = issue.path[1];
-              if (typeof index === 'number' && statusValue[index]) {
-                currentValue = String(statusValue[index]);
-              }
-            } else if (typeof statusValue === 'string') {
-              currentValue = statusValue;
-            }
-          }
-
-          // Fallback to extracting from error message
-          if (!currentValue) {
-            currentValue = issue.message?.match(/"([^"]+)"/)?.[1];
-          }
-
-          if (currentValue && issue.values.length > 0) {
-            const closestMatch = findClosestMatch(currentValue, issue.values);
-            // If input is very short (1-2 characters), show all options instead of fuzzy match
-            if (closestMatch && currentValue.length > 2) {
-              suggestions.push(`Did you mean "${closestMatch}"?`);
-            } else if (currentValue.length <= 2) {
-              suggestions.push(
-                `💡 Please choose one of: ${issue.values.join(', ')}`
-              );
-            } else {
-              // For longer inputs that don't have a good match, show all choices
-              suggestions.push(
-                `Please choose one of: ${issue.values.join(', ')}`
-              );
-            }
-          } else {
-            suggestions.push(`Valid choices are: ${issue.values.join(', ')}`);
-          }
-        }
-      }
-
-      // Duration field specific suggestions
-      else if (fieldPath === 'estimatedDuration') {
-        if (issue.code === 'invalid_type' && issue.expected === 'number') {
-          suggestions.push(
-            'Provide duration in minutes as a number (e.g., 120 for 2 hours)'
-          );
-        }
-      }
-
-      // Generic type suggestions
-      else if (issue.code === 'invalid_type') {
-        if (issue.expected === 'array') {
-          suggestions.push(`Provide ${fieldPath} as array of strings`);
-        } else if (issue.expected === 'number') {
-          // Special handling for array elements
-          if (fieldPath.includes('.')) {
-            suggestions.push(`Please provide a value of type number`);
-          } else {
-            suggestions.push(`Provide ${fieldPath} as a number`);
-          }
-        } else if (issue.expected === 'string') {
-          suggestions.push(`Provide ${fieldPath} as a string`);
-        }
-      }
-
-      // Enum value suggestions with fuzzy matching
-      else if (issue.code === 'invalid_value' && issue.values) {
-        // Try multiple patterns to extract the current value
-        let currentValue = issue.message?.match(/"([^"]+)"/)?.[1];
-        if (!currentValue) {
-          // Try alternative patterns
-          currentValue = issue.message?.match(/received (\w+)/)?.[1];
-        }
-        if (!currentValue) {
-          // Try another pattern for Zod errors
-          currentValue = issue.message?.match(
-            /Invalid option: (.+?)(?:\s|$)/
-          )?.[1];
-        }
-
-        if (currentValue && issue.values.length > 0) {
-          const closestMatch = findClosestMatch(currentValue, issue.values);
-          if (closestMatch) {
-            suggestions.push(`Did you mean "${closestMatch}"?`);
-          } else {
-            suggestions.push(
-              `💡 Please choose one of: ${issue.values.join(', ')}`
-            );
-          }
+      enhancedMessages.forEach((msg: string, index: number) => {
+        if (enhancedMessages.length > 1) {
+          result += `${index + 1}. ${msg}\n`;
         } else {
-          suggestions.push(`Valid choices are: ${issue.values.join(', ')}`);
+          result += `${msg}\n`;
         }
+      });
+
+      result += '\n💡 Guidance:';
+      result += '\n• Please check the parameter format and try again';
+
+      // Add common fixes section if context is provided
+      if (context.includeContext !== false) {
+        result += '\n\n🔧 Common fixes:';
+        result += '\n1. Check parameter types and formats';
+        result += '\n2. Ensure all required fields are provided';
+        result += '\n3. Verify UUID format for ID fields';
       }
+
+      // Add working example section if examples are enabled
+      if (context.includeExamples !== false) {
+        result += '\n\n📝 Working example:';
+        const example = generateContextualExample(context.toolName, errors);
+        result += `\n${example}`;
+      }
+
+      return result;
     }
-  }
 
-  // Add generic suggestions if no specific ones were found
-  if (suggestions.length === 0) {
-    suggestions.push('Check parameter types and formats');
-    suggestions.push('Ensure all required fields are provided');
-    suggestions.push('Verify UUID format for ID fields');
-  }
+    // Fallback to original format if no enhanced messages
+    // For deeply nested errors, preserve the original Zod error structure
+    const hasDeepNesting = errors.some(
+      error =>
+        error &&
+        typeof error === 'object' &&
+        'path' in error &&
+        Array.isArray((error as { path?: unknown[] }).path) &&
+        (error as { path: unknown[] }).path.length > 2
+    );
 
-  return suggestions;
-}
-
-/**
- * Find the closest match for enum values using simple string similarity
- */
-function findClosestMatch(input: string, validValues: string[]): string | null {
-  const inputLower = input.toLowerCase();
-
-  // Exact match (case insensitive)
-  for (const value of validValues) {
-    if (value.toLowerCase() === inputLower) {
-      return value;
+    let result = '';
+    if (hasDeepNesting) {
+      // For deeply nested errors, show the original Zod error messages
+      result = `❌ Validation error:\n`;
+      errors.forEach((error: unknown) => {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'path' in error &&
+          'message' in error
+        ) {
+          const errorObj = error as { path?: string[]; message?: string };
+          const fieldPath = errorObj.path?.join('.') || 'field';
+          result += `${fieldPath}: ${errorObj.message}\n`;
+        }
+      });
+    } else {
+      result = `❌ Validation error: ${JSON.stringify(errors, null, 2)}`;
     }
-  }
 
-  // Partial match
-  for (const value of validValues) {
-    if (
-      value.toLowerCase().includes(inputLower) ||
-      inputLower.includes(value.toLowerCase())
-    ) {
-      return value;
+    // Add guidance section
+    result += '\n💡 Guidance:';
+    result += '\n• Please check the parameter format and try again';
+
+    // Add common fixes section if context is provided
+    if (context.includeContext !== false) {
+      result += '\n\n🔧 Common fixes:';
+      result += '\n1. Check parameter types and formats';
+      result += '\n2. Ensure all required fields are provided';
+      result += '\n3. Verify UUID format for ID fields';
     }
-  }
 
-  // Simple edit distance for typos
-  let bestMatch = null;
-  let bestScore = Infinity;
+    // Add working example section if examples are enabled
+    if (context.includeExamples !== false) {
+      result += '\n\n📝 Working example:';
 
-  for (const value of validValues) {
-    const score = calculateEditDistance(inputLower, value.toLowerCase());
-    if (score < bestScore && score <= 2) {
-      // Allow up to 2 character differences
-      bestScore = score;
-      bestMatch = value;
+      // Generate context-specific examples based on the tool and errors
+      const example = generateContextualExample(context.toolName, errors);
+      result += `\n${example}`;
     }
+
+    return result;
   }
 
-  return bestMatch;
-}
+  // For non-ValidationError types, create a generic error message with expected formatting
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  let result = `❌ Validation error: ${errorMessage}`;
 
-/**
- * Calculate simple edit distance between two strings
- */
-function calculateEditDistance(a: string, b: string): number {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-
-  const matrix: number[][] = Array(a.length + 1)
-    .fill(null)
-    .map(() => Array(b.length + 1).fill(0));
-
-  for (let i = 0; i <= a.length; i++) {
-    matrix[i]![0] = i;
-  }
-  for (let j = 0; j <= b.length; j++) {
-    matrix[0]![j] = j;
+  // Add common fixes section if context is provided
+  if (context.includeContext !== false) {
+    result += '\n\n🔧 Common fixes:';
+    result += '\n1. Check parameter types and formats';
+    result += '\n2. Ensure all required fields are provided';
+    result += '\n3. Verify UUID format for ID fields';
   }
 
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i]![j] = Math.min(
-        matrix[i - 1]![j]! + 1, // deletion
-        matrix[i]![j - 1]! + 1, // insertion
-        matrix[i - 1]![j - 1]! + cost // substitution
-      );
-    }
+  // Add working example section if examples are enabled
+  if (context.includeExamples !== false) {
+    result += '\n\n📝 Working example:';
+    result +=
+      '\n{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "New task"\n}';
   }
 
-  return matrix[a.length]![b.length]!;
+  return result;
 }
 
 // Legacy createErrorContext function for backward compatibility
@@ -845,7 +821,7 @@ export class ErrorFormatter {
       closestMatch?: string;
     }> = [];
 
-    // Handle ZodError instances with enhanced formatting
+    // Handle ZodError instances with detailed formatting
     if (error && typeof error === 'object' && 'issues' in error) {
       const zodError = error as { issues: unknown[] };
 
@@ -859,6 +835,7 @@ export class ErrorFormatter {
             minimum?: number;
             values?: string[];
             expected?: string;
+            received?: unknown;
           };
 
           const fieldPath = zodIssue.path?.join('.') || 'validation';
@@ -874,7 +851,7 @@ export class ErrorFormatter {
               (zodIssue.code === 'invalid_type' &&
                 zodIssue.expected === 'number')
             ) {
-              suggestion = 'Use numbers 1-5, where 5 is highest priority';
+              suggestion = 'Use numbers 1-5';
               example = '5';
             }
           } else if (fieldPath === 'tags') {
@@ -882,22 +859,22 @@ export class ErrorFormatter {
               zodIssue.code === 'invalid_type' &&
               zodIssue.expected === 'array'
             ) {
-              suggestion = 'Provide as array of strings';
+              suggestion = 'array of strings';
               example = '["urgent", "important", "bug-fix"]';
             }
           } else if (fieldPath.includes('status')) {
             if (zodIssue.code === 'invalid_value' && zodIssue.values) {
-              const currentValue = zodIssue.message?.match(/"([^"]+)"/)?.[1];
-              if (currentValue) {
-                const match = findClosestMatch(currentValue, zodIssue.values);
-                if (match) {
-                  closestMatch = match;
-                  suggestion = `Did you mean "${closestMatch}"?`;
-                } else {
-                  suggestion = `Valid choices are: ${zodIssue.values.join(', ')}`;
+              suggestion = `Please choose one of: ${zodIssue.values.join(', ')}`;
+
+              // Apply fuzzy matching for enum values
+              if (zodIssue.received && typeof zodIssue.received === 'string') {
+                const matchResult = ENUM_MATCHER.findClosestEnumValue(
+                  zodIssue.received,
+                  zodIssue.values
+                );
+                if (matchResult.match && matchResult.confidence > 0.3) {
+                  closestMatch = matchResult.match;
                 }
-              } else {
-                suggestion = `Valid choices are: ${zodIssue.values.join(', ')}`;
               }
             }
           } else if (fieldPath === 'estimatedDuration') {
@@ -922,6 +899,17 @@ export class ErrorFormatter {
               }
             } else if (zodIssue.code === 'invalid_value' && zodIssue.values) {
               suggestion = `Valid choices are: ${zodIssue.values.join(', ')}`;
+
+              // Apply fuzzy matching for enum values
+              if (zodIssue.received && typeof zodIssue.received === 'string') {
+                const matchResult = ENUM_MATCHER.findClosestEnumValue(
+                  zodIssue.received,
+                  zodIssue.values
+                );
+                if (matchResult.match && matchResult.confidence > 0.3) {
+                  closestMatch = matchResult.match;
+                }
+              }
             }
           }
 
@@ -952,7 +940,7 @@ export class ErrorFormatter {
         }
       }
     } else {
-      // Convert to a simple format that tests expect
+      // Convert to a format that tests expect
       const errorMessage =
         error instanceof Error ? error.message : String(error);
 
@@ -1029,3 +1017,7 @@ export class ErrorFormatter {
     return result;
   }
 }
+
+// Export aliases for backward compatibility
+export { DETAILED_ERRORS as DetailedErrors };
+export { ERROR_CONTEXTS as ErrorContexts };

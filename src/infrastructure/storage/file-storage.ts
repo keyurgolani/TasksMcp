@@ -13,7 +13,7 @@ import {
 } from '../../shared/types/storage.js';
 import { FileLock } from '../../shared/utils/file-lock.js';
 import { JsonOptimizer } from '../../shared/utils/json-optimizer.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { RetryLogic } from '../../shared/utils/retry-logic.js';
 
 import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
@@ -31,8 +31,8 @@ export class FileStorageBackend extends StorageBackend {
   private cleanupInterval: NodeJS.Timeout | undefined;
   private isShuttingDown = false;
 
-  private readonly LOCK_TIMEOUT = 30000; // 30 seconds
-  private readonly INDEX_RETRY_OPTIONS = {
+  private readonly lockTimeout = 30000; // 30 seconds
+  private readonly indexRetryOptions = {
     maxRetries: 3,
     initialDelay: 100,
     maxDelay: 2000,
@@ -57,7 +57,7 @@ export class FileStorageBackend extends StorageBackend {
     }
 
     try {
-      logger.info('Initializing file storage backend', {
+      LOGGER.info('Initializing file storage backend', {
         dataDirectory: this.config.dataDirectory,
       });
 
@@ -76,9 +76,9 @@ export class FileStorageBackend extends StorageBackend {
       await this.loadContextIndexIntoMemory();
 
       this.initialized = true;
-      logger.info('File storage backend initialized successfully');
+      LOGGER.info('File storage backend initialized successfully');
     } catch (error) {
-      logger.error('Failed to initialize file storage backend', { error });
+      LOGGER.error('Failed to initialize file storage backend', { error });
       throw error;
     }
   }
@@ -108,7 +108,7 @@ export class FileStorageBackend extends StorageBackend {
       // Create backup if file exists and backup is requested
       if (options?.backup === true && (await this.fileExists(filePath))) {
         await fs.copyFile(filePath, backupPath);
-        logger.debug('Created backup before save', { key, backupPath });
+        LOGGER.debug('Created backup before save', { key, backupPath });
       }
 
       // Ensure parent directory exists
@@ -132,7 +132,7 @@ export class FileStorageBackend extends StorageBackend {
         await fs.unlink(backupPath);
       }
 
-      logger.debug('Task list saved to file storage', {
+      LOGGER.debug('Task list saved to file storage', {
         key,
         title: data.title,
         filePath,
@@ -142,19 +142,19 @@ export class FileStorageBackend extends StorageBackend {
       try {
         if (await this.fileExists(backupPath)) {
           await fs.rename(backupPath, filePath);
-          logger.debug('Restored backup after failed save', { key });
+          LOGGER.debug('Restored backup after failed save', { key });
         }
         if (await this.fileExists(tempPath)) {
           await fs.unlink(tempPath);
         }
       } catch (rollbackError) {
-        logger.error('Failed to rollback after save error', {
+        LOGGER.error('Failed to rollback after save error', {
           key,
           rollbackError,
         });
       }
 
-      logger.error('Failed to save task list to file storage', {
+      LOGGER.error('Failed to save task list to file storage', {
         key,
         error,
       });
@@ -183,7 +183,7 @@ export class FileStorageBackend extends StorageBackend {
         convertDates: true,
       });
 
-      logger.debug('Task list loaded from file storage', {
+      LOGGER.debug('Task list loaded from file storage', {
         key,
         title: data.title,
         filePath,
@@ -191,7 +191,7 @@ export class FileStorageBackend extends StorageBackend {
 
       return data;
     } catch (error) {
-      logger.error('Failed to load task list from file storage', {
+      LOGGER.error('Failed to load task list from file storage', {
         key,
         error,
       });
@@ -224,12 +224,12 @@ export class FileStorageBackend extends StorageBackend {
       // Remove from indexes with retry logic and locking
       await this.removeFromIndexesSafely(key);
 
-      logger.info('Task list permanently deleted from file storage', {
+      LOGGER.info('Task list permanently deleted from file storage', {
         key,
         backupPath,
       });
     } catch (error) {
-      logger.error('Failed to delete task list from file storage', {
+      LOGGER.error('Failed to delete task list from file storage', {
         key,
         error,
       });
@@ -295,7 +295,7 @@ export class FileStorageBackend extends StorageBackend {
 
             return summary;
           } catch (error) {
-            logger.warn('Failed to load list summary', { key, error });
+            LOGGER.warn('Failed to load list summary', { key, error });
             return null;
           }
         });
@@ -318,14 +318,14 @@ export class FileStorageBackend extends StorageBackend {
         result = result.slice(0, options.limit);
       }
 
-      logger.debug('Task list summaries retrieved from file storage', {
+      LOGGER.debug('Task list summaries retrieved from file storage', {
         count: result.length,
         total: summaries.length,
       });
 
       return result;
     } catch (error) {
-      logger.error('Failed to list task lists from file storage', { error });
+      LOGGER.error('Failed to list task lists from file storage', { error });
       throw error;
     }
   }
@@ -346,7 +346,7 @@ export class FileStorageBackend extends StorageBackend {
 
       return true;
     } catch (error) {
-      logger.error('File storage health check failed', { error });
+      LOGGER.error('File storage health check failed', { error });
       return false;
     }
   }
@@ -428,10 +428,10 @@ export class FileStorageBackend extends StorageBackend {
     try {
       await RetryLogic.execute(
         () => this.updateIndexesWithLock(key, data),
-        this.INDEX_RETRY_OPTIONS
+        this.indexRetryOptions
       );
     } catch (error) {
-      logger.error('Failed to update indexes after retries', { key, error });
+      LOGGER.error('Failed to update indexes after retries', { key, error });
       // Don't throw - index updates are not critical for data integrity
       // but log as error since this indicates a persistent problem
     }
@@ -454,7 +454,7 @@ export class FileStorageBackend extends StorageBackend {
       async () => {
         await this.doUpdateIndexes(key, data, contextIndexPath);
       },
-      { timeout: this.LOCK_TIMEOUT }
+      { timeout: this.lockTimeout }
     );
   }
 
@@ -474,7 +474,7 @@ export class FileStorageBackend extends StorageBackend {
         const indexData = await fs.readFile(contextIndexPath, 'utf8');
         contextIndex = JSON.parse(indexData) as Record<string, string[]>;
       } catch (error) {
-        logger.warn('Failed to read context index, starting fresh', { error });
+        LOGGER.warn('Failed to read context index, starting fresh', { error });
         contextIndex = {};
       }
     }
@@ -517,7 +517,7 @@ export class FileStorageBackend extends StorageBackend {
         await fs.unlink(backupPath);
       }
 
-      logger.debug('Index updated successfully', { key, context });
+      LOGGER.debug('Index updated successfully', { key, context });
     } catch (error) {
       // Rollback on failure
       try {
@@ -528,7 +528,7 @@ export class FileStorageBackend extends StorageBackend {
           await fs.unlink(tempPath);
         }
       } catch (rollbackError) {
-        logger.error('Failed to rollback index update', { key, rollbackError });
+        LOGGER.error('Failed to rollback index update', { key, rollbackError });
       }
       throw error;
     }
@@ -541,10 +541,10 @@ export class FileStorageBackend extends StorageBackend {
     try {
       await RetryLogic.execute(
         () => this.removeFromIndexesWithLock(key),
-        this.INDEX_RETRY_OPTIONS
+        this.indexRetryOptions
       );
     } catch (error) {
-      logger.error('Failed to remove from indexes after retries', {
+      LOGGER.error('Failed to remove from indexes after retries', {
         key,
         error,
       });
@@ -566,7 +566,7 @@ export class FileStorageBackend extends StorageBackend {
       async () => {
         await this.doRemoveFromIndexes(key, contextIndexPath);
       },
-      { timeout: this.LOCK_TIMEOUT }
+      { timeout: this.lockTimeout }
     );
   }
 
@@ -585,7 +585,7 @@ export class FileStorageBackend extends StorageBackend {
         const indexData = await fs.readFile(contextIndexPath, 'utf8');
         contextIndex = JSON.parse(indexData) as Record<string, string[]>;
       } catch (error) {
-        logger.warn('Failed to read context index for removal', { error });
+        LOGGER.warn('Failed to read context index for removal', { error });
         return; // If we can't read the index, there's nothing to remove
       }
     }
@@ -605,7 +605,7 @@ export class FileStorageBackend extends StorageBackend {
 
     // Only write if we actually modified something
     if (!modified) {
-      logger.debug('No index modifications needed for removal', { key });
+      LOGGER.debug('No index modifications needed for removal', { key });
       return;
     }
 
@@ -637,7 +637,7 @@ export class FileStorageBackend extends StorageBackend {
         await fs.unlink(backupPath);
       }
 
-      logger.debug('Index removal completed successfully', { key });
+      LOGGER.debug('Index removal completed successfully', { key });
     } catch (error) {
       // Rollback on failure
       try {
@@ -648,7 +648,7 @@ export class FileStorageBackend extends StorageBackend {
           await fs.unlink(tempPath);
         }
       } catch (rollbackError) {
-        logger.error('Failed to rollback index removal', {
+        LOGGER.error('Failed to rollback index removal', {
           key,
           rollbackError,
         });
@@ -670,11 +670,11 @@ export class FileStorageBackend extends StorageBackend {
 
         if (stats.mtime.getTime() < cutoffTime) {
           await fs.unlink(filePath);
-          logger.debug('Cleaned up old backup file', { file });
+          LOGGER.debug('Cleaned up old backup file', { file });
         }
       }
     } catch (error) {
-      logger.warn('Failed to cleanup old backups', { error });
+      LOGGER.warn('Failed to cleanup old backups', { error });
       // Don't throw - cleanup is not critical
     }
   }
@@ -701,7 +701,7 @@ export class FileStorageBackend extends StorageBackend {
     await FileLock.cleanup();
 
     if (lockCount > 0) {
-      logger.debug('Cleaned up file locks', { releasedLocks: lockCount });
+      LOGGER.debug('Cleaned up file locks', { releasedLocks: lockCount });
     }
   }
 
@@ -714,7 +714,7 @@ export class FileStorageBackend extends StorageBackend {
     }
 
     this.isShuttingDown = true;
-    logger.info('FileStorageBackend shutting down');
+    LOGGER.info('FileStorageBackend shutting down');
 
     // Clear cleanup interval
     if (this.cleanupInterval) {
@@ -728,7 +728,7 @@ export class FileStorageBackend extends StorageBackend {
     // Clear context index
     this.contextIndex.clear();
 
-    logger.info('FileStorageBackend shutdown completed');
+    LOGGER.info('FileStorageBackend shutdown completed');
   }
 
   /**
@@ -737,23 +737,23 @@ export class FileStorageBackend extends StorageBackend {
   private setupErrorRecovery(): void {
     // Import errorHandler dynamically to avoid circular dependencies
     import('../../shared/errors/error-handler.js')
-      .then(({ errorHandler }) => {
+      .then(({ ERROR_HANDLER }) => {
         // Listen for storage recovery events
-        errorHandler.on(
+        ERROR_HANDLER.on(
           'storageRecovery',
           (event: { type: string; context: unknown; error: Error }): void => {
             void (async (): Promise<void> => {
               try {
                 await this.handleStorageRecovery(event);
               } catch (error) {
-                logger.error('Storage recovery failed', { event, error });
+                LOGGER.error('Storage recovery failed', { event, error });
               }
             })();
           }
         );
       })
       .catch((error: unknown) => {
-        logger.warn('Failed to setup error recovery', { error });
+        LOGGER.warn('Failed to setup error recovery', { error });
       });
   }
 
@@ -765,7 +765,7 @@ export class FileStorageBackend extends StorageBackend {
     context: unknown;
     error: Error;
   }): Promise<void> {
-    logger.info('Handling storage recovery', { type: event.type });
+    LOGGER.info('Handling storage recovery', { type: event.type });
 
     switch (event.type) {
       case 'file_not_found':
@@ -784,7 +784,7 @@ export class FileStorageBackend extends StorageBackend {
         await this.recoverCorruptionError(event);
         break;
       default:
-        logger.warn('Unknown storage recovery type', { type: event.type });
+        LOGGER.warn('Unknown storage recovery type', { type: event.type });
     }
   }
 
@@ -828,13 +828,13 @@ export class FileStorageBackend extends StorageBackend {
           const targetPath = this.getFilePath(key);
 
           await fs.copyFile(backupFilePath, targetPath);
-          logger.info('Recovered file from backup', {
+          LOGGER.info('Recovered file from backup', {
             key,
             backup: mostRecent,
           });
         }
       } catch (error) {
-        logger.error('Failed to recover from backup', { key, error });
+        LOGGER.error('Failed to recover from backup', { key, error });
       }
     }
   }
@@ -854,9 +854,9 @@ export class FileStorageBackend extends StorageBackend {
       await fs.chmod(this.getBackupsDirectory(), 0o755);
       await fs.chmod(this.getIndexesDirectory(), 0o755);
 
-      logger.info('Attempted to fix directory permissions');
+      LOGGER.info('Attempted to fix directory permissions');
     } catch (error) {
-      logger.error('Failed to fix permissions', { error });
+      LOGGER.error('Failed to fix permissions', { error });
     }
   }
 
@@ -882,17 +882,17 @@ export class FileStorageBackend extends StorageBackend {
       for (const tempFile of tempFiles) {
         try {
           await fs.unlink(join(listsDir, tempFile));
-          logger.debug('Cleaned up temp file', { file: tempFile });
+          LOGGER.debug('Cleaned up temp file', { file: tempFile });
         } catch {
           // Ignore individual file cleanup errors
         }
       }
 
-      logger.info('Attempted disk space cleanup', {
+      LOGGER.info('Attempted disk space cleanup', {
         cleanedFiles: tempFiles.length,
       });
     } catch (error) {
-      logger.error('Failed to cleanup disk space', { error });
+      LOGGER.error('Failed to cleanup disk space', { error });
     }
   }
 
@@ -907,9 +907,9 @@ export class FileStorageBackend extends StorageBackend {
     try {
       // Clean up any stale locks
       await FileLock.cleanup();
-      logger.info('Cleaned up file locks');
+      LOGGER.info('Cleaned up file locks');
     } catch (error) {
-      logger.error('Failed to cleanup locks', { error });
+      LOGGER.error('Failed to cleanup locks', { error });
     }
   }
 
@@ -976,10 +976,10 @@ export class FileStorageBackend extends StorageBackend {
           };
 
           await fs.writeFile(filePath, JSON.stringify(minimalList, null, 2));
-          logger.info('Created minimal recovery file', { key });
+          LOGGER.info('Created minimal recovery file', { key });
         }
       } catch (error) {
-        logger.error('Failed to recover from corruption', { key, error });
+        LOGGER.error('Failed to recover from corruption', { key, error });
       }
     }
   }
@@ -1031,12 +1031,12 @@ export class FileStorageBackend extends StorageBackend {
           this.contextIndex.set(context, new Set(listIds));
         }
 
-        logger.debug('Loaded context index into memory', {
+        LOGGER.debug('Loaded context index into memory', {
           contexts: this.contextIndex.size,
         });
       }
     } catch (error) {
-      logger.warn('Failed to load context index into memory', { error });
+      LOGGER.warn('Failed to load context index into memory', { error });
     }
   }
 

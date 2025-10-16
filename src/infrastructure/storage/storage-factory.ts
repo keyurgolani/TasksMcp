@@ -2,7 +2,7 @@
  * Factory for creating storage backend instances
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import { FileStorageBackend, type FileStorageConfig } from './file-storage.js';
 import { MemoryStorageBackend } from './memory-storage.js';
@@ -41,7 +41,7 @@ export class StorageFactory {
   static async createStorage(
     config: StorageConfiguration
   ): Promise<StorageBackend> {
-    logger.info('Creating storage backend', { type: config.type });
+    LOGGER.info('Creating storage backend', { type: config.type });
 
     let backend: StorageBackend;
 
@@ -70,7 +70,7 @@ export class StorageFactory {
         }
         // PostgreSQL storage backend is not implemented in this version
         // Fall back to file storage for compatibility
-        logger.warn(
+        LOGGER.warn(
           'PostgreSQL storage not implemented, falling back to file storage'
         );
         backend = new FileStorageBackend({
@@ -91,7 +91,7 @@ export class StorageFactory {
     // Initialize the storage backend if it supports initialization
     if (typeof backend.initialize === 'function') {
       await backend.initialize();
-      logger.info('Storage backend initialized successfully', {
+      LOGGER.info('Storage backend initialized successfully', {
         type: config.type,
       });
     }
@@ -110,7 +110,7 @@ export class StorageFactory {
    * @returns Promise<StorageBackend> - Initialized storage backend instance
    */
   static async create(config: StorageConfiguration): Promise<StorageBackend> {
-    logger.warn(
+    LOGGER.warn(
       'Using deprecated StorageFactory.create() method. Please migrate to createStorage()'
     );
     return this.createStorage(config);
@@ -127,7 +127,7 @@ export class StorageFactory {
    * @returns StorageBackend - Storage backend instance (not initialized)
    */
   static createStorageSync(config: StorageConfiguration): StorageBackend {
-    logger.warn(
+    LOGGER.warn(
       'Using deprecated createStorageSync - consider using async createStorage instead'
     );
 
@@ -150,7 +150,7 @@ export class StorageFactory {
           );
         }
         // For now, fall back to file storage as PostgreSQL implementation is not complete
-        logger.warn(
+        LOGGER.warn(
           'PostgreSQL storage not implemented, falling back to file storage'
         );
         return new FileStorageBackend({

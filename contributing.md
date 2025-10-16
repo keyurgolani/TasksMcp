@@ -81,7 +81,7 @@ Thank you for your interest in contributing to the MCP Task Manager! This docume
 
 Use descriptive branch names:
 
-- `feature/add-bulk-operations`
+- `feature/add-rest-api-bulk-operations`
 - `fix/priority-validation-error`
 - `docs/update-api-reference`
 - `refactor/simplify-error-handling`
@@ -100,7 +100,7 @@ type(scope): description
 
 Examples:
 
-- `feat(api): add bulk task operations tool`
+- `feat(rest-api): add bulk task operations endpoint`
 - `fix(validation): correct priority range validation`
 - `docs(readme): update installation instructions`
 - `test(integration): add dependency management tests`
@@ -325,7 +325,7 @@ By contributing to this project, you agree that your contributions will be licen
 
 Contributors are recognized in:
 
-- **README.md**: Major contributors listed
+- **readme.md**: Major contributors listed
 - **Release notes**: Contributors mentioned in releases
 - **GitHub**: Automatic contributor recognition
 

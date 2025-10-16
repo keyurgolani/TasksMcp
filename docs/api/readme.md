@@ -75,10 +75,10 @@ The MCP Task Manager provides **20 focused tools** organized in 6 categories:
 
 - `get_ready_tasks` - Daily workflow planning
 - `analyze_task_dependencies` - Project management insights
-- `bulk_task_operations` - Batch efficiency
+- `search_tool` - Unified search and filtering
 - `set_task_exit_criteria` - Quality control
 - **Task Management (7 tools)**: `add_task`, `update_task`, `remove_task`, `complete_task`, `set_task_priority`, `add_task_tags`, `remove_task_tags`
-- **Search & Display (3 tools)**: `search_tasks`, `filter_tasks`, `show_tasks`
+- **Search & Display (2 tools)**: `search_tool`, `show_tasks`
 - **Advanced Features (2 tools)**: `analyze_task`, `get_task_suggestions`
 
 ### Legacy Complex Tools
@@ -219,7 +219,7 @@ interface ListAnalytics {
 
 - **Basic CRUD operations**: ~5ms for create, ~2ms for read
 - **Complex queries with filtering**: < 500ms
-- **Bulk operations**: < 5 seconds
+- **Bulk operations (REST API only)**: < 5 seconds
 
 ### Scalability Limits
 

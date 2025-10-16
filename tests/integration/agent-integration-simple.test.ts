@@ -40,7 +40,9 @@ describe('Agent Integration Tests - Simplified', () => {
   });
 
   afterEach(async () => {
-    // Cleanup is handled automatically by test setup
+    if (server) {
+      await server.close();
+    }
   });
 
   describe('Parameter Preprocessing Validation', () => {

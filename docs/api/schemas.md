@@ -685,52 +685,9 @@ Examples: ["urgent", "frontend", "bug-fix"]
 }
 ```
 
-## Bulk Operations Tool
+## Note on Bulk Operations
 
-### bulk_task_operations
-
-```json
-{
-  "name": "bulk_task_operations",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "listId": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "operations": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["create", "update", "delete", "complete", "set_priority"]
-            },
-            "taskId": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "data": {
-              "type": "object"
-            },
-            "priority": {
-              "type": "number",
-              "minimum": 1,
-              "maximum": 5
-            }
-          },
-          "required": ["type"]
-        },
-        "minItems": 1,
-        "maxItems": 50
-      }
-    },
-    "required": ["listId", "operations"]
-  }
-}
-```
+**Important**: Bulk operations have been removed from MCP tools and are only available through the REST API. For MCP usage, perform individual operations using the respective tools instead.
 
 ## Response Formats
 

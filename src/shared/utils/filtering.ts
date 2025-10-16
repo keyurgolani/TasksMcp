@@ -16,7 +16,7 @@ import {
   type GetTaskListPagination,
 } from '../../shared/types/task.js';
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 import type { SortOptions } from '../../domain/repositories/task-list.repository.js';
 
@@ -38,7 +38,7 @@ export class FilteringUtils {
    */
   static applyFilters(items: Task[], filters: GetTaskListFilters): Task[] {
     try {
-      logger.debug('Applying filters to items', {
+      LOGGER.debug('Applying filters to items', {
         itemCount: items.length,
         filterCount: Object.keys(filters).length,
       });
@@ -166,14 +166,14 @@ export class FilteringUtils {
         });
       }
 
-      logger.debug('Filters applied successfully', {
+      LOGGER.debug('Filters applied successfully', {
         originalCount: items.length,
         filteredCount: filteredItems.length,
       });
 
       return filteredItems;
     } catch (error) {
-      logger.error('Failed to apply filters', { error });
+      LOGGER.error('Failed to apply filters', { error });
       throw error;
     }
   }
@@ -204,7 +204,7 @@ export class FilteringUtils {
       const limit = pagination.limit ?? totalCount; // Default to all items if no limit
       const offset = pagination.offset ?? 0;
 
-      logger.debug('Applying pagination to items', {
+      LOGGER.debug('Applying pagination to items', {
         totalCount,
         limit,
         offset,
@@ -226,7 +226,7 @@ export class FilteringUtils {
       const paginatedItems = items.slice(offset, offset + limit);
       const hasMore = offset + limit < totalCount;
 
-      logger.debug('Pagination applied successfully', {
+      LOGGER.debug('Pagination applied successfully', {
         totalCount,
         returnedCount: paginatedItems.length,
         hasMore,
@@ -238,7 +238,7 @@ export class FilteringUtils {
         hasMore,
       };
     } catch (error) {
-      logger.error('Failed to apply pagination', { error });
+      LOGGER.error('Failed to apply pagination', { error });
       throw error;
     }
   }
@@ -258,7 +258,7 @@ export class FilteringUtils {
     hasMore: boolean;
   } {
     try {
-      logger.debug('Processing items with filters, sorting, and pagination', {
+      LOGGER.debug('Processing items with filters, sorting, and pagination', {
         originalCount: items.length,
         hasFilters: !!filters,
         hasSorting: !!sorting,
@@ -291,7 +291,7 @@ export class FilteringUtils {
         paginationResult = this.applyPagination(processedItems, pagination);
       }
 
-      logger.info('Items processed successfully', {
+      LOGGER.info('Items processed successfully', {
         originalCount,
         filteredCount,
         finalCount: paginationResult.items.length,
@@ -305,7 +305,7 @@ export class FilteringUtils {
         hasMore: paginationResult.hasMore,
       };
     } catch (error) {
-      logger.error('Failed to process items', { error });
+      LOGGER.error('Failed to process items', { error });
       throw error;
     }
   }
@@ -319,7 +319,7 @@ export class FilteringUtils {
    */
   static applySorting(items: Task[], sorting: SortOptions): Task[] {
     try {
-      logger.debug('Applying sorting to items', {
+      LOGGER.debug('Applying sorting to items', {
         itemCount: items.length,
         field: sorting.field,
         direction: sorting.direction,
@@ -371,14 +371,14 @@ export class FilteringUtils {
         return 0;
       });
 
-      logger.debug('Sorting applied successfully', {
+      LOGGER.debug('Sorting applied successfully', {
         originalCount: items.length,
         sortedCount: sortedItems.length,
       });
 
       return sortedItems;
     } catch (error) {
-      logger.error('Failed to apply sorting', { error });
+      LOGGER.error('Failed to apply sorting', { error });
       throw error;
     }
   }

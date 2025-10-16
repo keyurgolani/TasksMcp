@@ -247,18 +247,11 @@ export class TemplateEngine {
       }
     }
 
-    // Determine complexity based on variable count and template length
-    const complexity =
-      variablesFound.length > 5 || template.length > 1000
-        ? 'complex'
-        : 'simple';
-
     return {
       isValid: errors.length === 0,
       errors,
       warnings,
       variablesFound,
-      complexity,
     };
   }
 

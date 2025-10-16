@@ -15,7 +15,7 @@ import { handleSetTaskDependencies } from '../../src/api/handlers/set-task-depen
 import { handleShowTasks } from '../../src/api/handlers/show-tasks.js';
 import { TaskListManager } from '../../src/domain/lists/task-list-manager.js';
 import { MemoryStorageBackend } from '../../src/infrastructure/storage/memory-storage.js';
-import { logger } from '../../src/shared/utils/logger.js';
+import { LOGGER as logger } from '../../src/shared/utils/logger.js';
 import { TestCleanup } from '../setup.js';
 import { createTaskListManager } from '../utils/test-helpers.js';
 
@@ -47,7 +47,8 @@ describe('Dependency Management End-to-End Integration Tests', () => {
   });
 
   afterEach(async () => {
-    // Cleanup is handled automatically by test setup
+    // Cleanup test resources
+    await TestCleanup.cleanupAll();
   });
 
   /**

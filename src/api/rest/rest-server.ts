@@ -13,7 +13,7 @@ import express, {
   type NextFunction,
 } from 'express';
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { healthCheckHandler } from '../handlers/health-check.js';
 import {
   errorHandlerMiddleware,
@@ -231,7 +231,7 @@ export class RestServer {
     // Mount the router
     this.app.use('/api/v2', apiRouter);
 
-    logger.info('REST API routes configured', {
+    LOGGER.info('REST API routes configured', {
       version: 'v2',
       architecture: 'orchestration-based',
       features: [
@@ -307,7 +307,7 @@ export class RestServer {
           this.config.port,
           this.config.host,
           () => {
-            logger.info('REST API server started', {
+            LOGGER.info('REST API server started', {
               port: this.config.port,
               host: this.config.host,
               version: 'v2',
@@ -325,11 +325,11 @@ export class RestServer {
         );
 
         this.server.on('error', (error: Error) => {
-          logger.error('REST API server error', { error });
+          LOGGER.error('REST API server error', { error });
           reject(error);
         });
       } catch (error) {
-        logger.error('Failed to start REST API server', { error });
+        LOGGER.error('Failed to start REST API server', { error });
         reject(error);
       }
     });
@@ -346,10 +346,10 @@ export class RestServer {
     return new Promise((resolve, reject) => {
       this.server!.close(error => {
         if (error) {
-          logger.error('Error stopping REST API server', { error });
+          LOGGER.error('Error stopping REST API server', { error });
           reject(error);
         } else {
-          logger.info('REST API server stopped');
+          LOGGER.info('REST API server stopped');
           this.server = null;
           resolve();
         }

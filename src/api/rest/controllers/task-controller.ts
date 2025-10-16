@@ -14,7 +14,7 @@ import {
   UpdateTaskData,
   SearchTasksData,
 } from '../../../shared/types/task-operations.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { LOGGER } from '../../../shared/utils/logger.js';
 
 // Validation schemas
 const createTaskSchema = z.object({
@@ -75,7 +75,7 @@ export class TaskController {
       const startTime = Date.now();
       const taskData = createTaskSchema.parse(req.body);
 
-      logger.info('Creating task', {
+      LOGGER.info('Creating task', {
         listId: taskData.listId,
         title: taskData.title,
         requestId: req.headers['x-request-id'],
@@ -145,7 +145,7 @@ export class TaskController {
         searchData.offset = parseInt(req.query['offset'] as string);
       }
 
-      logger.info('Searching tasks', {
+      LOGGER.info('Searching tasks', {
         searchData,
         requestId: req.headers['x-request-id'],
       });
@@ -185,7 +185,7 @@ export class TaskController {
         return;
       }
 
-      logger.info('Getting task', {
+      LOGGER.info('Getting task', {
         taskId: id,
         requestId: req.headers['x-request-id'],
       });
@@ -220,7 +220,7 @@ export class TaskController {
       }
       const updateData = updateTaskSchema.parse(req.body);
 
-      logger.info('Updating task', {
+      LOGGER.info('Updating task', {
         taskId: id,
         updates: Object.keys(updateData),
         requestId: req.headers['x-request-id'],
@@ -272,7 +272,7 @@ export class TaskController {
         return;
       }
 
-      logger.info('Deleting task', {
+      LOGGER.info('Deleting task', {
         taskId: id,
         requestId: req.headers['x-request-id'],
       });
@@ -306,7 +306,7 @@ export class TaskController {
         return;
       }
 
-      logger.info('Completing task', {
+      LOGGER.info('Completing task', {
         taskId: id,
         requestId: req.headers['x-request-id'],
       });
@@ -342,7 +342,7 @@ export class TaskController {
       }
       const { priority } = req.body;
 
-      logger.info('Setting task priority', {
+      LOGGER.info('Setting task priority', {
         taskId: id,
         priority,
         requestId: req.headers['x-request-id'],
@@ -382,7 +382,7 @@ export class TaskController {
       }
       const { tags } = req.body;
 
-      logger.info('Adding task tags', {
+      LOGGER.info('Adding task tags', {
         taskId: id,
         tags,
         requestId: req.headers['x-request-id'],
@@ -419,7 +419,7 @@ export class TaskController {
       }
       const { tags } = req.body;
 
-      logger.info('Removing task tags', {
+      LOGGER.info('Removing task tags', {
         taskId: id,
         tags,
         requestId: req.headers['x-request-id'],
@@ -456,7 +456,7 @@ export class TaskController {
       }
       const { status } = req.body;
 
-      logger.info('Setting task status', {
+      LOGGER.info('Setting task status', {
         taskId: id,
         status,
         requestId: req.headers['x-request-id'],
@@ -489,7 +489,7 @@ export class TaskController {
       const startTime = Date.now();
       const { tasks } = bulkCreateTaskSchema.parse(req.body);
 
-      logger.info('Creating bulk tasks', {
+      LOGGER.info('Creating bulk tasks', {
         count: tasks.length,
         requestId: req.headers['x-request-id'],
       });
@@ -540,7 +540,7 @@ export class TaskController {
       const startTime = Date.now();
       const { updates } = bulkUpdateTaskSchema.parse(req.body);
 
-      logger.info('Updating bulk tasks', {
+      LOGGER.info('Updating bulk tasks', {
         count: updates.length,
         requestId: req.headers['x-request-id'],
       });
@@ -598,7 +598,7 @@ export class TaskController {
       const startTime = Date.now();
       const { taskIds } = bulkTaskSchema.parse(req.body);
 
-      logger.info('Deleting bulk tasks', {
+      LOGGER.info('Deleting bulk tasks', {
         count: taskIds.length,
         requestId: req.headers['x-request-id'],
       });
@@ -627,7 +627,7 @@ export class TaskController {
       const startTime = Date.now();
       const { taskIds } = bulkTaskSchema.parse(req.body);
 
-      logger.info('Completing bulk tasks', {
+      LOGGER.info('Completing bulk tasks', {
         count: taskIds.length,
         requestId: req.headers['x-request-id'],
       });
@@ -659,7 +659,7 @@ export class TaskController {
       const { taskIds } = bulkTaskSchema.parse(req.body);
       const { priority } = req.body;
 
-      logger.info('Setting bulk task priority', {
+      LOGGER.info('Setting bulk task priority', {
         count: taskIds.length,
         priority,
         requestId: req.headers['x-request-id'],
@@ -694,7 +694,7 @@ export class TaskController {
       const { taskIds } = bulkTaskSchema.parse(req.body);
       const { tags } = req.body;
 
-      logger.info('Adding bulk task tags', {
+      LOGGER.info('Adding bulk task tags', {
         count: taskIds.length,
         tags,
         requestId: req.headers['x-request-id'],
@@ -729,7 +729,7 @@ export class TaskController {
       const { taskIds } = bulkTaskSchema.parse(req.body);
       const { tags } = req.body;
 
-      logger.info('Removing bulk task tags', {
+      LOGGER.info('Removing bulk task tags', {
         count: taskIds.length,
         tags,
         requestId: req.headers['x-request-id'],
@@ -762,7 +762,7 @@ export class TaskController {
     const requestId = req.headers['x-request-id'];
 
     if (error instanceof z.ZodError) {
-      logger.warn('Validation error', {
+      LOGGER.warn('Validation error', {
         error: error.issues,
         requestId,
       });
@@ -783,7 +783,7 @@ export class TaskController {
     if (error instanceof OrchestrationError) {
       const statusCode = this.getStatusCodeForError(error);
 
-      logger.warn('Orchestration error', {
+      LOGGER.warn('Orchestration error', {
         error: error.message,
         context: error.context,
         requestId,
@@ -806,7 +806,7 @@ export class TaskController {
     }
 
     // Handle unexpected errors
-    logger.error('Unexpected error', {
+    LOGGER.error('Unexpected error', {
       error: error instanceof Error ? error.message : String(error),
       requestId,
     });

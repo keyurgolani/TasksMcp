@@ -14,7 +14,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type { DependencyAnalysisResponse } from '../../shared/types/mcp-types.js';
@@ -236,7 +236,7 @@ export async function handleAnalyzeTaskDependencies(
   const dependencyResolver = new DependencyResolver();
 
   try {
-    logger.debug('Processing analyze_task_dependencies request', {
+    LOGGER.debug('Processing analyze_task_dependencies request', {
       params: request.params?.arguments,
     });
 
@@ -380,7 +380,7 @@ export async function handleAnalyzeTaskDependencies(
 
       if (bottleneckTasks.length > 0) {
         recommendations.push(
-          `Bottleneck alert: "${
+          `Bottleneck detected: "${
             bottleneckTasks[0]!.title
           }" is blocking multiple tasks. Consider breaking it down or prioritizing it.`
         );
@@ -473,7 +473,7 @@ export async function handleAnalyzeTaskDependencies(
       }
     }
 
-    logger.info('Task dependency analysis completed successfully', {
+    LOGGER.info('Task dependency analysis completed successfully', {
       listId: args.listId,
       format: args.format,
       dagStyle: args.dagStyle,

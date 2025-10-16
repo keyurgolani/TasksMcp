@@ -2,7 +2,7 @@
  * Request logging middleware
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { ApiRequest } from '../../shared/types/api.js';
 import type { Request, Response, NextFunction } from 'express';
@@ -18,7 +18,7 @@ export function requestLoggerMiddleware(
   const apiReq = req as ApiRequest;
 
   // Log incoming request
-  logger.info('Incoming request', {
+  LOGGER.info('Incoming request', {
     requestId: apiReq.id,
     method: req.method,
     path: req.path,
@@ -32,7 +32,7 @@ export function requestLoggerMiddleware(
   res.send = function (data): Response {
     const duration = Date.now() - apiReq.startTime;
 
-    logger.info('Request completed', {
+    LOGGER.info('Request completed', {
       requestId: apiReq.id,
       method: req.method,
       path: req.path,

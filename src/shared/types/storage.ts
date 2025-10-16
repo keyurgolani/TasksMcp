@@ -67,7 +67,7 @@ export abstract class StorageBackend {
   /**
    * Loads a task list from storage
    * @param key - Unique identifier for the list
-   * @param options - Load options (include archived)
+   * @param options - Load options
    * @returns Promise<TaskList | null> - The loaded list or null if not found
    */
   abstract load(key: string, options?: LoadOptions): Promise<TaskList | null>;

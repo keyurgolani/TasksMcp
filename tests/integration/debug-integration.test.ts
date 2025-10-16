@@ -27,7 +27,9 @@ describe('Debug Integration Test', () => {
   });
 
   afterEach(async () => {
-    // Cleanup is handled automatically by test setup
+    if (server) {
+      await server.close();
+    }
   });
 
   it('should debug list creation and parameter passing', async () => {

@@ -5,7 +5,7 @@
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { ConfigManager } from '../config/index.js';
 import { StorageFactory } from '../storage/storage-factory.js';
 
@@ -57,7 +57,7 @@ export class BackupManager {
     const backupId = `${type}-${new Date().toISOString().replace(/[:.]/g, '-')}`;
 
     try {
-      logger.info('Starting backup', { type, backupId });
+      LOGGER.info('Starting backup', { type, backupId });
 
       const storage = await this.getStorage();
 
@@ -119,7 +119,7 @@ export class BackupManager {
 
       const duration = Date.now() - startTime;
 
-      logger.info('Backup completed successfully', {
+      LOGGER.info('Backup completed successfully', {
         backupId,
         type,
         listCount: allLists.length,
@@ -142,7 +142,7 @@ export class BackupManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      logger.error('Backup failed', {
+      LOGGER.error('Backup failed', {
         backupId,
         type,
         error: errorMessage,
@@ -172,7 +172,7 @@ export class BackupManager {
     const startTime = Date.now();
 
     try {
-      logger.info('Starting restore', { backupId });
+      LOGGER.info('Starting restore', { backupId });
 
       // Load backup file
       const backupPath = this.getBackupPath(backupId);
@@ -191,7 +191,7 @@ export class BackupManager {
           throw new Error('Backup integrity check failed - checksum mismatch');
         }
       } catch (metaError) {
-        logger.warn('Could not verify backup integrity', {
+        LOGGER.warn('Could not verify backup integrity', {
           backupId,
           error: metaError,
         });
@@ -216,7 +216,7 @@ export class BackupManager {
           restoredLists++;
           restoredItems += list.items.length;
         } catch (error) {
-          logger.warn('Failed to restore list', {
+          LOGGER.warn('Failed to restore list', {
             listId: list.id,
             title: list.title,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -226,7 +226,7 @@ export class BackupManager {
 
       const duration = Date.now() - startTime;
 
-      logger.info('Restore completed successfully', {
+      LOGGER.info('Restore completed successfully', {
         backupId,
         restoredLists,
         restoredItems,
@@ -245,7 +245,7 @@ export class BackupManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      logger.error('Restore failed', {
+      LOGGER.error('Restore failed', {
         backupId,
         error: errorMessage,
         duration,
@@ -283,7 +283,7 @@ export class BackupManager {
           const metadata = JSON.parse(content) as BackupMetadata;
           backups.push(metadata);
         } catch (error) {
-          logger.warn('Failed to read backup metadata', {
+          LOGGER.warn('Failed to read backup metadata', {
             file: metaFile,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
@@ -296,7 +296,7 @@ export class BackupManager {
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
     } catch (error) {
-      logger.error('Failed to list backups', {
+      LOGGER.error('Failed to list backups', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       return [];
@@ -312,20 +312,20 @@ export class BackupManager {
       try {
         await fs.unlink(backupPath);
       } catch (error) {
-        logger.warn('Failed to delete backup file', { backupPath, error });
+        LOGGER.warn('Failed to delete backup file', { backupPath, error });
       }
 
       // Delete metadata file
       try {
         await fs.unlink(metadataPath);
       } catch (error) {
-        logger.warn('Failed to delete metadata file', { metadataPath, error });
+        LOGGER.warn('Failed to delete metadata file', { metadataPath, error });
       }
 
-      logger.info('Backup deleted', { backupId });
+      LOGGER.info('Backup deleted', { backupId });
       return true;
     } catch (error) {
-      logger.error('Failed to delete backup', {
+      LOGGER.error('Failed to delete backup', {
         backupId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -352,7 +352,7 @@ export class BackupManager {
         for (const backup of toDelete) {
           await this.deleteBackup(backup.id);
         }
-        logger.info('Cleaned up excess backups', { deleted: toDelete.length });
+        LOGGER.info('Cleaned up excess backups', { deleted: toDelete.length });
       }
 
       // Delete backups older than retention period
@@ -364,10 +364,10 @@ export class BackupManager {
       }
 
       if (oldBackups.length > 0) {
-        logger.info('Cleaned up old backups', { deleted: oldBackups.length });
+        LOGGER.info('Cleaned up old backups', { deleted: oldBackups.length });
       }
     } catch (error) {
-      logger.error('Failed to cleanup old backups', {
+      LOGGER.error('Failed to cleanup old backups', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
@@ -391,7 +391,7 @@ export class BackupManager {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      logger.error('Failed to create backup directory', {
+      LOGGER.error('Failed to create backup directory', {
         directory: dir,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -418,7 +418,7 @@ export class ScheduledBackupManager {
 
   start(): void {
     if (!this.config.backup.enabled) {
-      logger.info('Scheduled backups disabled');
+      LOGGER.info('Scheduled backups disabled');
       return;
     }
 
@@ -432,28 +432,28 @@ export class ScheduledBackupManager {
     this.intervalId = setInterval((): void => {
       void (async (): Promise<void> => {
         try {
-          logger.info('Running scheduled backup');
+          LOGGER.info('Running scheduled backup');
           const result = await this.backupManager.createBackup('incremental');
 
           if (result.success) {
-            logger.info('Scheduled backup completed', {
+            LOGGER.info('Scheduled backup completed', {
               backupId: result.backupId,
               duration: result.duration,
             });
           } else {
-            logger.error('Scheduled backup failed', {
+            LOGGER.error('Scheduled backup failed', {
               error: result.error,
             });
           }
         } catch (error) {
-          logger.error('Scheduled backup error', {
+          LOGGER.error('Scheduled backup error', {
             error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       })();
     }, interval);
 
-    logger.info('Scheduled backup started', {
+    LOGGER.info('Scheduled backup started', {
       interval: interval / 1000 / 60, // minutes
       enabled: this.config.backup.enabled,
     });
@@ -463,7 +463,7 @@ export class ScheduledBackupManager {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      logger.info('Scheduled backup stopped');
+      LOGGER.info('Scheduled backup stopped');
     }
   }
 }

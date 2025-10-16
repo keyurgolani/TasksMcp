@@ -2,7 +2,7 @@
  * Repository interface for Task (Task) operations
  *
  * Provides task-specific query and manipulation operations that work
- * across TaskLists. This interface complements ITaskListRepository by
+ * across TaskLists. This interface complements TaskListRepositoryInterface by
  * focusing on individual task operations rather than list-level operations.
  *
  * Use cases:
@@ -135,7 +135,7 @@ export interface BulkOperationResult {
  * Repository interface for Task operations
  *
  * This interface provides task-centric operations that may span
- * multiple TaskLists. It complements ITaskListRepository by focusing
+ * multiple TaskLists. It complements TaskListRepositoryInterface by focusing
  * on individual task queries and operations.
  *
  * Expected behaviors:
@@ -144,7 +144,7 @@ export interface BulkOperationResult {
  * - All operations should be atomic where possible
  * - Search operations should be performant
  */
-export interface ITaskRepository {
+export interface TaskRepositoryInterface {
   /**
    * Finds a task by its ID across all lists
    *

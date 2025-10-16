@@ -4,7 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { StorageBackend } from '../../shared/types/storage.js';
 import type { TaskList } from '../../shared/types/task.js';
@@ -63,7 +63,7 @@ export class TransactionManager {
       void this.timeoutTransaction(transactionId);
     }, this.transactionTimeout);
 
-    logger.debug('Transaction started', { transactionId });
+    LOGGER.debug('Transaction started', { transactionId });
     return transactionId;
   }
 
@@ -83,7 +83,7 @@ export class TransactionManager {
       backup = (await this.storage.load(key, {})) ?? undefined;
     } catch (_error) {
       // Ignore errors when loading backup - item might not exist
-      logger.debug('No existing data to backup', { key, transactionId });
+      LOGGER.debug('No existing data to backup', { key, transactionId });
     }
 
     const operation: TransactionOperation = {
@@ -98,7 +98,7 @@ export class TransactionManager {
 
     transaction.operations.push(operation);
 
-    logger.debug('Save operation added to transaction', {
+    LOGGER.debug('Save operation added to transaction', {
       transactionId,
       key,
       operationCount: transaction.operations.length,
@@ -123,7 +123,7 @@ export class TransactionManager {
       backup,
     });
 
-    logger.debug('Delete operation added to transaction', {
+    LOGGER.debug('Delete operation added to transaction', {
       transactionId,
       key,
       operationCount: transaction.operations.length,
@@ -138,7 +138,7 @@ export class TransactionManager {
     const startTime = Date.now();
 
     try {
-      logger.info('Committing transaction', {
+      LOGGER.info('Committing transaction', {
         transactionId,
         operationCount: transaction.operations.length,
       });
@@ -177,7 +177,7 @@ export class TransactionManager {
         operationsCompleted: transaction.operations.length,
       };
 
-      logger.info('Transaction committed successfully', {
+      LOGGER.info('Transaction committed successfully', {
         transactionId,
         operationsCompleted: transaction.operations.length,
         duration: Date.now() - startTime,
@@ -198,7 +198,7 @@ export class TransactionManager {
         error: error instanceof Error ? error : new Error('Unknown error'),
       };
 
-      logger.error('Transaction commit failed', {
+      LOGGER.error('Transaction commit failed', {
         transactionId,
         error: error instanceof Error ? error.message : 'Unknown error',
         duration: Date.now() - startTime,
@@ -219,7 +219,7 @@ export class TransactionManager {
     const startTime = Date.now();
 
     try {
-      logger.info('Rolling back transaction', {
+      LOGGER.info('Rolling back transaction', {
         transactionId,
         operationCount: transaction.operations.length,
       });
@@ -235,7 +235,7 @@ export class TransactionManager {
         operationsCompleted: 0,
       };
 
-      logger.info('Transaction rolled back successfully', {
+      LOGGER.info('Transaction rolled back successfully', {
         transactionId,
         duration: Date.now() - startTime,
       });
@@ -252,7 +252,7 @@ export class TransactionManager {
         error: error instanceof Error ? error : new Error('Unknown error'),
       };
 
-      logger.error('Transaction rollback failed', {
+      LOGGER.error('Transaction rollback failed', {
         transactionId,
         error: error instanceof Error ? error.message : 'Unknown error',
         duration: Date.now() - startTime,
@@ -352,7 +352,7 @@ export class TransactionManager {
           }
         }
       } catch (error) {
-        logger.error('Failed to rollback operation', {
+        LOGGER.error('Failed to rollback operation', {
           operation: operation.type,
           key: operation.key,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -365,7 +365,7 @@ export class TransactionManager {
   private async timeoutTransaction(transactionId: string): Promise<void> {
     const transaction = this.activeTransactions.get(transactionId);
     if (transaction && transaction.status === 'pending') {
-      logger.warn('Transaction timed out, rolling back', { transactionId });
+      LOGGER.warn('Transaction timed out, rolling back', { transactionId });
       await this.rollbackTransaction(transactionId);
     }
   }
@@ -388,7 +388,7 @@ export class TransactionManager {
     }
 
     if (cleanedCount > 0) {
-      logger.debug('Cleaned up old transactions', { count: cleanedCount });
+      LOGGER.debug('Cleaned up old transactions', { count: cleanedCount });
     }
 
     return cleanedCount;

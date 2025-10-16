@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { ApiError } from '../../shared/errors/api-error.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { CreateExitCriteriaInput } from '../../domain/tasks/exit-criteria-manager.js';
 import type {
@@ -86,7 +86,7 @@ export async function getTaskExitCriteriaHandler(
     );
   }
 
-  logger.info('Getting task exit criteria', {
+  LOGGER.info('Getting task exit criteria', {
     requestId: req.id,
     taskId,
     listId,
@@ -127,7 +127,7 @@ export async function getTaskExitCriteriaHandler(
     },
   };
 
-  logger.info('Task exit criteria retrieved successfully', {
+  LOGGER.info('Task exit criteria retrieved successfully', {
     requestId: req.id,
     taskId,
     criteriaCount: exitCriteria.length,
@@ -165,7 +165,7 @@ export async function addExitCriteriaHandler(
       );
     }
 
-    logger.info('Adding exit criteria to task', {
+    LOGGER.info('Adding exit criteria to task', {
       requestId: req.id,
       taskId,
       listId,
@@ -230,7 +230,7 @@ export async function addExitCriteriaHandler(
       },
     };
 
-    logger.info('Exit criteria added successfully', {
+    LOGGER.info('Exit criteria added successfully', {
       requestId: req.id,
       taskId,
       criteriaId: newCriteria.id,
@@ -284,7 +284,7 @@ export async function updateExitCriteriaHandler(
       );
     }
 
-    logger.info('Updating exit criteria', {
+    LOGGER.info('Updating exit criteria', {
       requestId: req.id,
       criteriaId,
       listId,
@@ -375,7 +375,7 @@ export async function updateExitCriteriaHandler(
       },
     };
 
-    logger.info('Exit criteria updated successfully', {
+    LOGGER.info('Exit criteria updated successfully', {
       requestId: req.id,
       criteriaId,
       taskId,
@@ -417,7 +417,7 @@ export async function getActionPlanHandler(
     );
   }
 
-  logger.info('Getting task action plan', {
+  LOGGER.info('Getting task action plan', {
     requestId: req.id,
     taskId,
     listId,
@@ -471,7 +471,7 @@ export async function getActionPlanHandler(
     },
   };
 
-  logger.info('Task action plan retrieved successfully', {
+  LOGGER.info('Task action plan retrieved successfully', {
     requestId: req.id,
     taskId,
     stepCount: actionPlan.steps.length,
@@ -510,7 +510,7 @@ export async function createActionPlanHandler(
       );
     }
 
-    logger.info('Creating action plan for task', {
+    LOGGER.info('Creating action plan for task', {
       requestId: req.id,
       taskId,
       listId,
@@ -579,7 +579,7 @@ export async function createActionPlanHandler(
       },
     };
 
-    logger.info('Action plan created successfully', {
+    LOGGER.info('Action plan created successfully', {
       requestId: req.id,
       taskId,
       planId: newActionPlan.id,
@@ -634,7 +634,7 @@ export async function updateActionPlanHandler(
       );
     }
 
-    logger.info('Updating action plan', {
+    LOGGER.info('Updating action plan', {
       requestId: req.id,
       planId,
       listId,
@@ -716,7 +716,7 @@ export async function updateActionPlanHandler(
       },
     };
 
-    logger.info('Action plan updated successfully', {
+    LOGGER.info('Action plan updated successfully', {
       requestId: req.id,
       planId,
       taskId,
@@ -763,7 +763,7 @@ export async function getTaskNotesHandler(
   const sortOrder = (req.query['sortOrder'] as 'asc' | 'desc') || 'desc';
   const noteType = req.query['type'] as ImplementationNote['type'] | undefined;
 
-  logger.info('Getting task notes', {
+  LOGGER.info('Getting task notes', {
     requestId: req.id,
     taskId,
     listId,
@@ -814,7 +814,7 @@ export async function getTaskNotesHandler(
     },
   };
 
-  logger.info('Task notes retrieved successfully', {
+  LOGGER.info('Task notes retrieved successfully', {
     requestId: req.id,
     taskId,
     noteCount: notes.length,
@@ -852,7 +852,7 @@ export async function addTaskNoteHandler(
       );
     }
 
-    logger.info('Adding note to task', {
+    LOGGER.info('Adding note to task', {
       requestId: req.id,
       taskId,
       listId,
@@ -918,7 +918,7 @@ export async function addTaskNoteHandler(
       },
     };
 
-    logger.info('Task note added successfully', {
+    LOGGER.info('Task note added successfully', {
       requestId: req.id,
       taskId,
       noteId: newNote.id,
@@ -978,7 +978,7 @@ export async function completeStepHandler(
   // Parse optional notes from request body
   const notes = req.body?.notes as string | undefined;
 
-  logger.info('Completing action plan step', {
+  LOGGER.info('Completing action plan step', {
     requestId: req.id,
     planId,
     stepId,
@@ -1087,7 +1087,7 @@ export async function completeStepHandler(
     },
   };
 
-  logger.info('Action plan step completed successfully', {
+  LOGGER.info('Action plan step completed successfully', {
     requestId: req.id,
     planId,
     stepId,

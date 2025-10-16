@@ -8,7 +8,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -29,7 +29,7 @@ export async function handleRemoveTaskTags(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing remove_task_tags request', {
+    LOGGER.debug('Processing remove_task_tags request', {
       params: request.params?.arguments,
     });
 
@@ -72,7 +72,7 @@ export async function handleRemoveTaskTags(
       tag => !updatedTask.tags.includes(tag)
     );
     if (removedTags.length !== args.tags.length) {
-      logger.warn('Not all tags were successfully removed', {
+      LOGGER.warn('Not all tags were successfully removed', {
         requestedTags: args.tags,
         removedTags,
         finalTags: updatedTask.tags,
@@ -91,7 +91,7 @@ export async function handleRemoveTaskTags(
       estimatedDuration: updatedTask.estimatedDuration,
     };
 
-    logger.info('Task tags removed successfully', {
+    LOGGER.info('Task tags removed successfully', {
       listId: args.listId,
       taskId: args.taskId,
       title: updatedTask.title,

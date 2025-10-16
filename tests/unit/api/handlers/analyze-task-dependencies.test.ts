@@ -14,7 +14,7 @@ import type { TaskList, Task } from '../../../../src/shared/types/task.js';
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
-  logger: {
+  LOGGER: {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
@@ -303,7 +303,7 @@ describe('handleAnalyzeTaskDependencies', () => {
       expect(analysis.issues.bottlenecks).toContain('bottleneck');
       expect(
         analysis.recommendations.some((rec: string) =>
-          rec.includes('Bottleneck alert')
+          rec.includes('Bottleneck detected')
         )
       ).toBe(true);
     });

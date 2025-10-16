@@ -3,22 +3,22 @@
  * Centralized task list management with validation
  */
 
-import { DataDelegationService } from '../../../data/delegation/data-delegation-service';
-import { TaskList } from '../../../domain/models/task-list';
+import { DataDelegationService } from '../../../data/delegation/data-delegation-service.js';
+import { TaskList } from '../../../domain/models/task-list.js';
 import {
   OrchestrationError,
   ValidationError,
   ListNotFoundError,
-} from '../../../shared/errors/orchestration-error';
+} from '../../../shared/errors/orchestration-error.js';
 import {
   CreateListData,
   UpdateListData,
   ListFilters,
 } from '../../../shared/types/list-operations';
-import { ValidationResult } from '../../../shared/types/validation';
-import { DataOperation } from '../interfaces/base-orchestrator';
-import { ListOrchestrator } from '../interfaces/list-orchestrator';
-import { ListValidator } from '../validators/list-validator';
+import { ValidationResult } from '../../../shared/types/validation.js';
+import { DataOperation } from '../interfaces/base-orchestrator.js';
+import { ListOrchestrator } from '../interfaces/list-orchestrator.js';
+import { ListValidator } from '../validators/list-validator.js';
 
 export class ListOrchestratorImpl implements ListOrchestrator {
   constructor(

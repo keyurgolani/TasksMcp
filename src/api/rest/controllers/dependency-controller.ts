@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { DependencyOrchestrator } from '../../../core/orchestration/interfaces/dependency-orchestrator.js';
 import { OrchestrationError } from '../../../shared/errors/orchestration-error.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { LOGGER } from '../../../shared/utils/logger.js';
 
 // Validation schemas
 const setDependenciesSchema = z.object({
@@ -51,7 +51,7 @@ export class DependencyController {
       const startTime = Date.now();
       const { taskId, dependencyIds } = setDependenciesSchema.parse(req.body);
 
-      logger.info('Setting task dependencies', {
+      LOGGER.info('Setting task dependencies', {
         taskId,
         dependencyCount: dependencyIds.length,
         requestId: req.headers['x-request-id'],
@@ -92,7 +92,7 @@ export class DependencyController {
       const format = (req.query['format'] as string) || 'analysis';
       const dagStyle = (req.query['dagStyle'] as string) || 'ascii';
 
-      logger.info('Analyzing dependencies', {
+      LOGGER.info('Analyzing dependencies', {
         listId,
         format,
         dagStyle,
@@ -135,7 +135,7 @@ export class DependencyController {
         ? parseInt(req.query['limit'] as string)
         : 20;
 
-      logger.info('Getting ready tasks', {
+      LOGGER.info('Getting ready tasks', {
         listId,
         limit,
         requestId: req.headers['x-request-id'],
@@ -169,7 +169,7 @@ export class DependencyController {
         req.body
       );
 
-      logger.info('Validating dependencies', {
+      LOGGER.info('Validating dependencies', {
         listId,
         dependencyCount: dependencies.length,
         requestId: req.headers['x-request-id'],
@@ -201,7 +201,7 @@ export class DependencyController {
       const startTime = Date.now();
       const { dependencies } = bulkSetDependenciesSchema.parse(req.body);
 
-      logger.info('Setting bulk task dependencies', {
+      LOGGER.info('Setting bulk task dependencies', {
         count: dependencies.length,
         requestId: req.headers['x-request-id'],
       });
@@ -239,7 +239,7 @@ export class DependencyController {
       const startTime = Date.now();
       const { taskIds } = bulkClearDependenciesSchema.parse(req.body);
 
-      logger.info('Clearing bulk task dependencies', {
+      LOGGER.info('Clearing bulk task dependencies', {
         count: taskIds.length,
         requestId: req.headers['x-request-id'],
       });
@@ -268,7 +268,7 @@ export class DependencyController {
     const requestId = req.headers['x-request-id'];
 
     if (error instanceof z.ZodError) {
-      logger.warn('Validation error', {
+      LOGGER.warn('Validation error', {
         error: error.issues,
         requestId,
       });
@@ -289,7 +289,7 @@ export class DependencyController {
     if (error instanceof OrchestrationError) {
       const statusCode = this.getStatusCodeForError(error);
 
-      logger.warn('Orchestration error', {
+      LOGGER.warn('Orchestration error', {
         error: error.message,
         context: error.context,
         requestId,
@@ -312,7 +312,7 @@ export class DependencyController {
     }
 
     // Handle unexpected errors
-    logger.error('Unexpected error', {
+    LOGGER.error('Unexpected error', {
       error: error instanceof Error ? error.message : String(error),
       requestId,
     });

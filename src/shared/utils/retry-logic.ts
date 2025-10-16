@@ -2,7 +2,7 @@
  * Retry logic utility with exponential backoff
  */
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 export interface RetryOptions {
   maxRetries?: number;
@@ -73,7 +73,7 @@ export class RetryLogic {
           actualDelay += (Math.random() - 0.5) * 2 * jitterAmount;
         }
 
-        logger.debug('Retrying operation after error', {
+        LOGGER.debug('Retrying operation after error', {
           attempt: attempt + 1,
           maxRetries,
           delay: actualDelay,

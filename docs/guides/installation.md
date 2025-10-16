@@ -1,43 +1,36 @@
 # Installation Guide
 
-This guide covers all installation methods for the MCP Task Manager, from quick setup to development environments.
+This guide covers all installation methods for the Task MCP Unified system, from quick setup to development environments with both MCP and REST API servers.
 
 ## 🚀 Quick Installation (Recommended)
 
-The fastest way to get started - no local installation required:
+The fastest way to get started with the Task MCP Unified system:
 
-### Method 1: npx (Zero Installation)
+### Method 1: Local Installation
 
 ```bash
-# Test the installation
-npx task-list-mcp@latest --version
+# Clone the repository
+git clone https://github.com/keyurgolani/task-list-mcp.git
+cd task-list-mcp
 
-# The server is now ready to use in your MCP client configuration
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Test the installation
+node mcp.js --help
+node rest.js --help
 ```
 
 This method:
 
-- ✅ Always uses the latest version
-- ✅ No local installation required
-- ✅ Works on all platforms
-- ✅ Automatic updates
-
-### Method 2: Global npm Installation
-
-```bash
-# Install globally
-npm install -g task-list-mcp
-
-# Test the installation
-task-list-mcp --version
-```
-
-This method:
-
-- ✅ Faster startup (no download)
-- ✅ Works offline after installation
-- ✅ Version control with npm
-- ⚠️ Requires manual updates
+- ✅ Full control over configuration
+- ✅ Both MCP and REST API servers
+- ✅ Domain-driven architecture
+- ✅ Agent prompt template support
+- ✅ Dependency management features
 
 ## 🔧 MCP Client Configuration
 
@@ -52,13 +45,13 @@ Add to your Claude Desktop configuration file:
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "info",
-        "DATA_DIRECTORY": "~/.claude/task-manager-data"
+        "DATA_DIRECTORY": "~/.claude/task-mcp-unified-data"
       }
     }
   }
@@ -72,13 +65,13 @@ Add to your workspace `.kiro/settings/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "info",
-        "DATA_DIRECTORY": "/tmp/task-list-mcp-data"
+        "DATA_DIRECTORY": "/tmp/task-mcp-unified-data"
       },
       "disabled": false,
       "autoApprove": [
@@ -88,6 +81,7 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "delete_list",
         "add_task",
         "update_task",
+        "get_agent_prompt",
         "remove_task",
         "complete_task",
         "set_task_priority",
@@ -95,13 +89,11 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "remove_task_tags",
         "search_tool",
         "show_tasks",
-
-        "set_task_exit_criteria",
-        "update_exit_criteria",
         "set_task_dependencies",
         "get_ready_tasks",
         "analyze_task_dependencies",
-        ""
+        "set_task_exit_criteria",
+        "update_exit_criteria"
       ]
     }
   }
@@ -115,14 +107,13 @@ For other MCP clients, use this configuration template:
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "info",
-        "DATA_DIRECTORY": "/path/to/data/directory",
-        "STORAGE_TYPE": "file"
+        "DATA_DIRECTORY": "/path/to/data/directory"
       }
     }
   }
@@ -166,7 +157,6 @@ For development, use these environment variables:
 ```bash
 export NODE_ENV=development
 export MCP_LOG_LEVEL=debug
-export STORAGE_TYPE=memory
 export DATA_DIRECTORY=./dev-data
 ```
 
@@ -175,18 +165,29 @@ export DATA_DIRECTORY=./dev-data
 ```json
 {
   "mcpServers": {
-    "task-manager-dev": {
+    "task-mcp-unified-dev": {
       "command": "node",
-      "args": ["/path/to/task-list-mcp/dist/index.js"],
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "development",
         "MCP_LOG_LEVEL": "debug",
-        "STORAGE_TYPE": "file",
         "DATA_DIRECTORY": "./dev-data"
       }
     }
   }
 }
+```
+
+### REST API Server Configuration
+
+The REST API server can be configured via JSON/YAML files or environment variables:
+
+```bash
+# Start REST API server
+node rest.js
+
+# With custom configuration
+PORT=4000 HOST=0.0.0.0 node rest.js
 ```
 
 ## 🔧 Environment Configuration

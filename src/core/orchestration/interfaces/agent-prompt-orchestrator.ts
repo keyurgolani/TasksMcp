@@ -9,12 +9,12 @@ import {
   TemplateValidationResult,
 } from '../../../shared/types/template';
 
-import { BaseOrchestrator } from './base-orchestrator';
+import { BaseOrchestrator } from './base-orchestrator.js';
 
 export interface AgentPromptOrchestrator extends BaseOrchestrator {
   /**
    * Gets rendered agent prompt for a task with variable substitution
-   * Performance requirement: < 10ms for simple templates, < 50ms for complex
+   * Performance requirement: < 10ms for fast templates, < 50ms for complex
    */
   getAgentPrompt(
     taskId: string,

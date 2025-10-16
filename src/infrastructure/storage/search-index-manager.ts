@@ -2,7 +2,7 @@
  * Efficient search indexing system for implementation notes
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { ImplementationNote } from '../../shared/types/task.js';
 
@@ -66,7 +66,7 @@ export class NotesSearchIndexManager {
       dateIndex: new Map(),
     };
 
-    logger.debug('NotesSearchIndexManager initialized');
+    LOGGER.debug('NotesSearchIndexManager initialized');
   }
 
   /**
@@ -127,7 +127,7 @@ export class NotesSearchIndexManager {
     }
     this.index.dateIndex.get(dateKey)!.add(note.id);
 
-    logger.debug('Note added to index', {
+    LOGGER.debug('Note added to index', {
       noteId: note.id,
       entityId,
       entityType,
@@ -175,7 +175,7 @@ export class NotesSearchIndexManager {
       }
     }
 
-    logger.debug('Note removed from index', { noteId });
+    LOGGER.debug('Note removed from index', { noteId });
   }
 
   /**
@@ -211,7 +211,7 @@ export class NotesSearchIndexManager {
 
     const searchTime = performance.now() - startTime;
 
-    logger.debug('Search completed', {
+    LOGGER.debug('Search completed', {
       query: query.terms,
       candidateCount: candidateIds.size,
       filteredCount: filteredIds.size,
@@ -239,7 +239,7 @@ export class NotesSearchIndexManager {
       }
     >
   ): void {
-    logger.info('Rebuilding notes search index', {
+    LOGGER.info('Rebuilding notes search index', {
       noteCount: notes.length,
     });
 
@@ -256,7 +256,7 @@ export class NotesSearchIndexManager {
       );
     }
 
-    logger.info('Notes search index rebuilt', {
+    LOGGER.info('Notes search index rebuilt', {
       noteCount: notes.length,
       termCount: this.index.termIndex.size,
       indexSize: this.calculateIndexSize(),
@@ -272,7 +272,7 @@ export class NotesSearchIndexManager {
     this.index.typeIndex.clear();
     this.index.dateIndex.clear();
 
-    logger.debug('Notes search index cleared');
+    LOGGER.debug('Notes search index cleared');
   }
 
   // Private helper methods

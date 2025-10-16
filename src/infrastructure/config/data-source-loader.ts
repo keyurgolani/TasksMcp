@@ -9,7 +9,7 @@ import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import {
   type MultiSourceConfig,
@@ -89,7 +89,7 @@ export class DataSourceConfigLoader {
 
     // Fall back to default configuration
     if (!config) {
-      logger.info('No configuration found, using defaults');
+      LOGGER.info('No configuration found, using defaults');
       config = getDefaultMultiSourceConfig();
     }
 
@@ -101,7 +101,7 @@ export class DataSourceConfigLoader {
     // Validate final configuration
     const validatedConfig = validateMultiSourceConfig(config);
 
-    logger.info('Data source configuration loaded', {
+    LOGGER.info('Data source configuration loaded', {
       sourceCount: validatedConfig.sources.length,
       enabledSources: validatedConfig.sources.filter(s => s.enabled).length,
       aggregationEnabled: validatedConfig.aggregationEnabled,
@@ -122,7 +122,7 @@ export class DataSourceConfigLoader {
     const resolvedPath = resolve(filePath);
 
     if (!existsSync(resolvedPath)) {
-      logger.debug('Configuration file not found', { path: resolvedPath });
+      LOGGER.debug('Configuration file not found', { path: resolvedPath });
       return null;
     }
 
@@ -130,10 +130,10 @@ export class DataSourceConfigLoader {
       const content = await readFile(resolvedPath, 'utf-8');
       const config = this.parseConfigContent(content, filePath);
 
-      logger.info('Configuration loaded from file', { path: resolvedPath });
+      LOGGER.info('Configuration loaded from file', { path: resolvedPath });
       return config;
     } catch (error) {
-      logger.error('Failed to load configuration file', {
+      LOGGER.error('Failed to load configuration file', {
         path: resolvedPath,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -474,11 +474,11 @@ export class DataSourceConfigLoader {
     const content = JSON.stringify(config, null, 2);
     await writeFile(filePath, content, 'utf-8');
 
-    logger.info('Configuration saved', { path: filePath });
+    LOGGER.info('Configuration saved', { path: filePath });
   }
 }
 
 /**
  * Singleton instance for convenience
  */
-export const dataSourceConfigLoader = new DataSourceConfigLoader();
+export const DATA_SOURCE_CONFIG_LOADER = new DataSourceConfigLoader();

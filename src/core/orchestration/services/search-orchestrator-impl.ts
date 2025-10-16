@@ -49,8 +49,8 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
         criteria
       )) as Task[];
 
-      // Apply enhanced filtering
-      const filteredTasks = this.applyAdvancedFiltering(allTasks, criteria);
+      // Apply filtering
+      const filteredTasks = this.applyFiltering(allTasks, criteria);
 
       // Apply sorting
       const sortedTasks = this.applySorting(filteredTasks, criteria);
@@ -374,12 +374,9 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
   }
 
   /**
-   * Apply advanced filtering to tasks based on search criteria
+   * Apply filtering to tasks based on search criteria
    */
-  private applyAdvancedFiltering(
-    tasks: Task[],
-    criteria: SearchCriteria
-  ): Task[] {
+  private applyFiltering(tasks: Task[], criteria: SearchCriteria): Task[] {
     let filteredTasks = [...tasks];
 
     if (!criteria.filters) {
@@ -464,7 +461,7 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
   }
 
   /**
-   * Apply text search with enhanced options
+   * Apply text search with options
    */
   private applyTextSearch(
     tasks: Task[],
@@ -784,7 +781,7 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
   }
 
   /**
-   * Advanced search with enhanced options and performance metrics
+   * Advanced search with options and performance metrics
    */
   async advancedSearch(
     criteria: SearchCriteria,
@@ -804,7 +801,6 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
         isValid: true,
         errors: [],
         warnings: [],
-        suggestions: [],
       };
 
       if (options) {
@@ -821,10 +817,9 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
           'SearchOrchestrator.advancedSearch',
           { criteria, options },
           'Valid search criteria and options',
-          [
-            ...criteriaValidation.errors.map(e => e.actionableGuidance),
-            ...(optionsValidation.suggestions || []),
-          ].join('; ')
+          [...criteriaValidation.errors.map(e => e.actionableGuidance)].join(
+            '; '
+          )
         );
       }
 
@@ -836,7 +831,7 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
 
       // Apply filtering with timing
       const filterStartTime = Date.now();
-      const filteredTasks = this.applyAdvancedFiltering(allTasks, criteria);
+      const filteredTasks = this.applyFiltering(allTasks, criteria);
       filterTime = Date.now() - filterStartTime;
       itemsFiltered = filteredTasks.length;
 
@@ -869,7 +864,6 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
           ...criteriaValidation.warnings.map(w => w.message),
           ...optionsValidation.warnings,
         ],
-        suggestions: optionsValidation.suggestions || [],
       };
 
       return {
@@ -883,7 +877,6 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
         sortedBy: criteria.sortBy,
         metrics,
         validation,
-        suggestions: optionsValidation.suggestions || [],
       };
     } catch (error) {
       if (error instanceof OrchestrationError) {
@@ -975,7 +968,7 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
   }
 
   /**
-   * Validate search criteria and provide suggestions
+   * Validate search criteria
    */
   async validateSearchCriteria(criteria: SearchCriteria): Promise<{
     isValid: boolean;
@@ -987,23 +980,13 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
       const validation = this.validator.validateSearchCriteria(criteria);
       const suggestions: string[] = [];
 
-      // Add performance suggestions
+      // Generate performance suggestions
       if (criteria.limit && criteria.limit > 100) {
-        suggestions.push(
-          'Consider using pagination with smaller limit for better performance'
-        );
+        suggestions.push('Consider using pagination for large result sets');
       }
 
       if (criteria.query && criteria.query.length < 3) {
-        suggestions.push(
-          'Longer search queries typically provide more relevant results'
-        );
-      }
-
-      if (criteria.filters?.tags && criteria.filters.tags.length > 10) {
-        suggestions.push(
-          'Consider using fewer tags or tag operators for more focused results'
-        );
+        suggestions.push('Longer search queries provide more accurate results');
       }
 
       return {
@@ -1072,7 +1055,7 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
   }
 
   /**
-   * Calculate fuzzy matching score using simple string similarity
+   * Calculate fuzzy matching score using string similarity
    */
   private calculateFuzzyScore(query: string, text: string): number {
     if (!text || text.length === 0) return 0;
@@ -1081,7 +1064,7 @@ export class SearchOrchestratorImpl implements SearchOrchestrator {
       return 1.0; // Exact substring match
     }
 
-    // Simple character-based similarity
+    // Character-based similarity
     const queryChars = query.split('');
     let matches = 0;
     let textIndex = 0;

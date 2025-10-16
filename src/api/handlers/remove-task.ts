@@ -8,7 +8,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -26,7 +26,7 @@ export async function handleRemoveTask(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing remove_task request', {
+    LOGGER.debug('Processing remove_task request', {
       params: request.params?.arguments,
     });
 
@@ -42,7 +42,7 @@ export async function handleRemoveTask(
       throw new Error('Task was not successfully removed');
     }
 
-    logger.info('Task removed successfully', {
+    LOGGER.info('Task removed successfully', {
       listId: args.listId,
       taskId: args.taskId,
     });

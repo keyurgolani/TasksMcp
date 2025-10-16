@@ -6,12 +6,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   createOrchestrationError,
-  DetailedErrors,
+  DETAILED_ERRORS,
 } from '../../shared/utils/error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { ActionPlan, ActionStep } from '../../shared/types/task.js';
-import type { ITaskListRepository } from '../repositories/task-list.repository.js';
+import type { TaskListRepositoryInterface } from '../repositories/task-list.repository.js';
 
 export interface CreateActionPlanInput {
   taskId: string;
@@ -40,12 +40,12 @@ export interface ActionPlanValidationResult {
 export class ActionPlanManager {
   // Repository for future direct action plan persistence
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITaskListRepository | undefined;
+  private readonly repository: TaskListRepositoryInterface | undefined;
 
-  constructor(repository?: ITaskListRepository) {
+  constructor(repository?: TaskListRepositoryInterface) {
     this.repository = repository;
 
-    logger.debug('ActionPlanManager initialized', {
+    LOGGER.debug('ActionPlanManager initialized', {
       hasRepository: !!repository,
     });
   }
@@ -54,7 +54,7 @@ export class ActionPlanManager {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITaskListRepository | undefined {
+  getRepository(): TaskListRepositoryInterface | undefined {
     return this.repository;
   }
 
@@ -63,7 +63,7 @@ export class ActionPlanManager {
    */
   async createActionPlan(input: CreateActionPlanInput): Promise<ActionPlan> {
     try {
-      logger.debug('Creating action plan', {
+      LOGGER.debug('Creating action plan', {
         taskId: input.taskId,
         contentLength: input.content.length,
       });
@@ -86,7 +86,7 @@ export class ActionPlanManager {
         version: 1,
       };
 
-      logger.info('Action plan created successfully', {
+      LOGGER.info('Action plan created successfully', {
         planId,
         taskId: input.taskId,
         stepCount: steps.length,
@@ -94,7 +94,7 @@ export class ActionPlanManager {
 
       return actionPlan;
     } catch (error) {
-      logger.error('Failed to create action plan', {
+      LOGGER.error('Failed to create action plan', {
         taskId: input.taskId,
         error,
       });
@@ -110,7 +110,7 @@ export class ActionPlanManager {
     updates: Partial<ActionPlan>
   ): Promise<ActionPlan> {
     try {
-      logger.debug('Updating action plan', {
+      LOGGER.debug('Updating action plan', {
         planId: existingPlan.id,
         hasContentUpdate: !!updates.content,
       });
@@ -132,7 +132,7 @@ export class ActionPlanManager {
         version: existingPlan.version + 1,
       };
 
-      logger.info('Action plan updated successfully', {
+      LOGGER.info('Action plan updated successfully', {
         planId: existingPlan.id,
         newVersion: updatedPlan.version,
         stepCount: updatedSteps.length,
@@ -140,7 +140,7 @@ export class ActionPlanManager {
 
       return updatedPlan;
     } catch (error) {
-      logger.error('Failed to update action plan', {
+      LOGGER.error('Failed to update action plan', {
         planId: existingPlan.id,
         error,
       });
@@ -153,7 +153,7 @@ export class ActionPlanManager {
    */
   parseStepsFromContent(content: string): ActionStep[] {
     try {
-      logger.debug('Parsing steps from content', {
+      LOGGER.debug('Parsing steps from content', {
         contentLength: content.length,
       });
 
@@ -217,14 +217,14 @@ export class ActionPlanManager {
         }
       }
 
-      logger.debug('Steps parsed successfully', {
+      LOGGER.debug('Steps parsed successfully', {
         stepCount: steps.length,
         completedSteps: steps.filter(s => s.status === 'completed').length,
       });
 
       return steps;
     } catch (error) {
-      logger.error('Failed to parse steps from content', { error });
+      LOGGER.error('Failed to parse steps from content', { error });
       throw new Error(
         `Failed to parse action plan steps: ${
           error instanceof Error ? error.message : 'Unknown error'
@@ -241,7 +241,7 @@ export class ActionPlanManager {
     input: UpdateStepProgressInput
   ): Promise<ActionPlan> {
     try {
-      logger.debug('Updating step progress', {
+      LOGGER.debug('Updating step progress', {
         planId: input.planId,
         stepId: input.stepId,
         newStatus: input.status,
@@ -251,7 +251,7 @@ export class ActionPlanManager {
         step => step.id === input.stepId
       );
       if (stepIndex === -1) {
-        throw DetailedErrors.notFound(
+        throw DETAILED_ERRORS.notFound(
           'Step',
           'Action Plan Step Management',
           input.stepId
@@ -260,7 +260,7 @@ export class ActionPlanManager {
 
       const existingStep = existingPlan.steps[stepIndex];
       if (!existingStep) {
-        throw DetailedErrors.notFound(
+        throw DETAILED_ERRORS.notFound(
           'Step',
           'Action Plan Step Management',
           input.stepId
@@ -293,7 +293,7 @@ export class ActionPlanManager {
         version: existingPlan.version + 1,
       };
 
-      logger.info('Step progress updated successfully', {
+      LOGGER.info('Step progress updated successfully', {
         planId: input.planId,
         stepId: input.stepId,
         oldStatus: existingStep.status,
@@ -302,7 +302,7 @@ export class ActionPlanManager {
 
       return updatedPlan;
     } catch (error) {
-      logger.error('Failed to update step progress', {
+      LOGGER.error('Failed to update step progress', {
         planId: input.planId,
         stepId: input.stepId,
         error,
@@ -325,7 +325,7 @@ export class ActionPlanManager {
       ).length;
       const progress = Math.round((completedSteps / plan.steps.length) * 100);
 
-      logger.debug('Plan progress calculated', {
+      LOGGER.debug('Plan progress calculated', {
         planId: plan.id,
         totalSteps: plan.steps.length,
         completedSteps,
@@ -334,7 +334,7 @@ export class ActionPlanManager {
 
       return progress;
     } catch (error) {
-      logger.error('Failed to calculate plan progress', {
+      LOGGER.error('Failed to calculate plan progress', {
         planId: plan.id,
         error,
       });
@@ -414,7 +414,7 @@ export class ActionPlanManager {
     }
 
     if (warnings.length > 0) {
-      logger.warn('Action plan validation warnings', {
+      LOGGER.warn('Action plan validation warnings', {
         warnings,
         contentLength: content.length,
       });
@@ -555,7 +555,7 @@ export class ActionPlanManager {
     }>
   ): Promise<ActionPlan> {
     try {
-      logger.debug('Batch updating steps', {
+      LOGGER.debug('Batch updating steps', {
         planId: existingPlan.id,
         updateCount: updates.length,
       });
@@ -574,7 +574,7 @@ export class ActionPlanManager {
         }
       }
 
-      logger.info('Batch step updates completed successfully', {
+      LOGGER.info('Batch step updates completed successfully', {
         planId: existingPlan.id,
         updateCount: updates.length,
         newVersion: updatedPlan.version,
@@ -582,7 +582,7 @@ export class ActionPlanManager {
 
       return updatedPlan;
     } catch (error) {
-      logger.error('Failed to batch update steps', {
+      LOGGER.error('Failed to batch update steps', {
         planId: existingPlan.id,
         updateCount: updates.length,
         error,

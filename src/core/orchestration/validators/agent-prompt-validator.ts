@@ -7,8 +7,23 @@ import {
   ValidationResult,
   ValidationError,
 } from '../../../shared/types/validation.js';
-import { DetailedErrors } from '../../../shared/utils/error-formatter.js';
+import { DETAILED_ERRORS } from '../../../shared/utils/error-formatter.js';
 
+/**
+ * Validator for agent prompt templates
+ *
+ * Validates agent prompt template content, length, and variable syntax
+ * to ensure templates can be properly rendered with task and list data.
+ *
+ * @example
+ * ```typescript
+ * const validator = new AgentPromptValidator();
+ * const result = VALIDATOR.validateTemplate('Hello {{task.title}}');
+ * if (!result.isValid) {
+ *   LOGGER.error('Validation errors:', result.errors);
+ * }
+ * ```
+ */
 export class AgentPromptValidator {
   validateTemplate(template: string | undefined): ValidationResult {
     const errors: ValidationError[] = [];
@@ -22,7 +37,7 @@ export class AgentPromptValidator {
     }
 
     if (typeof template !== 'string') {
-      const detailedError = DetailedErrors.invalidType(
+      const detailedError = DETAILED_ERRORS.invalidType(
         'template',
         'Agent Prompt Template Validation',
         template,
@@ -40,7 +55,7 @@ export class AgentPromptValidator {
     }
 
     if (typeof template === 'string' && template.length > 10000) {
-      const detailedError = DetailedErrors.lengthExceeded(
+      const detailedError = DETAILED_ERRORS.lengthExceeded(
         'template',
         'Agent Prompt Template Validation',
         template.length,

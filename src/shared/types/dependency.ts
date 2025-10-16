@@ -3,7 +3,7 @@
  * Defines structures for dependency management and analysis
  */
 
-import { TaskStatus } from '../../domain/models/task';
+import { TaskStatus } from '../../domain/models/task.js';
 
 export interface DependencyGraph {
   nodes: Map<string, DependencyNode>;

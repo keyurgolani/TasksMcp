@@ -5,7 +5,7 @@
 import { EventEmitter } from 'events';
 
 // import { ConfigManager } from '../infrastructure/config/index.js';
-import { logger } from '../utils/logger.js';
+import { LOGGER } from '../utils/logger.js';
 
 export interface ErrorContext {
   operation: string;
@@ -175,7 +175,7 @@ export class ErrorHandler extends EventEmitter {
         this.updateCircuitBreaker(context.operation, true);
 
         if (attempt > 1) {
-          logger.info('Operation succeeded after retry', {
+          LOGGER.info('Operation succeeded after retry', {
             operation: context.operation,
             attempt,
             totalAttempts: config.maxAttempts,
@@ -197,7 +197,7 @@ export class ErrorHandler extends EventEmitter {
         // Calculate delay with exponential backoff and jitter
         const delay = this.calculateRetryDelay(attempt, config);
 
-        logger.warn('Operation failed, retrying', {
+        LOGGER.warn('Operation failed, retrying', {
           operation: context.operation,
           attempt,
           totalAttempts: config.maxAttempts,
@@ -275,7 +275,7 @@ export class ErrorHandler extends EventEmitter {
       circuitBreaker.lastFailureTime = 0;
       circuitBreaker.nextAttemptTime = 0;
 
-      logger.info('Circuit breaker reset', { operation: operationName });
+      LOGGER.info('Circuit breaker reset', { operation: operationName });
     }
   }
 
@@ -498,7 +498,7 @@ export class ErrorHandler extends EventEmitter {
 
       return `Recovery event emitted for ${errorReport.category} error`;
     } catch (recoveryError) {
-      logger.error('Error recovery failed', {
+      LOGGER.error('Error recovery failed', {
         originalError: errorReport.error.message,
         recoveryError:
           recoveryError instanceof Error
@@ -563,7 +563,7 @@ export class ErrorHandler extends EventEmitter {
         circuitBreaker.nextAttemptTime =
           Date.now() + this.circuitBreakerConfig.recoveryTimeout;
 
-        logger.warn('Circuit breaker opened', {
+        LOGGER.warn('Circuit breaker opened', {
           operation: operationName,
           failureCount: circuitBreaker.failureCount,
         });
@@ -620,16 +620,16 @@ export class ErrorHandler extends EventEmitter {
 
     switch (errorReport.severity) {
       case 'critical':
-        logger.error('Critical error occurred', logData);
+        LOGGER.error('Critical error occurred', logData);
         break;
       case 'high':
-        logger.error('High severity error', logData);
+        LOGGER.error('High severity error', logData);
         break;
       case 'medium':
-        logger.warn('Medium severity error', logData);
+        LOGGER.warn('Medium severity error', logData);
         break;
       case 'low':
-        logger.info('Low severity error', logData);
+        LOGGER.info('Low severity error', logData);
         break;
     }
   }
@@ -654,7 +654,7 @@ export class ErrorHandler extends EventEmitter {
       });
 
       // Log and exit gracefully
-      logger.error('Uncaught exception, shutting down', {
+      LOGGER.error('Uncaught exception, shutting down', {
         error: error.message,
       });
       process.exit(1);
@@ -676,7 +676,7 @@ export class ErrorHandler extends EventEmitter {
     // This will be handled by the error reporting system via events
     // but we can add immediate reporting for critical errors here
     if (errorReport.severity === 'critical') {
-      logger.error('CRITICAL ERROR DETECTED', {
+      LOGGER.error('CRITICAL ERROR DETECTED', {
         errorId: errorReport.id,
         operation: errorReport.context.operation,
         message: errorReport.error.message,
@@ -687,4 +687,4 @@ export class ErrorHandler extends EventEmitter {
 }
 
 // Global error handler instance
-export const errorHandler = new ErrorHandler();
+export const ERROR_HANDLER = new ErrorHandler();

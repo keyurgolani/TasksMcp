@@ -10,7 +10,7 @@ import {
   validateDataSourceConfig,
   validateMultiSourceConfig,
   getDefaultMultiSourceConfig,
-  schemas,
+  SCHEMAS,
 } from '../../../../src/infrastructure/config/data-source-config.js';
 
 describe('DataSourceConfig', () => {
@@ -163,15 +163,15 @@ describe('DataSourceConfig', () => {
         password: 'test',
       };
 
-      const result = schemas.PostgreSQLConfig.parse(config);
+      const result = SCHEMAS.PostgreSQLConfig.parse(config);
       expect(result).toEqual(config);
 
       // Test that invalid port is rejected
       expect(() =>
-        schemas.PostgreSQLConfig.parse({ ...config, port: 0 })
+        SCHEMAS.PostgreSQLConfig.parse({ ...config, port: 0 })
       ).toThrow();
       expect(() =>
-        schemas.PostgreSQLConfig.parse({ ...config, port: 99999 })
+        SCHEMAS.PostgreSQLConfig.parse({ ...config, port: 99999 })
       ).toThrow();
     });
   });
@@ -357,14 +357,14 @@ describe('DataSourceConfig', () => {
     });
   });
 
-  describe('schemas', () => {
+  describe('SCHEMAS', () => {
     it('should export all configuration schemas', () => {
-      expect(schemas.FileSystemConfig).toBeDefined();
-      expect(schemas.PostgreSQLConfig).toBeDefined();
-      expect(schemas.MongoDBConfig).toBeDefined();
-      expect(schemas.MemoryConfig).toBeDefined();
-      expect(schemas.DataSourceConfig).toBeDefined();
-      expect(schemas.MultiSourceConfig).toBeDefined();
+      expect(SCHEMAS.FileSystemConfig).toBeDefined();
+      expect(SCHEMAS.PostgreSQLConfig).toBeDefined();
+      expect(SCHEMAS.MongoDBConfig).toBeDefined();
+      expect(SCHEMAS.MemoryConfig).toBeDefined();
+      expect(SCHEMAS.DataSourceConfig).toBeDefined();
+      expect(SCHEMAS.MultiSourceConfig).toBeDefined();
     });
 
     it('should validate filesystem config with schema', () => {
@@ -374,7 +374,7 @@ describe('DataSourceConfig', () => {
         enableCompression: false,
       };
 
-      const result = schemas.FileSystemConfig.parse(config);
+      const result = SCHEMAS.FileSystemConfig.parse(config);
       expect(result).toEqual(config);
     });
 
@@ -389,7 +389,7 @@ describe('DataSourceConfig', () => {
         maxConnections: 10,
       };
 
-      const result = schemas.PostgreSQLConfig.parse(config);
+      const result = SCHEMAS.PostgreSQLConfig.parse(config);
       expect(result).toEqual(config);
     });
 
@@ -401,7 +401,7 @@ describe('DataSourceConfig', () => {
         maxPoolSize: 10,
       };
 
-      const result = schemas.MongoDBConfig.parse(config);
+      const result = SCHEMAS.MongoDBConfig.parse(config);
       expect(result).toEqual(config);
     });
 
@@ -411,7 +411,7 @@ describe('DataSourceConfig', () => {
         persistToDisk: false,
       };
 
-      const result = schemas.MemoryConfig.parse(config);
+      const result = SCHEMAS.MemoryConfig.parse(config);
       expect(result).toEqual(config);
     });
   });

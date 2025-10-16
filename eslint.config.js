@@ -85,7 +85,7 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.js', '.github/scripts/**/*.mjs', 'vitest.config.ts'],
+    files: ['scripts/**/*.js', '.github/scripts/**/*.mjs', 'vitest-config.ts'],
     languageOptions: {
       globals: {
         // Node.js globals
@@ -122,7 +122,7 @@ export default [
     files: ['mcp.js', 'rest.js'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
         // Node.js globals
         process: 'readonly',

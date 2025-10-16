@@ -2,7 +2,7 @@
  * JSON serialization/deserialization for large objects
  */
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 import type { TaskList, Task } from '../../shared/types/task.js';
 
@@ -52,7 +52,7 @@ export class JsonOptimizer {
 
       if (duration > 10) {
         // Log slow serializations
-        logger.debug('Slow JSON serialization detected', {
+        LOGGER.debug('Slow JSON serialization detected', {
           listId: taskList.id,
           itemCount: taskList.items.length,
           duration: `${duration.toFixed(2)}ms`,
@@ -62,7 +62,7 @@ export class JsonOptimizer {
 
       return result;
     } catch (error) {
-      logger.error('JSON serialization failed', {
+      LOGGER.error('JSON serialization failed', {
         listId: taskList.id,
         error,
       });
@@ -117,7 +117,7 @@ export class JsonOptimizer {
 
       if (duration > 10) {
         // Log slow deserializations
-        logger.debug('Slow JSON deserialization detected', {
+        LOGGER.debug('Slow JSON deserialization detected', {
           listId: parsed.id,
           itemCount: parsed.items?.length || 0,
           duration: `${duration.toFixed(2)}ms`,
@@ -127,7 +127,7 @@ export class JsonOptimizer {
 
       return parsed;
     } catch (error) {
-      logger.error('JSON deserialization failed', {
+      LOGGER.error('JSON deserialization failed', {
         error,
         jsonLength: jsonString.length,
       });
@@ -161,7 +161,7 @@ export class JsonOptimizer {
         0
       );
 
-      logger.debug('Batch JSON serialization completed', {
+      LOGGER.debug('Batch JSON serialization completed', {
         listCount: taskLists.length,
         totalItems,
         duration: `${duration.toFixed(2)}ms`,
@@ -171,7 +171,7 @@ export class JsonOptimizer {
 
       return result;
     } catch (error) {
-      logger.error('Batch JSON serialization failed', {
+      LOGGER.error('Batch JSON serialization failed', {
         listCount: taskLists.length,
         error,
       });
@@ -242,7 +242,7 @@ export class JsonOptimizer {
         0
       );
 
-      logger.debug('Batch JSON deserialization completed', {
+      LOGGER.debug('Batch JSON deserialization completed', {
         listCount: parsed.length,
         totalItems,
         duration: `${duration.toFixed(2)}ms`,
@@ -252,7 +252,7 @@ export class JsonOptimizer {
 
       return parsed;
     } catch (error) {
-      logger.error('Batch JSON deserialization failed', {
+      LOGGER.error('Batch JSON deserialization failed', {
         error,
         jsonLength: jsonString.length,
       });
@@ -403,7 +403,7 @@ export class JsonOptimizer {
 
       // Handle large arrays - could implement chunking here if needed
       if (Array.isArray(value) && value.length > 1000) {
-        logger.debug('Large array detected in JSON serialization', {
+        LOGGER.debug('Large array detected in JSON serialization', {
           key,
           length: value.length,
         });

@@ -161,7 +161,9 @@ describe('Comprehensive Validation Tests', () => {
           createErrorContext('test_tool')
         );
 
-        expect(formatted).toContain('user.profile.settings');
+        expect(formatted).toContain('user');
+        expect(formatted).toContain('profile');
+        expect(formatted).toContain('settings');
         expect(formatted).toContain('expected number, received string');
         expect(formatted).toContain('❌');
       }

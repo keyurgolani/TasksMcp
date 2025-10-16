@@ -9,9 +9,9 @@
   },
   "files": [
     "dist/**/*",
-    "README.md",
+    "readme.md",
     "LICENSE",
-    "AGENTS.md",
+    "agents.md",
     "examples/**/*"
   ],
   "repository": {
@@ -34,7 +34,7 @@
     "start:api": "node dist/app/api-server.js",
     "dev:api": "npm run build:dev && npm run start:api",
     "prepublishOnly": "npm run build:prod",
-    "test": "vitest",
+    "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:coverage:ui": "vitest --coverage --ui",

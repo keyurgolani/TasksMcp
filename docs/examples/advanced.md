@@ -581,7 +581,7 @@ get_ready_tasks → Identify articles ready for next stage
 
 ```json
 {
-  "tool": "search_tasks",
+  "tool": "search_tool",
   "parameters": {
     "query": "authentication security",
     "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
@@ -598,7 +598,7 @@ get_ready_tasks → Identify articles ready for next stage
 
 ```json
 {
-  "tool": "filter_tasks",
+  "tool": "search_tool",
   "parameters": {
     "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
     "estimatedDurationMin": 60,
@@ -628,70 +628,78 @@ get_ready_tasks → Identify articles ready for next stage
 
 ### Batch Operations
 
-**Create Multiple Related Tasks:**
+**Create Multiple Related Tasks (Individual Operations):**
 
 ```json
 {
-  "tool": "bulk_task_operations",
+  "tool": "add_task",
   "parameters": {
     "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
-    "operations": [
-      {
-        "type": "create",
-        "data": {
-          "title": "Set up user authentication API",
-          "priority": 5,
-          "tags": ["backend", "auth", "api"],
-          "estimatedDuration": 180
-        }
-      },
-      {
-        "type": "create",
-        "data": {
-          "title": "Implement JWT token handling",
-          "priority": 4,
-          "tags": ["backend", "auth", "security"],
-          "estimatedDuration": 120
-        }
-      },
-      {
-        "type": "create",
-        "data": {
-          "title": "Add password hashing and validation",
-          "priority": 4,
-          "tags": ["backend", "auth", "security"],
-          "estimatedDuration": 90
-        }
-      }
-    ]
+    "title": "Set up user authentication API",
+    "priority": 5,
+    "tags": ["backend", "auth", "api"],
+    "estimatedDuration": 180
   }
 }
 ```
 
-**Update Multiple Task Priorities:**
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "title": "Implement JWT token handling",
+    "priority": 4,
+    "tags": ["backend", "auth", "security"],
+    "estimatedDuration": 120
+  }
+}
+```
 
 ```json
 {
-  "tool": "bulk_task_operations",
+  "tool": "add_task",
   "parameters": {
     "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
-    "operations": [
-      {
-        "type": "set_priority",
-        "taskId": "task-id-1",
-        "priority": 5
-      },
-      {
-        "type": "set_priority",
-        "taskId": "task-id-2",
-        "priority": 4
-      },
-      {
-        "type": "add_tags",
-        "taskId": "task-id-3",
-        "tags": ["urgent", "client-facing"]
-      }
-    ]
+    "title": "Add password hashing and validation",
+    "priority": 4,
+    "tags": ["backend", "auth", "security"],
+    "estimatedDuration": 90
+  }
+}
+```
+
+**Update Multiple Task Priorities (Individual Operations):**
+
+```json
+{
+  "tool": "set_task_priority",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "task-id-1",
+    "priority": 5
+  }
+}
+```
+
+```json
+{
+  "tool": "set_task_priority",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "task-id-2",
+    "priority": 4
+  }
+}
+```
+
+```json
+{
+  "tool": "add_task_tags",
+  "parameters": {
+    "listId": "11b0dfb3-9580-42ea-afba-208b5e44877d",
+    "taskId": "task-id-3",
+    "tags": ["urgent", "client-facing"]
   }
 }
 ```
@@ -718,7 +726,7 @@ get_ready_tasks → Identify articles ready for next stage
 
 ### Performance Optimization
 
-- **Batch Operations**: Use bulk operations for multiple related changes
+- **Batch Operations**: Use REST API bulk operations for multiple related changes (not available in MCP)
 - **Efficient Filtering**: Use specific criteria to reduce data transfer
 - **Context Management**: Maintain context for related operations
 

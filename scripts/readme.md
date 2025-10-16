@@ -51,7 +51,7 @@ scripts/
 ├── run.js                    # Unified script runner
 ├── workflows.js              # Development workflow runner
 ├── setup.sh                  # Script setup and permissions
-├── README.md                 # This file
+├── readme.md                 # This file
 ├── clean.sh                  # Project cleanup script
 ├── validate.sh               # Project structure validation
 ├── deploy.sh                 # Deployment automation
@@ -284,4 +284,4 @@ chmod +x scripts/**/*.sh
 - [Getting Started Guide](../docs/guides/getting-started.md)
 - [Configuration Guide](../docs/guides/configuration.md)
 - [Troubleshooting Guide](../docs/guides/troubleshooting.md)
-- [API Documentation](../docs/api/README.md)
+- [API Documentation](../docs/api/readme.md)

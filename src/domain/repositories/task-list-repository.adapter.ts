@@ -1,7 +1,7 @@
 /**
  * TaskListRepositoryAdapter
  *
- * Adapter that wraps the existing StorageBackend to implement ITaskListRepository.
+ * Adapter that wraps the existing StorageBackend to implement TaskListRepositoryInterface.
  * This adapter provides backward compatibility while enabling the repository pattern.
  *
  * Key responsibilities:
@@ -12,15 +12,15 @@
  *
  * Design decisions:
  * - Uses composition over inheritance (wraps StorageBackend)
- * - Implements all ITaskListRepository methods
+ * - Implements all TaskListRepositoryInterface methods
  * - Preserves existing storage behavior and data format
  * - Adds error handling and logging
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
-  ITaskListRepository,
+  TaskListRepositoryInterface,
   FindOptions,
   SearchQuery,
   SearchResult,
@@ -32,14 +32,14 @@ import type { StorageBackend } from '../../shared/types/storage.js';
 import type { TaskList, TaskListSummary } from '../../shared/types/task.js';
 
 /**
- * Adapter that implements ITaskListRepository using an existing StorageBackend
+ * Adapter that implements TaskListRepositoryInterface using an existing StorageBackend
  *
  * This adapter enables the repository pattern while maintaining backward
  * compatibility with the existing file-based storage system.
  */
-export class TaskListRepositoryAdapter implements ITaskListRepository {
+export class TaskListRepositoryAdapter implements TaskListRepositoryInterface {
   constructor(private readonly storage: StorageBackend) {
-    logger.debug('TaskListRepositoryAdapter initialized');
+    LOGGER.debug('TaskListRepositoryAdapter initialized');
   }
 
   /**
@@ -50,20 +50,20 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async save(list: TaskList): Promise<void> {
     try {
-      logger.debug('Saving TaskList', { listId: list.id, title: list.title });
+      LOGGER.debug('Saving TaskList', { listId: list.id, title: list.title });
 
       await this.storage.save(list.id, list, {
         backup: true,
         validate: true,
       });
 
-      logger.info('TaskList saved successfully', {
+      LOGGER.info('TaskList saved successfully', {
         listId: list.id,
         title: list.title,
         itemCount: list.items.length,
       });
     } catch (error) {
-      logger.error('Failed to save TaskList', {
+      LOGGER.error('Failed to save TaskList', {
         listId: list.id,
         title: list.title,
         error,
@@ -84,12 +84,12 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async findById(id: string, options?: FindOptions): Promise<TaskList | null> {
     try {
-      logger.debug('Finding TaskList by ID', { listId: id, options });
+      LOGGER.debug('Finding TaskList by ID', { listId: id, options });
 
       const list = await this.storage.load(id, {});
 
       if (!list) {
-        logger.debug('TaskList not found', { listId: id });
+        LOGGER.debug('TaskList not found', { listId: id });
         return null;
       }
 
@@ -112,7 +112,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
         );
       }
 
-      logger.debug('TaskList found', {
+      LOGGER.debug('TaskList found', {
         listId: id,
         title: filteredList.title,
         itemCount: filteredList.items.length,
@@ -120,7 +120,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
 
       return filteredList;
     } catch (error) {
-      logger.error('Failed to find TaskList by ID', { listId: id, error });
+      LOGGER.error('Failed to find TaskList by ID', { listId: id, error });
       throw new Error(
         `Failed to find TaskList ${id}: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -136,7 +136,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async findAll(options?: FindOptions): Promise<TaskList[]> {
     try {
-      logger.debug('Finding all TaskLists', { options });
+      LOGGER.debug('Finding all TaskLists', { options });
 
       // Get all list summaries first
       const summaries = await this.storage.list({});
@@ -151,11 +151,11 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
         }
       }
 
-      logger.info('Found TaskLists', { count: lists.length });
+      LOGGER.info('Found TaskLists', { count: lists.length });
 
       return lists;
     } catch (error) {
-      logger.error('Failed to find all TaskLists', { error });
+      LOGGER.error('Failed to find all TaskLists', { error });
       throw new Error(
         `Failed to find all TaskLists: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -171,7 +171,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async search(query: SearchQuery): Promise<SearchResult<TaskList>> {
     try {
-      logger.debug('Searching TaskLists', { query });
+      LOGGER.debug('Searching TaskLists', { query });
 
       // Get all lists first
       const allLists = await this.findAll({});
@@ -195,7 +195,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
       const paginatedLists = filteredLists.slice(offset, offset + limit);
       const hasMore = offset + paginatedLists.length < totalCount;
 
-      logger.info('Search completed', {
+      LOGGER.info('Search completed', {
         totalCount,
         returnedCount: paginatedLists.length,
         hasMore,
@@ -213,7 +213,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TaskLists', { query, error });
+      LOGGER.error('Failed to search TaskLists', { query, error });
       throw new Error(
         `Failed to search TaskLists: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -231,7 +231,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
     query: SearchQuery
   ): Promise<SearchResult<TaskListSummary>> {
     try {
-      logger.debug('Searching TaskList summaries', { query });
+      LOGGER.debug('Searching TaskList summaries', { query });
 
       // Get all summaries from storage
       const listOptions: { projectTag?: string } = {};
@@ -278,7 +278,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
       const paginatedSummaries = summaries.slice(offset, offset + limit);
       const hasMore = offset + paginatedSummaries.length < totalCount;
 
-      logger.info('Summary search completed', {
+      LOGGER.info('Summary search completed', {
         totalCount,
         returnedCount: paginatedSummaries.length,
         hasMore,
@@ -296,7 +296,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TaskList summaries', { query, error });
+      LOGGER.error('Failed to search TaskList summaries', { query, error });
       throw new Error(
         `Failed to search TaskList summaries: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -311,13 +311,13 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async delete(id: string): Promise<void> {
     try {
-      logger.debug('Deleting TaskList', { listId: id });
+      LOGGER.debug('Deleting TaskList', { listId: id });
 
       await this.storage.delete(id);
 
-      logger.info('TaskList deleted successfully', { listId: id });
+      LOGGER.info('TaskList deleted successfully', { listId: id });
     } catch (error) {
-      logger.error('Failed to delete TaskList', {
+      LOGGER.error('Failed to delete TaskList', {
         listId: id,
         error,
       });
@@ -336,16 +336,16 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async exists(id: string): Promise<boolean> {
     try {
-      logger.debug('Checking if TaskList exists', { listId: id });
+      LOGGER.debug('Checking if TaskList exists', { listId: id });
 
       const list = await this.storage.load(id, {});
       const exists = list !== null;
 
-      logger.debug('TaskList existence check', { listId: id, exists });
+      LOGGER.debug('TaskList existence check', { listId: id, exists });
 
       return exists;
     } catch (error) {
-      logger.error('Failed to check TaskList existence', { listId: id, error });
+      LOGGER.error('Failed to check TaskList existence', { listId: id, error });
       throw new Error(
         `Failed to check if TaskList ${id} exists: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -361,7 +361,7 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async count(query?: SearchQuery): Promise<number> {
     try {
-      logger.debug('Counting TaskLists', { query });
+      LOGGER.debug('Counting TaskLists', { query });
 
       if (!query) {
         // Count of all lists
@@ -372,11 +372,11 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
       // Use search to get filtered count
       const result = await this.searchSummaries(query);
 
-      logger.debug('TaskList count', { count: result.totalCount });
+      LOGGER.debug('TaskList count', { count: result.totalCount });
 
       return result.totalCount;
     } catch (error) {
-      logger.error('Failed to count TaskLists', { query, error });
+      LOGGER.error('Failed to count TaskLists', { query, error });
       throw new Error(
         `Failed to count TaskLists: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -390,15 +390,15 @@ export class TaskListRepositoryAdapter implements ITaskListRepository {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      logger.debug('Performing repository health check');
+      LOGGER.debug('Performing repository health check');
 
       const isHealthy = await this.storage.healthCheck();
 
-      logger.debug('Repository health check result', { isHealthy });
+      LOGGER.debug('Repository health check result', { isHealthy });
 
       return isHealthy;
     } catch (error) {
-      logger.error('Repository health check failed', { error });
+      LOGGER.error('Repository health check failed', { error });
       return false;
     }
   }

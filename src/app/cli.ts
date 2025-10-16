@@ -5,7 +5,7 @@
  * Command-line interface for the MCP Task Manager server
  */
 
-import { logger } from '../shared/utils/logger.js';
+import { LOGGER } from '../shared/utils/logger.js';
 import { getVersionInfo, getFormattedVersionInfo } from '../shared/version.js';
 
 interface CliOptions {
@@ -265,7 +265,7 @@ async function main(): Promise<void> {
     // Dynamically import the server to avoid early initialization
     const { McpTaskManagerServer } = await import('./server.js');
 
-    logger.info('Starting MCP Task Manager server...', {
+    LOGGER.info('Starting MCP Task Manager server...', {
       version: process.env['npm_package_version'] ?? getVersionInfo().version,
       nodeVersion: process.version,
       platform: `${process.platform} ${process.arch}`,
@@ -277,12 +277,12 @@ async function main(): Promise<void> {
 
     // Handle graceful shutdown
     const shutdown = (signal: string): void => {
-      logger.info(`Received ${signal}, shutting down gracefully...`);
+      LOGGER.info(`Received ${signal}, shutting down gracefully...`);
       try {
         // Add any cleanup logic here
         process.exit(0);
       } catch (error) {
-        logger.error('Error during shutdown', { error });
+        LOGGER.error('Error during shutdown', { error });
         process.exit(1);
       }
     };
@@ -297,7 +297,7 @@ async function main(): Promise<void> {
     // Keep the process alive
     process.stdin.resume();
   } catch (error) {
-    logger.error('Failed to start MCP Task Manager server', { error });
+    LOGGER.error('Failed to start MCP Task Manager server', { error });
     cliOutput.error(
       `Failed to start server: ${
         error instanceof Error ? error.message : error
@@ -309,13 +309,13 @@ async function main(): Promise<void> {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled promise rejection', { reason, promise });
+  LOGGER.error('Unhandled promise rejection', { reason, promise });
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', error => {
-  logger.error('Uncaught exception', { error });
+  LOGGER.error('Uncaught exception', { error });
   process.exit(1);
 });
 

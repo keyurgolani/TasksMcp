@@ -12,7 +12,7 @@ import {
   SearchCriteria,
   UnifiedSearchCriteria,
 } from '../../../shared/types/search.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { LOGGER } from '../../../shared/utils/logger.js';
 
 // Validation schemas
 const searchTasksSchema = z.object({
@@ -121,7 +121,7 @@ export class SearchController {
 
       const searchCriteria = searchTasksSchema.parse(queryParams);
 
-      logger.info('Searching tasks', {
+      LOGGER.info('Searching tasks', {
         criteria: searchCriteria,
         requestId: req.headers['x-request-id'],
       });
@@ -172,7 +172,7 @@ export class SearchController {
 
       const searchCriteria = searchListsSchema.parse(queryParams);
 
-      logger.info('Searching lists', {
+      LOGGER.info('Searching lists', {
         criteria: searchCriteria,
         requestId: req.headers['x-request-id'],
       });
@@ -224,7 +224,7 @@ export class SearchController {
 
       const searchCriteria = unifiedSearchSchema.parse(queryParams);
 
-      logger.info('Performing unified search', {
+      LOGGER.info('Performing unified search', {
         criteria: searchCriteria,
         requestId: req.headers['x-request-id'],
       });
@@ -269,7 +269,7 @@ export class SearchController {
     const requestId = req.headers['x-request-id'];
 
     if (error instanceof z.ZodError) {
-      logger.warn('Validation error', {
+      LOGGER.warn('Validation error', {
         error: error.issues,
         requestId,
       });
@@ -290,7 +290,7 @@ export class SearchController {
     if (error instanceof OrchestrationError) {
       const statusCode = this.getStatusCodeForError(error);
 
-      logger.warn('Orchestration error', {
+      LOGGER.warn('Orchestration error', {
         error: error.message,
         context: error.context,
         requestId,
@@ -313,7 +313,7 @@ export class SearchController {
     }
 
     // Handle unexpected errors
-    logger.error('Unexpected error', {
+    LOGGER.error('Unexpected error', {
       error: error instanceof Error ? error.message : String(error),
       requestId,
     });

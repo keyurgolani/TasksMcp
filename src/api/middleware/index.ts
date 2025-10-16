@@ -13,7 +13,7 @@ export {
 export {
   validate,
   validateMultiple,
-  commonSchemas,
+  COMMON_SCHEMAS,
   formatValidationError,
   type ValidationTarget,
 } from './validation.js';

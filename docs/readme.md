@@ -1,6 +1,6 @@
-# MCP Task Manager Documentation
+# Task MCP Unified Documentation
 
-Welcome to the comprehensive documentation for the MCP Task Manager - an intelligent Model Context Protocol server that provides sophisticated task management capabilities for AI agents.
+Welcome to the comprehensive documentation for the Task MCP Unified system - an enterprise-grade Model Context Protocol server built with domain-driven architecture that provides sophisticated task management capabilities for AI agents.
 
 ## 🚀 Quick Start
 
@@ -16,7 +16,7 @@ New to the MCP Task Manager? Start here:
 
 Complete reference for all MCP tools and interfaces:
 
-- **[MCP Tools](api/tools.md)** - All 20 MCP tools with examples
+- **[MCP Tools](api/tools.md)** - All 17 MCP tools with examples
 - **[Tool Schemas](api/schemas.md)** - Parameter specifications and validation
 - **[Error Handling](api/errors.md)** - Error codes and troubleshooting
 - **[Response Formats](api/responses.md)** - Standard response structures
@@ -64,8 +64,9 @@ Additional resources and information:
 
 - ✅ **Smart Parameter Preprocessing** - Automatic type conversion for common agent patterns
 - ✅ **Enhanced Error Messages** - Clear, actionable error guidance with examples
+- ✅ **Agent Prompt Templates** - Variable substitution for multi-agent environments
 - ✅ **Unified Search Interface** - Single tool for complex search and filtering operations
-- ✅ **Bulk Operations** - Efficient batch processing for multiple tasks
+- ✅ **Dependency Management** - Circular dependency detection and ready task identification
 - ✅ **DAG Visualization** - Visual dependency graphs in ASCII, DOT, and Mermaid formats
 
 ## 🛠️ System Requirements
@@ -163,7 +164,7 @@ npm run build && npm run validate
 - **Current Version**: 2.3.0
 - **MCP Protocol**: Compatible with MCP SDK 1.0.0+
 - **Node.js**: Requires 18.0.0+, tested with 18.17.0+
-- **Total MCP Tools**: 20 focused tools for complete task management
+- **Total MCP Tools**: 17 focused tools for complete task management
 - **Last Updated**: September 27, 2025
 
 ## 📄 License
@@ -172,7 +173,7 @@ MIT License - see [LICENSE](../LICENSE) file for details.
 
 ## 🤝 Contributing
 
-We welcome contributions! See the [Contributing Guide](../CONTRIBUTING.md) for:
+We welcome contributions! See the [Contributing Guide](../contributing.md) for:
 
 - Code contribution guidelines
 - Development setup instructions
@@ -183,4 +184,4 @@ We welcome contributions! See the [Contributing Guide](../CONTRIBUTING.md) for:
 
 **Ready to get started?** Begin with the [Installation Guide](guides/installation.md) or jump straight to the [Getting Started Tutorial](guides/getting-started.md) if you're experienced with MCP servers.
 
-The MCP Task Manager provides intelligent, scalable task management for the AI agent ecosystem. Whether you're building personal productivity tools or enterprise-scale AI workflows, this documentation will guide you through every step of the journey.
+The Task MCP Unified system provides intelligent, scalable task management for the AI agent ecosystem with enterprise-grade architecture. Whether you're building personal productivity tools or enterprise-scale AI workflows, this documentation will guide you through every step of the journey.

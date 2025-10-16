@@ -3,8 +3,8 @@
  * Provides common patterns for validation, error handling, and data delegation
  */
 
-import { OrchestrationError } from '../../../shared/errors/orchestration-error';
-import { ValidationResult } from '../../../shared/types/validation';
+import { OrchestrationError } from '../../../shared/errors/orchestration-error.js';
+import { ValidationResult } from '../../../shared/types/validation.js';
 
 export interface DataOperation {
   type: 'create' | 'read' | 'update' | 'delete' | 'search';

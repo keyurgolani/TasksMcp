@@ -3,14 +3,14 @@
  * Handles all list-related operations with validation
  */
 
-import { TaskList } from '../../../domain/models/task-list';
+import { TaskList } from '../../../domain/models/task-list.js';
 import {
   CreateListData,
   UpdateListData,
   ListFilters,
 } from '../../../shared/types/list-operations';
 
-import { BaseOrchestrator } from './base-orchestrator';
+import { BaseOrchestrator } from './base-orchestrator.js';
 
 export interface ListOrchestrator extends BaseOrchestrator {
   /**

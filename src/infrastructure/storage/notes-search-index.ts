@@ -252,4 +252,4 @@ export class NotesSearchIndex {
 }
 
 // Export singleton instance
-export const notesSearchIndex = new NotesSearchIndex();
+export const NOTES_SEARCH_INDEX = new NotesSearchIndex();

@@ -6,7 +6,7 @@ import { getVersionInfo } from '../../shared/version.js';
 
 const versionInfo = getVersionInfo();
 
-export const baseConfig = {
+export const BASE_CONFIG = {
   server: {
     name: versionInfo.name,
     version: versionInfo.version,

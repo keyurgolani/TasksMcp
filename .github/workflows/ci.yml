@@ -155,7 +155,7 @@ jobs:
         run: |
           echo "Checking required documentation files..."
 
-          required_files=("README.md" "AGENTS.md" "LICENSE" "package.json")
+          required_files=("readme.md" "agents.md" "LICENSE" "package.json")
           for file in "${required_files[@]}"; do
             if [[ ! -f "$file" ]]; then
               echo "❌ Missing required file: $file"
@@ -165,20 +165,20 @@ jobs:
             fi
           done
 
-          echo "Checking README.md content..."
-          if ! grep -q "MCP Task Manager" README.md; then
-            echo "❌ README.md missing project title"
+          echo "Checking readme.md content..."
+          if ! grep -q "MCP Task Manager" readme.md; then
+            echo "❌ readme.md missing project title"
             exit 1
           fi
 
-          if ! grep -q "installation" README.md; then
-            echo "❌ README.md missing installation instructions"
+          if ! grep -q "installation" readme.md; then
+            echo "❌ readme.md missing installation instructions"
             exit 1
           fi
 
-          echo "Checking AGENTS.md content..."
-          if ! grep -q "MCP Tools" AGENTS.md; then
-            echo "❌ AGENTS.md missing MCP tools documentation"
+          echo "Checking agents.md content..."
+          if ! grep -q "MCP Tools" agents.md; then
+            echo "❌ agents.md missing MCP tools documentation"
             exit 1
           fi
 

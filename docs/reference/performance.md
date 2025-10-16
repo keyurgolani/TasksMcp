@@ -34,12 +34,12 @@ This guide covers performance characteristics, optimization techniques, and scal
 
 ### Data Volume Limits
 
-| Resource            | Recommended | Maximum Tested | Hard Limit  |
-| ------------------- | ----------- | -------------- | ----------- |
-| **Tasks per List**  | 1,000       | 10,000         | 50,000      |
-| **Total Lists**     | 100         | 1,000          | Unlimited\* |
-| **Search Results**  | 100         | 1,000          | 10,000      |
-| **Bulk Operations** | 50          | 100            | 500         |
+| Resource                       | Recommended | Maximum Tested | Hard Limit  |
+| ------------------------------ | ----------- | -------------- | ----------- |
+| **Tasks per List**             | 1,000       | 10,000         | 50,000      |
+| **Total Lists**                | 100         | 1,000          | Unlimited\* |
+| **Search Results**             | 100         | 1,000          | 10,000      |
+| **Bulk Operations (REST API)** | 50          | 100            | 500         |
 
 \*Limited by available storage space
 
@@ -68,23 +68,25 @@ This guide covers performance characteristics, optimization techniques, and scal
 ```json
 // Don't use multiple separate calls
 {
-  "tool": "search_tasks",
+  "tool": "search_tool",
   "parameters": {"query": "urgent"}
 }
 // followed by
 {
-  "tool": "filter_tasks",
-  "parameters": {"priority": 4}
+  "tool": "search_tool",
+  "parameters": {"priority": [4]}
 }
 ```
 
-#### Bulk Operations
+#### Bulk Operations (REST API Only)
+
+**Note**: Bulk operations are only available through the REST API, not MCP tools.
 
 **Efficient:**
 
 ```json
 {
-  "tool": "bulk_task_operations",
+  "tool": "search_tool",
   "parameters": {
     "listId": "project-id",
     "operations": [
@@ -182,7 +184,7 @@ This guide covers performance characteristics, optimization techniques, and scal
 - Keep lists focused (< 1000 tasks)
 - Use meaningful project tags
 - Archive completed projects
-- Regular cleanup of old data
+- Regular cleanup of completed data
 
 **Inefficient:**
 
@@ -357,10 +359,10 @@ find $DATA_DIRECTORY -name "*.json" | wc -l
 
 **Solutions:**
 
-1. **Reduce data volume**: Archive old projects
+1. **Reduce data volume**: Remove completed projects
 2. **Optimize queries**: Use specific filters
 3. **Increase limits**: Adjust system resources
-4. **Use bulk operations**: Reduce API calls
+4. **Use REST API bulk operations**: Reduce API calls (not available in MCP)
 
 #### High Memory Usage
 
@@ -501,7 +503,7 @@ NODE_ENV=production DATA_DIRECTORY=/prod/data npx task-list-mcp@latest
 
 1. **Use appropriate tools**: Choose the most efficient tool for each task
 2. **Limit result sets**: Use reasonable limits and pagination
-3. **Batch operations**: Use bulk operations when possible
+3. **Batch operations**: Use REST API bulk operations when possible (not available in MCP)
 4. **Monitor performance**: Track response times and resource usage
 5. **Optimize queries**: Use specific filters
 
@@ -515,7 +517,7 @@ NODE_ENV=production DATA_DIRECTORY=/prod/data npx task-list-mcp@latest
 
 ### Data Management Best Practices
 
-1. **Archive old data**: Regular archival of completed projects
+1. **Remove old data**: Regular removal of completed projects
 2. **Limit data growth**: Reasonable limits on list and task sizes
 3. **Cleanup routines**: Automated cleanup of temporary data
 4. **Backup management**: Regular backup cleanup and rotation

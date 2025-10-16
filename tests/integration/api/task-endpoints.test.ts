@@ -238,7 +238,7 @@ describe('Task Management API Endpoints', () => {
       });
 
       taskId = response.body.data.id;
-    });
+    }, 15000); // Increase timeout to 15 seconds
 
     it('should get a single task', async () => {
       const response = await request(app)
@@ -432,6 +432,8 @@ describe('Task Management API Endpoints', () => {
         title: 'Dependency Task',
       });
 
+      expect(dep1Response.status).toBe(201);
+      expect(dep1Response.body.data).toBeDefined();
       const dep1Id = dep1Response.body.data.id;
 
       // Create task with dependency
@@ -443,6 +445,8 @@ describe('Task Management API Endpoints', () => {
           dependencies: [dep1Id],
         });
 
+      expect(task2Response.status).toBe(201);
+      expect(task2Response.body.data).toBeDefined();
       const task2Id = task2Response.body.data.id;
 
       // Complete dependency first

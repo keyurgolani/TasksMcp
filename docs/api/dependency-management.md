@@ -336,13 +336,13 @@ The `get_list` tool now includes dependency information in task responses:
 }
 ```
 
-### Enhanced filter_tasks
+### Enhanced search_tool
 
-The `filter_tasks` tool now supports dependency-based filtering:
+The `search_tool` supports dependency-based filtering:
 
 ```json
 {
-  "name": "filter_tasks",
+  "name": "search_tool",
   "arguments": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
     "hasDependencies": true,
@@ -402,7 +402,7 @@ The `show_tasks` tool now displays dependency status indicators:
 {"name": "analyze_task_dependencies", "arguments": {"listId": "..."}}
 
 // 3. Filter by priority if needed
-{"name": "filter_tasks", "arguments": {
+{"name": "search_tool", "arguments": {
   "listId": "...",
   "isReady": true,
   "priority": 4
@@ -416,7 +416,7 @@ The `show_tasks` tool now displays dependency status indicators:
 {"name": "analyze_task_dependencies", "arguments": {"listId": "..."}}
 
 // 2. Check for blocked tasks
-{"name": "filter_tasks", "arguments": {"listId": "...", "isBlocked": true}}
+{"name": "search_tool", "arguments": {"listId": "...", "isBlocked": true}}
 
 // 3. Review critical path
 // Use criticalPath from analysis response to prioritize work

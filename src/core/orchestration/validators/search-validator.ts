@@ -39,8 +39,8 @@ export class SearchValidator {
     const errors: ValidationError[] = [];
     const warnings: string[] = [];
 
-    // Validate basic parameters
-    this.validateBasicParameters(criteria, errors, warnings);
+    // Validate parameters
+    this.validateParameters(criteria, errors, warnings);
 
     // Validate filters
     if (criteria.filters) {
@@ -59,8 +59,6 @@ export class SearchValidator {
   ): SearchFilterValidation {
     const errors: string[] = [];
     const warnings: string[] = [];
-    const suggestions: string[] = [];
-
     // Validate fuzzy search threshold
     if (options.fuzzyThreshold !== undefined) {
       if (options.fuzzyThreshold < 0 || options.fuzzyThreshold > 1) {
@@ -81,22 +79,14 @@ export class SearchValidator {
       }
     }
 
-    // Provide suggestions
-    if (options.fuzzySearch && !options.fuzzyThreshold) {
-      suggestions.push(
-        'Consider setting fuzzyThreshold for better fuzzy search results'
-      );
-    }
-
     return {
       isValid: errors.length === 0,
       errors,
       warnings,
-      suggestions,
     };
   }
 
-  private validateBasicParameters(
+  private validateParameters(
     criteria: SearchCriteria,
     errors: ValidationError[],
     warnings: string[]

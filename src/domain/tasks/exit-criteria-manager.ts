@@ -5,16 +5,22 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { createOrchestrationError } from '../../shared/utils/error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { ExitCriteria } from '../../shared/types/task.js';
-import type { ITaskListRepository } from '../repositories/task-list.repository.js';
+import type { TaskListRepositoryInterface } from '../repositories/task-list.repository.js';
 
+/**
+ * Input parameters for creating exit criteria
+ */
 export interface CreateExitCriteriaInput {
   taskId: string;
   description: string;
 }
 
+/**
+ * Input parameters for updating exit criteria
+ */
 export interface UpdateExitCriteriaInput {
   criteriaId: string;
   description?: string;
@@ -22,6 +28,9 @@ export interface UpdateExitCriteriaInput {
   notes?: string;
 }
 
+/**
+ * Result of exit criteria validation
+ */
 export interface ExitCriteriaValidationResult {
   isValid: boolean;
   errors: string[];
@@ -48,12 +57,12 @@ export interface ExitCriteriaValidationResult {
 export class ExitCriteriaManager {
   // Repository for future direct exit criteria persistence
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITaskListRepository | undefined;
+  private readonly repository: TaskListRepositoryInterface | undefined;
 
-  constructor(repository?: ITaskListRepository) {
+  constructor(repository?: TaskListRepositoryInterface) {
     this.repository = repository;
 
-    logger.debug('ExitCriteriaManager initialized', {
+    LOGGER.debug('ExitCriteriaManager initialized', {
       hasRepository: !!repository,
     });
   }
@@ -62,7 +71,7 @@ export class ExitCriteriaManager {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITaskListRepository | undefined {
+  getRepository(): TaskListRepositoryInterface | undefined {
     return this.repository;
   }
 
@@ -73,7 +82,7 @@ export class ExitCriteriaManager {
     input: CreateExitCriteriaInput
   ): Promise<ExitCriteria> {
     try {
-      logger.debug('Creating exit criteria', {
+      LOGGER.debug('Creating exit criteria', {
         taskId: input.taskId,
         description: input.description,
       });
@@ -89,7 +98,7 @@ export class ExitCriteriaManager {
         isMet: false,
       };
 
-      logger.info('Exit criteria created successfully', {
+      LOGGER.info('Exit criteria created successfully', {
         criteriaId,
         taskId: input.taskId,
         description: exitCriteria.description,
@@ -97,7 +106,7 @@ export class ExitCriteriaManager {
 
       return exitCriteria;
     } catch (error) {
-      logger.error('Failed to create exit criteria', {
+      LOGGER.error('Failed to create exit criteria', {
         taskId: input.taskId,
         error,
       });
@@ -113,7 +122,7 @@ export class ExitCriteriaManager {
     updates: Partial<ExitCriteria>
   ): Promise<ExitCriteria> {
     try {
-      logger.debug('Updating exit criteria', {
+      LOGGER.debug('Updating exit criteria', {
         criteriaId: existingCriteria.id,
         hasDescriptionUpdate: !!updates.description,
         hasStatusUpdate: updates.isMet !== undefined,
@@ -145,7 +154,7 @@ export class ExitCriteriaManager {
         delete updatedCriteria.metAt;
       }
 
-      logger.info('Exit criteria updated successfully', {
+      LOGGER.info('Exit criteria updated successfully', {
         criteriaId: existingCriteria.id,
         descriptionChanged: updates.description !== undefined,
         statusChanged: updates.isMet !== undefined,
@@ -154,7 +163,7 @@ export class ExitCriteriaManager {
 
       return updatedCriteria;
     } catch (error) {
-      logger.error('Failed to update exit criteria', {
+      LOGGER.error('Failed to update exit criteria', {
         criteriaId: existingCriteria.id,
         error,
       });
@@ -200,7 +209,7 @@ export class ExitCriteriaManager {
       const metCriteria = criteria.filter(c => c.isMet).length;
       const progress = Math.round((metCriteria / criteria.length) * 100);
 
-      logger.debug('Exit criteria progress calculated', {
+      LOGGER.debug('Exit criteria progress calculated', {
         totalCriteria: criteria.length,
         metCriteria,
         progress,
@@ -208,7 +217,7 @@ export class ExitCriteriaManager {
 
       return progress;
     } catch (error) {
-      logger.error('Failed to calculate criteria progress', { error });
+      LOGGER.error('Failed to calculate criteria progress', { error });
       return 0;
     }
   }
@@ -291,7 +300,7 @@ export class ExitCriteriaManager {
     }
 
     if (warnings.length > 0) {
-      logger.warn('Exit criteria validation warnings', {
+      LOGGER.warn('Exit criteria validation warnings', {
         warnings,
         descriptionLength: description.length,
       });

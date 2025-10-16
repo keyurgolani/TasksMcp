@@ -24,45 +24,60 @@ describe('REST API Server', () => {
   let notesManager: NotesManager;
 
   beforeAll(async () => {
-    // Initialize storage with memory backend for testing
-    storage = await StorageFactory.createStorage({
-      type: 'memory',
-    });
-    await storage.initialize();
+    try {
+      // Initialize storage with memory backend for testing
+      storage = await StorageFactory.createStorage({
+        type: 'memory',
+      });
+      await storage.initialize();
 
-    // Initialize managers
-    taskListManager = new TaskListManager(storage);
-    dependencyManager = new DependencyResolver();
-    exitCriteriaManager = new ExitCriteriaManager(storage);
-    actionPlanManager = new ActionPlanManager(storage);
-    notesManager = new NotesManager(storage);
+      // Initialize managers
+      taskListManager = new TaskListManager(storage);
+      dependencyManager = new DependencyResolver();
+      exitCriteriaManager = new ExitCriteriaManager(storage);
+      actionPlanManager = new ActionPlanManager(storage);
+      notesManager = new NotesManager(storage);
 
-    // Create server
-    server = new RestApiServer(
-      {
-        port: 3099, // Use different port for testing
-        corsOrigins: ['*'],
-      },
-      taskListManager,
-      dependencyManager,
-      exitCriteriaManager,
-      actionPlanManager,
-      notesManager
-    );
+      // Create server
+      server = new RestApiServer(
+        {
+          port: 3099, // Use different port for testing
+          corsOrigins: ['*'],
+        },
+        taskListManager,
+        dependencyManager,
+        exitCriteriaManager,
+        actionPlanManager,
+        notesManager
+      );
 
-    // Initialize routes before starting
-    await server.initialize();
-    await server.start();
+      // Initialize routes before starting
+      await server.initialize();
+      await server.start();
+
+      // Wait a bit for server to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('Failed to start server in beforeAll:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
-    await server.stop();
-    // Memory storage doesn't have cleanup method
+    try {
+      if (server) {
+        await server.stop();
+      }
+      // Memory storage doesn't have cleanup method
+    } catch (error) {
+      console.error('Error stopping server:', error);
+    }
   });
 
   it('should start the server successfully', () => {
     expect(server).toBeDefined();
     expect(server.getConfig().port).toBe(3099);
+    expect(server.isRunning()).toBe(true);
   });
 
   it('should respond to health check endpoint', async () => {

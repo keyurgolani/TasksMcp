@@ -4,6 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { ValidationError } from '../../shared/errors/orchestration-error.js';
 import {
   TaskStatus,
   Priority,
@@ -19,11 +20,11 @@ import {
   type DependencyNode,
 } from '../../shared/types/task.js';
 import {
-  DetailedErrors,
+  DETAILED_ERRORS,
   createOrchestrationError,
 } from '../../shared/utils/error-formatter.js';
 import { FilteringUtils } from '../../shared/utils/filtering.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { PrettyPrintFormatter } from '../../shared/utils/pretty-print-formatter.js';
 import { ActionPlanManager } from '../tasks/action-plan-manager.js';
 import {
@@ -41,7 +42,7 @@ import type {
   ListOptions,
 } from '../../shared/types/storage.js';
 import type { SortOptions } from '../repositories/task-list.repository.js';
-import type { ITaskListRepository } from '../repositories/task-list.repository.js';
+import type { TaskListRepositoryInterface } from '../repositories/task-list.repository.js';
 
 export interface CreateTaskListInput {
   title: string;
@@ -116,10 +117,16 @@ export interface ListTaskListsInput {
   offset?: number | undefined;
 }
 
+/**
+ * Input parameters for deleting a task list
+ */
 export interface DeleteTaskListInput {
   listId: string;
 }
 
+/**
+ * Result of a task list deletion operation
+ */
 export interface DeleteTaskListResult {
   success: boolean;
   operation: 'deleted';
@@ -143,7 +150,7 @@ export class TaskListManager {
   private readonly storage: StorageBackend | undefined;
 
   constructor(
-    private readonly repository: ITaskListRepository,
+    private readonly repository: TaskListRepositoryInterface,
     storage?: StorageBackend
   ) {
     this.dependencyResolver = new DependencyResolver(repository);
@@ -180,7 +187,7 @@ export class TaskListManager {
 
     // Memory management removed - no longer supported
 
-    logger.info('TaskListManager initialized successfully');
+    LOGGER.info('TaskListManager initialized successfully');
   }
 
   // Getter methods for components
@@ -202,7 +209,7 @@ export class TaskListManager {
 
   async createTaskList(input: CreateTaskListInput): Promise<TaskList> {
     try {
-      logger.info('Creating new task list', {
+      LOGGER.info('Creating new task list', {
         title: input.title,
         context: input.context,
         projectTag: input.projectTag,
@@ -245,7 +252,7 @@ export class TaskListManager {
               });
               item.actionPlan = actionPlan;
             } catch (error) {
-              logger.warn('Failed to create action plan for task', {
+              LOGGER.warn('Failed to create action plan for task', {
                 taskId: item.id,
                 taskTitle: item.title,
                 error,
@@ -266,7 +273,7 @@ export class TaskListManager {
                 item.implementationNotes.push(note);
               }
             } catch (error) {
-              logger.warn('Failed to create implementation notes for task', {
+              LOGGER.warn('Failed to create implementation notes for task', {
                 taskId: item.id,
                 taskTitle: item.title,
                 error,
@@ -314,7 +321,7 @@ export class TaskListManager {
             taskList.implementationNotes.push(note);
           }
         } catch (error) {
-          logger.warn('Failed to create implementation notes for list', {
+          LOGGER.warn('Failed to create implementation notes for list', {
             listId,
             listTitle: input.title,
             error,
@@ -326,7 +333,7 @@ export class TaskListManager {
       // Save to repository
       await this.repository.save(taskList);
 
-      logger.info('Task list created successfully', {
+      LOGGER.info('Task list created successfully', {
         id: listId,
         title: input.title,
         itemCount: items.length,
@@ -334,14 +341,14 @@ export class TaskListManager {
 
       return taskList;
     } catch (error) {
-      logger.error('Failed to create task list', { title: input.title, error });
+      LOGGER.error('Failed to create task list', { title: input.title, error });
       throw error;
     }
   }
 
   async getTaskList(input: GetTaskListInput): Promise<TaskList | null> {
     try {
-      logger.debug('Retrieving task list with advanced filtering', {
+      LOGGER.debug('Retrieving task list with advanced filtering', {
         listId: input.listId,
         hasFilters: !!input.filters,
 
@@ -351,7 +358,7 @@ export class TaskListManager {
       const taskList = await this.repository.findById(input.listId);
 
       if (taskList === null) {
-        logger.debug('Task list not found', { listId: input.listId });
+        LOGGER.debug('Task list not found', { listId: input.listId });
         return null;
       }
 
@@ -426,7 +433,7 @@ export class TaskListManager {
         },
       };
 
-      logger.info('Task list retrieved successfully with advanced processing', {
+      LOGGER.info('Task list retrieved successfully with advanced processing', {
         id: taskList.id,
         title: taskList.title,
         originalCount: taskList.items.length,
@@ -440,7 +447,7 @@ export class TaskListManager {
 
       return result;
     } catch (error) {
-      logger.error('Failed to retrieve task list', {
+      LOGGER.error('Failed to retrieve task list', {
         listId: input.listId,
         error,
       });
@@ -450,7 +457,7 @@ export class TaskListManager {
 
   async updateTaskList(input: UpdateTaskListInput): Promise<TaskList> {
     try {
-      logger.info('Updating task list', {
+      LOGGER.info('Updating task list', {
         listId: input.listId,
         action: input.action,
         itemId: input.itemId,
@@ -473,7 +480,7 @@ export class TaskListManager {
 
         case 'update_item':
           if (input.itemId === undefined) {
-            throw DetailedErrors.requiredField('itemId', 'Update Item Action');
+            throw DETAILED_ERRORS.requiredField('itemId', 'Update Item Action');
           }
           updatedItems = await this.updateItem(
             updatedItems,
@@ -485,20 +492,20 @@ export class TaskListManager {
 
         case 'remove_item':
           if (input.itemId === undefined) {
-            throw DetailedErrors.requiredField('itemId', 'Remove Item Action');
+            throw DETAILED_ERRORS.requiredField('itemId', 'Remove Item Action');
           }
           updatedItems = this.removeItem(updatedItems, input.itemId);
           break;
 
         case 'update_status':
           if (input.itemId === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'itemId',
               'Update Status Action'
             );
           }
           if (input.itemData?.status === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'status',
               'Update Status Action'
             );
@@ -561,19 +568,19 @@ export class TaskListManager {
 
         case 'add_task_note':
           if (input.itemId === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'itemId',
               'Add Task Note Action'
             );
           }
           if (input.noteContent === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'noteContent',
               'Add Task Note Action'
             );
           }
           if (input.noteType === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'noteType',
               'Add Task Note Action'
             );
@@ -589,13 +596,13 @@ export class TaskListManager {
 
         case 'add_list_note': {
           if (input.noteContent === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'noteContent',
               'Add List Note Action'
             );
           }
           if (input.noteType === undefined) {
-            throw DetailedErrors.requiredField(
+            throw DETAILED_ERRORS.requiredField(
               'noteType',
               'Add List Note Action'
             );
@@ -612,7 +619,7 @@ export class TaskListManager {
         }
 
         default:
-          throw DetailedErrors.invalidOption(
+          throw DETAILED_ERRORS.invalidOption(
             'action',
             'List Action Processing',
             input.action,
@@ -645,7 +652,7 @@ export class TaskListManager {
       // Save to repository
       await this.repository.save(updatedTaskList);
 
-      logger.info('Task list updated successfully', {
+      LOGGER.info('Task list updated successfully', {
         id: input.listId,
         action: input.action,
         itemCount: updatedItems.length,
@@ -653,7 +660,7 @@ export class TaskListManager {
 
       return updatedTaskList;
     } catch (error) {
-      logger.error('Failed to update task list', {
+      LOGGER.error('Failed to update task list', {
         listId: input.listId,
         action: input.action,
         error,
@@ -694,7 +701,7 @@ export class TaskListManager {
         });
       }
     } catch (error) {
-      logger.error('Failed to update action plan', { itemId, error });
+      LOGGER.error('Failed to update action plan', { itemId, error });
       throw new Error(
         `Failed to update action plan: ${
           error instanceof Error ? error.message : 'Unknown error'
@@ -747,7 +754,7 @@ export class TaskListManager {
         }
       );
     } catch (error) {
-      logger.error('Failed to update step progress', { itemId, stepId, error });
+      LOGGER.error('Failed to update step progress', { itemId, stepId, error });
       throw error;
     }
 
@@ -804,7 +811,7 @@ export class TaskListManager {
         noteType
       );
     } catch (error) {
-      logger.error('Failed to add task note', { itemId, error });
+      LOGGER.error('Failed to add task note', { itemId, error });
       throw new Error(
         `Failed to add task note: ${
           error instanceof Error ? error.message : 'Unknown error'
@@ -829,7 +836,13 @@ export class TaskListManager {
     now: Date
   ): Promise<Task[]> {
     if (itemData?.title === undefined || itemData.title.length === 0) {
-      throw new Error('Title is required for new items');
+      throw new ValidationError(
+        'Title is required for new items',
+        'Task Creation',
+        undefined,
+        'Non-empty string',
+        'Provide a descriptive title for the task'
+      );
     }
 
     // Validate dependencies using DependencyResolver
@@ -849,7 +862,7 @@ export class TaskListManager {
 
       // Log warnings if any
       if (validation.warnings.length > 0) {
-        logger.warn('Dependency warnings for new item', {
+        LOGGER.warn('Dependency warnings for new item', {
           itemId: newItemId,
           warnings: validation.warnings,
         });
@@ -892,7 +905,7 @@ export class TaskListManager {
           newItem.actionPlan = itemData.actionPlan;
         }
       } catch (error) {
-        logger.warn('Failed to create action plan for new item', {
+        LOGGER.warn('Failed to create action plan for new item', {
           itemId: newItemId,
           itemTitle: newItem.title,
           error,
@@ -917,7 +930,7 @@ export class TaskListManager {
         }
         newItem.exitCriteria = exitCriteria;
       } catch (error) {
-        logger.warn('Failed to create exit criteria for new item', {
+        LOGGER.warn('Failed to create exit criteria for new item', {
           itemId: newItemId,
           itemTitle: newItem.title,
           error,
@@ -961,7 +974,7 @@ export class TaskListManager {
 
       // Log warnings if any
       if (validation.warnings.length > 0) {
-        logger.warn('Dependency warnings for item update', {
+        LOGGER.warn('Dependency warnings for item update', {
           itemId,
           warnings: validation.warnings,
         });
@@ -1011,7 +1024,7 @@ export class TaskListManager {
           updatedItem.actionPlan = itemData.actionPlan;
         }
       } catch (error) {
-        logger.warn('Failed to update action plan during item update', {
+        LOGGER.warn('Failed to update action plan during item update', {
           itemId,
           error,
         });
@@ -1052,7 +1065,7 @@ export class TaskListManager {
         }
         updatedItem.exitCriteria = exitCriteria;
       } catch (error) {
-        logger.warn('Failed to update exit criteria during item update', {
+        LOGGER.warn('Failed to update exit criteria during item update', {
           itemId,
           error,
         });
@@ -1185,7 +1198,7 @@ export class TaskListManager {
    */
   async getDependencyGraph(listId: string): Promise<DependencyGraph> {
     try {
-      logger.debug('Getting dependency graph', { listId });
+      LOGGER.debug('Getting dependency graph', { listId });
 
       const taskList = await this.repository.findById(listId);
 
@@ -1197,7 +1210,7 @@ export class TaskListManager {
         taskList.items
       );
 
-      logger.info('Dependency graph retrieved successfully', {
+      LOGGER.info('Dependency graph retrieved successfully', {
         listId,
         nodeCount: graph.nodes.size,
         cycleCount: graph.cycles.length,
@@ -1205,7 +1218,7 @@ export class TaskListManager {
 
       return graph;
     } catch (error) {
-      logger.error('Failed to get dependency graph', { listId, error });
+      LOGGER.error('Failed to get dependency graph', { listId, error });
       throw error;
     }
   }
@@ -1219,7 +1232,7 @@ export class TaskListManager {
     dependencies: string[]
   ): Promise<DependencyValidationResult> {
     try {
-      logger.debug('Validating item dependencies', {
+      LOGGER.debug('Validating item dependencies', {
         listId,
         itemId,
         dependencies,
@@ -1237,7 +1250,7 @@ export class TaskListManager {
         taskList.items
       );
 
-      logger.debug('Item dependencies validated', {
+      LOGGER.debug('Item dependencies validated', {
         listId,
         itemId,
         isValid: validation.isValid,
@@ -1246,7 +1259,7 @@ export class TaskListManager {
 
       return validation;
     } catch (error) {
-      logger.error('Failed to validate item dependencies', {
+      LOGGER.error('Failed to validate item dependencies', {
         listId,
         itemId,
         error,
@@ -1260,7 +1273,7 @@ export class TaskListManager {
    */
   async getReadyItems(listId: string): Promise<Task[]> {
     try {
-      logger.debug('Getting ready items', { listId });
+      LOGGER.debug('Getting ready items', { listId });
 
       const taskList = await this.repository.findById(listId);
 
@@ -1270,7 +1283,7 @@ export class TaskListManager {
 
       const readyItems = this.dependencyResolver.getReadyItems(taskList.items);
 
-      logger.info('Ready items retrieved successfully', {
+      LOGGER.info('Ready items retrieved successfully', {
         listId,
         totalItems: taskList.items.length,
         readyCount: readyItems.length,
@@ -1278,7 +1291,7 @@ export class TaskListManager {
 
       return readyItems;
     } catch (error) {
-      logger.error('Failed to get ready items', { listId, error });
+      LOGGER.error('Failed to get ready items', { listId, error });
       throw error;
     }
   }
@@ -1290,7 +1303,7 @@ export class TaskListManager {
     listId: string
   ): Promise<Array<{ item: Task; blockedBy: Task[] }>> {
     try {
-      logger.debug('Getting blocked items', { listId });
+      LOGGER.debug('Getting blocked items', { listId });
 
       const taskList = await this.repository.findById(listId);
 
@@ -1302,7 +1315,7 @@ export class TaskListManager {
         taskList.items
       );
 
-      logger.info('Blocked items retrieved successfully', {
+      LOGGER.info('Blocked items retrieved successfully', {
         listId,
         totalItems: taskList.items.length,
         blockedCount: blockedItems.length,
@@ -1310,7 +1323,7 @@ export class TaskListManager {
 
       return blockedItems;
     } catch (error) {
-      logger.error('Failed to get blocked items', { listId, error });
+      LOGGER.error('Failed to get blocked items', { listId, error });
       throw error;
     }
   }
@@ -1320,7 +1333,7 @@ export class TaskListManager {
    */
   async getCriticalPath(listId: string): Promise<string[]> {
     try {
-      logger.debug('Calculating critical path', { listId });
+      LOGGER.debug('Calculating critical path', { listId });
 
       const taskList = await this.repository.findById(listId);
 
@@ -1332,14 +1345,14 @@ export class TaskListManager {
         taskList.items
       );
 
-      logger.info('Critical path calculated successfully', {
+      LOGGER.info('Critical path calculated successfully', {
         listId,
         pathLength: criticalPath.length,
       });
 
       return criticalPath;
     } catch (error) {
-      logger.error('Failed to calculate critical path', { listId, error });
+      LOGGER.error('Failed to calculate critical path', { listId, error });
       throw error;
     }
   }
@@ -1358,7 +1371,7 @@ export class TaskListManager {
     estimatedCompletion?: string;
   } | null> {
     try {
-      logger.debug('Getting action plan progress', { listId, itemId });
+      LOGGER.debug('Getting action plan progress', { listId, itemId });
 
       const taskList = await this.repository.findById(listId);
 
@@ -1379,7 +1392,7 @@ export class TaskListManager {
         item.actionPlan
       );
 
-      logger.info('Action plan progress retrieved successfully', {
+      LOGGER.info('Action plan progress retrieved successfully', {
         listId,
         itemId,
         progress: progressSummary.progress,
@@ -1387,7 +1400,7 @@ export class TaskListManager {
 
       return progressSummary;
     } catch (error) {
-      logger.error('Failed to get action plan progress', {
+      LOGGER.error('Failed to get action plan progress', {
         listId,
         itemId,
         error,
@@ -1406,7 +1419,7 @@ export class TaskListManager {
     }>
   > {
     try {
-      logger.debug('Getting tasks with action plans', { listId });
+      LOGGER.debug('Getting tasks with action plans', { listId });
 
       const taskList = await this.repository.findById(listId);
 
@@ -1423,21 +1436,21 @@ export class TaskListManager {
           ),
         }));
 
-      logger.info('Tasks with action plans retrieved successfully', {
+      LOGGER.info('Tasks with action plans retrieved successfully', {
         listId,
         taskCount: tasksWithPlans.length,
       });
 
       return tasksWithPlans;
     } catch (error) {
-      logger.error('Failed to get tasks with action plans', { listId, error });
+      LOGGER.error('Failed to get tasks with action plans', { listId, error });
       throw error;
     }
   }
 
   async listTaskLists(input: ListTaskListsInput): Promise<TaskListSummary[]> {
     try {
-      logger.debug('Listing task lists', {
+      LOGGER.debug('Listing task lists', {
         context: input.context,
         projectTag: input.projectTag,
         status: input.status,
@@ -1499,7 +1512,7 @@ export class TaskListManager {
         });
       }
 
-      logger.info('Task lists listed successfully', {
+      LOGGER.info('Task lists listed successfully', {
         totalCount: summaries.length,
         filteredCount: filteredSummaries.length,
         context: input.context,
@@ -1508,7 +1521,7 @@ export class TaskListManager {
 
       return filteredSummaries as TaskListSummary[];
     } catch (error) {
-      logger.error('Failed to list task lists', {
+      LOGGER.error('Failed to list task lists', {
         context: input.context,
         status: input.status,
         error,
@@ -1521,7 +1534,7 @@ export class TaskListManager {
     input: DeleteTaskListInput
   ): Promise<DeleteTaskListResult> {
     try {
-      logger.info('Deleting task list', {
+      LOGGER.info('Deleting task list', {
         listId: input.listId,
       });
 
@@ -1535,7 +1548,7 @@ export class TaskListManager {
       // Permanently delete the list
       await this.repository.delete(input.listId);
 
-      logger.info('Task list permanently deleted', {
+      LOGGER.info('Task list permanently deleted', {
         id: input.listId,
         title: taskList.title,
       });
@@ -1546,7 +1559,7 @@ export class TaskListManager {
         message: `Task list "${taskList.title}" has been permanently deleted`,
       };
     } catch (error) {
-      logger.error('Failed to delete task list', {
+      LOGGER.error('Failed to delete task list', {
         listId: input.listId,
         error,
       });
@@ -1558,7 +1571,7 @@ export class TaskListManager {
     try {
       return await this.repository.healthCheck();
     } catch (error) {
-      logger.error('TaskListManager health check failed', { error });
+      LOGGER.error('TaskListManager health check failed', { error });
       return false;
     }
   }
@@ -1722,7 +1735,7 @@ export class TaskListManager {
           updatedAt, // Ensure it's a Date object
         };
       } catch (error) {
-        logger.warn('Failed to format note for display', {
+        LOGGER.warn('Failed to format note for display', {
           noteId: note.id,
           error,
         });
@@ -1769,7 +1782,7 @@ export class TaskListManager {
     }
 
     this.isShuttingDown = true;
-    logger.info('TaskListManager shutting down');
+    LOGGER.info('TaskListManager shutting down');
 
     // Clear intervals
     if (this.cleanupInterval) {
@@ -1790,7 +1803,7 @@ export class TaskListManager {
       await this.storage.shutdown();
     }
 
-    logger.info('TaskListManager shutdown completed');
+    LOGGER.info('TaskListManager shutdown completed');
   }
 
   /**
@@ -1806,7 +1819,7 @@ export class TaskListManager {
     }
   ): Promise<TaskList> {
     try {
-      logger.info('Updating list metadata', { listId, updates });
+      LOGGER.info('Updating list metadata', { listId, updates });
 
       // Load the existing list
       const existingList = await this.repository.findById(listId);
@@ -1832,11 +1845,11 @@ export class TaskListManager {
       // Save to repository
       await this.repository.save(updatedList);
 
-      logger.info('List metadata updated successfully', { listId });
+      LOGGER.info('List metadata updated successfully', { listId });
 
       return updatedList;
     } catch (error) {
-      logger.error('Failed to update list metadata', { listId, error });
+      LOGGER.error('Failed to update list metadata', { listId, error });
       throw error;
     }
   }

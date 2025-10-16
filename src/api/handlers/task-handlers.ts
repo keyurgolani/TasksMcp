@@ -2,11 +2,13 @@
  * Task management API handlers
  */
 
+import { randomUUID } from 'crypto';
+
 import { z } from 'zod';
 
 import { ApiError } from '../../shared/errors/api-error.js';
 import { TaskStatus } from '../../shared/types/task.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
   ApiRequest,
@@ -103,7 +105,7 @@ export async function createTaskHandler(
     // Validate request body
     const input = createTaskSchema.parse(req.body);
 
-    logger.info('Creating new task', {
+    LOGGER.info('Creating new task', {
       requestId: req.id,
       listId: input.listId,
       title: input.title,
@@ -174,7 +176,7 @@ export async function createTaskHandler(
     }
     if (input.implementationNotes !== undefined) {
       itemData.implementationNotes = input.implementationNotes.map(note => ({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         content: note.content,
         type: note.type,
         createdAt: new Date(),
@@ -215,7 +217,7 @@ export async function createTaskHandler(
       },
     };
 
-    logger.info('Task created successfully', {
+    LOGGER.info('Task created successfully', {
       requestId: req.id,
       listId: input.listId,
       taskId: task.id,
@@ -247,7 +249,7 @@ export async function searchTasksHandler(
     // Validate query parameters
     const query = searchTasksQuerySchema.parse(req.query);
 
-    logger.info('Searching tasks', {
+    LOGGER.info('Searching tasks', {
       requestId: req.id,
       listId: query.listId,
       status: query.status,
@@ -343,7 +345,7 @@ export async function searchTasksHandler(
       },
     };
 
-    logger.info('Tasks retrieved successfully', {
+    LOGGER.info('Tasks retrieved successfully', {
       requestId: req.id,
       totalTasks: filteredTasks.length,
       returnedTasks: paginatedTasks.length,
@@ -385,7 +387,7 @@ export async function getTaskHandler(
     );
   }
 
-  logger.info('Getting task', {
+  LOGGER.info('Getting task', {
     requestId: req.id,
     taskId,
     listId,
@@ -419,7 +421,7 @@ export async function getTaskHandler(
     },
   };
 
-  logger.info('Task retrieved successfully', {
+  LOGGER.info('Task retrieved successfully', {
     requestId: req.id,
     taskId: task.id,
     duration,
@@ -456,7 +458,7 @@ export async function updateTaskHandler(
     // Validate request body
     const updates = updateTaskSchema.parse(req.body);
 
-    logger.info('Updating task', {
+    LOGGER.info('Updating task', {
       requestId: req.id,
       taskId,
       listId,
@@ -561,7 +563,7 @@ export async function updateTaskHandler(
       },
     };
 
-    logger.info('Task updated successfully', {
+    LOGGER.info('Task updated successfully', {
       requestId: req.id,
       taskId,
       duration,
@@ -602,7 +604,7 @@ export async function deleteTaskHandler(
     );
   }
 
-  logger.info('Deleting task', {
+  LOGGER.info('Deleting task', {
     requestId: req.id,
     taskId,
     listId,
@@ -665,7 +667,7 @@ export async function deleteTaskHandler(
     },
   };
 
-  logger.info('Task deleted successfully', {
+  LOGGER.info('Task deleted successfully', {
     requestId: req.id,
     taskId,
     duration,
@@ -698,7 +700,7 @@ export async function completeTaskHandler(
     );
   }
 
-  logger.info('Completing task', {
+  LOGGER.info('Completing task', {
     requestId: req.id,
     taskId,
     listId,
@@ -802,7 +804,7 @@ export async function completeTaskHandler(
     },
   };
 
-  logger.info('Task completed successfully', {
+  LOGGER.info('Task completed successfully', {
     requestId: req.id,
     taskId,
     duration,

@@ -5,9 +5,9 @@
 
 import { CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 
-import { TaskOrchestrator } from '../../../core/orchestration/interfaces/task-orchestrator';
-import { Priority } from '../../../domain/models/task';
-import { OrchestrationError } from '../../../shared/errors/orchestration-error';
+import { TaskOrchestrator } from '../../../core/orchestration/interfaces/task-orchestrator.js';
+import { Priority } from '../../../domain/models/task.js';
+import { OrchestrationError } from '../../../shared/errors/orchestration-error.js';
 import {
   CreateTaskData,
   UpdateTaskData,

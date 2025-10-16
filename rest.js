@@ -5,32 +5,20 @@
  * Handles REST API server initialization with JSON/YAML configuration using orchestration layer
  */
 
-const { RestServer } = require('./dist/api/rest/rest-server.js');
-const {
-  ConfigurationManager,
-} = require('./dist/infrastructure/config/system-configuration.js');
+import { RestServer } from './dist/api/rest/rest-server.js';
+import { ConfigurationManager } from './dist/infrastructure/config/system-configuration.js';
 
 // Import orchestration services
-const {
-  TaskOrchestratorImpl,
-} = require('./dist/core/orchestration/services/task-orchestrator-impl.js');
-const {
-  ListOrchestratorImpl,
-} = require('./dist/core/orchestration/services/list-orchestrator-impl.js');
-const {
-  DependencyOrchestratorImpl,
-} = require('./dist/core/orchestration/services/dependency-orchestrator-impl.js');
-const {
-  SearchOrchestratorImpl,
-} = require('./dist/core/orchestration/services/search-orchestrator-impl.js');
-const {
-  AgentPromptOrchestratorImpl,
-} = require('./dist/core/orchestration/services/agent-prompt-orchestrator-impl.js');
+import { TaskOrchestratorImpl } from './dist/core/orchestration/services/task-orchestrator-impl.js';
+import { ListOrchestratorImpl } from './dist/core/orchestration/services/list-orchestrator-impl.js';
+import { DependencyOrchestratorImpl } from './dist/core/orchestration/services/dependency-orchestrator-impl.js';
+import { SearchOrchestratorImpl } from './dist/core/orchestration/services/search-orchestrator-impl.js';
+import { AgentPromptOrchestratorImpl } from './dist/core/orchestration/services/agent-prompt-orchestrator-impl.js';
 
 // Import data delegation service
-const {
-  DataDelegationService,
-} = require('./dist/data/delegation/data-delegation-service.js');
+import { DataDelegationService } from './dist/data/delegation/data-delegation-service.js';
+import { DataAccessServiceImpl } from './dist/data/access/data-access-service.js';
+import { StorageFactory } from './dist/infrastructure/storage/storage-factory.js';
 
 async function startRestServer() {
   try {
@@ -46,9 +34,23 @@ async function startRestServer() {
     );
     console.log('Architecture: Orchestration-based with bulk operations');
 
-    // Initialize data delegation service
-    const dataDelegationService = new DataDelegationService(config);
-    await dataDelegationService.initialize();
+    // Initialize storage backend and data access service
+    const storageType =
+      config.dataStore.type === 'filesystem' ? 'file' : config.dataStore.type;
+    const storageBackend = await StorageFactory.createStorage({
+      type: storageType,
+      file:
+        storageType === 'file'
+          ? {
+              dataDirectory: config.dataStore.location,
+              backupRetentionDays: 7,
+              enableCompression: false,
+            }
+          : undefined,
+    });
+
+    const dataAccessService = new DataAccessServiceImpl(storageBackend);
+    const dataDelegationService = new DataDelegationService(dataAccessService);
 
     // Initialize orchestration services
     const taskOrchestrator = new TaskOrchestratorImpl(dataDelegationService);
@@ -97,14 +99,14 @@ async function startRestServer() {
     process.on('SIGINT', async () => {
       console.log('Shutting down REST API Server...');
       await server.stop();
-      await dataDelegationService.cleanup();
+      // No cleanup needed for delegation service
       process.exit(0);
     });
 
     process.on('SIGTERM', async () => {
       console.log('Shutting down REST API Server...');
       await server.stop();
-      await dataDelegationService.cleanup();
+      // No cleanup needed for delegation service
       process.exit(0);
     });
   } catch (error) {
@@ -115,8 +117,8 @@ async function startRestServer() {
 }
 
 // Start the server if this file is run directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   startRestServer();
 }
 
-module.exports = { startRestServer };
+export { startRestServer };

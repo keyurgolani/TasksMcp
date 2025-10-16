@@ -63,7 +63,7 @@ Comprehensive type definitions for queries:
 
 **Files:**
 
-- `README.md`: Comprehensive guide to repository interfaces
+- `readme.md`: Comprehensive guide to repository interfaces
 - `IMPLEMENTATION_NOTES.md`: This file
 
 **Documentation includes:**
@@ -238,7 +238,7 @@ npm run test:run
 1. `src/domain/repositories/task-list.repository.ts` (280 lines)
 2. `src/domain/repositories/task.repository.ts` (240 lines)
 3. `src/domain/repositories/index.ts` (30 lines)
-4. `src/domain/repositories/README.md` (450 lines)
+4. `src/domain/repositories/readme.md` (450 lines)
 5. `src/domain/repositories/IMPLEMENTATION_NOTES.md` (this file)
 
 **Total:** 5 files, ~1000 lines of code and documentation

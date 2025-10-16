@@ -142,17 +142,20 @@ Example:
 - **Dependency-Based Ordering**: Tasks are ordered by dependency completion
 - **Pagination**: Handle large result sets efficiently
 
-**Recommendation**: Use `search_tool` instead of the legacy `search_tasks` and `filter_tasks` tools.
+**Recommendation**: Use `search_tool` instead of the legacy search and filter tools.
 
 ### Q: What are bulk operations and when should I use them?
 
-**A:** Bulk operations allow you to perform multiple actions in a single request:
+**A:** Bulk operations have been removed from MCP tools and are only available through the REST API. They allow you to perform multiple actions in a single request:
 
-**Use Cases:**
+**Use Cases (REST API only):**
 
-- **Sprint Setup**: Create multiple tasks at once
-- **Priority Updates**: Adjust priorities for multiple tasks
-- **Status Changes**: Mark multiple tasks as complete
+- **Sprint Setup**: Create multiple tasks at once (via REST API)
+- **Priority Updates**: Adjust priorities for multiple tasks (via REST API)
+- **Status Changes**: Mark multiple tasks as complete (via REST API)
+
+**Note**: For MCP clients, use individual tool calls for each operation.
+
 - **Cleanup**: Remove or archive multiple completed tasks
 
 **Benefits:**
@@ -385,7 +388,7 @@ tar -czf task-manager-backup.tar.gz $DATA_DIRECTORY
 
 **A:** Support resources:
 
-- **[Documentation](../README.md)**: Comprehensive guides and examples
+- **[Documentation](../readme.md)**: Comprehensive guides and examples
 - **[Troubleshooting Guide](../guides/troubleshooting.md)**: Common issues and solutions
 - **[GitHub Issues](https://github.com/keyurgolani/task-list-mcp/issues)**: Bug reports and feature requests
 - **[Discussions](https://github.com/keyurgolani/task-list-mcp/discussions)**: Community Q&A
@@ -410,7 +413,7 @@ tar -czf task-manager-backup.tar.gz $DATA_DIRECTORY
 - **Documentation**: Improve guides and examples
 - **Testing**: Help test new features
 
-See the [Contributing Guide](../../CONTRIBUTING.md) for details.
+See the [Contributing Guide](../../contributing.md) for details.
 
 ---
 

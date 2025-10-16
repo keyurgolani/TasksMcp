@@ -17,7 +17,7 @@ import { ListOrchestrator } from '../../core/orchestration/interfaces/list-orche
 import { SearchOrchestrator } from '../../core/orchestration/interfaces/search-orchestrator.js';
 import { TaskOrchestrator } from '../../core/orchestration/interfaces/task-orchestrator.js';
 import { SystemConfiguration } from '../../infrastructure/config/system-configuration.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { getVersionInfo } from '../../shared/version.js';
 
 import { ConsolidatedMcpHandlers } from './handlers/consolidated-handlers.js';
@@ -32,6 +32,7 @@ import type { TaskList } from '../../shared/types/task.js';
 export class ConsolidatedMcpServer {
   private readonly server: Server;
   private handlers: ConsolidatedMcpHandlers | null = null;
+  private transport: StdioServerTransport | null = null;
 
   constructor(private config: SystemConfiguration) {
     const versionInfo = getVersionInfo();
@@ -169,7 +170,7 @@ export class ConsolidatedMcpServer {
           throw new Error(`Unknown tool: ${toolName}`);
       }
     } catch (error) {
-      logger.error('Tool execution error', {
+      LOGGER.error('Tool execution error', {
         toolName,
         error: error instanceof Error ? error.message : String(error),
         parameters: request.params.arguments,
@@ -196,10 +197,10 @@ export class ConsolidatedMcpServer {
       );
 
       // Use stdio transport for MCP communication
-      const transport = new StdioServerTransport();
-      await this.server.connect(transport);
+      this.transport = new StdioServerTransport();
+      await this.server.connect(this.transport);
 
-      logger.info('Consolidated MCP Server started successfully', {
+      LOGGER.info('Consolidated MCP Server started successfully', {
         toolsCount: ALL_MCP_TOOLS.length,
         domains: [
           'List Management',
@@ -212,7 +213,7 @@ export class ConsolidatedMcpServer {
         transport: 'stdio',
       });
     } catch (error) {
-      logger.error('Failed to start Consolidated MCP Server', { error });
+      LOGGER.error('Failed to start Consolidated MCP Server', { error });
       throw error;
     }
   }
@@ -286,8 +287,19 @@ export class ConsolidatedMcpServer {
             key: filters['id'] as string,
           });
         }
-        // For list operations, we'll need to use the repository directly
-        return await initResult.repository.findAll();
+        // For list operations, use the orchestration layer
+        const { ListOrchestratorImpl } = await import(
+          '../../core/orchestration/services/list-orchestrator-impl.js'
+        );
+        const { ListValidator } = await import(
+          '../../core/orchestration/validators/list-validator.js'
+        );
+        const listValidator = new ListValidator();
+        const listOrchestrator = new ListOrchestratorImpl(
+          listValidator,
+          dataDelegationService
+        );
+        return await listOrchestrator.getAllLists();
       },
       async update(_entity: string, data: unknown): Promise<unknown> {
         const entityData = data as { id: string };
@@ -313,8 +325,14 @@ export class ConsolidatedMcpServer {
         _entity: string,
         criteria?: Record<string, unknown>
       ): Promise<unknown> {
-        // For search operations, we'll use the repository
-        return await initResult.repository.findAll(criteria);
+        // For search operations, use the orchestration layer
+        const { SearchOrchestratorImpl } = await import(
+          '../../core/orchestration/services/search-orchestrator-impl.js'
+        );
+        const searchOrchestrator = new SearchOrchestratorImpl(
+          dataDelegationService
+        );
+        return await searchOrchestrator.searchLists(criteria || {});
       },
     };
 
@@ -404,21 +422,33 @@ export class ConsolidatedMcpServer {
       // Health check implementation
       return true;
     } catch (error) {
-      logger.error('Server health check failed', { error });
+      LOGGER.error('Server health check failed', { error });
       return false;
     }
   }
 
   /**
-   * Closes the server and cleans up resources
+   * Stops the server and cleans up resources
    */
-  async close(): Promise<void> {
+  async stop(): Promise<void> {
     try {
+      if (this.transport && typeof this.transport.close === 'function') {
+        await this.transport.close();
+        this.transport = null;
+      }
       this.handlers = null;
-      logger.info('Consolidated MCP Server closed successfully');
+      LOGGER.info('Consolidated MCP Server stopped successfully');
     } catch (error) {
-      logger.error('Error during server shutdown', { error });
+      LOGGER.error('Error during server shutdown', { error });
       throw error;
     }
+  }
+
+  /**
+   * Closes the server and cleans up resources
+   * @deprecated Use stop() instead
+   */
+  async close(): Promise<void> {
+    return this.stop();
   }
 }

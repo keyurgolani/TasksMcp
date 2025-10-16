@@ -5,14 +5,14 @@
 import { z } from 'zod';
 
 import {
-  DetailedErrors,
+  DETAILED_ERRORS,
   createOrchestrationError,
 } from '../../shared/utils/error-formatter.js';
 import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -33,7 +33,7 @@ export async function handleAddTaskTags(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing add_task_tags request', {
+    LOGGER.debug('Processing add_task_tags request', {
       params: request.params?.arguments,
     });
 
@@ -43,14 +43,14 @@ export async function handleAddTaskTags(
     });
 
     if (!currentList) {
-      throw DetailedErrors.notFound('Task list', 'Add Task Tags', args.listId);
+      throw DETAILED_ERRORS.notFound('Task list', 'Add Task Tags', args.listId);
     }
 
     const currentTask = currentList.items.find(
       (item: Task) => item.id === args.taskId
     );
     if (!currentTask) {
-      throw DetailedErrors.notFound('Task', 'Add Task Tags', args.taskId);
+      throw DETAILED_ERRORS.notFound('Task', 'Add Task Tags', args.taskId);
     }
 
     const existingTags = currentTask.tags || [];
@@ -83,7 +83,7 @@ export async function handleAddTaskTags(
 
     const addedTags = args.tags.filter(tag => updatedTask.tags.includes(tag));
     if (addedTags.length !== args.tags.length) {
-      logger.warn('Not all tags were successfully added', {
+      LOGGER.warn('Not all tags were successfully added', {
         requestedTags: args.tags,
         addedTags,
         finalTags: updatedTask.tags,
@@ -102,7 +102,7 @@ export async function handleAddTaskTags(
       estimatedDuration: updatedTask.estimatedDuration,
     };
 
-    logger.info('Task tags added successfully', {
+    LOGGER.info('Task tags added successfully', {
       listId: args.listId,
       taskId: args.taskId,
       title: updatedTask.title,

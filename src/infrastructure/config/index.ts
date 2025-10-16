@@ -9,13 +9,13 @@ export * from './data-source-config.js';
 export * from './data-source-loader.js';
 export * from './file-config-loader.js';
 export * from './system-configuration.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import {
   StorageFactory,
   type StorageConfiguration,
 } from '../storage/storage-factory.js';
 
-import { baseConfig } from './base.js';
+import { BASE_CONFIG } from './base.js';
 
 // Custom boolean parser for environment variables
 const booleanFromString = z
@@ -192,8 +192,8 @@ export class ConfigManager {
       environment: env,
       storage: storageConfig,
       server: {
-        name: baseConfig.server.name,
-        version: baseConfig.server.version,
+        name: BASE_CONFIG.server.name,
+        version: BASE_CONFIG.server.version,
         nodeEnv: env.NODE_ENV,
       },
       features: {
@@ -239,7 +239,7 @@ export class ConfigManager {
     // Only log configuration in non-MCP mode to avoid interfering with stdio protocol
     const isMcpMode = this.isMcpMode();
     if (!isMcpMode) {
-      logger.info('Configuration loaded successfully', {
+      LOGGER.info('Configuration loaded successfully', {
         nodeEnv: config.server.nodeEnv,
         storageType: config.storage.type,
         dataDirectory: this.getDataDirectory(config.storage),

@@ -1,10 +1,10 @@
-# MCP Task Manager
+# Task MCP Unified
 
-A Model Context Protocol (MCP) server that provides task management capabilities for AI agents. Features task breakdown, persistent state management, and **agent-friendly parameter preprocessing** for seamless AI integration.
+A comprehensive Model Context Protocol (MCP) server that provides enterprise-grade task management capabilities for AI agents. Built with domain-driven architecture, featuring task orchestration, dependency management, and **multi-interface support** (MCP, REST API) for seamless AI integration.
 
 ## 🤖 Agent-Friendly Features
 
-The MCP Task Manager is specifically designed to work seamlessly with AI agents like Claude Desktop and Kiro IDE, including **multi-agent orchestration environments** where multiple AI agents work together on complex projects.
+The Task MCP Unified system is specifically designed to work seamlessly with AI agents like Claude Desktop and Kiro IDE, featuring a **domain-driven architecture** with comprehensive orchestration layers for enterprise-grade task management and **multi-agent coordination environments** where multiple AI agents work together on complex projects.
 
 ### 📚 Essential for AI Agents
 
@@ -34,11 +34,11 @@ Key agent-friendly improvements include:
 
 ### 🤝 Multi-Agent Orchestration Support
 
-- **Task Dependencies**: Set up complex task relationships with prerequisite management
-- **Ready Task Discovery**: Find tasks that are unblocked and ready for parallel execution
-- **Agent Assignment**: Orchestration agents can identify and assign ready tasks to specialized agents
-- **Parallel Execution**: Multiple agents can work on independent tasks simultaneously
-- **Progress Tracking**: Monitor completion status across distributed agent workflows
+- **Task Dependencies**: Set up complex task relationships with prerequisite management and circular dependency detection
+- **Ready Task Discovery**: Find tasks that are unblocked and ready for parallel execution using dependency-based ordering
+- **Agent Prompt Templates**: Customize AI agent prompts with variable substitution for different task types
+- **Parallel Execution**: Multiple agents can work on independent tasks simultaneously through orchestration layer
+- **Progress Tracking**: Monitor completion status across distributed agent workflows with exit criteria system
 
 ### 🔧 Common Agent Patterns Supported
 
@@ -79,18 +79,30 @@ Error: Expected number, received string at priority
 
 ## 🚀 Quick Start
 
-### Method 1: Install via npx (Recommended)
+### Method 1: MCP Server (Recommended)
 
-The easiest way to get started - no local installation required:
+Start the MCP server using the dedicated CLI:
 
 ```bash
-# Test the installation
-npx task-list-mcp@latest --version
+# Start MCP server with environment configuration
+node mcp.js
 
-# The server is now ready to use in your MCP client configuration
+# Or with custom configuration
+NODE_ENV=production DATA_DIRECTORY=/path/to/data node mcp.js
 ```
 
-### Method 2: Local Development Installation
+### Method 2: REST API Server
+
+Start the REST API server for programmatic access:
+
+```bash
+# Start REST API server with JSON/YAML configuration
+node rest.js
+
+# Server will be available at http://localhost:3000 by default
+```
+
+### Method 3: Local Development Installation
 
 For development or customization:
 
@@ -103,20 +115,16 @@ npm install
 # Build the project
 npm run build
 
-# Test that everything works
-npx task-list-mcp@latest --version
+# Start MCP server
+node mcp.js
+
+# Or start REST API server
+node rest.js
 ```
 
-## ⚡ Automatic MCP Client Setup
+## ⚡ MCP Client Configuration
 
-Use our setup script to automatically configure your MCP clients:
-
-```bash
-# Install the package
-npx task-list-mcp@latest
-```
-
-This will automatically update your Claude Desktop or Kiro IDE configuration files.
+Configure your MCP clients to connect to the Task MCP Unified server:
 
 ## 🔧 Manual MCP Client Configuration
 
@@ -133,9 +141,9 @@ Add to your Claude Desktop `mcp.json` configuration file:
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "info",
@@ -166,13 +174,13 @@ Add to your workspace `.kiro/settings/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "info",
-        "DATA_DIRECTORY": "/tmp/task-list-mcp-data"
+        "DATA_DIRECTORY": "/tmp/task-mcp-unified-data"
       },
       "disabled": false,
       "autoApprove": [
@@ -182,14 +190,19 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "delete_list",
         "add_task",
         "update_task",
+        "get_agent_prompt",
         "remove_task",
         "complete_task",
         "set_task_priority",
         "add_task_tags",
         "remove_task_tags",
-        "search_tasks",
-        "filter_tasks",
-        "show_tasks"
+        "search_tool",
+        "show_tasks",
+        "set_task_dependencies",
+        "get_ready_tasks",
+        "analyze_task_dependencies",
+        "set_task_exit_criteria",
+        "update_exit_criteria"
       ]
     }
   }
@@ -214,19 +227,21 @@ Add to your workspace `.kiro/settings/mcp.json`:
 ### Direct Command Line Usage
 
 ```bash
-# Using npx
-npx task-list-mcp@latest
+# Start MCP server
+node mcp.js
 
-# With options
-npx task-list-mcp@latest --verbose
-npx task-list-mcp@latest --config ./my-config.json
+# Start REST API server
+node rest.js
+
+# With environment variables
+NODE_ENV=production DATA_DIRECTORY=/custom/path node mcp.js
 ```
 
 ## 🔧 Environment Configuration
 
 ### Core Environment Variables
 
-The MCP Task Manager supports several environment variables to customize its behavior:
+The Task MCP Unified system supports several environment variables to customize its behavior:
 
 | Variable         | Required | Default       | Description                                              |
 | ---------------- | -------- | ------------- | -------------------------------------------------------- |
@@ -242,14 +257,13 @@ The MCP Task Manager supports several environment variables to customize its beh
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "development",
         "MCP_LOG_LEVEL": "debug",
-        "DATA_DIRECTORY": "./dev-data",
-        "STORAGE_TYPE": "file"
+        "DATA_DIRECTORY": "./dev-data"
       }
     }
   }
@@ -268,14 +282,13 @@ The MCP Task Manager supports several environment variables to customize its beh
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "warn",
-        "DATA_DIRECTORY": "/var/lib/task-manager",
-        "STORAGE_TYPE": "file"
+        "DATA_DIRECTORY": "/var/lib/task-mcp-unified"
       }
     }
   }
@@ -294,14 +307,13 @@ The MCP Task Manager supports several environment variables to customize its beh
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "test",
         "MCP_LOG_LEVEL": "error",
-        "DATA_DIRECTORY": "/tmp/test-data",
-        "STORAGE_TYPE": "memory"
+        "DATA_DIRECTORY": "/tmp/task-mcp-unified-tests"
       }
     }
   }
@@ -350,6 +362,8 @@ Selects the storage backend:
 - **`file`**: Persistent file-based storage with atomic operations (default)
 - **`memory`**: In-memory storage for testing and development (data lost on restart)
 
+Note: Storage type is configured through the system configuration management domain.
+
 ### Configuration Troubleshooting
 
 #### Common Configuration Issues
@@ -357,11 +371,11 @@ Selects the storage backend:
 **Server Won't Start**
 
 ```bash
-# Check if the command is accessible
-npx task-list-mcp@latest --version
+# Check if the server starts
+node mcp.js
 
 # Test with minimal configuration
-NODE_ENV=development npx task-list-mcp@latest
+NODE_ENV=development node mcp.js
 ```
 
 **Permission Errors**
@@ -382,7 +396,7 @@ chmod 755 ~/.local/share/task-manager
 3. Check client logs for environment variable parsing errors
 4. Test environment variables directly:
    ```bash
-   NODE_ENV=production MCP_LOG_LEVEL=debug npx task-list-mcp@latest --version
+   NODE_ENV=production MCP_LOG_LEVEL=debug node mcp.js
    ```
 
 **Data Directory Issues**
@@ -411,14 +425,14 @@ ls -la /path/to/data/directory
 
    ```bash
    # Test server starts with your configuration
-   npx task-list-mcp@latest --version
+   node mcp.js
    ```
 
 3. **Check Environment Variables**
 
    ```bash
    # Test with explicit environment variables
-   NODE_ENV=production MCP_LOG_LEVEL=info npx task-list-mcp@latest --help
+   NODE_ENV=production MCP_LOG_LEVEL=info node mcp.js
    ```
 
 4. **Validate Data Directory**
@@ -435,41 +449,54 @@ ls -la /path/to/data/directory
 
 ## 🛠️ Available MCP Tools
 
-The MCP Task Manager provides **18 focused MCP tools** organized into 5 categories for intelligent task management and multi-agent orchestration:
+The Task MCP Unified system provides **17 focused MCP tools** organized into 5 categories for intelligent task management and multi-agent orchestration:
 
 ### List Management (4 tools)
 
 1. **`create_list`** - Create new task lists with simple parameters
 2. **`get_list`** - Retrieve a specific task list by ID with optional filtering
 3. **`list_all_lists`** - Get all task lists with basic information and filtering
-4. **`delete_list`** - Delete or archive a task list (reversible by default)
+4. **`delete_list`** - Delete a task list permanently
 
-### Task Management (6 tools)
+### Task Management (7 tools)
 
-5. **`add_task`** - Add new tasks with priority, tags, and time estimates
-6. **`update_task`** - Update task properties (title, description, duration)
-7. **`remove_task`** - Remove tasks from lists
-8. **`complete_task`** - Mark tasks as completed with automatic progress tracking
-9. **`set_task_priority`** - Change task priority levels (1-5 scale)
-10. **`add_task_tags`** - Add organizational tags to tasks
-11. **`remove_task_tags`** - Remove organizational tags from tasks
+5. **`add_task`** - Add new tasks with priority, tags, dependencies, exit criteria, and agent prompt templates
+6. **`update_task`** - Update task properties (title, description, duration, exit criteria, agent prompts)
+7. **`get_agent_prompt`** - Get rendered agent prompt with variable substitution for multi-agent environments
+8. **`remove_task`** - Remove tasks from lists
+9. **`complete_task`** - Mark tasks as completed with automatic progress tracking
+10. **`set_task_priority`** - Change task priority levels (1-5 scale)
+11. **`add_task_tags`** - Add organizational tags to tasks
+12. **`remove_task_tags`** - Remove organizational tags from tasks
     - **Automatic Blocking Detection**: Tasks automatically show why they're blocked by dependencies
 
-### Search & Display (3 tools)
+### Search & Display (2 tools)
 
-11. **`search_tasks`** - Search tasks by text across titles and descriptions
-12. **`filter_tasks`** - Filter tasks by status, priority, tags, and other criteria
-13. **`show_tasks`** - Display formatted task lists with grouping and styling options
+13. **`search_tool`** - Unified search and filtering with comprehensive criteria support
+14. **`show_tasks`** - Display formatted task lists with grouping and styling options
 
-### Advanced Features - Removed
+### Dependency Management (3 tools)
 
-Intelligence features have been removed from the system.
+15. **`set_task_dependencies`** - Set task prerequisites and relationships for workflow management
+16. **`get_ready_tasks`** - Find tasks ready for execution (no incomplete dependencies)
+17. **`analyze_task_dependencies`** - Analyze project structure, critical paths, and bottlenecks with **DAG visualization**
 
-### Multi-Agent Orchestration (3 tools)
+### Exit Criteria Management (2 tools)
 
-16. **`set_task_dependencies`** - Set task prerequisites and relationships for workflow management
-17. **`get_ready_tasks`** - Find tasks ready for execution (no incomplete dependencies)
-18. **`analyze_task_dependencies`** - Analyze project structure, critical paths, and bottlenecks with **DAG visualization**
+18. **`set_task_exit_criteria`** - Define specific completion requirements for quality control
+19. **`update_exit_criteria`** - Track progress on individual exit criteria throughout task execution
+
+### Removed Features
+
+The following features have been completely removed from the system as part of the architectural cleanup:
+
+- **Intelligence Tools**: Task suggestion features, task complexity evaluation features, and AI-powered recommendations have been removed
+- **Monitoring Systems**: Performance monitoring, alerting, and resource usage tracking
+- **Statistics Management**: Task statistics calculation and reporting
+- **Caching Systems**: All caching implementations have been removed
+- **Bulk Operations in MCP**: Bulk operations are only available through the REST API
+- **Task Ordering**: Tasks are now ordered by dependencies only, not manual ordering
+- **Archiving**: Only permanent deletion is supported
 
 ### Quick Examples
 
@@ -530,7 +557,7 @@ For complete documentation:
 - **[Examples](./docs/examples/)** - Usage examples and patterns
 - **[Troubleshooting](./docs/guides/troubleshooting.md)** - Common issues and solutions
 
-**See:** [docs/README.md](./docs/README.md) - Complete Documentation Index
+**See:** [docs/readme.md](./docs/readme.md) - Complete Documentation Index
 
 ## 🤖 Multi-Agent Orchestration
 
@@ -616,30 +643,34 @@ This makes the MCP Task Manager ideal for:
 
 ## 🧪 Testing Your Installation
 
-### Quick Version Check
+### Quick Health Check
 
 ```bash
-# Test npx installation
-npx task-list-mcp@latest --version
+# Test MCP server startup
+node mcp.js
 
-# Expected output:
-# MCP Task Manager v1.0.0
-# Node.js v18.x.x
-# Platform: darwin arm64
+# Test REST API server startup
+node rest.js
+
+# Run health check
+npm run health
 ```
 
 ### Test MCP Protocol
 
 ```bash
-# Start the server and test basic functionality
-npx task-list-mcp@latest --help
+# Start the MCP server and test basic functionality
+node mcp.js
+
+# In another terminal, test the REST API
+curl http://localhost:3000/health
 ```
 
 ### Verify MCP Client Connection
 
 After configuring your MCP client:
 
-1. **Claude Desktop**: Restart Claude Desktop and look for the task-manager server in the available tools
+1. **Claude Desktop**: Restart Claude Desktop and look for the task-mcp-unified server in the available tools
 2. **Kiro IDE**: Check the MCP Server view in the Kiro feature panel
 3. **Custom client**: Send a `tools/list` request to verify the server responds
 
@@ -647,10 +678,13 @@ After configuring your MCP client:
 
 ```bash
 # Run health check
-node dist/health-check.js
+npm run health
 
-# Run integration tests
-npm test -- --testPathPattern=integration
+# Run all tests
+npm run test:run
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ## 📋 Usage Examples
@@ -701,63 +735,70 @@ npm start
 
 ```
 src/
-├── handlers/         # MCP tool implementations (15 tools)
-├── managers/         # Business logic and system managers
-├── core/            # Core functionality and utilities
-├── storage/         # Data persistence backends (file/memory)
+├── api/                    # Interface layer (MCP, REST)
+│   ├── handlers/          # MCP tool implementations (17 tools)
+│   ├── mcp/              # MCP server and tools
+│   ├── rest/             # REST API server and routes
+│   └── tools/            # Tool definitions and schemas
+├── core/                  # Core orchestration layer
+│   └── orchestration/    # Business logic orchestrators
+├── domain/               # Domain models and business logic
+│   ├── models/          # Task and TaskList models
+│   ├── tasks/           # Task-specific domain logic
+│   └── repositories/    # Repository interfaces
+├── data/                 # Data layer
+│   ├── access/          # Data access implementations
+│   └── delegation/      # Data delegation service
+├── infrastructure/       # Infrastructure concerns
+│   ├── config/          # Configuration management
+│   └── storage/         # Storage backends
+├── shared/              # Shared utilities and types
+│   ├── types/           # TypeScript interfaces
+│   ├── utils/           # Utility functions
+│   └── errors/          # Error handling
+└── app/                 # Application entry points
+    ├── cli.ts           # Main CLI interface
+    ├── health-check.ts  # Health check utilities
+    └── server.ts        # Server initialization
 
-├── monitoring/      # Performance and health monitoring
-├── types/           # TypeScript interfaces and schemas
-├── utils/           # Pure utility functions
-├── config/          # Configuration management
-├── cli.ts           # Command-line interface
-└── index.ts         # Main server entry point
-
-examples/
-├── 01-list-management-examples.md    # List management examples
-├── 02-task-management-examples.md    # Task management examples
-├── 03-search-display-examples.md     # Search and display examples
-├── 04-advanced-features-examples.md  # AI-powered features
-├── 05-configuration-examples.md      # Configuration examples
-└── README.md                         # Examples overview
+mcp.js                   # MCP server CLI
+rest.js                  # REST API server CLI
 
 docs/
-├── api/             # Complete API documentation
-├── configuration/   # Setup and configuration guides
-├── examples/        # Usage examples and patterns
-├── reference/       # Reference materials
-├── tutorials/       # Step-by-step tutorials
-├── mcp-tools.md     # Complete MCP tools reference
-├── mcp-tool-usage.md # Practical usage guide
-└── README.md        # Documentation overview
+├── api/                 # API documentation
+├── guides/              # User guides
+├── examples/            # Usage examples
+└── reference/           # Reference materials
 ```
 
 ## Quality Standards
 
-This project follows production-ready standards:
+This project follows enterprise-grade standards:
 
-- **Zero TypeScript errors**: Strict mode enabled with comprehensive checks
-- **MCP Protocol Compliance**: All tools follow MCP specification
-- **Production Ready**: Optimized for performance and reliability
+- **Zero TypeScript errors**: Strict mode enabled with comprehensive checks and no `any` types
+- **Domain-Driven Architecture**: Clean separation of concerns with orchestration layers
+- **MCP Protocol Compliance**: All tools follow MCP specification with enhanced error handling
+- **Comprehensive Testing**: 95% line coverage, 90% branch coverage requirements
+- **Production Ready**: Optimized for performance and reliability with proper error handling
 
 ## 🚨 Troubleshooting
 
 ### Installation Issues
 
-#### npx Installation Problems
+#### Node.js and Dependencies
 
 ```bash
-# Check npm version (npm 7.0.0+ recommended)
-npm --version
+# Check Node.js version (18.0.0+ required)
+node --version
 
-# Clear npm cache
-npm cache clean --force
+# Install dependencies
+npm install
 
-# Try with explicit version
-npx task-list-mcp@latest --version
+# Build the project
+npm run build
 
-# If still failing, check Node.js version
-node --version  # Must be 18.0.0+
+# Test the build
+node mcp.js
 ```
 
 ### Server Issues
@@ -765,83 +806,96 @@ node --version  # Must be 18.0.0+
 #### Server Won't Start
 
 ```bash
-# Test the server directly
-npx task-list-mcp@latest --version
+# Test the MCP server directly
+node mcp.js
+
+# Test the REST API server
+node rest.js
 
 # Check with verbose logging
-npx task-list-mcp@latest --verbose
+MCP_LOG_LEVEL=debug node mcp.js
 
 # For local development
-npm run build && node dist/cli.js --version
+npm run build && node mcp.js
 ```
 
 #### MCP Client Can't Connect
 
 1. **Check configuration syntax**: Ensure JSON is valid
-2. **Verify command paths**: `npx` must be in PATH
-3. **Test server manually**: Run the command from terminal first
+2. **Verify command paths**: `node` must be in PATH and path to mcp.js must be correct
+3. **Test server manually**: Run `node mcp.js` from terminal first
 4. **Check client logs**: Look for connection errors in MCP client
 5. **Restart client**: Restart Claude Desktop or Kiro after config changes
 
 #### Permission Errors
 
 ```bash
-# For npx (may need to fix npm permissions)
-npm config get prefix
-npm config set prefix ~/.npm-global
-
 # For local development
-chmod +x dist/cli.js
+chmod +x mcp.js
+chmod +x rest.js
+
+# Check data directory permissions
+mkdir -p /path/to/data/directory
+chmod 755 /path/to/data/directory
 ```
 
 ### Configuration Issues
 
-#### Automatic Setup Fails
+#### Configuration Issues
 
 ```bash
 # Check if config directories exist
 ls -la ~/Library/Application\ Support/Claude/  # macOS
 ls -la ~/.kiro/settings/                       # Kiro workspace
 
-# Copy example configs manually
-cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
+# Create directories if missing
+mkdir -p ~/Library/Application\ Support/Claude/
+mkdir -p ~/.kiro/settings/
 ```
 
 #### Server Not Found in MCP Client
 
 1. **Restart the MCP client** after configuration changes
-2. **Check server name** matches configuration (should be "task-manager")
-3. **Verify command accessibility**: Run `npx task-list-mcp@latest --version` in terminal
+2. **Check server name** matches configuration (should be "task-mcp-unified")
+3. **Verify command accessibility**: Run `node mcp.js` in terminal
 4. **Check environment variables** in the configuration
+5. **Verify file paths**: Ensure the path to mcp.js is correct in the configuration
 
 ### Getting Help
 
-1. **Test installation**: `npx task-list-mcp@latest --version`
-2. **Check verbose logs**: Add `--verbose` flag to see detailed output
-3. **Validate configuration**: Use the setup script to regenerate configs
+1. **Test installation**: `node mcp.js` and `node rest.js`
+2. **Check verbose logs**: Set `MCP_LOG_LEVEL=debug` to see detailed output
+3. **Validate configuration**: Check JSON syntax and file paths
 4. **Check prerequisites**: Ensure Node.js 18+ and npm are installed
 5. **Review client logs**: Check your MCP client's log files for connection errors
+6. **Run health check**: `npm run health` to verify system status
 
 ### Common Error Messages
 
-- **"command not found: npx"** → Install Node.js and npm
-- **"EACCES: permission denied"** → Fix npm permissions or use sudo
-- **"Module not found"** → Clear cache and reinstall: `npm cache clean --force`
-- **"Connection refused"** → Check if server starts manually before configuring client
+- **"command not found: node"** → Install Node.js 18+
+- **"EACCES: permission denied"** → Fix file permissions with `chmod +x`
+- **"Module not found"** → Run `npm install` and `npm run build`
+- **"Connection refused"** → Check if server starts manually with `node mcp.js`
+- **"Cannot find module"** → Ensure project is built with `npm run build`
 
 ## 📊 Performance & Limitations
 
 ### Current Implementation Status
 
+- **Domain-driven architecture**: Clean separation with orchestration layers
 - **File-based storage**: Persistent storage with atomic operations and backup capabilities
 - **Memory storage option**: Available for development and testing
-- **Complete CRUD operations**: Full create, read, update, delete functionality
+- **Complete CRUD operations**: Full create, read, update, delete functionality through orchestration
+- **Multi-interface support**: Both MCP and REST API servers
+- **Agent prompt templates**: Variable substitution for multi-agent environments
+- **Dependency management**: Circular dependency detection and ready task identification
 - **No authentication**: Open access (suitable for development only)
 
 ### Performance Characteristics
 
 - **Response time**: ~5ms for create operations, ~2ms for read operations
-- **Complex operations**: ~10-50ms for AI analysis and bulk operations
+- **Template rendering**: <10ms for simple templates, <50ms for complex templates
+- **Dependency analysis**: O(n) circular dependency detection
 - **Concurrent operations**: Supports 100+ simultaneous requests
 - **Memory usage**: Stable under load, ~145MB typical usage
 - **Data volume**: Supports 1000+ items per task list, unlimited lists
@@ -850,22 +904,23 @@ cp examples/mcp-config-npx.json ~/.config/claude/mcp.json
 
 ## 🛣️ Roadmap
 
-### Current Status (v1.0.0) ✅
+### Current Status (v2.5.0) ✅
 
-- **Complete**: 15 focused MCP tools for comprehensive task management
-
+- **Complete**: 17 focused MCP tools for comprehensive task management
+- **Complete**: Domain-driven architecture with orchestration layers
+- **Complete**: Agent prompt template system with variable substitution
+- **Complete**: Circular dependency detection and management
 - **Complete**: File-based storage with atomic operations and backup
 - **Complete**: Comprehensive error handling and recovery systems
-- **Complete**: Performance monitoring and health checking
-- **Complete**: Production-ready CLI interface and configuration
+- **Complete**: Multi-interface support (MCP and REST API servers)
+- **Complete**: Production-ready CLI interfaces and configuration
 
-### Phase 2: Enhanced Intelligence - Removed
+### Phase 2: Enhanced Features (Future)
 
-Intelligence features have been removed from the system.
-
-- Improved complexity scoring algorithms with machine learning
-- Better task generation with context awareness
-- Predictive task completion estimates
+- React UI domain with Storybook design system
+- Advanced search indexing and performance optimization
+- Enhanced agent prompt template features
+- Additional REST API endpoints for bulk operations
 
 ### Phase 3: Production Features (Future)
 
@@ -891,14 +946,16 @@ Intelligence features have been removed from the system.
 
 ### Implementation Status
 
-- ✅ **15 MCP Tools**: Complete tool set organized in 4 categories
+- ✅ **17 MCP Tools**: Complete tool set organized in 5 categories
+- ✅ **Domain-Driven Architecture**: Clean separation with orchestration layers
 - ✅ **MCP Protocol**: Fully compliant with MCP SDK 1.0.0+
-- ✅ **CLI Interface**: Complete command-line interface with help and version
+- ✅ **Multi-Interface Support**: Both MCP and REST API servers
+- ✅ **Agent Prompt Templates**: Variable substitution for multi-agent environments
+- ✅ **Dependency Management**: Circular dependency detection and ready task identification
+- ✅ **CLI Interfaces**: Separate MCP and REST server CLIs
 - ✅ **Storage Systems**: File and memory storage with atomic operations
-
 - ✅ **Error Handling**: Comprehensive error handling with recovery mechanisms
-- ✅ **Monitoring**: Performance monitoring, health checks, and metrics
-- ✅ **TypeScript**: Strict TypeScript with zero `any` types
+- ✅ **TypeScript**: Strict TypeScript with zero `any` types and comprehensive testing
 - ✅ **Production Ready**: Optimized for performance and reliability
 - ✅ **Documentation**: Complete API documentation and examples
 

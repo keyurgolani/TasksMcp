@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { errorHandler } from '../../../../src/shared/errors/error-handler.js';
+import { ERROR_HANDLER } from '../../../../src/shared/errors/error-handler.js';
 import {
   ActionPlanParseError,
   ProjectManagementError,
@@ -18,16 +18,16 @@ import { validator } from '../../../../src/shared/utils/validation.js';
 describe('Error Handler', () => {
   beforeEach(() => {
     // Clear any existing error reports
-    errorHandler['errorReports'] = [];
-    errorHandler['alerts'] = [];
-    errorHandler['circuitBreakers'].clear();
+    ERROR_HANDLER['errorReports'] = [];
+    ERROR_HANDLER['alerts'] = [];
+    ERROR_HANDLER['circuitBreakers'].clear();
   });
 
   afterEach(() => {
     // Clean up after each test
-    errorHandler['errorReports'] = [];
-    errorHandler['alerts'] = [];
-    errorHandler['circuitBreakers'].clear();
+    ERROR_HANDLER['errorReports'] = [];
+    ERROR_HANDLER['alerts'] = [];
+    ERROR_HANDLER['circuitBreakers'].clear();
   });
 
   describe('Error Handling', () => {
@@ -38,7 +38,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report).toBeDefined();
       expect(report.error).toBe(error);
@@ -57,7 +57,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report.category).toBe('action_plan');
       expect(report.recoverable).toBe(true);
@@ -73,7 +73,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report.category).toBe('project_management');
       expect(report.recoverable).toBe(true);
@@ -86,7 +86,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report.category).toBe('notes');
       expect(report.recoverable).toBe(true);
@@ -102,7 +102,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report.category).toBe('formatting');
       expect(report.recoverable).toBe(true);
@@ -118,7 +118,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report.category).toBe('cleanup');
       expect(report.recoverable).toBe(true);
@@ -131,7 +131,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const report = errorHandler.handleError(error, context);
+      const report = ERROR_HANDLER.handleError(error, context);
 
       expect(report.category).toBe('migration');
       expect(report.recoverable).toBe(true);
@@ -154,7 +154,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const result = await errorHandler.executeWithRetry(operation, context, {
+      const result = await ERROR_HANDLER.executeWithRetry(operation, context, {
         maxAttempts: 3,
         baseDelay: 10,
       });
@@ -174,7 +174,7 @@ describe('Error Handler', () => {
       };
 
       await expect(
-        errorHandler.executeWithRetry(operation, context, {
+        ERROR_HANDLER.executeWithRetry(operation, context, {
           maxAttempts: 2,
           baseDelay: 10,
         })
@@ -197,7 +197,7 @@ describe('Error Handler', () => {
       // Trigger failures to open circuit
       for (let i = 0; i < 5; i++) {
         try {
-          await errorHandler.executeWithRetry(operation, context, {
+          await ERROR_HANDLER.executeWithRetry(operation, context, {
             maxAttempts: 1,
           });
         } catch {
@@ -206,7 +206,7 @@ describe('Error Handler', () => {
       }
 
       // Circuit should be open now
-      const states = errorHandler.getCircuitBreakerStates();
+      const states = ERROR_HANDLER.getCircuitBreakerStates();
       const circuitState = states.find(s => s.name === 'circuit_test');
 
       expect(circuitState?.state).toBe('open');
@@ -220,7 +220,7 @@ describe('Error Handler', () => {
       };
 
       // Manually create circuit breaker state
-      errorHandler['circuitBreakers'].set('reset_test', {
+      ERROR_HANDLER['circuitBreakers'].set('reset_test', {
         name: 'reset_test',
         state: 'open',
         failureCount: 5,
@@ -229,9 +229,9 @@ describe('Error Handler', () => {
         successCount: 0,
       });
 
-      errorHandler.resetCircuitBreaker('reset_test');
+      ERROR_HANDLER.resetCircuitBreaker('reset_test');
 
-      const states = errorHandler.getCircuitBreakerStates();
+      const states = ERROR_HANDLER.getCircuitBreakerStates();
       const circuitState = states.find(s => s.name === 'reset_test');
 
       expect(circuitState?.state).toBe('closed');
@@ -249,7 +249,9 @@ describe('Error Handler', () => {
       };
 
       await expect(
-        errorHandler.executeWithTimeout(slowOperation, context, { timeout: 50 })
+        ERROR_HANDLER.executeWithTimeout(slowOperation, context, {
+          timeout: 50,
+        })
       ).rejects.toThrow('Operation timed out after 50ms');
     });
 
@@ -260,7 +262,7 @@ describe('Error Handler', () => {
         timestamp: Date.now(),
       };
 
-      const result = await errorHandler.executeWithTimeout(
+      const result = await ERROR_HANDLER.executeWithTimeout(
         fastOperation,
         context,
         { timeout: 1000 }
@@ -314,7 +316,7 @@ describe('Enhanced Validation', () => {
 
       const errors = [actionPlanError, projectError, notesError];
       const reports = errors.map((error, index) =>
-        errorHandler.handleError(error, {
+        ERROR_HANDLER.handleError(error, {
           operation: `complex_scenario_${index}`,
           timestamp: Date.now(),
         })

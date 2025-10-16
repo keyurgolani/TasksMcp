@@ -10,7 +10,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -29,7 +29,7 @@ export async function handleGetReadyTasks(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing get_ready_tasks request', {
+    LOGGER.debug('Processing get_ready_tasks request', {
       params: request.params?.arguments,
     });
 
@@ -114,7 +114,7 @@ export async function handleGetReadyTasks(
     // Clean up dependency resolver
     dependencyResolver.cleanup();
 
-    logger.info('Ready tasks retrieved successfully', {
+    LOGGER.info('Ready tasks retrieved successfully', {
       listId: args.listId,
       totalReady: readyTasks.length,
       returned: sortedReadyTasks.length,

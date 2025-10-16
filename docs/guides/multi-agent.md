@@ -589,7 +589,7 @@ class SpecializedAgent:
 
 ```json
 {
-  "name": "filter_tasks",
+  "name": "search_tool",
   "arguments": {
     "listId": "project-id",
     "status": "in_progress"
@@ -602,7 +602,7 @@ class SpecializedAgent:
 ### Planned Features
 
 - **Agent Load Balancing**: Automatic distribution of tasks based on agent capacity
-- **Predictive Scheduling**: AI-powered prediction of task completion times
+- **Dependency-Based Scheduling**: Task scheduling based on dependency completion
 - **Dynamic Dependency Adjustment**: Automatic optimization of dependency relationships
 - **Cross-Project Coordination**: Support for dependencies across multiple projects
 - **Real-time Collaboration**: Live updates and coordination between agents

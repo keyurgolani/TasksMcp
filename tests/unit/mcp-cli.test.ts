@@ -54,7 +54,7 @@ describe('MCP CLI', () => {
       const content = fs.readFileSync(cliPath, 'utf8');
 
       expect(content).toContain("process.on('SIGINT'");
-      expect(content).toContain('Shutting down MCP Server...');
+      expect(content).toContain('shutting down MCP Server...');
     });
 
     it('should handle SIGTERM gracefully', () => {
@@ -65,7 +65,7 @@ describe('MCP CLI', () => {
       const content = fs.readFileSync(cliPath, 'utf8');
 
       expect(content).toContain("process.on('SIGTERM'");
-      expect(content).toContain('Shutting down MCP Server...');
+      expect(content).toContain('shutting down MCP Server...');
     });
 
     it('should export startMcpServer function', () => {
@@ -75,7 +75,7 @@ describe('MCP CLI', () => {
       const cliPath = path.join(process.cwd(), 'mcp.js');
       const content = fs.readFileSync(cliPath, 'utf8');
 
-      expect(content).toContain('module.exports = { startMcpServer }');
+      expect(content).toContain('export { startMcpServer }');
     });
 
     it('should start server when run directly', () => {
@@ -85,7 +85,9 @@ describe('MCP CLI', () => {
       const cliPath = path.join(process.cwd(), 'mcp.js');
       const content = fs.readFileSync(cliPath, 'utf8');
 
-      expect(content).toContain('if (require.main === module)');
+      expect(content).toContain(
+        'if (import.meta.url === `file://${process.argv[1]}`)'
+      );
       expect(content).toContain('startMcpServer()');
     });
 

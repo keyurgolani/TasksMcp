@@ -3,7 +3,7 @@
  * Tests agent prompt template validation in orchestration layer
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import { AgentPromptValidator } from '../../../../../src/core/orchestration/validators/agent-prompt-validator.js';
 

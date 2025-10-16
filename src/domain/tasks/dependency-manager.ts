@@ -3,9 +3,9 @@
  */
 
 import { TaskStatus, type Task } from '../../shared/types/task.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
-import type { ITaskListRepository } from '../repositories/task-list.repository.js';
+import type { TaskListRepositoryInterface } from '../repositories/task-list.repository.js';
 
 export interface DependencyNode {
   id: string;
@@ -46,12 +46,12 @@ export interface DependencyValidationResult {
 export class DependencyResolver {
   // Repository for future multi-source dependency resolution
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITaskListRepository | undefined;
+  private readonly repository: TaskListRepositoryInterface | undefined;
 
-  constructor(repository?: ITaskListRepository) {
+  constructor(repository?: TaskListRepositoryInterface) {
     this.repository = repository;
 
-    logger.debug('DependencyResolver initialized', {
+    LOGGER.debug('DependencyResolver initialized', {
       hasRepository: !!repository,
     });
   }
@@ -60,7 +60,7 @@ export class DependencyResolver {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITaskListRepository | undefined {
+  getRepository(): TaskListRepositoryInterface | undefined {
     return this.repository;
   }
   /**
@@ -79,7 +79,7 @@ export class DependencyResolver {
     };
 
     try {
-      logger.debug('Validating dependencies', {
+      LOGGER.debug('Validating dependencies', {
         itemId,
         dependencies,
         totalItems: allItems.length,
@@ -139,7 +139,7 @@ export class DependencyResolver {
         );
       }
 
-      logger.debug('Dependency validation completed', {
+      LOGGER.debug('Dependency validation completed', {
         itemId,
         isValid: result.isValid,
         errorCount: result.errors.length,
@@ -148,7 +148,7 @@ export class DependencyResolver {
 
       return result;
     } catch (error) {
-      logger.error('Failed to validate dependencies', {
+      LOGGER.error('Failed to validate dependencies', {
         itemId,
         dependencies,
         error,
@@ -164,7 +164,7 @@ export class DependencyResolver {
   }
 
   /**
-   * Detects circular dependencies using optimized depth-first search
+   * Detects circular dependencies using depth-first search
    * Implements O(V + E) algorithm where V is vertices (tasks) and E is edges (dependencies)
    */
   detectCircularDependencies(
@@ -186,7 +186,7 @@ export class DependencyResolver {
       // Add or update the item with new dependencies
       dependencyMap.set(itemId, [...newDependencies]);
 
-      // Optimized DFS for cycle detection - O(V + E) complexity
+      // DFS for cycle detection - O(V + E) complexity
       const visited = new Set<string>();
       const recursionStack = new Set<string>();
 
@@ -234,7 +234,7 @@ export class DependencyResolver {
         }
       }
 
-      logger.debug('Circular dependency detection completed', {
+      LOGGER.debug('Circular dependency detection completed', {
         itemId,
         cyclesFound: cycles.length,
         totalNodes: dependencyMap.size,
@@ -246,7 +246,7 @@ export class DependencyResolver {
 
       return cycles;
     } catch (error) {
-      logger.error('Failed to detect circular dependencies', { itemId, error });
+      LOGGER.error('Failed to detect circular dependencies', { itemId, error });
       return [];
     }
   }
@@ -256,7 +256,7 @@ export class DependencyResolver {
    */
   buildDependencyGraph(items: Task[]): DependencyGraph {
     try {
-      logger.debug('Building dependency graph', { itemCount: items.length });
+      LOGGER.debug('Building dependency graph', { itemCount: items.length });
 
       const nodes = new Map<string, DependencyNode>();
       const dependentMap = new Map<string, Set<string>>();
@@ -328,7 +328,7 @@ export class DependencyResolver {
         blockedItems,
       };
 
-      logger.info('Dependency graph built successfully', {
+      LOGGER.info('Dependency graph built successfully', {
         nodeCount: nodes.size,
         rootCount: roots.length,
         leafCount: leaves.length,
@@ -339,7 +339,7 @@ export class DependencyResolver {
 
       return graph;
     } catch (error) {
-      logger.error('Failed to build dependency graph', { error });
+      LOGGER.error('Failed to build dependency graph', { error });
       throw error;
     }
   }
@@ -490,14 +490,14 @@ export class DependencyResolver {
         }
       }
 
-      logger.debug('Ready items calculated', {
+      LOGGER.debug('Ready items calculated', {
         totalItems: items.length,
         readyCount: readyItems.length,
       });
 
       return readyItems;
     } catch (error) {
-      logger.error('Failed to get ready items', { error });
+      LOGGER.error('Failed to get ready items', { error });
       return [];
     }
   }
@@ -531,14 +531,14 @@ export class DependencyResolver {
         }
       }
 
-      logger.debug('Blocked items calculated', {
+      LOGGER.debug('Blocked items calculated', {
         totalItems: items.length,
         blockedCount: blockedItems.length,
       });
 
       return blockedItems;
     } catch (error) {
-      logger.error('Failed to get blocked items', { error });
+      LOGGER.error('Failed to get blocked items', { error });
       return [];
     }
   }
@@ -580,14 +580,14 @@ export class DependencyResolver {
         findLongestPath(rootId, []);
       }
 
-      logger.debug('Critical path calculated', {
+      LOGGER.debug('Critical path calculated', {
         pathLength: longestPath.length,
         path: longestPath,
       });
 
       return longestPath;
     } catch (error) {
-      logger.error('Failed to calculate critical path', { error });
+      LOGGER.error('Failed to calculate critical path', { error });
       return [];
     }
   }
@@ -602,7 +602,7 @@ export class DependencyResolver {
     try {
       const task = items.find(item => item.id === taskId);
       if (!task) {
-        logger.warn('Task not found for block reason calculation', { taskId });
+        LOGGER.warn('Task not found for block reason calculation', { taskId });
         return undefined;
       }
 
@@ -655,7 +655,7 @@ export class DependencyResolver {
         details,
       };
 
-      logger.debug('Block reason calculated', {
+      LOGGER.debug('Block reason calculated', {
         taskId,
         blockedByCount: blockedBy.length,
         details: details.map(d => ({
@@ -667,7 +667,7 @@ export class DependencyResolver {
 
       return blockReason;
     } catch (error) {
-      logger.error('Failed to calculate block reason', { taskId, error });
+      LOGGER.error('Failed to calculate block reason', { taskId, error });
       return undefined;
     }
   }
@@ -676,6 +676,6 @@ export class DependencyResolver {
    * Clean up internal resources
    */
   cleanup(): void {
-    logger.debug('DependencyResolver cleanup completed');
+    LOGGER.debug('DependencyResolver cleanup completed');
   }
 }

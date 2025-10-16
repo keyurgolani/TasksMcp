@@ -16,7 +16,7 @@ import { ActionPlanManager } from '../domain/tasks/action-plan-manager.js';
 import { DependencyResolver } from '../domain/tasks/dependency-manager.js';
 import { ExitCriteriaManager } from '../domain/tasks/exit-criteria-manager.js';
 import { NotesManager } from '../domain/tasks/notes-manager.js';
-import { logger } from '../shared/utils/logger.js';
+import { LOGGER } from '../shared/utils/logger.js';
 
 import {
   initializeApplication,
@@ -68,27 +68,27 @@ async function main(): Promise<void> {
     // Load configuration
     const config = loadConfig();
 
-    logger.info('Starting REST API server', {
+    LOGGER.info('Starting REST API server', {
       port: config.port,
       environment: config.environment,
       corsOrigins: config.corsOrigins,
     });
 
     // Initialize application (data layer)
-    logger.info('Initializing data layer...');
+    LOGGER.info('Initializing data layer...');
     initResult = await initializeApplication({
       useEnvironment: true,
       requireConfigFile: false,
       enableAggregation: true,
     });
 
-    logger.info('Data layer initialized', {
+    LOGGER.info('Data layer initialized', {
       healthySources: initResult.healthStatus.healthy,
       totalSources: initResult.healthStatus.total,
     });
 
     // Create domain managers
-    logger.info('Creating domain managers...');
+    LOGGER.info('Creating domain managers...');
 
     const taskListManager = new TaskListManager(initResult.repository);
 
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
 
     const notesManager = new NotesManager(initResult.repository);
 
-    logger.info('Domain managers created');
+    LOGGER.info('Domain managers created');
 
     // Create API server configuration
     const apiConfig: Partial<ApiConfig> = {
@@ -114,7 +114,7 @@ async function main(): Promise<void> {
     };
 
     // Create and initialize REST API server
-    logger.info('Creating REST API server...');
+    LOGGER.info('Creating REST API server...');
 
     apiServer = new RestApiServer(
       apiConfig,
@@ -127,13 +127,13 @@ async function main(): Promise<void> {
 
     // Initialize routes
     await apiServer.initialize();
-    logger.info('REST API server routes initialized');
+    LOGGER.info('REST API server routes initialized');
 
     // Start the server
     await apiServer.start();
 
     // Log startup success
-    logger.info('✓ REST API server started successfully', {
+    LOGGER.info('✓ REST API server started successfully', {
       port: config.port,
       environment: config.environment,
       apiUrl: `http://localhost:${config.port}`,
@@ -151,8 +151,8 @@ async function main(): Promise<void> {
       },
     });
 
-    // Log server startup for monitoring
-    logger.info('REST API server started successfully', {
+    // Log server startup
+    LOGGER.info('REST API server started successfully', {
       environment: config.environment,
       port: config.port,
       healthyDataSources: initResult.healthStatus.healthy,
@@ -186,7 +186,7 @@ async function main(): Promise<void> {
     // Setup graceful shutdown
     setupGracefulShutdown(apiServer, initResult);
   } catch (error) {
-    logger.error('Failed to start REST API server', { error });
+    LOGGER.error('Failed to start REST API server', { error });
     process.stderr.write('\n✗ Failed to start REST API server:\n');
     process.stderr.write(
       `  ${error instanceof Error ? error.message : String(error)}\n\n`
@@ -197,7 +197,7 @@ async function main(): Promise<void> {
       try {
         await apiServer.stop();
       } catch (stopError) {
-        logger.error('Error stopping server during cleanup', {
+        LOGGER.error('Error stopping server during cleanup', {
           error: stopError,
         });
       }
@@ -207,7 +207,7 @@ async function main(): Promise<void> {
       try {
         await shutdownApplication(initResult);
       } catch (shutdownError) {
-        logger.error('Error shutting down application during cleanup', {
+        LOGGER.error('Error shutting down application during cleanup', {
           error: shutdownError,
         });
       }
@@ -228,35 +228,35 @@ function setupGracefulShutdown(
 
   const shutdown = async (signal: string) => {
     if (isShuttingDown) {
-      logger.warn('Shutdown already in progress, ignoring signal', { signal });
+      LOGGER.warn('Shutdown already in progress, ignoring signal', { signal });
       return;
     }
 
     isShuttingDown = true;
-    logger.info('Received shutdown signal, starting graceful shutdown', {
+    LOGGER.info('Received shutdown signal, starting graceful shutdown', {
       signal,
     });
     process.stdout.write(`\n\n  Shutting down gracefully (${signal})...\n`);
 
     try {
       // Stop accepting new connections
-      logger.info('Stopping REST API server...');
+      LOGGER.info('Stopping REST API server...');
       await apiServer.stop();
-      logger.info('REST API server stopped');
+      LOGGER.info('REST API server stopped');
       process.stdout.write('  ✓ REST API server stopped\n');
 
       // Shutdown data layer
-      logger.info('Shutting down data layer...');
+      LOGGER.info('Shutting down data layer...');
       await shutdownApplication(initResult);
-      logger.info('Data layer shutdown complete');
+      LOGGER.info('Data layer shutdown complete');
       process.stdout.write('  ✓ Data layer shutdown complete\n');
 
       process.stdout.write('\n  Shutdown complete\n\n');
-      logger.info('Graceful shutdown complete');
+      LOGGER.info('Graceful shutdown complete');
 
       process.exit(0);
     } catch (error) {
-      logger.error('Error during graceful shutdown', { error });
+      LOGGER.error('Error during graceful shutdown', { error });
       process.stderr.write('\n  ✗ Error during shutdown:\n');
       process.stderr.write(
         `    ${error instanceof Error ? error.message : String(error)}\n\n`
@@ -271,13 +271,13 @@ function setupGracefulShutdown(
 
   // Handle uncaught errors
   process.on('uncaughtException', error => {
-    logger.error('Uncaught exception', { error });
+    LOGGER.error('Uncaught exception', { error });
     process.stderr.write('\n✗ Uncaught exception: ' + String(error) + '\n');
     shutdown('uncaughtException');
   });
 
   process.on('unhandledRejection', (reason, promise) => {
-    logger.error('Unhandled rejection', { reason, promise });
+    LOGGER.error('Unhandled rejection', { reason, promise });
     process.stderr.write('\n✗ Unhandled rejection: ' + String(reason) + '\n');
     shutdown('unhandledRejection');
   });
@@ -285,7 +285,7 @@ function setupGracefulShutdown(
 
 // Start the server
 main().catch(error => {
-  logger.error('Fatal error in main', { error });
+  LOGGER.error('Fatal error in main', { error });
   process.stderr.write('\n✗ Fatal error: ' + String(error) + '\n');
   process.exit(1);
 });

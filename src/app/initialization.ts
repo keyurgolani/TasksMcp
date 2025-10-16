@@ -17,13 +17,13 @@ import {
   type MultiSourceConfig,
   type DataSourceConfig,
 } from '../infrastructure/config/data-source-config.js';
-import { DataSourceConfigLoader } from '../infrastructure/config/data-source-loader.js';
+import { DATA_SOURCE_CONFIG_LOADER } from '../infrastructure/config/data-source-loader.js';
 import {
   DataSourceRouter,
   type DataSourceConfig as RouterDataSourceConfig,
 } from '../infrastructure/storage/data-source-router.js';
 import { MultiSourceAggregator } from '../infrastructure/storage/multi-source-aggregator.js';
-import { logger } from '../shared/utils/logger.js';
+import { LOGGER } from '../shared/utils/logger.js';
 
 import type { StorageConfiguration } from '../infrastructure/storage/storage-factory.js';
 
@@ -97,13 +97,13 @@ export class ApplicationInitializer {
   static async initialize(
     options: InitializationOptions = {}
   ): Promise<InitializationResult> {
-    logger.info('Starting application initialization', { options });
+    LOGGER.info('Starting application initialization', { options });
 
     try {
       // Step 1: Load data source configuration
       const config = await this.loadConfiguration(options);
 
-      logger.info('Configuration loaded', {
+      LOGGER.info('Configuration loaded', {
         sourceCount: config.sources.length,
         enabledSources: config.sources.filter(s => s.enabled).length,
         aggregationEnabled: config.aggregationEnabled,
@@ -112,26 +112,26 @@ export class ApplicationInitializer {
       // Step 2: Create and initialize DataSourceRouter
       const router = await this.createRouter(config);
 
-      logger.info('DataSourceRouter initialized', {
+      LOGGER.info('DataSourceRouter initialized', {
         sources: router.getStatus().total,
       });
 
       // Step 3: Create MultiSourceAggregator
       const aggregator = this.createAggregator(config);
 
-      logger.info('MultiSourceAggregator created', {
+      LOGGER.info('MultiSourceAggregator created', {
         conflictResolution: config.conflictResolution,
       });
 
       // Step 4: Create TaskListRepository
       const repository = new TaskListRepository(router, aggregator);
 
-      logger.info('TaskListRepository created');
+      LOGGER.info('TaskListRepository created');
 
       // Step 5: Perform health checks
       const healthStatus = await this.performHealthChecks(router);
 
-      logger.info('Health checks completed', {
+      LOGGER.info('Health checks completed', {
         healthy: healthStatus.healthy,
         unhealthy: healthStatus.unhealthy,
         total: healthStatus.total,
@@ -139,12 +139,12 @@ export class ApplicationInitializer {
 
       // Warn if no healthy sources
       if (healthStatus.healthy === 0) {
-        logger.warn('No healthy data sources available!', {
+        LOGGER.warn('No healthy data sources available!', {
           sources: healthStatus.sources,
         });
       }
 
-      logger.info('Application initialization complete', {
+      LOGGER.info('Application initialization complete', {
         healthySources: healthStatus.healthy,
         totalSources: healthStatus.total,
       });
@@ -157,7 +157,7 @@ export class ApplicationInitializer {
         healthStatus,
       };
     } catch (error) {
-      logger.error('Application initialization failed', { error });
+      LOGGER.error('Application initialization failed', { error });
       throw new Error(
         `Failed to initialize application: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -182,7 +182,7 @@ export class ApplicationInitializer {
   ): Promise<MultiSourceConfig> {
     // If we have a fallback storage configuration and not requiring config file, use it directly
     if (options.fallbackStorage && !options.requireConfigFile) {
-      logger.info('Using fallback storage configuration', {
+      LOGGER.info('Using fallback storage configuration', {
         type: options.fallbackStorage.type,
       });
 
@@ -196,7 +196,7 @@ export class ApplicationInitializer {
       return config;
     }
 
-    const loader = new DataSourceConfigLoader();
+    const loader = DATA_SOURCE_CONFIG_LOADER;
 
     try {
       // Try to load from file or environment
@@ -224,7 +224,7 @@ export class ApplicationInitializer {
     } catch (error) {
       // If we have a fallback storage configuration, use it
       if (options.fallbackStorage) {
-        logger.info('Using fallback storage configuration after load failure', {
+        LOGGER.info('Using fallback storage configuration after load failure', {
           type: options.fallbackStorage.type,
         });
 
@@ -239,7 +239,7 @@ export class ApplicationInitializer {
       }
 
       // Otherwise, use default configuration
-      logger.warn('Failed to load configuration, using defaults', { error });
+      LOGGER.warn('Failed to load configuration, using defaults', { error });
       const config = getDefaultMultiSourceConfig();
 
       // Override aggregation setting if specified
@@ -362,7 +362,7 @@ export class ApplicationInitializer {
 
       case 'mongodb':
         // MongoDB not yet implemented, fall back to memory
-        logger.warn('MongoDB storage not implemented, using memory storage', {
+        LOGGER.warn('MongoDB storage not implemented, using memory storage', {
           sourceId: source.id,
         });
         return {
@@ -486,7 +486,7 @@ export class ApplicationInitializer {
       throw new Error('No healthy data sources available');
     }
 
-    logger.info('Initialization validation passed', {
+    LOGGER.info('Initialization validation passed', {
       healthySources: result.healthStatus.healthy,
       totalSources: result.healthStatus.total,
     });
@@ -498,7 +498,7 @@ export class ApplicationInitializer {
    * @param result - Initialization result to shutdown
    */
   static async shutdown(result: InitializationResult): Promise<void> {
-    logger.info('Shutting down application components');
+    LOGGER.info('Shutting down application components');
 
     try {
       // Shutdown repository (which will shutdown router)
@@ -506,9 +506,9 @@ export class ApplicationInitializer {
         await result.repository.shutdown();
       }
 
-      logger.info('Application shutdown complete');
+      LOGGER.info('Application shutdown complete');
     } catch (error) {
-      logger.error('Error during application shutdown', { error });
+      LOGGER.error('Error during application shutdown', { error });
       throw error;
     }
   }

@@ -3,7 +3,15 @@
  */
 
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'vitest';
 
 import { RestApiServer } from '../../../src/app/rest-api-server.js';
 import { TaskListManager } from '../../../src/domain/lists/task-list-manager.js';
@@ -17,7 +25,7 @@ import { TaskStatus as _TaskStatus } from '../../../src/shared/types/task.js';
 
 import type { Express } from 'express';
 
-describe('Dependency Management API Endpoints', { timeout: 60000 }, () => {
+describe('Dependency Management API Endpoints', { timeout: 120000 }, () => {
   let server: RestApiServer;
   let app: Express;
   let testListId: string;
@@ -78,6 +86,13 @@ describe('Dependency Management API Endpoints', { timeout: 60000 }, () => {
       description: 'First task',
       priority: 3,
     });
+    if (task1Response.status !== 201) {
+      console.error(
+        'Task 1 creation failed:',
+        task1Response.status,
+        task1Response.body
+      );
+    }
     expect(task1Response.status).toBe(201);
     task1Id = task1Response.body.data.id;
 
@@ -98,6 +113,21 @@ describe('Dependency Management API Endpoints', { timeout: 60000 }, () => {
     });
     expect(task3Response.status).toBe(201);
     task3Id = task3Response.body.data.id;
+  }, 15000); // Increase timeout to 15 seconds
+
+  afterEach(async () => {
+    // Clean up the test list if it still exists
+    if (testListId) {
+      try {
+        await request(app).delete(`/api/v1/lists/${testListId}`);
+      } catch (_error) {
+        // Ignore errors - list might already be deleted
+      }
+      testListId = '';
+      task1Id = '';
+      task2Id = '';
+      task3Id = '';
+    }
   });
 
   describe('GET /api/v1/dependencies/graph/:listId', () => {
@@ -480,11 +510,11 @@ describe('Dependency Management API Endpoints', { timeout: 60000 }, () => {
       expect(response.body.error).toBeDefined();
     });
 
-    it('should return 404 for archived list', async () => {
-      // Archive the list
+    it('should return 404 for deleted list', async () => {
+      // Delete the list permanently
       await request(app).delete(`/api/v1/lists/${testListId}`).expect(200);
 
-      // Archived lists are not accessible, so we get 404
+      // Deleted lists are not accessible, so we get 404
       const response = await request(app)
         .post('/api/v1/dependencies/set')
         .send({

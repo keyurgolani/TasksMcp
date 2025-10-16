@@ -243,13 +243,15 @@ describe('Task 30.1: Write unit tests for improved error messages', () => {
 
     it('should provide helpful warnings for edge cases', () => {
       // Test very long duration warning
-      const longDurationResult = taskValidator.validateEstimatedDuration(20160); // 2 weeks
+      const longDurationResult = (
+        taskValidator as any
+      ).validateEstimatedDuration(20160); // 2 weeks
       expect(longDurationResult.isValid).toBe(true);
       expect(longDurationResult.warnings).toHaveLength(1);
       expect(longDurationResult.warnings[0].message).toContain(
         'unusually long'
       );
-      expect(longDurationResult.warnings[0].suggestion).toContain(
+      expect(longDurationResult.warnings[0].message).toContain(
         'breaking this task into smaller subtasks'
       );
 
@@ -270,7 +272,7 @@ describe('Task 30.1: Write unit tests for improved error messages', () => {
       expect(duplicateTagsResult.warnings[0].message).toContain(
         'Duplicate tags found'
       );
-      expect(duplicateTagsResult.warnings[0].suggestion).toContain(
+      expect(duplicateTagsResult.warnings[0].message).toContain(
         'Remove duplicate tags'
       );
     });

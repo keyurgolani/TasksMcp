@@ -18,7 +18,7 @@ import {
 } from '../api/middleware/error-handler.js';
 import { requestIdMiddleware } from '../api/middleware/request-id.js';
 import { requestLoggerMiddleware } from '../api/middleware/request-logger.js';
-import { logger } from '../shared/utils/logger.js';
+import { LOGGER } from '../shared/utils/logger.js';
 
 import type { TaskListManager } from '../domain/lists/task-list-manager.js';
 import type { ActionPlanManager } from '../domain/tasks/action-plan-manager.js';
@@ -83,10 +83,10 @@ export class RestApiServer {
    * Initialize the server (must be called before start)
    */
   async initialize(): Promise<void> {
-    logger.info('Initializing REST API server routes');
+    LOGGER.info('Initializing REST API server routes');
     await this.setupRoutes();
     this.setupErrorHandling(); // Must be called AFTER routes are set up
-    logger.info('REST API server routes initialized');
+    LOGGER.info('REST API server routes initialized');
   }
 
   /**
@@ -179,7 +179,7 @@ export class RestApiServer {
     // Mount the router AFTER all routes are added
     this.app.use('/api/v1', apiRouter);
 
-    logger.info('API routes configured', {
+    LOGGER.info('API routes configured', {
       routes: [
         'POST /api/v1/lists',
         'GET /api/v1/lists',
@@ -382,7 +382,7 @@ export class RestApiServer {
     return new Promise((resolve, reject) => {
       try {
         this.server = this.app.listen(this.config.port, () => {
-          logger.info('REST API server started', {
+          LOGGER.info('REST API server started', {
             port: this.config.port,
             environment: process.env['NODE_ENV'] || 'development',
           });
@@ -390,11 +390,11 @@ export class RestApiServer {
         });
 
         this.server.on('error', (error: Error) => {
-          logger.error('Server error', { error });
+          LOGGER.error('Server error', { error });
           reject(error);
         });
       } catch (error) {
-        logger.error('Failed to start server', { error });
+        LOGGER.error('Failed to start server', { error });
         reject(error);
       }
     });
@@ -411,10 +411,10 @@ export class RestApiServer {
     return new Promise((resolve, reject) => {
       this.server!.close(error => {
         if (error) {
-          logger.error('Error stopping server', { error });
+          LOGGER.error('Error stopping server', { error });
           reject(error);
         } else {
-          logger.info('REST API server stopped');
+          LOGGER.info('REST API server stopped');
           this.server = null;
           resolve();
         }
@@ -441,5 +441,12 @@ export class RestApiServer {
    */
   getContext(): HandlerContext {
     return this.context;
+  }
+
+  /**
+   * Check if the server is running
+   */
+  isRunning(): boolean {
+    return this.server !== null && this.server.listening;
   }
 }

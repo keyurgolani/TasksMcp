@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { AgentPromptOrchestrator } from '../../../core/orchestration/interfaces/agent-prompt-orchestrator.js';
 import { OrchestrationError } from '../../../shared/errors/orchestration-error.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { LOGGER } from '../../../shared/utils/logger.js';
 
 // Validation schemas
 const validateTemplateSchema = z.object({
@@ -44,7 +44,7 @@ export class AgentPromptController {
 
       const useDefault = req.query['useDefault'] === 'true';
 
-      logger.info('Getting agent prompt', {
+      LOGGER.info('Getting agent prompt', {
         taskId,
         useDefault,
         requestId: req.headers['x-request-id'],
@@ -71,7 +71,7 @@ export class AgentPromptController {
           duration,
           performance: {
             renderTime: prompt.renderTime,
-            isSimple: prompt.renderTime < 10,
+            isFast: prompt.renderTime < 10,
             isComplex: prompt.renderTime >= 10 && prompt.renderTime < 50,
             isSlow: prompt.renderTime >= 50,
           },
@@ -87,7 +87,7 @@ export class AgentPromptController {
       const startTime = Date.now();
       const { template } = validateTemplateSchema.parse(req.body);
 
-      logger.info('Validating template', {
+      LOGGER.info('Validating template', {
         templateLength: template.length,
         requestId: req.headers['x-request-id'],
       });
@@ -103,7 +103,6 @@ export class AgentPromptController {
           errors: validation.errors,
           warnings: validation.warnings,
           variablesFound: validation.variablesFound,
-          complexity: validation.complexity,
         },
         meta: {
           requestId: req.headers['x-request-id'],
@@ -121,7 +120,7 @@ export class AgentPromptController {
       const startTime = Date.now();
       const { template, taskId, listId } = renderTemplateSchema.parse(req.body);
 
-      logger.info('Rendering template', {
+      LOGGER.info('Rendering template', {
         templateLength: template.length,
         taskId,
         listId,
@@ -148,7 +147,7 @@ export class AgentPromptController {
           duration,
           performance: {
             renderTime: result.renderTime,
-            isSimple: result.renderTime < 10,
+            isFast: result.renderTime < 10,
             isComplex: result.renderTime >= 10 && result.renderTime < 50,
             isSlow: result.renderTime >= 50,
           },
@@ -163,7 +162,7 @@ export class AgentPromptController {
     const requestId = req.headers['x-request-id'];
 
     if (error instanceof z.ZodError) {
-      logger.warn('Validation error', {
+      LOGGER.warn('Validation error', {
         error: error.issues,
         requestId,
       });
@@ -184,7 +183,7 @@ export class AgentPromptController {
     if (error instanceof OrchestrationError) {
       const statusCode = this.getStatusCodeForError(error);
 
-      logger.warn('Orchestration error', {
+      LOGGER.warn('Orchestration error', {
         error: error.message,
         context: error.context,
         requestId,
@@ -207,7 +206,7 @@ export class AgentPromptController {
     }
 
     // Handle unexpected errors
-    logger.error('Unexpected error', {
+    LOGGER.error('Unexpected error', {
       error: error instanceof Error ? error.message : String(error),
       requestId,
     });

@@ -10,8 +10,8 @@ echo "🔍 Validating MCP Task Manager project structure..."
 # Check required files exist
 required_files=(
     "package.json"
-    "README.md" 
-    "AGENTS.md"
+    "readme.md" 
+    "agents.md"
     "LICENSE"
     "tsconfig.json"
     ".gitignore"
@@ -123,8 +123,8 @@ fi
 # Check documentation structure
 echo "📚 Checking documentation structure..."
 doc_files=(
-    "docs/README.md"
-    "docs/api/README.md"
+    "docs/readme.md"
+    "docs/api/readme.md"
     "docs/api/tools.md"
     "docs/api/dependency-management.md"
     "docs/api/errors.md"
@@ -154,8 +154,8 @@ done
 # Check examples structure
 echo "📖 Checking examples structure..."
 example_files=(
-    "examples/README.md"
-    "docs/examples/README.md"
+    "examples/readme.md"
+    "docs/examples/readme.md"
     "docs/examples/basic.md"
     "docs/examples/advanced.md"
     "docs/examples/configuration.md"

@@ -13,7 +13,7 @@ import {
   ERROR_CODES,
 } from '../types/errors.js';
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 /**
  * Error message templates for different user contexts
@@ -149,7 +149,7 @@ export class UserFriendlyErrorMessages {
       // Handle standard errors
       return this.generateStandardErrorMessage(error, defaultContext);
     } catch (messageError) {
-      logger.error('Failed to generate user-friendly error message', {
+      LOGGER.error('Failed to generate user-friendly error message', {
         originalError: error.message,
         messageError:
           messageError instanceof Error
@@ -441,7 +441,7 @@ export class UserFriendlyErrorMessages {
 /**
  * Utility functions for error message formatting
  */
-export const ErrorMessageUtils = {
+export const ERROR_MESSAGE_UTILS = {
   /**
    * Truncate error message for display
    */

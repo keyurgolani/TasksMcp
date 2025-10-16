@@ -60,17 +60,19 @@ _Check if similar projects exist to learn from their structure_
 
 ### Adding Tasks with Investigation and Planning
 
-**Step 1: Analyze Task Complexity** (Use Tools, Don't Guess)
+**Step 1: Research and Plan** (Use Tools, Don't Guess)
 
 ```json
 {
-  "tool": "analyze_task",
+  "tool": "search_tool",
   "parameters": {
-    "taskDescription": "Create wireframes for main pages including home, about, services, and contact pages",
-    "context": "Website redesign project with focus on user experience and conversion optimization"
+    "query": "wireframes design",
+    "includeCompleted": true
   }
 }
 ```
+
+_Research similar completed tasks for context and learnings_
 
 **Step 2: Create Task with Detailed Action Plan**
 
@@ -492,15 +494,15 @@ _Research similar completed tasks for context and learnings_
 
 ## 🎯 Task Analysis
 
-### Analyze Task Complexity
+### Research Task Context
 
 ```json
 {
-  "tool": "analyze_task",
+  "tool": "search_tool",
   "parameters": {
-    "taskDescription": "Create a responsive website header with navigation menu, logo, and search functionality",
-    "context": "React.js frontend development project",
-    "maxSuggestions": 3
+    "query": "responsive header navigation",
+    "includeCompleted": true,
+    "limit": 5
   }
 }
 ```
@@ -509,105 +511,55 @@ _Research similar completed tasks for context and learnings_
 
 ```json
 {
-  "complexity": {
-    "score": 6.5,
-    "level": "Medium-High",
-    "factors": [
-      "Multiple components required",
-      "Responsive design considerations",
-      "Interactive functionality",
-      "Integration requirements"
-    ]
-  },
-  "estimatedDuration": 180,
-  "confidence": 0.75,
-  "suggestions": [
-    "Break down into smaller tasks: Logo component, Navigation menu, Search functionality",
-    "Consider mobile-first responsive design approach",
-    "Plan for accessibility requirements (ARIA labels, keyboard navigation)"
-  ]
-}
-```
-
-### Get Task Suggestions
-
-```json
-{
-  "tool": "get_task_suggestions",
-  "parameters": {
-    "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "style": "practical",
-    "maxSuggestions": 5
+  "results": [
+    {
+      "id": "task-123",
+      "title": "Build responsive navigation component",
+      "description": "Created mobile-first navigation with hamburger menu",
+      "status": "completed",
+      "tags": ["frontend", "responsive", "navigation"]
+    }
+  ],
+  "summary": {
+    "totalFound": 3,
+    "completedTasks": 2,
+    "avgDuration": 180
   }
 }
 ```
 
-## 🔄 Bulk Operations
+## 🔄 Multiple Task Operations
 
-### Create Multiple Tasks at Once
+**Note**: For multiple operations, use individual MCP tool calls. Bulk operations are available through the REST API only.
+
+### Create Multiple Tasks
+
+For creating multiple tasks, use individual `add_task` calls:
 
 ```json
 {
-  "tool": "bulk_task_operations",
+  "tool": "add_task",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "operations": [
-      {
-        "type": "create",
-        "data": {
-          "title": "Set up development environment",
-          "priority": 4,
-          "tags": ["setup", "development"],
-          "estimatedDuration": 60
-        }
-      },
-      {
-        "type": "create",
-        "data": {
-          "title": "Install required dependencies",
-          "priority": 4,
-          "tags": ["setup", "dependencies"],
-          "estimatedDuration": 30
-        }
-      },
-      {
-        "type": "create",
-        "data": {
-          "title": "Configure build system",
-          "priority": 3,
-          "tags": ["setup", "build"],
-          "estimatedDuration": 90
-        }
-      }
-    ]
+    "title": "Set up development environment",
+    "priority": 4,
+    "tags": ["setup", "development"],
+    "estimatedDuration": 60
   }
 }
 ```
 
 ### Update Multiple Task Priorities
 
+For updating multiple task priorities, use individual `set_task_priority` calls:
+
 ```json
 {
-  "tool": "bulk_task_operations",
+  "tool": "set_task_priority",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "operations": [
-      {
-        "type": "set_priority",
-        "taskId": "task-id-1",
-        "priority": 5
-      },
-      {
-        "type": "set_priority",
-        "taskId": "task-id-2",
-        "priority": 4
-      },
-      {
-        "type": "set_priority",
-        "taskId": "task-id-3",
-        "priority": 3
-      }
-    ]
+    "taskId": "task-id-1",
+    "priority": 5
   }
 }
 ```
@@ -834,7 +786,14 @@ The response includes time estimates for remaining work.
 
 3. **Update task priorities:**
    ```json
-   {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
+   {
+     "tool": "set_task_priority",
+     "parameters": {
+       "listId": "project-id",
+       "taskId": "task-id",
+       "priority": 5
+     }
+   }
    ```
 
 ### Project Setup Workflow
@@ -851,13 +810,27 @@ The response includes time estimates for remaining work.
 2. **Add initial tasks:**
 
    ```json
-   {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
+   {
+     "tool": "add_task",
+     "parameters": {
+       "listId": "project-id",
+       "title": "Task Title",
+       "priority": 3
+     }
+   }
    ```
 
 3. **Set up task priorities:**
 
    ```json
-   {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
+   {
+     "tool": "set_task_priority",
+     "parameters": {
+       "listId": "project-id",
+       "taskId": "task-id",
+       "priority": 5
+     }
+   }
    ```
 
 4. **Review project structure:**

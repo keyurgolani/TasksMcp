@@ -25,7 +25,7 @@ import {
   Priority,
 } from '../../shared/types/task.js';
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 /**
  * Configuration options for formatting output
@@ -66,7 +66,7 @@ export interface FormattedOutput {
  * Handles formatting of task lists, tasks, and summaries with customization options
  */
 export class PrettyPrintFormatter {
-  /** Default formatting options optimized for readability */
+  /** Default formatting options for readability */
   private readonly defaultOptions: FormatOptions = {
     includeNotes: true,
     includeActionPlans: true,
@@ -153,7 +153,7 @@ export class PrettyPrintFormatter {
 
       return result;
     } catch (error) {
-      logger.error('Failed to format task list', { listId: list.id, error });
+      LOGGER.error('Failed to format task list', { listId: list.id, error });
       return this.formatError('Failed to format task list', error);
     }
   }
@@ -212,7 +212,7 @@ export class PrettyPrintFormatter {
         },
       };
     } catch (error) {
-      logger.error('Failed to format task', { taskId: task.id, error });
+      LOGGER.error('Failed to format task', { taskId: task.id, error });
       return this.formatError('Failed to format task', error);
     }
   }
@@ -228,7 +228,7 @@ export class PrettyPrintFormatter {
       const opts = { ...this.defaultOptions, ...options };
       const lines: string[] = [];
 
-      // Calculate basic counts
+      // Calculate counts
       const total = tasks.length;
       const completed = tasks.filter(
         t => t.status === TaskStatus.COMPLETED
@@ -300,7 +300,7 @@ export class PrettyPrintFormatter {
         },
       };
     } catch (error) {
-      logger.error('Failed to format task summary', {
+      LOGGER.error('Failed to format task summary', {
         taskCount: tasks.length,
         error,
       });
@@ -340,7 +340,7 @@ export class PrettyPrintFormatter {
 
       return `[${filled}${empty}] ${percentageText}`;
     } catch (error) {
-      logger.error('Failed to format progress bar', {
+      LOGGER.error('Failed to format progress bar', {
         completed,
         total,
         error,
@@ -390,7 +390,7 @@ export class PrettyPrintFormatter {
 
       return lines.join('\n');
     } catch (error) {
-      logger.error('Failed to format action plan', { planId: plan.id, error });
+      LOGGER.error('Failed to format action plan', { planId: plan.id, error });
       return '  [error formatting action plan]';
     }
   }

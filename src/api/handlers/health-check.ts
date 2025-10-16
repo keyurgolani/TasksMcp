@@ -2,7 +2,7 @@
  * Health check endpoint handler
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { getVersion } from '../../shared/version.js';
 
 import type {
@@ -58,7 +58,7 @@ export async function healthCheckHandler(
           : 503;
     res.status(statusCode).json(response);
   } catch (error) {
-    logger.error('Health check failed', { error });
+    LOGGER.error('Health check failed', { error });
 
     const response: HealthCheckResponse = {
       status: 'unhealthy',

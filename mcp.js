@@ -5,10 +5,8 @@
  * Handles MCP server initialization with environment variable configuration
  */
 
-const { ConsolidatedMcpServer } = require('./dist/api/mcp/mcp-server.js');
-const {
-  ConfigurationManager,
-} = require('./dist/infrastructure/config/system-configuration.js');
+import { ConsolidatedMcpServer } from './dist/api/mcp/mcp-server.js';
+import { ConfigurationManager } from './dist/infrastructure/config/system-configuration.js';
 
 async function startMcpServer() {
   try {
@@ -26,17 +24,20 @@ async function startMcpServer() {
     console.log('MCP Server started successfully');
 
     // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-      console.log('Shutting down MCP Server...');
-      await server.stop();
-      process.exit(0);
-    });
+    const shutdown = async signal => {
+      console.log(`Received ${signal}, shutting down MCP Server...`);
+      try {
+        await server.stop();
+        console.log('MCP Server stopped successfully');
+        process.exit(0);
+      } catch (error) {
+        console.error('Error during shutdown:', error.message);
+        process.exit(1);
+      }
+    };
 
-    process.on('SIGTERM', async () => {
-      console.log('Shutting down MCP Server...');
-      await server.stop();
-      process.exit(0);
-    });
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
   } catch (error) {
     console.error('Failed to start MCP Server:', error.message);
     process.exit(1);
@@ -44,8 +45,8 @@ async function startMcpServer() {
 }
 
 // Start the server if this file is run directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   startMcpServer();
 }
 
-module.exports = { startMcpServer };
+export { startMcpServer };

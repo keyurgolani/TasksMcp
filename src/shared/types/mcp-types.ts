@@ -48,18 +48,6 @@ export interface UpdateTaskListParams {
   itemId?: string;
 }
 
-export interface AnalyzeTaskComplexityParams {
-  taskDescription: string;
-  context?: string;
-  autoCreate?: boolean;
-  generateOptions?: {
-    style?: 'detailed' | 'concise' | 'technical' | 'business';
-    maxTasks?: number;
-    includeTests?: boolean;
-    includeDependencies?: boolean;
-  };
-}
-
 // Response Types
 export interface ListResponse {
   id: string;

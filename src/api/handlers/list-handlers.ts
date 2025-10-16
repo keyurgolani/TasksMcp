@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { ApiError } from '../../shared/errors/api-error.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
   CreateTaskListInput,
@@ -111,7 +111,7 @@ export async function createListHandler(
     // Validate request body
     const input = createListSchema.parse(req.body);
 
-    logger.info('Creating new list', {
+    LOGGER.info('Creating new list', {
       requestId: req.id,
       title: input.title,
       projectTag: input.projectTag,
@@ -153,9 +153,9 @@ export async function createListHandler(
     if (input.implementationNotes !== undefined) {
       createInput.implementationNotes = input.implementationNotes;
     }
-    logger.debug('About to create list with input', { createInput });
+    LOGGER.debug('About to create list with input', { createInput });
     const list = await context.taskListManager.createTaskList(createInput);
-    logger.debug('Created list', { id: list.id, title: list.title });
+    LOGGER.debug('Created list', { id: list.id, title: list.title });
 
     const duration = Date.now() - startTime;
 
@@ -169,7 +169,7 @@ export async function createListHandler(
       },
     };
 
-    logger.info('List created successfully', {
+    LOGGER.info('List created successfully', {
       requestId: req.id,
       listId: list.id,
       duration,
@@ -200,7 +200,7 @@ export async function listAllListsHandler(
     // Validate query parameters
     const query = listQuerySchema.parse(req.query);
 
-    logger.info('Listing all lists', {
+    LOGGER.info('Listing all lists', {
       requestId: req.id,
       projectTag: query.projectTag,
       status: query.status,
@@ -208,14 +208,14 @@ export async function listAllListsHandler(
 
     // Get lists using TaskListManager
     // Note: listTaskLists returns TaskListSummary[], not TaskList[]
-    logger.debug('About to call listTaskLists with query', { query });
+    LOGGER.debug('About to call listTaskLists with query', { query });
     const summaries = await context.taskListManager.listTaskLists({
       projectTag: query.projectTag,
       status: query.status,
       limit: query.limit,
       offset: query.offset,
     });
-    logger.debug('listTaskLists returned items', { count: summaries.length });
+    LOGGER.debug('listTaskLists returned items', { count: summaries.length });
 
     const duration = Date.now() - startTime;
 
@@ -229,7 +229,7 @@ export async function listAllListsHandler(
       },
     };
 
-    logger.info('Lists retrieved successfully', {
+    LOGGER.info('Lists retrieved successfully', {
       requestId: req.id,
       count: summaries.length,
       duration,
@@ -264,7 +264,7 @@ export async function getListHandler(
     // Validate query parameters
     const query = getListQuerySchema.parse(req.query);
 
-    logger.info('Getting list', {
+    LOGGER.info('Getting list', {
       requestId: req.id,
       listId: id,
       includeCompleted: query.includeCompleted,
@@ -293,7 +293,7 @@ export async function getListHandler(
       },
     };
 
-    logger.info('List retrieved successfully', {
+    LOGGER.info('List retrieved successfully', {
       requestId: req.id,
       listId: id,
       duration,
@@ -328,13 +328,13 @@ export async function updateListHandler(
     // Validate request body
     const updates = updateListSchema.parse(req.body);
 
-    logger.info('Updating list', {
+    LOGGER.info('Updating list', {
       requestId: req.id,
       listId: id,
       updates: Object.keys(updates),
     });
 
-    // First, get the existing list to verify it exists (including archived)
+    // First, get the existing list to verify it exists
     const getInput: GetTaskListInput = { listId: id };
     const existingList = await context.taskListManager.getTaskList(getInput);
 
@@ -374,7 +374,7 @@ export async function updateListHandler(
       },
     };
 
-    logger.info('List updated successfully', {
+    LOGGER.info('List updated successfully', {
       requestId: req.id,
       listId: id,
       duration,
@@ -392,7 +392,7 @@ export async function updateListHandler(
 }
 
 /**
- * DELETE /api/v1/lists/:id - Delete or archive a list
+ * DELETE /api/v1/lists/:id - Delete a list
  */
 export async function deleteListHandler(
   req: ApiRequest,
@@ -409,7 +409,7 @@ export async function deleteListHandler(
     // Validate query parameters
     const query = deleteQuerySchema.parse(req.query);
 
-    logger.info('Deleting list', {
+    LOGGER.info('Deleting list', {
       requestId: req.id,
       listId: id,
       permanent: query.permanent,
@@ -431,7 +431,7 @@ export async function deleteListHandler(
       },
     };
 
-    logger.info('List deleted successfully', {
+    LOGGER.info('List deleted successfully', {
       requestId: req.id,
       listId: id,
       operation: result.operation,

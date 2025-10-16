@@ -8,7 +8,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -25,7 +25,7 @@ export async function handleDeleteList(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing delete_list request', {
+    LOGGER.debug('Processing delete_list request', {
       params: request.params?.arguments,
     });
 
@@ -45,7 +45,7 @@ export async function handleDeleteList(
       listId: args.listId,
     };
 
-    logger.info('Task list deleted successfully', {
+    LOGGER.info('Task list deleted successfully', {
       id: args.listId,
       operation: result.operation,
     });

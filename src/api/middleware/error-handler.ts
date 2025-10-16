@@ -5,7 +5,7 @@
 import { ZodError } from 'zod';
 
 import { ApiError } from '../../shared/errors/api-error.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
   ApiRequest,
@@ -169,7 +169,7 @@ export function errorHandlerMiddleware(
 
   // Log error with full context
   const logLevel = statusCode >= 500 ? 'error' : 'warn';
-  logger[logLevel]('Request error', {
+  LOGGER[logLevel]('Request error', {
     requestId: apiReq.id,
     errorCode,
     statusCode,

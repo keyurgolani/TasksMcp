@@ -9,7 +9,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
   TaskListManager,
@@ -44,7 +44,7 @@ export async function handleCreateList(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing create_list request', {
+    LOGGER.debug('Processing create_list request', {
       params: request.params?.arguments,
     });
 
@@ -80,7 +80,7 @@ export async function handleCreateList(
       response.projectTag = result.projectTag;
     }
 
-    logger.info('Task list created successfully', {
+    LOGGER.info('Task list created successfully', {
       id: result.id,
       title: result.title,
     });

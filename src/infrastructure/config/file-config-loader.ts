@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 import yaml from 'js-yaml';
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 export interface FileConfigOptions {
   configPath?: string;
@@ -87,10 +87,10 @@ export class FileConfigLoader {
       if (existsSync(resolvedPath)) {
         try {
           const config = this.loadConfigFile(resolvedPath);
-          logger.info('Configuration loaded from file', { path: resolvedPath });
+          LOGGER.info('Configuration loaded from file', { path: resolvedPath });
           return config;
         } catch (error) {
-          logger.warn('Failed to load configuration file', {
+          LOGGER.warn('Failed to load configuration file', {
             path: resolvedPath,
             error: error instanceof Error ? error.message : String(error),
           });

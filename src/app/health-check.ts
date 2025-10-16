@@ -4,7 +4,7 @@
 
 import { ConfigManager } from '../infrastructure/config/index.js';
 import { StorageFactory } from '../infrastructure/storage/storage-factory.js';
-import { logger } from '../shared/utils/logger.js';
+import { LOGGER } from '../shared/utils/logger.js';
 
 import type { StorageBackend } from '../shared/types/storage.js';
 
@@ -74,14 +74,14 @@ export class HealthChecker {
 
     // Log health status changes
     if (overallStatus !== 'healthy') {
-      logger.warn('Health check failed', {
+      LOGGER.warn('Health check failed', {
         status: overallStatus,
         failedChecks: failedChecks.length,
         warnChecks: warnChecks.length,
         duration: Date.now() - startTime,
       });
     } else {
-      logger.debug('Health check passed', {
+      LOGGER.debug('Health check passed', {
         duration: Date.now() - startTime,
         checksCount: checks.length,
       });
@@ -123,7 +123,7 @@ export class HealthChecker {
             itemsPerDay: 0,
             completionRate: 0,
           },
-          complexityDistribution: {},
+
           tagFrequency: {},
           dependencyGraph: [],
         },
@@ -175,7 +175,7 @@ export class HealthChecker {
           await storage.shutdown();
         } catch (shutdownError) {
           // Log but don't throw shutdown errors
-          logger.warn('Failed to shutdown storage during health check', {
+          LOGGER.warn('Failed to shutdown storage during health check', {
             error:
               shutdownError instanceof Error
                 ? shutdownError.message
@@ -344,17 +344,17 @@ export async function performHealthCheck(): Promise<void> {
     const health = await healthChecker.checkHealth();
 
     if (health.status === 'healthy') {
-      logger.info('Health check passed');
+      LOGGER.info('Health check passed');
       process.exit(0);
     } else {
-      logger.error('Health check failed', {
+      LOGGER.error('Health check failed', {
         status: health.status,
         failedChecks: health.checks.filter(c => c.status === 'fail'),
       });
       process.exit(1);
     }
   } catch (error) {
-    logger.error('Health check error', {
+    LOGGER.error('Health check error', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
     process.exit(1);

@@ -79,7 +79,7 @@ vi.mock(
 
 // Mock logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
-  logger: {
+  LOGGER: {
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),

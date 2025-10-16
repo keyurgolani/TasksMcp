@@ -8,7 +8,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -27,7 +27,7 @@ export async function handleListAllLists(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing list_all_lists request', {
+    LOGGER.debug('Processing list_all_lists request', {
       params: request.params?.arguments,
     });
 
@@ -57,7 +57,7 @@ export async function handleListAllLists(
       return listResponse;
     });
 
-    logger.info('Task lists retrieved successfully', {
+    LOGGER.info('Task lists retrieved successfully', {
       count: response.length,
       projectTag: args.projectTag,
     });

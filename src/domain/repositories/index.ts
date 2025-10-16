@@ -14,7 +14,7 @@
 
 // TaskList repository
 export type {
-  ITaskListRepository,
+  TaskListRepositoryInterface,
   FindOptions,
   TaskFilters,
   SortOptions,
@@ -25,7 +25,7 @@ export type {
 
 // Task repository
 export type {
-  ITaskRepository,
+  TaskRepositoryInterface,
   TaskSearchQuery,
   TaskWithContext,
   UpdateTaskOptions,

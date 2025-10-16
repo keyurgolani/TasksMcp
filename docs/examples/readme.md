@@ -19,7 +19,7 @@ Simple task and list management operations for getting started.
 
 - `create_list`, `get_list`, `list_all_lists`, `delete_list`
 - `add_task`, `update_task`, `complete_task`, `remove_task`
-- `search_tasks`, `filter_tasks`, `show_tasks`
+- `search_tool`, `show_tasks`
 
 ### [Advanced Workflows](advanced.md) ⭐ **Enhanced with Methodology**
 
@@ -147,7 +147,7 @@ Setup and configuration examples for different environments and MCP clients.
 ### Daily Development Workflow
 
 1. **Morning standup**: Use `get_ready_tasks` to see what's available
-2. **Work planning**: Use `filter_tasks` to focus on priority items
+2. **Work planning**: Use `search_tool` to focus on priority items
 3. **Progress tracking**: Use `show_tasks` with summary format
 4. **Task completion**: Use `complete_task` to mark work done
 

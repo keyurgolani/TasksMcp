@@ -39,8 +39,8 @@ import {
 } from '../../../src/shared/types/task.js';
 
 import type {
-  ITaskRepository,
-  ITaskListRepository,
+  TaskRepositoryInterface,
+  TaskListRepositoryInterface,
   TaskSearchQuery,
   TaskWithContext,
   UpdateTaskOptions,
@@ -216,9 +216,9 @@ describe('Todo-to-Task Terminology Migration', () => {
   });
 
   describe('Repository Interface Terminology', () => {
-    it('should have ITaskRepository interface using Task terminology', () => {
-      // Test that ITaskRepository interface exists and uses Task terminology
-      const mockTaskRepo: Partial<ITaskRepository> = {
+    it('should have TaskRepositoryInterface interface using Task terminology', () => {
+      // Test that TaskRepositoryInterface interface exists and uses Task terminology
+      const mockTaskRepo: Partial<TaskRepositoryInterface> = {
         findById: async (_taskId: string) => null,
         search: async (_query: TaskSearchQuery) => ({
           items: [],
@@ -246,9 +246,9 @@ describe('Todo-to-Task Terminology Migration', () => {
       expect(mockTaskRepo.update).toBeDefined();
     });
 
-    it('should have ITaskListRepository interface using TaskList terminology', () => {
-      // Test that ITaskListRepository interface exists and uses TaskList terminology
-      const mockTaskListRepo: Partial<ITaskListRepository> = {
+    it('should have TaskListRepositoryInterface interface using TaskList terminology', () => {
+      // Test that TaskListRepositoryInterface interface exists and uses TaskList terminology
+      const mockTaskListRepo: Partial<TaskListRepositoryInterface> = {
         save: async (_list: TaskList) => {},
         findById: async (_id: string) => null,
         findAll: async () => [],
@@ -614,7 +614,9 @@ describe('Todo-to-Task Terminology Migration', () => {
       );
       const taskRepoContent = readFileSync(taskRepoPath, 'utf-8');
 
-      expect(taskRepoContent).toContain('export interface ITaskRepository');
+      expect(taskRepoContent).toContain(
+        'export interface TaskRepositoryInterface'
+      );
       expect(taskRepoContent).toContain('TaskSearchQuery');
       expect(taskRepoContent).toContain('TaskWithContext');
       expect(taskRepoContent).toContain('UpdateTaskOptions');
@@ -629,7 +631,7 @@ describe('Todo-to-Task Terminology Migration', () => {
       const taskListRepoContent = readFileSync(taskListRepoPath, 'utf-8');
 
       expect(taskListRepoContent).toContain(
-        'export interface ITaskListRepository'
+        'export interface TaskListRepositoryInterface'
       );
       expect(taskListRepoContent).toContain('TaskList');
       expect(taskListRepoContent).toContain('TaskFilters');

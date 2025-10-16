@@ -153,18 +153,11 @@ export class AgentPromptOrchestratorImpl implements AgentPromptOrchestrator {
       match.slice(2, -2).trim()
     );
 
-    // Determine complexity based on template length and variable count
-    const complexity =
-      template.length > 1000 || variablesFound.length > 5
-        ? 'complex'
-        : 'simple';
-
     return {
       isValid: errors.length === 0,
       errors: errors.map(e => e.message),
       warnings: [],
       variablesFound,
-      complexity,
     };
   }
 

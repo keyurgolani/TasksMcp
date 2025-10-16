@@ -12,7 +12,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -61,7 +61,7 @@ export async function handleUpdateTask(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing update_task request', {
+    LOGGER.debug('Processing update_task request', {
       params: request.params?.arguments,
     });
 
@@ -135,7 +135,7 @@ export async function handleUpdateTask(
       }),
     };
 
-    logger.info('Task updated successfully', {
+    LOGGER.info('Task updated successfully', {
       listId: args.listId,
       taskId: args.taskId,
       title: updatedTask.title,

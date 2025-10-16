@@ -2,10 +2,10 @@
  * Development environment configuration
  */
 
-import { baseConfig } from './base.js';
+import { BASE_CONFIG } from './base.js';
 
-export const developmentConfig = {
-  ...baseConfig,
+export const DEVELOPMENT_CONFIG = {
+  ...BASE_CONFIG,
   storage: {
     type: 'file' as const,
     file: {
@@ -15,11 +15,11 @@ export const developmentConfig = {
     },
   },
   health: {
-    ...baseConfig.health,
+    ...BASE_CONFIG.health,
     interval: 10000, // 10 seconds for faster feedback
   },
   backup: {
-    ...baseConfig.backup,
+    ...BASE_CONFIG.backup,
     enabled: false, // Disable automated backups in development
   },
   security: {

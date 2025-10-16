@@ -5,7 +5,7 @@
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 export interface LockOptions {
   timeout?: number; // Maximum time to wait for lock in milliseconds
@@ -64,7 +64,7 @@ export class FileLock {
         await fs.writeFile(lockPath, process.pid.toString(), { flag: 'wx' });
         lockAcquired = true;
 
-        logger.debug('File lock acquired', { filePath, lockPath, retries });
+        LOGGER.debug('File lock acquired', { filePath, lockPath, retries });
       } catch (error: unknown) {
         if (
           error instanceof Error &&
@@ -80,7 +80,7 @@ export class FileLock {
             if (!FileLock.isProcessRunning(lockPid)) {
               // Stale lock, remove it
               await fs.unlink(lockPath);
-              logger.warn('Removed stale lock file', {
+              LOGGER.warn('Removed stale lock file', {
                 filePath,
                 lockPath,
                 stalePid: lockPid,
@@ -91,7 +91,7 @@ export class FileLock {
             // If we can't read the lock file, assume it's corrupted and remove it
             try {
               await fs.unlink(lockPath);
-              logger.warn('Removed corrupted lock file', {
+              LOGGER.warn('Removed corrupted lock file', {
                 filePath,
                 lockPath,
               });
@@ -132,9 +132,9 @@ export class FileLock {
     return async () => {
       try {
         await fs.unlink(lockPath);
-        logger.debug('File lock released', { filePath, lockPath });
+        LOGGER.debug('File lock released', { filePath, lockPath });
       } catch (error) {
-        logger.warn('Failed to remove lock file', {
+        LOGGER.warn('Failed to remove lock file', {
           filePath,
           lockPath,
           error,

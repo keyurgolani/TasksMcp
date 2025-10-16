@@ -2,7 +2,7 @@
 
 This directory contains the complete CI/CD pipeline configuration for the MCP Task Manager project.
 
-> **Note**: This file was renamed from `README.md` to `CICD.md` to prevent GitHub from displaying it instead of the main project README.md on the repository homepage.
+> **Note**: This file was renamed from `readme.md` to `CICD.md` to prevent GitHub from displaying it instead of the main project readme.md on the repository homepage.
 
 ## 🚀 Pipeline Overview
 

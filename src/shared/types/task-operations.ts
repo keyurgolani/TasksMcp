@@ -8,7 +8,7 @@ import {
   Priority,
   ActionPlan,
   ExitCriteria,
-} from '../../domain/models/task';
+} from '../../domain/models/task.js';
 
 export interface CreateTaskData {
   listId: string;

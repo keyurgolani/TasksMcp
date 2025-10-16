@@ -3,14 +3,14 @@
  * Handles all task-related operations with business rule enforcement
  */
 
-import { Task, TaskStatus, Priority } from '../../../domain/models/task';
+import { Task, TaskStatus, Priority } from '../../../domain/models/task.js';
 import {
   CreateTaskData,
   UpdateTaskData,
   SearchTasksData,
 } from '../../../shared/types/task-operations';
 
-import { BaseOrchestrator } from './base-orchestrator';
+import { BaseOrchestrator } from './base-orchestrator.js';
 
 export interface TaskOrchestrator extends BaseOrchestrator {
   /**

@@ -88,8 +88,8 @@ update_markdown_version() {
 }
 
 # Update main documentation files
-update_markdown_version "README.md"
-update_markdown_version "AGENTS.md"
+update_markdown_version "readme.md"
+update_markdown_version "agents.md"
 
 # Update docs directory
 find docs -name "*.md" -type f | while read -r file; do

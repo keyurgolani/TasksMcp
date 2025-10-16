@@ -1,5 +1,5 @@
 /**
- * Enhanced task validator for orchestration layer
+ * Task validator for orchestration layer
  * Validates task data according to domain rules with detailed error messages
  */
 
@@ -212,8 +212,8 @@ export class TaskValidator {
     if (uniqueTags.size !== tags.length) {
       warnings.push({
         field: 'tags',
-        message: 'Duplicate tags found',
-        suggestion: 'Remove duplicate tags for better organization',
+        message:
+          'Duplicate tags found. Remove duplicate tags to avoid confusion.',
       });
     }
 
@@ -311,16 +311,13 @@ export class TaskValidator {
       // More than a week (7 * 24 * 60)
       warnings.push({
         field: 'estimatedDuration',
-        message: 'Duration is unusually long (more than a week)',
-        suggestion:
-          'Consider breaking this task into smaller subtasks for better management',
+        message:
+          'Duration is unusually long (more than a week). Consider breaking this task into smaller subtasks.',
       });
     } else if (duration < 1) {
       warnings.push({
         field: 'estimatedDuration',
         message: 'Duration is very short (less than 1 minute)',
-        suggestion:
-          'Consider if this task needs an estimated duration or if it can be combined with other tasks',
       });
     }
 

@@ -1,7 +1,7 @@
 /**
  * TaskListRepository Implementation
  *
- * Concrete implementation of ITaskListRepository that uses DataSourceRouter
+ * Concrete implementation of TaskListRepositoryInterface that uses DataSourceRouter
  * and MultiSourceAggregator to provide multi-source data access with
  * conflict resolution and aggregation capabilities.
  *
@@ -20,10 +20,10 @@
  * - Maintains backward compatibility with existing repository interface
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
-  ITaskListRepository,
+  TaskListRepositoryInterface,
   FindOptions,
   SearchQuery,
   SearchResult,
@@ -56,12 +56,24 @@ export interface TaskListWithSource extends TaskList {
  * - Fallback and error recovery
  * - Consistent query interface across all sources
  */
-export class TaskListRepository implements ITaskListRepository {
+/**
+ * Multi-source TaskList repository implementation
+ *
+ * Provides TaskList persistence and retrieval operations across multiple data sources
+ * with automatic routing, aggregation, and conflict resolution.
+ *
+ * Features:
+ * - Multi-source data routing with priority-based selection
+ * - Automatic conflict resolution using latest-wins strategy
+ * - Comprehensive search and filtering capabilities
+ * - Consistent query interface across all sources
+ */
+export class TaskListRepository implements TaskListRepositoryInterface {
   constructor(
     private readonly router: DataSourceRouter,
     private readonly aggregator: MultiSourceAggregator
   ) {
-    logger.info('TaskListRepository initialized with multi-source support');
+    LOGGER.info('TaskListRepository initialized with multi-source support');
   }
 
   /**
@@ -77,7 +89,7 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async save(list: TaskList): Promise<void> {
     try {
-      logger.debug('Saving TaskList via router', {
+      LOGGER.debug('Saving TaskList via router', {
         listId: list.id,
         title: list.title,
         projectTag: list.projectTag,
@@ -102,13 +114,13 @@ export class TaskListRepository implements ITaskListRepository {
         context
       );
 
-      logger.info('TaskList saved successfully', {
+      LOGGER.info('TaskList saved successfully', {
         listId: list.id,
         title: list.title,
         itemCount: list.items.length,
       });
     } catch (error) {
-      logger.error('Failed to save TaskList', {
+      LOGGER.error('Failed to save TaskList', {
         listId: list.id,
         title: list.title,
         error,
@@ -134,7 +146,7 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async findById(id: string, options?: FindOptions): Promise<TaskList | null> {
     try {
-      logger.debug('Finding TaskList by ID via router', {
+      LOGGER.debug('Finding TaskList by ID via router', {
         listId: id,
         options,
       });
@@ -153,11 +165,11 @@ export class TaskListRepository implements ITaskListRepository {
       );
 
       if (!list) {
-        logger.debug('TaskList not found', { listId: id });
+        LOGGER.debug('TaskList not found', { listId: id });
         return null;
       }
 
-      logger.debug('TaskList found', {
+      LOGGER.debug('TaskList found', {
         listId: id,
         title: list.title,
         itemCount: list.items.length,
@@ -165,7 +177,7 @@ export class TaskListRepository implements ITaskListRepository {
 
       return list;
     } catch (error) {
-      logger.error('Failed to find TaskList by ID', { listId: id, error });
+      LOGGER.error('Failed to find TaskList by ID', { listId: id, error });
       throw new Error(
         `Failed to find TaskList ${id}: ${
           error instanceof Error ? error.message : String(error)
@@ -189,7 +201,7 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async findAll(options?: FindOptions): Promise<TaskList[]> {
     try {
-      logger.debug('Finding all TaskLists via aggregator', { options });
+      LOGGER.debug('Finding all TaskLists via aggregator', { options });
 
       // Build search query from find options
       const query: SearchQuery = {
@@ -208,14 +220,14 @@ export class TaskListRepository implements ITaskListRepository {
       // Use aggregator to get all lists
       const result = await this.aggregator.aggregateLists(sources, query);
 
-      logger.info('Found TaskLists via aggregator', {
+      LOGGER.info('Found TaskLists via aggregator', {
         count: result.items.length,
         totalCount: result.totalCount,
       });
 
       return result.items;
     } catch (error) {
-      logger.error('Failed to find all TaskLists', { error });
+      LOGGER.error('Failed to find all TaskLists', { error });
       throw new Error(
         `Failed to find all TaskLists: ${
           error instanceof Error ? error.message : String(error)
@@ -240,7 +252,7 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async search(query: SearchQuery): Promise<SearchResult<TaskList>> {
     try {
-      logger.debug('Searching TaskLists via aggregator', { query });
+      LOGGER.debug('Searching TaskLists via aggregator', { query });
 
       // Get all sources from router with metadata
       const backends = this.router.getAllSources();
@@ -262,7 +274,7 @@ export class TaskListRepository implements ITaskListRepository {
         };
       });
 
-      logger.debug('Querying sources for search', {
+      LOGGER.debug('Querying sources for search', {
         sourceCount: sources.length,
         sources: sources.map(s => ({
           id: s.id,
@@ -274,7 +286,7 @@ export class TaskListRepository implements ITaskListRepository {
       // Use aggregator to search across all sources
       const result = await this.aggregator.aggregateLists(sources, query);
 
-      logger.info('Search completed via aggregator', {
+      LOGGER.info('Search completed via aggregator', {
         totalCount: result.totalCount,
         returnedCount: result.items.length,
         hasMore: result.hasMore,
@@ -282,7 +294,7 @@ export class TaskListRepository implements ITaskListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TaskLists', { query, error });
+      LOGGER.error('Failed to search TaskLists', { query, error });
       throw new Error(
         `Failed to search TaskLists: ${
           error instanceof Error ? error.message : String(error)
@@ -305,7 +317,7 @@ export class TaskListRepository implements ITaskListRepository {
     query: SearchQuery
   ): Promise<SearchResult<TaskListSummary>> {
     try {
-      logger.debug('Searching TaskList summaries via aggregator', { query });
+      LOGGER.debug('Searching TaskList summaries via aggregator', { query });
 
       // Get all sources from router with metadata
       const backends = this.router.getAllSources();
@@ -325,14 +337,14 @@ export class TaskListRepository implements ITaskListRepository {
         };
       });
 
-      logger.debug('Querying sources for summaries', {
+      LOGGER.debug('Querying sources for summaries', {
         sourceCount: sources.length,
       });
 
       // Use aggregator to search summaries across all sources
       const result = await this.aggregator.aggregateSummaries(sources, query);
 
-      logger.info('Summary search completed via aggregator', {
+      LOGGER.info('Summary search completed via aggregator', {
         totalCount: result.totalCount,
         returnedCount: result.items.length,
         hasMore: result.hasMore,
@@ -340,7 +352,7 @@ export class TaskListRepository implements ITaskListRepository {
 
       return result;
     } catch (error) {
-      logger.error('Failed to search TaskList summaries', { query, error });
+      LOGGER.error('Failed to search TaskList summaries', { query, error });
       throw new Error(
         `Failed to search TaskList summaries: ${
           error instanceof Error ? error.message : String(error)
@@ -361,7 +373,7 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async delete(id: string): Promise<void> {
     try {
-      logger.debug('Deleting TaskList via router', { listId: id });
+      LOGGER.debug('Deleting TaskList via router', { listId: id });
 
       const context: OperationContext = {
         listId: id,
@@ -376,9 +388,9 @@ export class TaskListRepository implements ITaskListRepository {
         context
       );
 
-      logger.info('TaskList deleted successfully', { listId: id });
+      LOGGER.info('TaskList deleted successfully', { listId: id });
     } catch (error) {
-      logger.error('Failed to delete TaskList', {
+      LOGGER.error('Failed to delete TaskList', {
         listId: id,
         error,
       });
@@ -401,16 +413,16 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async exists(id: string): Promise<boolean> {
     try {
-      logger.debug('Checking if TaskList exists', { listId: id });
+      LOGGER.debug('Checking if TaskList exists', { listId: id });
 
       const list = await this.findById(id);
       const exists = list !== null;
 
-      logger.debug('TaskList existence check', { listId: id, exists });
+      LOGGER.debug('TaskList existence check', { listId: id, exists });
 
       return exists;
     } catch (error) {
-      logger.error('Failed to check TaskList existence', { listId: id, error });
+      LOGGER.error('Failed to check TaskList existence', { listId: id, error });
       throw new Error(
         `Failed to check if TaskList ${id} exists: ${
           error instanceof Error ? error.message : String(error)
@@ -430,7 +442,7 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async count(query?: SearchQuery): Promise<number> {
     try {
-      logger.debug('Counting TaskLists', { query });
+      LOGGER.debug('Counting TaskLists', { query });
 
       if (!query) {
         // Count of all lists
@@ -440,11 +452,11 @@ export class TaskListRepository implements ITaskListRepository {
       // Use searchSummaries to get count (more efficient than full search)
       const result = await this.searchSummaries(query);
 
-      logger.debug('TaskList count', { count: result.totalCount });
+      LOGGER.debug('TaskList count', { count: result.totalCount });
 
       return result.totalCount;
     } catch (error) {
-      logger.error('Failed to count TaskLists', { query, error });
+      LOGGER.error('Failed to count TaskLists', { query, error });
       throw new Error(
         `Failed to count TaskLists: ${
           error instanceof Error ? error.message : String(error)
@@ -462,12 +474,12 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      logger.debug('Performing repository health check');
+      LOGGER.debug('Performing repository health check');
 
       const status = this.router.getStatus();
       const isHealthy = status.healthy > 0;
 
-      logger.debug('Repository health check result', {
+      LOGGER.debug('Repository health check result', {
         isHealthy,
         healthySources: status.healthy,
         totalSources: status.total,
@@ -475,7 +487,7 @@ export class TaskListRepository implements ITaskListRepository {
 
       return isHealthy;
     } catch (error) {
-      logger.error('Repository health check failed', { error });
+      LOGGER.error('Repository health check failed', { error });
       return false;
     }
   }
@@ -494,11 +506,11 @@ export class TaskListRepository implements ITaskListRepository {
    */
   async shutdown(): Promise<void> {
     try {
-      logger.info('Shutting down TaskListRepository');
+      LOGGER.info('Shutting down TaskListRepository');
       await this.router.shutdown();
-      logger.info('TaskListRepository shutdown complete');
+      LOGGER.info('TaskListRepository shutdown complete');
     } catch (error) {
-      logger.error('Failed to shutdown TaskListRepository', { error });
+      LOGGER.error('Failed to shutdown TaskListRepository', { error });
       throw error;
     }
   }

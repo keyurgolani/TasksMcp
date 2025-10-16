@@ -5,11 +5,14 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { createOrchestrationError } from '../../shared/utils/error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { ImplementationNote } from '../../shared/types/task.js';
-import type { ITaskListRepository } from '../repositories/task-list.repository.js';
+import type { TaskListRepositoryInterface } from '../repositories/task-list.repository.js';
 
+/**
+ * Input parameters for creating a note
+ */
 export interface CreateNoteInput {
   entityId: string; // Task ID or List ID
   entityType: 'task' | 'list';
@@ -18,11 +21,17 @@ export interface CreateNoteInput {
   author?: string;
 }
 
+/**
+ * Input parameters for updating a note
+ */
 export interface UpdateNoteInput {
   noteId: string;
   content: string;
 }
 
+/**
+ * Input parameters for searching notes
+ */
 export interface SearchNotesInput {
   query: string;
   entityType?: 'task' | 'list';
@@ -32,6 +41,9 @@ export interface SearchNotesInput {
   offset?: number;
 }
 
+/**
+ * Result of a notes search operation
+ */
 export interface SearchNotesResult {
   notes: Array<
     ImplementationNote & { entityId: string; entityType: 'task' | 'list' }
@@ -40,21 +52,37 @@ export interface SearchNotesResult {
   hasMore: boolean;
 }
 
+/**
+ * Result of note validation
+ */
 export interface NoteValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
 }
 
+/**
+ * Manages implementation notes for tasks and lists
+ *
+ * Provides comprehensive note management capabilities including creation, updating,
+ * searching, and formatting of implementation notes attached to tasks or lists.
+ *
+ * Features:
+ * - Note CRUD operations with validation
+ * - Full-text search across note content
+ * - Note history tracking and sorting
+ * - Formatted note display with metadata
+ * - Entity-based note organization (task/list)
+ */
 export class NotesManager {
   // Repository for future direct notes persistence
   // Currently unused but prepared for future enhancements
-  private readonly repository: ITaskListRepository | undefined;
+  private readonly repository: TaskListRepositoryInterface | undefined;
 
-  constructor(repository?: ITaskListRepository) {
+  constructor(repository?: TaskListRepositoryInterface) {
     this.repository = repository;
 
-    logger.debug('NotesManager initialized', {
+    LOGGER.debug('NotesManager initialized', {
       hasRepository: !!repository,
     });
   }
@@ -63,7 +91,7 @@ export class NotesManager {
    * Gets the repository instance if available
    * @returns The repository instance or undefined
    */
-  getRepository(): ITaskListRepository | undefined {
+  getRepository(): TaskListRepositoryInterface | undefined {
     return this.repository;
   }
 
@@ -108,7 +136,7 @@ export class NotesManager {
    */
   async createNote(input: CreateNoteInput): Promise<ImplementationNote> {
     try {
-      logger.debug('Creating implementation note', {
+      LOGGER.debug('Creating implementation note', {
         entityId: input.entityId,
         entityType: input.entityType,
         type: input.type,
@@ -131,7 +159,7 @@ export class NotesManager {
         ...(input.author && { author: input.author }),
       };
 
-      logger.info('Implementation note created successfully', {
+      LOGGER.info('Implementation note created successfully', {
         noteId,
         entityId: input.entityId,
         entityType: input.entityType,
@@ -141,7 +169,7 @@ export class NotesManager {
 
       return note;
     } catch (error) {
-      logger.error('Failed to create implementation note', {
+      LOGGER.error('Failed to create implementation note', {
         entityId: input.entityId,
         entityType: input.entityType,
         error,
@@ -158,7 +186,7 @@ export class NotesManager {
     updates: Partial<ImplementationNote>
   ): Promise<ImplementationNote> {
     try {
-      logger.debug('Updating implementation note', {
+      LOGGER.debug('Updating implementation note', {
         noteId: existingNote.id,
         hasContentUpdate: !!updates.content,
         hasTypeUpdate: !!updates.type,
@@ -188,7 +216,7 @@ export class NotesManager {
         updatedNote.content = updatedNote.content.trim();
       }
 
-      logger.info('Implementation note updated successfully', {
+      LOGGER.info('Implementation note updated successfully', {
         noteId: existingNote.id,
         contentChanged: updates.content !== undefined,
         typeChanged: updates.type !== undefined,
@@ -196,7 +224,7 @@ export class NotesManager {
 
       return updatedNote;
     } catch (error) {
-      logger.error('Failed to update implementation note', {
+      LOGGER.error('Failed to update implementation note', {
         noteId: existingNote.id,
         error,
       });
@@ -251,7 +279,7 @@ export class NotesManager {
     }
 
     if (warnings.length > 0) {
-      logger.warn('Note validation warnings', {
+      LOGGER.warn('Note validation warnings', {
         warnings,
         contentLength: content.length,
       });
@@ -293,7 +321,7 @@ export class NotesManager {
     sortOrder: 'asc' | 'desc' = 'desc'
   ): Promise<ImplementationNote[]> {
     try {
-      logger.debug('Getting notes history', {
+      LOGGER.debug('Getting notes history', {
         noteCount: notes.length,
         sortOrder,
       });
@@ -310,14 +338,14 @@ export class NotesManager {
           : dateA.getTime() - dateB.getTime();
       });
 
-      logger.debug('Notes history retrieved successfully', {
+      LOGGER.debug('Notes history retrieved successfully', {
         noteCount: sortedNotes.length,
         sortOrder,
       });
 
       return sortedNotes;
     } catch (error) {
-      logger.error('Failed to get notes history', {
+      LOGGER.error('Failed to get notes history', {
         noteCount: notes.length,
         error,
       });
@@ -335,7 +363,7 @@ export class NotesManager {
     input: SearchNotesInput
   ): Promise<SearchNotesResult> {
     try {
-      logger.debug('Searching notes', {
+      LOGGER.debug('Searching notes', {
         query: input.query,
         entityType: input.entityType,
         noteType: input.noteType,
@@ -385,7 +413,7 @@ export class NotesManager {
       const paginatedNotes = filteredNotes.slice(offset, offset + limit);
       const hasMore = offset + limit < total;
 
-      logger.info('Notes search completed', {
+      LOGGER.info('Notes search completed', {
         query: input.query,
         totalMatches: total,
         returnedCount: paginatedNotes.length,
@@ -398,7 +426,7 @@ export class NotesManager {
         hasMore,
       };
     } catch (error) {
-      logger.error('Failed to search notes', {
+      LOGGER.error('Failed to search notes', {
         query: input.query,
         error,
       });

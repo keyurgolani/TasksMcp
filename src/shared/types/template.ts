@@ -3,8 +3,8 @@
  * Defines structures for template rendering and variable substitution
  */
 
-import { Task } from '../../domain/models/task';
-import { TaskList } from '../../domain/models/task-list';
+import { TaskList } from '../../domain/models/task-list.js';
+import { Task } from '../../domain/models/task.js';
 
 export interface TemplateVariable {
   name: string;
@@ -32,7 +32,6 @@ export interface TemplateValidationResult {
   errors: string[];
   warnings: string[];
   variablesFound: string[];
-  complexity: 'simple' | 'complex';
 }
 
 export interface TemplateError {

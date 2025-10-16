@@ -104,7 +104,7 @@ Include relevant context that will help during execution:
   "arguments": {
     "listId": "web-app-project",
     "title": "Optimize database queries for user dashboard",
-    "description": "ACTION PLAN:\n1. Profile current query performance using EXPLAIN ANALYZE\n2. Identify N+1 query problems in user data loading\n3. Add appropriate database indexes\n4. Implement query result caching\n5. Optimize ORM queries (add eager loading)\n6. Add database query monitoring\n7. Performance test with realistic data volumes\n\nCONTEXT:\n- Dashboard loads slowly with >1000 users\n- Using PostgreSQL with Sequelize ORM\n- Current load time: 3-5 seconds, target: <500ms\n- Peak usage: 200 concurrent users\n\nRESOURCES:\n- Database performance guide: /docs/db-optimization.md\n- Current slow query log: /logs/slow-queries.log\n- Performance requirements: /specs/performance.md",
+    "description": "ACTION PLAN:\n1. Profile current query performance using EXPLAIN ANALYZE\n2. Identify N+1 query problems in user data loading\n3. Add appropriate database indexes\n4. Implement query result caching\n5. Optimize ORM queries (add eager loading)\n6. Add database indexes for common queries\n7. Performance test with realistic data volumes\n\nCONTEXT:\n- Dashboard loads slowly with >1000 users\n- Using PostgreSQL with Sequelize ORM\n- Current load time: 3-5 seconds, target: <500ms\n- Peak usage: 200 concurrent users\n\nRESOURCES:\n- Database performance guide: /docs/db-optimization.md\n- Current slow query log: /logs/slow-queries.log\n- Performance requirements: /specs/performance.md",
     "priority": 4,
     "estimatedDuration": 240,
     "tags": ["backend", "performance", "database"],
@@ -113,7 +113,7 @@ Include relevant context that will help during execution:
       "Database queries are properly indexed",
       "N+1 query problems eliminated",
       "Query result caching implemented",
-      "Performance monitoring in place",
+      "Performance benchmarks documented",
       "Load testing passes with 200 concurrent users"
     ]
   }
@@ -422,26 +422,25 @@ Before marking a task complete, ensure every exit criterion is satisfied:
 
 ### Advanced Patterns
 
-#### Bulk Operations for Efficiency
+#### Multiple Task Operations (REST API Only)
+
+**Note**: Bulk operations are only available through the REST API, not MCP tools. For MCP, use individual operations.
 
 ```json
 {
-  "name": "bulk_task_operations",
+  "name": "add_task",
   "arguments": {
     "listId": "project-uuid",
-    "operation": "create",
-    "tasks": [
-      {
-        "title": "Set up CI/CD pipeline",
+    "title": "Set up CI/CD pipeline",
         "description": "ACTION PLAN:\n1. Configure GitHub Actions\n2. Add automated testing\n3. Set up deployment to staging\n4. Configure production deployment\n\nCONTEXT: New project needs automated deployment",
         "priority": 4,
         "tags": ["devops", "automation"]
       },
       {
-        "title": "Implement error monitoring",
-        "description": "ACTION PLAN:\n1. Set up Sentry integration\n2. Add error boundaries in React\n3. Configure alerting rules\n4. Create error dashboard\n\nCONTEXT: Need visibility into production errors",
+        "title": "Implement error handling",
+        "description": "ACTION PLAN:\n1. Add comprehensive error boundaries in React\n2. Implement proper error logging\n3. Create user-friendly error messages\n4. Add error recovery mechanisms\n\nCONTEXT: Need robust error handling for production stability",
         "priority": 3,
-        "tags": ["monitoring", "reliability"]
+        "tags": ["error-handling", "reliability"]
       }
     ]
   }

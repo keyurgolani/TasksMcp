@@ -3,14 +3,14 @@
  * Handles dependency validation, circular detection, and ready task identification
  */
 
-import { Task } from '../../../domain/models/task';
+import { Task } from '../../../domain/models/task.js';
 import {
   DependencyGraph,
   CircularDependencyResult,
   BlockReason,
 } from '../../../shared/types/dependency';
 
-import { BaseOrchestrator } from './base-orchestrator';
+import { BaseOrchestrator } from './base-orchestrator.js';
 
 export interface DependencyOrchestrator extends BaseOrchestrator {
   /**

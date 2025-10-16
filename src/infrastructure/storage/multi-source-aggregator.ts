@@ -11,7 +11,7 @@
  * - Apply filtering, sorting, and pagination across aggregated results
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
   SearchQuery,
@@ -74,7 +74,7 @@ export class MultiSourceAggregator {
       queryTimeout: config.queryTimeout ?? 30000,
     };
 
-    logger.info('MultiSourceAggregator created', {
+    LOGGER.info('MultiSourceAggregator created', {
       conflictResolution: this.config.conflictResolution,
       parallelQueries: this.config.parallelQueries,
     });
@@ -96,7 +96,7 @@ export class MultiSourceAggregator {
     }>,
     query: SearchQuery
   ): Promise<SearchResult<TaskList>> {
-    logger.debug('Aggregating lists from multiple sources', {
+    LOGGER.debug('Aggregating lists from multiple sources', {
       sourceCount: sources.length,
       query,
     });
@@ -104,14 +104,14 @@ export class MultiSourceAggregator {
     // Query all sources
     const allLists = await this.queryAllSources(sources, query);
 
-    logger.debug('Retrieved lists from sources', {
+    LOGGER.debug('Retrieved lists from sources', {
       totalLists: allLists.length,
     });
 
     // Deduplicate and resolve conflicts
     const deduplicatedLists = await this.deduplicateAndResolve(allLists);
 
-    logger.debug('Deduplicated lists', {
+    LOGGER.debug('Deduplicated lists', {
       originalCount: allLists.length,
       deduplicatedCount: deduplicatedLists.length,
     });
@@ -119,7 +119,7 @@ export class MultiSourceAggregator {
     // Apply filters
     const filteredLists = this.applyFilters(deduplicatedLists, query);
 
-    logger.debug('Filtered lists', {
+    LOGGER.debug('Filtered lists', {
       beforeFilter: deduplicatedLists.length,
       afterFilter: filteredLists.length,
     });
@@ -138,7 +138,7 @@ export class MultiSourceAggregator {
     const hasMore =
       (query.pagination?.offset ?? 0) + paginatedLists.length < totalCount;
 
-    logger.info('Aggregation complete', {
+    LOGGER.info('Aggregation complete', {
       totalCount,
       returnedCount: paginatedLists.length,
       hasMore,
@@ -176,7 +176,7 @@ export class MultiSourceAggregator {
     }>,
     query: SearchQuery
   ): Promise<SearchResult<TaskListSummary>> {
-    logger.debug('Aggregating summaries from multiple sources', {
+    LOGGER.debug('Aggregating summaries from multiple sources', {
       sourceCount: sources.length,
       query,
     });
@@ -184,14 +184,14 @@ export class MultiSourceAggregator {
     // Query all sources for summaries
     const allSummaries = await this.queryAllSourcesForSummaries(sources, query);
 
-    logger.debug('Retrieved summaries from sources', {
+    LOGGER.debug('Retrieved summaries from sources', {
       totalSummaries: allSummaries.length,
     });
 
     // Deduplicate summaries (keep highest priority)
     const deduplicatedSummaries = this.deduplicateSummaries(allSummaries);
 
-    logger.debug('Deduplicated summaries', {
+    LOGGER.debug('Deduplicated summaries', {
       originalCount: allSummaries.length,
       deduplicatedCount: deduplicatedSummaries.length,
     });
@@ -219,7 +219,7 @@ export class MultiSourceAggregator {
     const hasMore =
       (query.pagination?.offset ?? 0) + paginatedSummaries.length < totalCount;
 
-    logger.info('Summary aggregation complete', {
+    LOGGER.info('Summary aggregation complete', {
       totalCount,
       returnedCount: paginatedSummaries.length,
       hasMore,
@@ -268,7 +268,7 @@ export class MultiSourceAggregator {
           },
         }));
       } catch (error) {
-        logger.warn('Failed to query source', {
+        LOGGER.warn('Failed to query source', {
           sourceId: source.id,
           error,
         });
@@ -292,7 +292,7 @@ export class MultiSourceAggregator {
           const lists = await promise;
           results.push(...lists);
         } catch (error) {
-          logger.warn('Sequential query failed', { error });
+          LOGGER.warn('Sequential query failed', { error });
         }
       }
       return results;
@@ -335,7 +335,7 @@ export class MultiSourceAggregator {
           },
         }));
       } catch (error) {
-        logger.warn('Failed to query source for summaries', {
+        LOGGER.warn('Failed to query source for summaries', {
           sourceId: source.id,
           error,
         });
@@ -364,7 +364,7 @@ export class MultiSourceAggregator {
           const summaries = await promise;
           results.push(...summaries);
         } catch (error) {
-          logger.warn('Sequential summary query failed', { error });
+          LOGGER.warn('Sequential summary query failed', { error });
         }
       }
       return results;
@@ -398,7 +398,7 @@ export class MultiSourceAggregator {
             lists.push(list);
           }
         } catch (error) {
-          logger.warn('Failed to load list from source', {
+          LOGGER.warn('Failed to load list from source', {
             listId: summary.id,
             error,
           });
@@ -438,7 +438,7 @@ export class MultiSourceAggregator {
         }
       } else {
         // Conflict detected, resolve it
-        logger.debug('Conflict detected for list', {
+        LOGGER.debug('Conflict detected for list', {
           listId,
           versionCount: versions.length,
         });
@@ -507,7 +507,7 @@ export class MultiSourceAggregator {
   private async resolveConflict(context: ConflictContext): Promise<TaskList> {
     const { listId, versions, strategy } = context;
 
-    logger.debug('Resolving conflict', {
+    LOGGER.debug('Resolving conflict', {
       listId,
       versionCount: versions.length,
       strategy,
@@ -522,7 +522,7 @@ export class MultiSourceAggregator {
 
       case 'manual':
         // For manual resolution, we'll use priority as fallback
-        logger.warn(
+        LOGGER.warn(
           'Manual conflict resolution not implemented, using priority',
           {
             listId,
@@ -532,7 +532,7 @@ export class MultiSourceAggregator {
 
       case 'merge':
         // For merge strategy, we'll use latest as fallback
-        logger.warn(
+        LOGGER.warn(
           'Merge conflict resolution not fully implemented, using latest',
           {
             listId,
@@ -541,7 +541,7 @@ export class MultiSourceAggregator {
         return this.resolveByLatest(versions);
 
       default:
-        logger.warn('Unknown conflict resolution strategy, using priority', {
+        LOGGER.warn('Unknown conflict resolution strategy, using priority', {
           listId,
           strategy,
         });
@@ -566,7 +566,7 @@ export class MultiSourceAggregator {
 
     const { _sourceMetadata, ...list } = version;
 
-    logger.debug('Resolved conflict by latest', {
+    LOGGER.debug('Resolved conflict by latest', {
       listId: list.id,
       selectedSource: _sourceMetadata?.sourceId,
       updatedAt: list.updatedAt,
@@ -592,7 +592,7 @@ export class MultiSourceAggregator {
 
     const { _sourceMetadata, ...list } = version;
 
-    logger.debug('Resolved conflict by priority', {
+    LOGGER.debug('Resolved conflict by priority', {
       listId: list.id,
       selectedSource: _sourceMetadata?.sourceId,
       priority: _sourceMetadata?.priority,

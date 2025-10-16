@@ -158,7 +158,7 @@ export interface SearchResult<T> {
  * - All operations should be atomic where possible
  * - Implementations should handle concurrent access safely
  */
-export interface ITaskListRepository {
+export interface TaskListRepositoryInterface {
   /**
    * Saves a TaskList to the repository
    *

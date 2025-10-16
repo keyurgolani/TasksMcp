@@ -269,30 +269,22 @@ describe('Comprehensive Validation Tests', () => {
       try {
         schema.parse({ priority: 'high', tags: 'not-array' });
       } catch (error) {
-        const addTaskFormatted = ErrorFormatter.formatValidationError(
+        // Use the enhanced error formatter
+        const addTaskFormatted = _formatZodError(
           error as ZodError,
-          { toolName: 'add_task' }
+          { toolName: 'add_task' },
+          { priority: 'high', tags: 'not-array' }
         );
 
-        const filterTasksFormatted = ErrorFormatter.formatValidationError(
+        const filterTasksFormatted = _formatZodError(
           error as ZodError,
-          { toolName: 'search_tool' }
+          { toolName: 'search_tool' },
+          { priority: 'high', tags: 'not-array' }
         );
 
-        // Should have different suggestions based on tool context
-        const addTaskPriorityError = addTaskFormatted.find(
-          e => e.field === 'priority'
-        );
-        const filterTasksPriorityError = filterTasksFormatted.find(
-          e => e.field === 'priority'
-        );
-
-        expect(addTaskPriorityError?.suggestion).toBe(
-          'Use numbers 1-5, where 5 is highest priority'
-        );
-        expect(filterTasksPriorityError?.suggestion).toBe(
-          'Use numbers 1-5, where 5 is highest priority'
-        );
+        // Should contain enhanced error messages
+        expect(addTaskFormatted).toContain('Priority must be a number');
+        expect(filterTasksFormatted).toContain('Priority must be a number');
       }
     });
 

@@ -6,7 +6,7 @@
 import { TaskStatus, Priority } from './task';
 
 export interface SearchCriteria {
-  // Basic search
+  // Text search
   query?: string;
   listId?: string;
   projectTag?: string;
@@ -19,7 +19,7 @@ export interface SearchCriteria {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 
-  // Enhanced filtering options
+  // Filtering options
   filters?: {
     // Status filtering
     status?: TaskStatus[];
@@ -139,13 +139,11 @@ export interface SearchFilterValidation {
   isValid: boolean;
   errors: string[];
   warnings: string[];
-  suggestions?: string[];
 }
 
 // Search result with metadata
 export interface SearchResultWithMetrics<T> extends SearchResult<T> {
   metrics: SearchMetrics;
   validation: SearchFilterValidation;
-  suggestions?: string[];
   relatedQueries?: string[];
 }

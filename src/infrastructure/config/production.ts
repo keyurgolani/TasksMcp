@@ -2,10 +2,10 @@
  * Production environment configuration
  */
 
-import { baseConfig } from './base.js';
+import { BASE_CONFIG } from './base.js';
 
-export const productionConfig = {
-  ...baseConfig,
+export const PRODUCTION_CONFIG = {
+  ...BASE_CONFIG,
   storage: {
     type: 'file' as const,
     file: {
@@ -15,13 +15,13 @@ export const productionConfig = {
     },
   },
   health: {
-    ...baseConfig.health,
+    ...BASE_CONFIG.health,
     enabled: true,
     interval: 30000,
   },
 
   backup: {
-    ...baseConfig.backup,
+    ...BASE_CONFIG.backup,
     enabled: true,
     schedule: '0 2 * * *', // Daily at 2 AM
     maxFiles: 90, // Keep 3 months of backups

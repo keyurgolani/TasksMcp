@@ -70,7 +70,7 @@ export function validateMultiple(
 /**
  * Common validation schemas
  */
-export const commonSchemas = {
+export const COMMON_SCHEMAS = {
   /**
    * UUID parameter validation
    */

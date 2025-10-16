@@ -9,7 +9,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -29,7 +29,7 @@ export async function handleGetList(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing get_list request', {
+    LOGGER.debug('Processing get_list request', {
       params: request.params?.arguments,
     });
 
@@ -102,7 +102,7 @@ export async function handleGetList(
       tasks: tasksWithDependencies,
     };
 
-    logger.info('Task list retrieved successfully', {
+    LOGGER.info('Task list retrieved successfully', {
       id: taskList.id,
       title: taskList.title,
       taskCount: taskList.items.length,

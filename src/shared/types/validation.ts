@@ -20,7 +20,6 @@ export interface ValidationError {
 export interface ValidationWarning {
   field: string;
   message: string;
-  suggestion?: string;
 }
 
 export interface FieldValidation {

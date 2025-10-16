@@ -5,7 +5,7 @@
  * when agents provide invalid options. Helps agents quickly correct enum validation errors.
  */
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 /**
  * Configuration for enum matching
@@ -101,7 +101,7 @@ export class EnumMatcher {
     const result = this.performMatching(input, validOptions);
 
     // Log matching attempt for debugging
-    logger.debug('Enum fuzzy matching performed', {
+    LOGGER.debug('Enum fuzzy matching performed', {
       input,
       validOptionsCount: validOptions.length,
       matchType: result.matchType,
@@ -407,7 +407,7 @@ export class EnumMatcher {
 /**
  * Global enum matcher instance with default configuration
  */
-export const enumMatcher = new EnumMatcher();
+export const ENUM_MATCHER = new EnumMatcher();
 
 /**
  * Convenience function to find closest enum match with default settings
@@ -420,7 +420,7 @@ export function findClosestEnumValue(
   input: string,
   validOptions: string[]
 ): string | null {
-  const result = enumMatcher.findClosestEnumValue(input, validOptions);
+  const result = ENUM_MATCHER.findClosestEnumValue(input, validOptions);
   return result.match;
 }
 
@@ -437,7 +437,7 @@ export function getEnumSuggestions(
   validOptions: string[],
   maxSuggestions = 3
 ): string[] {
-  const suggestions = enumMatcher.findSuggestions(
+  const suggestions = ENUM_MATCHER.findSuggestions(
     input,
     validOptions,
     maxSuggestions

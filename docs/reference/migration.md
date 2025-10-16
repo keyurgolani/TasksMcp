@@ -1,45 +1,51 @@
 # Migration Guide
 
-This guide helps you migrate between versions of the MCP Task Manager and upgrade your configurations.
+This guide helps you migrate to the Task MCP Unified system with its new domain-driven architecture and comprehensive feature changes.
 
 ## 🚀 Version Migration
 
-### Current Version: 2.3.0
+### Current Version: 2.5.0
 
-The MCP Task Manager follows semantic versioning (semver). This guide covers migration between major versions and significant feature updates.
+The Task MCP Unified system represents a major architectural overhaul with significant breaking changes. This guide covers migration from previous versions to the new domain-driven architecture.
 
 ### Migration Overview
 
-| From Version | To Version | Migration Required | Breaking Changes                 |
-| ------------ | ---------- | ------------------ | -------------------------------- |
-| 1.x → 2.x    | 2.3.0      | Yes                | Tool consolidation, new features |
-| 2.0 → 2.1    | 2.1.x      | No                 | Backward compatible              |
-| 2.1 → 2.2    | 2.2.x      | No                 | Agent-friendly features added    |
-| 2.2 → 2.3    | 2.3.x      | No                 | Additional tools, improvements   |
+| From Version | To Version | Migration Required | Breaking Changes               |
+| ------------ | ---------- | ------------------ | ------------------------------ |
+| Any → 2.5.0  | 2.5.0      | Yes                | Complete architecture overhaul |
+| 2.x → 2.5.0  | 2.5.0      | Yes                | CLI changes, removed features  |
+| 1.x → 2.5.0  | 2.5.0      | Yes                | All systems redesigned         |
 
-## 📋 Version 2.x Migration
+**⚠️ BREAKING CHANGES**: Version 2.5.0 introduces significant breaking changes including removed features, new CLI structure, and domain-driven architecture.
 
-### Major Changes in Version 2.x
+## 📋 Version 2.5.0 Migration
 
-#### Tool Consolidation
+### Major Changes in Version 2.5.0
 
-- **`search_tasks`** and **`filter_tasks`** → **`search_tool`** (unified interface)
-- Enhanced search capabilities with advanced filtering
-- Backward compatibility maintained for existing tools
+#### Architecture Overhaul
+
+- **Domain-Driven Design**: Complete restructuring with orchestration layers
+- **Multi-Interface Support**: Separate MCP and REST API servers
+- **New CLI Structure**: `mcp.js` and `rest.js` entry points
+- **Configuration Management**: Environment variables for MCP, JSON/YAML for REST
+
+#### Removed Features (Breaking Changes)
+
+- ❌ **Intelligence Systems**: Task suggestions, complexity analysis, AI recommendations
+- ❌ **Monitoring & Alerting**: Performance monitoring, resource tracking, alerting
+- ❌ **Statistics & Analytics**: Task statistics, progress analytics, reporting
+- ❌ **Caching Systems**: All caching implementations removed
+- ❌ **Task Ordering**: Manual ordering removed (use dependencies only)
+- ❌ **Archiving**: Only permanent deletion supported
+- ❌ **Bulk Operations in MCP**: Available in REST API only
 
 #### New Features Added
 
-- **Exit Criteria Management** (2 new tools)
-- **Dependency Management** (3 new tools)
-- **Bulk Operations** (1 new tool)
-- **DAG Visualization** (ASCII, DOT, Mermaid formats)
-- **Agent-Friendly Parameter Preprocessing**
-
-#### Configuration Changes
-
-- New environment variables for advanced features
-- Enhanced MCP client configuration options
-- Improved error handling and validation
+- ✅ **Agent Prompt Templates**: Variable substitution for multi-agent environments
+- ✅ **Enhanced Dependency Management**: Circular dependency detection, ready tasks
+- ✅ **Exit Criteria System**: Granular completion tracking
+- ✅ **REST API Server**: Full programmatic access with bulk operations
+- ✅ **Domain Architecture**: Clean separation of concerns
 
 ### Migration Steps
 
@@ -56,53 +62,41 @@ cp .kiro/settings/mcp.json .kiro/settings/mcp.json.backup
 
 #### Step 2: Update Installation
 
-**For npx users (recommended):**
+**New Installation Method (Required):**
 
 ```bash
-# npx automatically uses the latest version
-npx task-list-mcp@latest --version
-```
+# Clone the repository
+git clone https://github.com/keyurgolani/task-list-mcp.git
+cd task-list-mcp
 
-**For global installation:**
-
-```bash
-# Update to latest version
-npm update -g task-list-mcp
-
-# Verify update
-task-list-mcp --version
-```
-
-**For development installation:**
-
-```bash
-# Pull latest changes
-git pull origin main
-
-# Update dependencies
+# Install dependencies
 npm install
 
-# Rebuild
+# Build the project
 npm run build
 
-# Verify update
+# Verify installation
+node mcp.js --help
+node rest.js --help
 npm run health
 ```
 
+**⚠️ Note**: The npx installation method is no longer supported. You must use local installation.
+
 #### Step 3: Update Configuration
 
-**Enhanced MCP Client Configuration:**
+**New MCP Client Configuration:**
 
 ```json
 {
   "mcpServers": {
-    "task-manager": {
-      "command": "npx",
-      "args": ["task-list-mcp@latest"],
+    "task-mcp-unified": {
+      "command": "node",
+      "args": ["/path/to/task-mcp-unified/mcp.js"],
       "env": {
         "NODE_ENV": "production",
         "MCP_LOG_LEVEL": "info",
-        "DATA_DIRECTORY": "~/.task-manager-data"
+        "DATA_DIRECTORY": "/path/to/data"
       },
       "autoApprove": [
         "create_list",
@@ -111,6 +105,7 @@ npm run health
         "delete_list",
         "add_task",
         "update_task",
+        "get_agent_prompt",
         "remove_task",
         "complete_task",
         "set_task_priority",
@@ -118,46 +113,89 @@ npm run health
         "remove_task_tags",
         "search_tool",
         "show_tasks",
-
-        "set_task_exit_criteria",
-        "update_exit_criteria",
         "set_task_dependencies",
         "get_ready_tasks",
-analyze_task_dependencies
+        "analyze_task_dependencies",
+        "set_task_exit_criteria",
+        "update_exit_criteria"
       ]
     }
   }
 }
 ```
 
+**⚠️ Breaking Changes**:
+
+- Server name changed from `task-manager` to `task-mcp-unified`
+- Command changed from `npx` to `node`
+- Args changed to point to local `mcp.js` file
+- Removed tools: `search_tasks`, `filter_tasks`, intelligence tools
+
 #### Step 4: Test Migration
 
 ```bash
-# Test basic functionality
-npx task-list-mcp@latest --health
+# Test MCP server
+node mcp.js &
+MCP_PID=$!
+
+# Test REST API server
+node rest.js &
+REST_PID=$!
+
+# Run health check
+npm run health
 
 # Test with your MCP client
 # Create a test list and verify all features work
+
+# Clean up test processes
+kill $MCP_PID $REST_PID
 ```
 
 #### Step 5: Update Usage Patterns
 
-**Migrate from legacy search tools:**
+**Migrate from removed tools:**
 
 ```json
-// Old pattern (still works)
+// Old pattern (NO LONGER WORKS)
 {
   "tool": "search_tasks",
   "parameters": {"query": "urgent"}
 }
 
-// New recommended pattern
+// New pattern (REQUIRED)
 {
   "tool": "search_tool",
   "parameters": {
     "query": "urgent",
-    "priority": [4, 5],
+    "priority": [4, 5]
+  }
+}
 
+// Old pattern (NO LONGER WORKS)
+{
+  "tool": "filter_tasks",
+  "parameters": {"status": ["pending"]}
+}
+
+// New pattern (REQUIRED)
+{
+  "tool": "search_tool",
+  "parameters": {
+    "status": ["pending"]
+  }
+}
+```
+
+**New agent prompt template usage:**
+
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "uuid",
+    "title": "Task Title",
+    "agentPromptTemplate": "You are working on {{task.title}} in project {{list.title}}. Focus on quality and testing."
   }
 }
 ```

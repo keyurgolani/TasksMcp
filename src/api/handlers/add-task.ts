@@ -12,7 +12,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -58,7 +58,7 @@ export async function handleAddTask(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing add_task request', {
+    LOGGER.debug('Processing add_task request', {
       params: request.params?.arguments,
     });
 
@@ -87,7 +87,7 @@ export async function handleAddTask(
       );
 
       if (!validationResult.isValid) {
-        logger.warn('Dependency validation failed for new task', {
+        LOGGER.warn('Dependency validation failed for new task', {
           listId: args.listId,
           dependencies: args.dependencies,
           errors: validationResult.errors,
@@ -106,7 +106,7 @@ export async function handleAddTask(
 
       // Log warnings if any
       if (validationResult.warnings.length > 0) {
-        logger.warn('Dependency validation warnings for new task', {
+        LOGGER.warn('Dependency validation warnings for new task', {
           listId: args.listId,
           dependencies: args.dependencies,
           warnings: validationResult.warnings,
@@ -205,7 +205,7 @@ export async function handleAddTask(
 
     dependencyResolver.cleanup();
 
-    logger.info('Task added successfully', {
+    LOGGER.info('Task added successfully', {
       listId: args.listId,
       taskId: newTask.id,
       title: newTask.title,

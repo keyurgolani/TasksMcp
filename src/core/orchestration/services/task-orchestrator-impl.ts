@@ -3,28 +3,28 @@
  * Centralized task management with business rule enforcement
  */
 
-import { DataDelegationService } from '../../../data/delegation/data-delegation-service';
+import { DataDelegationService } from '../../../data/delegation/data-delegation-service.js';
 import {
   Task,
   TaskStatus,
   Priority,
   VALID_TRANSITIONS,
-} from '../../../domain/models/task';
+} from '../../../domain/models/task.js';
 import {
   OrchestrationError,
   ValidationError,
   StatusTransitionError,
   TaskNotFoundError,
-} from '../../../shared/errors/orchestration-error';
+} from '../../../shared/errors/orchestration-error.js';
 import {
   CreateTaskData,
   UpdateTaskData,
   SearchTasksData,
 } from '../../../shared/types/task-operations';
-import { ValidationResult } from '../../../shared/types/validation';
-import { DataOperation } from '../interfaces/base-orchestrator';
-import { TaskOrchestrator } from '../interfaces/task-orchestrator';
-import { TaskValidator } from '../validators/task-validator';
+import { ValidationResult } from '../../../shared/types/validation.js';
+import { DataOperation } from '../interfaces/base-orchestrator.js';
+import { TaskOrchestrator } from '../interfaces/task-orchestrator.js';
+import { TaskValidator } from '../validators/task-validator.js';
 
 export class TaskOrchestratorImpl implements TaskOrchestrator {
   constructor(

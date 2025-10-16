@@ -151,9 +151,7 @@ describe('Handler Error Formatter', () => {
         const result = formatHandlerError(error, { toolName: 'add_task' });
 
         expect(result.content[0]?.text).toContain('🔧');
-        expect(result.content[0]?.text).toContain(
-          'Invalid input: expected number, received string'
-        );
+        expect(result.content[0]?.text).toContain('Priority must be a number');
       }
     });
   });

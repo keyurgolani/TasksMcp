@@ -1,13 +1,13 @@
 /**
  * MCP Tool Validation
- * Provides enhanced validation for MCP tool parameters with agent-friendly error messages
+ * Provides validation for MCP tool parameters with agent-friendly error messages
  */
 
 import { CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z, ZodError } from 'zod';
 
 /**
- * Enhanced error formatter for MCP validation errors
+ * Error formatter for MCP validation errors
  */
 export function formatMcpValidationError(
   error: ZodError,
@@ -32,7 +32,7 @@ export function formatMcpValidationError(
   // Add working example section
   result += '\n\n📝 Working example:';
   result +=
-    '\n{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "Sample task"\n}';
+    '\n{\n  "listId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",\n  "title": "New task"\n}';
 
   return result;
 }

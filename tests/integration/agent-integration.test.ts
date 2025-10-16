@@ -50,7 +50,9 @@ describe('Agent Integration Tests', () => {
   });
 
   afterEach(async () => {
-    // Cleanup is handled automatically by test setup
+    if (server) {
+      await server.close();
+    }
   });
 
   describe('Parameter Preprocessing Integration', () => {

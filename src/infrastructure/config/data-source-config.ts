@@ -258,7 +258,7 @@ export function getDefaultMultiSourceConfig(): MultiSourceConfig {
 /**
  * Export schemas for external use
  */
-export const schemas = {
+export const SCHEMAS = {
   FileSystemConfig: FileSystemConfigSchema,
   PostgreSQLConfig: PostgreSQLConfigSchema,
   MongoDBConfig: MongoDBConfigSchema,

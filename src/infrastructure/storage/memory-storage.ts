@@ -8,7 +8,7 @@ import {
   type LoadOptions,
   type ListOptions,
 } from '../../shared/types/storage.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type {
   TaskList,
@@ -25,10 +25,10 @@ export class MemoryStorageBackend extends StorageBackend {
       return Promise.resolve();
     }
 
-    logger.info('Initializing memory storage backend');
+    LOGGER.info('Initializing memory storage backend');
     this.data.clear();
     this.initialized = true;
-    logger.info('Memory storage backend initialized successfully');
+    LOGGER.info('Memory storage backend initialized successfully');
     return Promise.resolve();
   }
 
@@ -42,8 +42,8 @@ export class MemoryStorageBackend extends StorageBackend {
     }
 
     try {
-      logger.debug('MemoryStorage.save called', { key, title: data.title });
-      logger.debug('MemoryStorage data size before save', {
+      LOGGER.debug('MemoryStorage.save called', { key, title: data.title });
+      LOGGER.debug('MemoryStorage data size before save', {
         size: this.data.size,
       });
 
@@ -69,21 +69,21 @@ export class MemoryStorageBackend extends StorageBackend {
       this.validateTaskList(clonedData);
       this.data.set(key, clonedData);
 
-      logger.debug('MemoryStorage data size after save', {
+      LOGGER.debug('MemoryStorage data size after save', {
         size: this.data.size,
       });
-      logger.debug('MemoryStorage data keys after save', {
+      LOGGER.debug('MemoryStorage data keys after save', {
         keys: Array.from(this.data.keys()),
       });
 
-      logger.debug('Task list saved to memory storage', {
+      LOGGER.debug('Task list saved to memory storage', {
         key,
         title: data.title,
       });
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('Failed to save task list to memory storage', {
+      LOGGER.error('Failed to save task list to memory storage', {
         key,
         error,
       });
@@ -169,13 +169,13 @@ export class MemoryStorageBackend extends StorageBackend {
         }
       });
 
-      logger.debug('Task list loaded from memory storage', {
+      LOGGER.debug('Task list loaded from memory storage', {
         key,
         title: clonedData.title,
       });
       return Promise.resolve(clonedData);
     } catch (error) {
-      logger.error('Failed to load task list from memory storage', {
+      LOGGER.error('Failed to load task list from memory storage', {
         key,
         error,
       });
@@ -195,11 +195,11 @@ export class MemoryStorageBackend extends StorageBackend {
       }
 
       this.data.delete(key);
-      logger.info('Task list permanently deleted from memory storage', {
+      LOGGER.info('Task list permanently deleted from memory storage', {
         key,
       });
     } catch (error) {
-      logger.error('Failed to delete task list from memory storage', {
+      LOGGER.error('Failed to delete task list from memory storage', {
         key,
         error,
       });
@@ -214,22 +214,22 @@ export class MemoryStorageBackend extends StorageBackend {
     }
 
     try {
-      logger.debug('MemoryStorage.list called', {
+      LOGGER.debug('MemoryStorage.list called', {
         options,
         dataSize: this.data.size,
       });
-      logger.debug('MemoryStorage data keys', {
+      LOGGER.debug('MemoryStorage data keys', {
         keys: Array.from(this.data.keys()),
       });
 
       const summaries: TaskListSummary[] = [];
 
       for (const [key, data] of this.data.entries()) {
-        logger.debug('Processing key', { key, id: data.id, title: data.title });
+        LOGGER.debug('Processing key', { key, id: data.id, title: data.title });
 
         // Skip backup entries
         if (key.includes('_backup_')) {
-          logger.debug('Skipping backup entry', { key });
+          LOGGER.debug('Skipping backup entry', { key });
           continue;
         }
 
@@ -238,7 +238,7 @@ export class MemoryStorageBackend extends StorageBackend {
           options?.context !== undefined &&
           data.context !== options.context
         ) {
-          logger.debug('Skipping due to context filter', {
+          LOGGER.debug('Skipping due to context filter', {
             key,
             expected: options.context,
             actual: data.context,
@@ -256,7 +256,7 @@ export class MemoryStorageBackend extends StorageBackend {
           context: data.context,
           projectTag: data.projectTag || data.context || 'default',
         };
-        logger.debug('Adding summary', { summary });
+        LOGGER.debug('Adding summary', { summary });
         summaries.push(summary);
       }
 
@@ -269,14 +269,14 @@ export class MemoryStorageBackend extends StorageBackend {
         result = result.slice(0, options.limit);
       }
 
-      logger.debug('Task list summaries retrieved from memory storage', {
+      LOGGER.debug('Task list summaries retrieved from memory storage', {
         count: result.length,
         total: summaries.length,
       });
 
       return Promise.resolve(result);
     } catch (error) {
-      logger.error('Failed to list task lists from memory storage', { error });
+      LOGGER.error('Failed to list task lists from memory storage', { error });
       throw error;
     }
   }
@@ -285,7 +285,7 @@ export class MemoryStorageBackend extends StorageBackend {
     try {
       return Promise.resolve(this.initialized);
     } catch (error) {
-      logger.error('Memory storage health check failed', { error });
+      LOGGER.error('Memory storage health check failed', { error });
       return Promise.resolve(false);
     }
   }
@@ -365,7 +365,7 @@ export class MemoryStorageBackend extends StorageBackend {
    * Shutdown memory storage and cleanup resources
    */
   async shutdown(): Promise<void> {
-    logger.info('MemoryStorageBackend shutting down');
+    LOGGER.info('MemoryStorageBackend shutting down');
 
     // Clean up old backups before shutdown
     this.cleanupAllOldBackups();
@@ -377,7 +377,7 @@ export class MemoryStorageBackend extends StorageBackend {
     this.data.clear();
     this.initialized = false;
 
-    logger.info('MemoryStorageBackend shutdown completed');
+    LOGGER.info('MemoryStorageBackend shutdown completed');
   }
 
   async loadAllData(): Promise<

@@ -126,7 +126,7 @@ Multiple approval processes with parallel reviews before deployment or publicati
 For complete documentation, see:
 
 - [Multi-Agent Guide](./docs/guides/multi-agent.md) - Comprehensive orchestration documentation
-- [API Reference](./docs/api/README.md) - Complete tool documentation
+- [API Reference](./docs/api/readme.md) - Complete tool documentation
 - [Getting Started](./docs/guides/getting-started.md) - Installation and setup guide
 
 ## MCP Tools
@@ -155,7 +155,7 @@ The MCP Task Manager provides a comprehensive set of tools for task and list man
 - `get_ready_tasks` - Find tasks ready for execution
 - `analyze_task_dependencies` - Generate dependency graphs and critical path analysis
 
-- `bulk_task_operations` - Perform batch operations on multiple tasks
+**Note**: Bulk operations are available through the REST API endpoints, not as MCP tools.
 
 ### Task Enhancement Tools
 

@@ -10,7 +10,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -33,7 +33,7 @@ export async function handleCompleteTask(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing complete_task request', {
+    LOGGER.debug('Processing complete_task request', {
       params: request.params?.arguments,
     });
 
@@ -67,7 +67,7 @@ export async function handleCompleteTask(
 
     // Task completion readiness check
     if (!canComplete) {
-      logger.warn('Attempted to complete task with unmet exit criteria', {
+      LOGGER.warn('Attempted to complete task with unmet exit criteria', {
         listId: args.listId,
         taskId: args.taskId,
         unmetCriteria: unmetCriteria.length,
@@ -166,7 +166,7 @@ export async function handleCompleteTask(
       },
     };
 
-    logger.info('Task completed successfully', {
+    LOGGER.info('Task completed successfully', {
       listId: args.listId,
       taskId: args.taskId,
       title: completedTask.title,

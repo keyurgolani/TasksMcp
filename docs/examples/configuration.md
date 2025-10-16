@@ -56,8 +56,7 @@ Add to your workspace `.kiro/settings/mcp.json`:
         "set_task_priority",
         "add_task_tags",
         "remove_task_tags",
-        "search_tasks",
-        "filter_tasks",
+        "search_tool",
         "show_tasks",
         "set_task_dependencies",
         "get_ready_tasks",
@@ -97,8 +96,7 @@ For other MCP clients:
         "set_task_priority",
         "add_task_tags",
         "remove_task_tags",
-        "search_tasks",
-        "filter_tasks",
+        "search_tool",
         "show_tasks",
         "set_task_dependencies",
         "get_ready_tasks",
@@ -320,7 +318,7 @@ npm install -g task-list-mcp
       "env": {
         "DATA_DIRECTORY": "/shared/frontend-tasks"
       },
-      "autoApprove": ["get_ready_tasks", "filter_tasks", "complete_task"]
+      "autoApprove": ["get_ready_tasks", "search_tool", "complete_task"]
     }
   }
 }
@@ -362,7 +360,7 @@ npm install -g task-list-mcp
         "MCP_LOG_LEVEL": "warn",
         "DATA_DIRECTORY": "/secure/task-data"
       },
-      "autoApprove": ["get_list", "search_tasks", "filter_tasks", "show_tasks"],
+      "autoApprove": ["get_list", "search_tool", "show_tasks"],
       "disabledTools": ["delete_list"]
     }
   }
@@ -384,8 +382,7 @@ npm install -g task-list-mcp
       "autoApprove": [
         "get_list",
         "list_all_lists",
-        "search_tasks",
-        "filter_tasks",
+        "search_tool",
         "show_tasks",
         "get_ready_tasks",
         "analyze_task_dependencies"

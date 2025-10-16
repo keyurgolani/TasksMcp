@@ -3,25 +3,25 @@
  * Manages task dependencies with circular detection and ready task identification
  */
 
-import { DataDelegationService } from '../../../data/delegation/data-delegation-service';
-import { Task } from '../../../domain/models/task';
+import { DataDelegationService } from '../../../data/delegation/data-delegation-service.js';
+import { Task } from '../../../domain/models/task.js';
 import {
   OrchestrationError,
   CircularDependencyError,
   TaskNotFoundError,
-} from '../../../shared/errors/orchestration-error';
+} from '../../../shared/errors/orchestration-error.js';
 import {
   DependencyGraph,
   CircularDependencyResult,
   BlockReason,
   BlockingTaskDetail,
 } from '../../../shared/types/dependency';
-import { ValidationResult } from '../../../shared/types/validation';
-import { DataOperation } from '../interfaces/base-orchestrator';
+import { ValidationResult } from '../../../shared/types/validation.js';
+import { DataOperation } from '../interfaces/base-orchestrator.js';
 import {
   DependencyOrchestrator,
   DependencyAnalysis,
-} from '../interfaces/dependency-orchestrator';
+} from '../interfaces/dependency-orchestrator.js';
 
 export class DependencyOrchestratorImpl implements DependencyOrchestrator {
   constructor(private dataDelegation: DataDelegationService) {}
@@ -74,7 +74,7 @@ export class DependencyOrchestratorImpl implements DependencyOrchestrator {
     const recursionStack = new Set<string>();
     const cycles: Array<{ tasks: string[]; path: string[] }> = [];
 
-    // Optimized O(V + E) cycle detection using DFS
+    // O(V + E) cycle detection using DFS
     const dfs = (nodeId: string, path: string[]): boolean => {
       // If we encounter a node already in the recursion stack, we found a cycle
       if (recursionStack.has(nodeId)) {

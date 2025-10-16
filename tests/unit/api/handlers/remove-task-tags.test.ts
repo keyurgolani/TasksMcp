@@ -517,7 +517,7 @@ describe('handleRemoveTaskTags', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain(
-        'expected string, received undefined'
+        'Tags must be provided as array of strings'
       );
     });
   });

@@ -14,7 +14,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -50,7 +50,7 @@ export async function handleShowTasks(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing show_tasks request', {
+    LOGGER.debug('Processing show_tasks request', {
       params: request.params?.arguments,
     });
 
@@ -61,7 +61,7 @@ export async function handleShowTasks(
     });
 
     if (!list) {
-      logger.debug('Task list not found for show_tasks', {
+      LOGGER.debug('Task list not found for show_tasks', {
         listId: args.listId,
       });
       return {
@@ -89,7 +89,7 @@ export async function handleShowTasks(
 
     dependencyResolver.cleanup();
 
-    logger.info('Tasks formatted successfully', {
+    LOGGER.info('Tasks formatted successfully', {
       listId: args.listId,
       format: args.format,
       groupBy: args.groupBy,

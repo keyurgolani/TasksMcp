@@ -9,7 +9,9 @@
  */
 
 import { existsSync } from 'fs';
-import { rm } from 'fs/promises';
+import { rm, mkdir } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -91,9 +93,23 @@ describe('Application Initialization', () => {
     });
 
     it('should initialize with default configuration when no fallback provided', async () => {
+      // Create a temporary directory for the default configuration
+      const testDataDir = join(tmpdir(), 'tasks-server-tests-default');
+
+      // Ensure the directory exists
+      await mkdir(testDataDir, { recursive: true });
+
       const result = await ApplicationInitializer.initialize({
         useEnvironment: false,
         requireConfigFile: false,
+        fallbackStorage: {
+          type: 'file',
+          file: {
+            dataDirectory: testDataDir,
+            backupRetentionDays: 7,
+            enableCompression: false,
+          },
+        },
       });
 
       expect(result).toBeDefined();
@@ -103,6 +119,7 @@ describe('Application Initialization', () => {
 
       // Cleanup
       await ApplicationInitializer.shutdown(result);
+      await rm(testDataDir, { recursive: true, force: true });
     });
 
     it('should validate initialization result', async () => {

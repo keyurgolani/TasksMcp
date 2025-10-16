@@ -10,7 +10,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -53,7 +53,7 @@ export async function handleSetTaskExitCriteria(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing set_task_exit_criteria request', {
+    LOGGER.debug('Processing set_task_exit_criteria request', {
       params: request.params?.arguments,
     });
 
@@ -116,7 +116,7 @@ export async function handleSetTaskExitCriteria(
       canComplete,
     };
 
-    logger.info('Task exit criteria updated successfully', {
+    LOGGER.info('Task exit criteria updated successfully', {
       listId: args.listId,
       taskId: args.taskId,
       criteriaCount: args.exitCriteria.length,

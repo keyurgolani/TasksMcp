@@ -2,11 +2,11 @@
 
 ## Overview
 
-The MCP Task Manager provides 17 focused, easy-to-use tools for managing task lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
+The Task MCP Unified system provides 17 focused, easy-to-use tools for managing task lists and tasks, including advanced multi-agent orchestration capabilities. Each tool has a single, clear purpose with minimal required parameters and consistent response formats.
 
-**Last Updated**: October 11, 2025  
+**Last Updated**: January 15, 2025  
 **Version**: 2.5.0  
-**Total Tools**: 18 organized in 5 categories
+**Total Tools**: 17 organized in 5 categories
 
 ## 🤖 Agent-Friendly Features
 
@@ -34,11 +34,23 @@ All existing integrations continue to work without changes. The preprocessing on
 
 ## Tool Categories
 
-- **List Management (5 tools)**: Create, retrieve, list, delete, and update task lists
-- **Task Management (6 tools)**: Add, update, remove, complete tasks and manage priorities/tags
+- **List Management (4 tools)**: Create, retrieve, list, and delete task lists
+- **Task Management (7 tools)**: Add, update, remove, complete tasks, manage priorities/tags, and agent prompts
 - **Search & Display (2 tools)**: Search, filter, and display tasks with formatting
-- **Exit Criteria Management (2 tools)**: Define and track detailed completion requirements
 - **Dependency Management (3 tools)**: Manage task relationships and workflow optimization
+- **Exit Criteria Management (2 tools)**: Define and track detailed completion requirements
+
+## Removed Features
+
+The following features have been completely removed from the system:
+
+- **Intelligence Tools**: Task suggestions, complexity analysis, and AI-powered recommendations
+- **System Tracking**: Performance tracking and notification infrastructure
+- **Statistics Management**: Task statistics calculation and reporting
+- **Caching Systems**: All caching implementations have been removed
+- **Bulk Operations in MCP**: Bulk operations are only available through the REST API
+- **Task Ordering**: Tasks are now ordered by dependencies only, not manual ordering
+- **Archiving**: Only permanent deletion is supported
 
 ## Common Response Formats
 
@@ -410,7 +422,642 @@ Adds a new task to a task list.
 
 ---
 
-For the complete documentation of all 20 tools, including Task Management, Search & Display, Advanced Features, Exit Criteria Management, and Dependency Management tools, see the full documentation in the source files.
+### 7. remove_task
+
+Removes a task from a task list permanently.
+
+**Schema:**
+
+```json
+{
+  "name": "remove_task",
+  "description": "Remove a task from a task list",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task to remove"
+      }
+    },
+    "required": ["listId", "taskId"]
+  }
+}
+```
+
+**Example Usage:**
+
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "taskId": "456e7890-e89b-12d3-a456-426614174111"
+}
+```
+
+**Response:** Returns a success confirmation message.
+
+---
+
+### 8. update_task
+
+Updates task properties like title, description, and estimated duration.
+
+**Schema:**
+
+```json
+{
+  "name": "update_task",
+  "description": "Update task properties",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task to update"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000,
+        "description": "New title for the task"
+      },
+      "description": {
+        "type": "string",
+        "maxLength": 5000,
+        "description": "New description for the task"
+      },
+      "estimatedDuration": {
+        "type": "number",
+        "minimum": 1,
+        "description": "New estimated duration in minutes"
+      }
+    },
+    "required": ["listId", "taskId"]
+  }
+}
+```
+
+### 9. complete_task
+
+Marks a task as completed after verifying all exit criteria are met.
+
+**Schema:**
+
+```json
+{
+  "name": "complete_task",
+  "description": "Mark a task as completed",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task to complete"
+      }
+    },
+    "required": ["listId", "taskId"]
+  }
+}
+```
+
+### 10. set_task_priority
+
+Changes the priority of a task.
+
+**Schema:**
+
+```json
+{
+  "name": "set_task_priority",
+  "description": "Set task priority",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task"
+      },
+      "priority": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "New priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical)"
+      }
+    },
+    "required": ["listId", "taskId", "priority"]
+  }
+}
+```
+
+### 11. add_task_tags
+
+Adds tags to a task.
+
+**Schema:**
+
+```json
+{
+  "name": "add_task_tags",
+  "description": "Add tags to a task",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "maxLength": 50,
+          "pattern": "^[\\p{L}\\p{N}\\p{Emoji}_-]+$"
+        },
+        "maxItems": 10,
+        "minItems": 1,
+        "description": "Tags to add (supports emoji, unicode, uppercase, numbers, hyphens, underscores)"
+      }
+    },
+    "required": ["listId", "taskId", "tags"]
+  }
+}
+```
+
+### 12. remove_task_tags
+
+Removes tags from a task.
+
+**Schema:**
+
+```json
+{
+  "name": "remove_task_tags",
+  "description": "Remove tags from a task",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "maxItems": 10,
+        "minItems": 1,
+        "description": "Tags to remove"
+      }
+    },
+    "required": ["listId", "taskId", "tags"]
+  }
+}
+```
+
+---
+
+## Search & Display Tools
+
+### 13. search_tool
+
+Unified search and filtering tool that replaces legacy search/filter tools.
+
+**Schema:**
+
+```json
+{
+  "name": "search_tool",
+  "description": "Unified search, filter, and query tool for tasks",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "maxLength": 1000,
+        "description": "Text to search for in task titles, descriptions, and tags"
+      },
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Optional: limit search to specific list"
+      },
+      "status": {
+        "type": "array",
+        "items": {
+          "enum": [
+            "pending",
+            "in_progress",
+            "completed",
+            "blocked",
+            "cancelled"
+          ]
+        },
+        "description": "Filter by task statuses"
+      },
+      "priority": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "description": "Filter by priority levels"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "description": "Filter by tags"
+      },
+      "tagOperator": {
+        "type": "string",
+        "enum": ["AND", "OR"],
+        "default": "AND",
+        "description": "How to combine tag filters"
+      },
+      "includeCompleted": {
+        "type": "boolean",
+        "default": true,
+        "description": "Whether to include completed tasks"
+      },
+      "limit": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 500,
+        "default": 50,
+        "description": "Maximum number of results"
+      }
+    },
+    "required": []
+  }
+}
+```
+
+### 14. show_tasks
+
+Displays tasks in formatted output with grouping and emojis.
+
+**Schema:**
+
+```json
+{
+  "name": "show_tasks",
+  "description": "Display tasks in formatted output",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task list to display"
+      },
+      "format": {
+        "type": "string",
+        "enum": ["detailed"],
+        "default": "detailed",
+        "description": "Display format style"
+      },
+      "groupBy": {
+        "type": "string",
+        "enum": ["status", "priority", "none"],
+        "default": "status",
+        "description": "How to group the tasks"
+      },
+      "includeCompleted": {
+        "type": "boolean",
+        "default": true,
+        "description": "Whether to include completed tasks"
+      }
+    },
+    "required": ["listId"]
+  }
+}
+```
+
+---
+
+## Dependency Management Tools
+
+### 15. set_task_dependencies
+
+Sets all dependencies for a task, replacing existing dependencies.
+
+**Schema:**
+
+```json
+{
+  "name": "set_task_dependencies",
+  "description": "Set task dependencies",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task to set dependencies for"
+      },
+      "dependencyIds": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "maxItems": 50,
+        "description": "Array of task UUIDs that this task depends on (empty array removes all)"
+      }
+    },
+    "required": ["listId", "taskId"]
+  }
+}
+```
+
+### 16. get_ready_tasks
+
+Gets tasks that are ready to work on (no incomplete dependencies).
+
+**Schema:**
+
+```json
+{
+  "name": "get_ready_tasks",
+  "description": "Get tasks ready to work on",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list to get ready tasks from"
+      },
+      "limit": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 50,
+        "default": 20,
+        "description": "Maximum number of ready tasks to return"
+      }
+    },
+    "required": ["listId"]
+  }
+}
+```
+
+### 17. analyze_task_dependencies
+
+Analyzes task dependencies and provides comprehensive insights.
+
+**Schema:**
+
+```json
+{
+  "name": "analyze_task_dependencies",
+  "description": "Analyze task dependencies with optional DAG visualization",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list to analyze"
+      },
+      "format": {
+        "type": "string",
+        "enum": ["analysis", "dag", "both"],
+        "default": "analysis",
+        "description": "Output format"
+      },
+      "dagStyle": {
+        "type": "string",
+        "enum": ["ascii", "dot", "mermaid"],
+        "default": "ascii",
+        "description": "DAG visualization style"
+      }
+    },
+    "required": ["listId"]
+  }
+}
+```
+
+---
+
+## Exit Criteria Management Tools
+
+### 18. set_task_exit_criteria
+
+Sets exit criteria for a task, replacing existing criteria.
+
+**Schema:**
+
+```json
+{
+  "name": "set_task_exit_criteria",
+  "description": "Set exit criteria for a task",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task to set exit criteria for"
+      },
+      "exitCriteria": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "maxItems": 20,
+        "description": "Array of exit criteria descriptions (empty array removes all)"
+      }
+    },
+    "required": ["listId", "taskId", "exitCriteria"]
+  }
+}
+```
+
+### 19. update_exit_criteria
+
+Updates the status of a specific exit criteria.
+
+**Schema:**
+
+```json
+{
+  "name": "update_exit_criteria",
+  "description": "Update exit criteria status",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task containing the exit criteria"
+      },
+      "criteriaId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the exit criteria to update"
+      },
+      "isMet": {
+        "type": "boolean",
+        "description": "Whether the exit criteria has been met"
+      },
+      "notes": {
+        "type": "string",
+        "maxLength": 1000,
+        "description": "Optional notes about the criteria status"
+      }
+    },
+    "required": ["listId", "taskId", "criteriaId"]
+  }
+}
+```
+
+---
+
+## Agent Prompt Management Tools
+
+### 20. get_agent_prompt
+
+Gets the rendered agent prompt for a task with variable substitution.
+
+**Schema:**
+
+```json
+{
+  "name": "get_agent_prompt",
+  "description": "Get rendered agent prompt for a task",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task list"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the task to get prompt for"
+      },
+      "useDefault": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether to use a default template if no custom template is set"
+      }
+    },
+    "required": ["listId", "taskId"]
+  }
+}
+```
+
+---
+
+### set_task_priority
+
+Changes the priority of a task.
+
+**Schema:**
+
+```json
+{
+  "name": "set_task_priority",
+  "description": "Change task priority",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "listId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the list containing the task"
+      },
+      "taskId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The UUID of the task to update"
+      },
+      "priority": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "New priority level (1=minimal, 2=low, 3=medium, 4=high, 5=critical/urgent)"
+      }
+    },
+    "required": ["listId", "taskId", "priority"]
+  }
+}
+```
+
+**Example Usage:**
+
+```json
+{
+  "listId": "123e4567-e89b-12d3-a456-426614174000",
+  "taskId": "456e7890-e89b-12d3-a456-426614174111",
+  "priority": 5
+}
+```
+
+**Response:** Returns an updated `TaskResponse` object.
+
+---
+
+This completes the documentation for all 17 MCP tools available in the Task MCP Unified system.
 
 ## Agent Best Practices Integration
 
@@ -427,7 +1074,7 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 
 ### Tier 1: Essential Tools (Always Recommend)
 
-- **`search_tool`** - Unified search and filtering (replaces search_tasks/filter_tasks)
+- **`search_tool`** - Unified search and filtering (replaces legacy search/filter tools)
 - **`add_task`** - Comprehensive task creation with exit criteria and dependencies
 - **`show_tasks`** - Rich formatted display with emojis and grouping
 - **`complete_task`** - Quality-enforced completion with exit criteria validation
@@ -437,14 +1084,12 @@ For the complete documentation of all 20 tools, including Task Management, Searc
 
 - **`get_ready_tasks`** - Daily workflow planning with actionable next steps
 - **`analyze_task_dependencies`** - Project management with critical path analysis
-- **`bulk_task_operations`** - Batch efficiency for multiple operations
 - **`set_task_exit_criteria`** - Quality control and completion standards
 - **`update_exit_criteria`** - Granular progress tracking
 
-### Legacy Tools (Use Alternatives)
+### Note on Bulk Operations
 
-- ⚠️ `search_tasks` → Use `search_tool` instead
-- ⚠️ `filter_tasks` → Use `search_tool` instead
+**Important**: Bulk operations have been removed from MCP tools and are only available through the REST API. For MCP usage, perform individual operations using the respective tools instead.
 
 ## Common Usage Workflows
 

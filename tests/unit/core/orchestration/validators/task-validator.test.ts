@@ -245,7 +245,9 @@ describe('TaskValidator', () => {
       expect(result.isValid).toBe(true); // Still valid, just a warning
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0].field).toBe('tags');
-      expect(result.warnings[0].message).toBe('Duplicate tags found');
+      expect(result.warnings[0].message).toBe(
+        'Duplicate tags found. Remove duplicate tags to avoid confusion.'
+      );
     });
 
     it('should accept emoji, unicode, and uppercase in tags', () => {

@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 import type { Task } from '../../shared/types/task.js';
 
@@ -13,7 +13,7 @@ import type { Task } from '../../shared/types/task.js';
  * Validation schema for dependency IDs array
  * Ensures dependencies are valid UUIDs with reasonable limits
  */
-export const DependencyIdsSchema = z
+export const DEPENDENCY_IDS_SCHEMA = z
   .array(z.string().uuid())
   .max(50, 'Maximum 50 dependencies allowed per task')
   .default([]);
@@ -21,12 +21,12 @@ export const DependencyIdsSchema = z
 /**
  * Validation schema for task ID parameter
  */
-export const TaskIdSchema = z.string().uuid();
+export const TASK_ID_SCHEMA = z.string().uuid();
 
 /**
  * Validation schema for list ID parameter
  */
-export const ListIdSchema = z.string().uuid();
+export const LIST_ID_SCHEMA = z.string().uuid();
 
 /**
  * Result of dependency validation
@@ -60,7 +60,7 @@ export function validateDependencyIds(
   };
 
   try {
-    logger.debug('Validating dependency IDs', {
+    LOGGER.debug('Validating dependency IDs', {
       taskId,
       dependencyCount: dependencyIds.length,
       totalTasks: allTasks.length,
@@ -117,7 +117,7 @@ export function validateDependencyIds(
       );
     }
 
-    logger.debug('Dependency validation completed', {
+    LOGGER.debug('Dependency validation completed', {
       taskId,
       isValid: result.isValid,
       errorCount: result.errors.length,
@@ -127,7 +127,7 @@ export function validateDependencyIds(
 
     return result;
   } catch (error) {
-    logger.error('Failed to validate dependency IDs', { taskId, error });
+    LOGGER.error('Failed to validate dependency IDs', { taskId, error });
     result.isValid = false;
     result.errors.push(
       `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -262,14 +262,14 @@ export function detectCircularDependencies(
       }
     }
 
-    logger.debug('Circular dependency detection completed', {
+    LOGGER.debug('Circular dependency detection completed', {
       taskId,
       cyclesFound: cycles.length,
     });
 
     return cycles;
   } catch (error) {
-    logger.error('Failed to detect circular dependencies', { taskId, error });
+    LOGGER.error('Failed to detect circular dependencies', { taskId, error });
     return [];
   }
 }
@@ -299,14 +299,14 @@ export function validateTaskDependencies(
       };
     }
 
-    logger.info('Starting dependency validation', {
+    LOGGER.info('Starting dependency validation', {
       taskId,
       dependencyCount: dependencyIds?.length ?? 0,
       totalTasks: allTasks.length,
     });
 
     // First validate the input parameters
-    const taskIdValidation = TaskIdSchema.safeParse(taskId);
+    const taskIdValidation = TASK_ID_SCHEMA.safeParse(taskId);
     if (!taskIdValidation.success) {
       return {
         isValid: false,
@@ -317,7 +317,7 @@ export function validateTaskDependencies(
     }
 
     const dependencyIdsValidation =
-      DependencyIdsSchema.safeParse(dependencyIds);
+      DEPENDENCY_IDS_SCHEMA.safeParse(dependencyIds);
     if (!dependencyIdsValidation.success) {
       return {
         isValid: false,
@@ -330,7 +330,7 @@ export function validateTaskDependencies(
     // Perform the main validation
     const result = validateDependencyIds(taskId, dependencyIds, allTasks);
 
-    logger.info('Dependency validation completed', {
+    LOGGER.info('Dependency validation completed', {
       taskId,
       isValid: result.isValid,
       errorCount: result.errors.length,
@@ -340,7 +340,7 @@ export function validateTaskDependencies(
 
     return result;
   } catch (error) {
-    logger.error('Dependency validation failed with exception', {
+    LOGGER.error('Dependency validation failed with exception', {
       taskId,
       error: error instanceof Error ? error.message : 'Unknown error',
     });
@@ -474,3 +474,7 @@ export function createDependencyErrorResponse(
 export function deduplicateDependencies(dependencyIds: string[]): string[] {
   return Array.from(new Set(dependencyIds));
 }
+// Export aliases for backward compatibility
+export { DEPENDENCY_IDS_SCHEMA as DependencyIdsSchema };
+export { TASK_ID_SCHEMA as TaskIdSchema };
+export { LIST_ID_SCHEMA as ListIdSchema };

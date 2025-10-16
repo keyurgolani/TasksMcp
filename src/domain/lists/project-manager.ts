@@ -2,11 +2,14 @@
  * Project management functionality for organizing task lists by project tags
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { StorageBackend } from '../../shared/types/storage.js';
 import type { TaskList } from '../../shared/types/task.js';
 
+/**
+ * Summary information for a project tag
+ */
 export interface ProjectSummary {
   tag: string;
   listCount: number;
@@ -30,8 +33,8 @@ export interface ProjectSummary {
  * ```
  */
 export class ProjectManager {
-  private readonly DEFAULT_PROJECT_TAG = 'default';
-  private readonly PROJECT_TAG_REGEX = /^[a-zA-Z0-9_-]{1,50}$/;
+  private readonly defaultProjectTag = 'default';
+  private readonly projectTagRegex = /^[a-zA-Z0-9_-]{1,50}$/;
 
   constructor(private readonly storage: StorageBackend) {}
 
@@ -44,14 +47,14 @@ export class ProjectManager {
     }
 
     // Project tags should be alphanumeric, hyphens, underscores, max 50 chars
-    return this.PROJECT_TAG_REGEX.test(tag);
+    return this.projectTagRegex.test(tag);
   }
 
   /**
    * Get the default project tag
    */
   getDefaultProjectTag(): string {
-    return this.DEFAULT_PROJECT_TAG;
+    return this.defaultProjectTag;
   }
 
   /**
@@ -59,7 +62,7 @@ export class ProjectManager {
    */
   sanitizeProjectTag(tag: string): string {
     if (!tag || typeof tag !== 'string') {
-      return this.DEFAULT_PROJECT_TAG;
+      return this.defaultProjectTag;
     }
 
     // Remove invalid characters and truncate to max length
@@ -80,7 +83,7 @@ export class ProjectManager {
       .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
 
     // Ensure it's not empty after sanitization
-    return sanitized || this.DEFAULT_PROJECT_TAG;
+    return sanitized || this.defaultProjectTag;
   }
 
   /**
@@ -88,7 +91,7 @@ export class ProjectManager {
    */
   async listProjects(): Promise<ProjectSummary[]> {
     try {
-      logger.debug('Listing all projects');
+      LOGGER.debug('Listing all projects');
 
       const allListSummaries = await this.storage.list({});
 
@@ -123,7 +126,7 @@ export class ProjectManager {
       // Group lists by project tag
       for (const list of allLists) {
         const projectTag =
-          list.projectTag || list.context || this.DEFAULT_PROJECT_TAG;
+          list.projectTag || list.context || this.defaultProjectTag;
 
         if (!projectMap.has(projectTag)) {
           projectMap.set(projectTag, {
@@ -168,14 +171,14 @@ export class ProjectManager {
         (a, b) => b.lastActivity.getTime() - a.lastActivity.getTime()
       );
 
-      logger.info('Projects listed successfully', {
+      LOGGER.info('Projects listed successfully', {
         projectCount: projects.length,
         totalLists: allLists.length,
       });
 
       return projects;
     } catch (error) {
-      logger.error('Failed to list projects', { error });
+      LOGGER.error('Failed to list projects', { error });
       throw error;
     }
   }
@@ -185,7 +188,7 @@ export class ProjectManager {
    */
   async migrateContextToProjectTag(): Promise<void> {
     try {
-      logger.debug('Starting context to projectTag migration');
+      LOGGER.debug('Starting context to projectTag migration');
 
       const allListSummaries = await this.storage.list({});
 
@@ -217,8 +220,8 @@ export class ProjectManager {
 
         // If both are missing, set defaults
         if (!list.projectTag && !list.context) {
-          updates.projectTag = this.DEFAULT_PROJECT_TAG;
-          updates.context = this.DEFAULT_PROJECT_TAG;
+          updates.projectTag = this.defaultProjectTag;
+          updates.context = this.defaultProjectTag;
           needsUpdate = true;
         }
 
@@ -237,7 +240,7 @@ export class ProjectManager {
         if (needsUpdate) {
           const updatedList = { ...list, ...updates };
           await this.storage.save(list.id, updatedList, { validate: true });
-          logger.debug('Migrated list', {
+          LOGGER.debug('Migrated list', {
             listId: list.id,
             oldContext: list.context,
             newProjectTag: updates.projectTag,
@@ -246,9 +249,9 @@ export class ProjectManager {
         }
       }
 
-      logger.info('Context to projectTag migration completed');
+      LOGGER.info('Context to projectTag migration completed');
     } catch (error) {
-      logger.error('Failed to migrate context to projectTag', { error });
+      LOGGER.error('Failed to migrate context to projectTag', { error });
       throw error;
     }
   }

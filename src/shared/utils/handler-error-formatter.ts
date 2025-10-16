@@ -8,7 +8,7 @@
 import { z } from 'zod';
 
 import { formatZodError, createErrorContext } from './error-formatter.js';
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 import type { CallToolResult } from '../types/mcp-types.js';
 
@@ -42,7 +42,7 @@ export function formatHandlerError(
   const { toolName, includeExamples = true, includeContext = true } = config;
 
   // Log the error for debugging
-  logger.error(`Handler error in ${toolName}`, {
+  LOGGER.error(`Handler error in ${toolName}`, {
     error: error instanceof Error ? error.message : String(error),
     toolName,
     params: requestParams,

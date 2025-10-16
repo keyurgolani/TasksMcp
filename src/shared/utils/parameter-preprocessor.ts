@@ -5,7 +5,7 @@
  * This makes the MCP server more agent-friendly by handling common type conversion scenarios.
  */
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 
 /**
  * Configuration for parameter preprocessing
@@ -129,7 +129,7 @@ export class ParameterPreprocessor {
           result.conversions.push(conversion);
 
           if (this.config.logConversions) {
-            logger.debug('Parameter preprocessing conversion', {
+            LOGGER.debug('Parameter preprocessing conversion', {
               parameter: fullKey,
               from: conversion.originalValue,
               to: conversion.convertedValue,
@@ -143,7 +143,7 @@ export class ParameterPreprocessor {
         }`;
         result.errors.push(errorMessage);
 
-        logger.warn('Parameter preprocessing error', {
+        LOGGER.warn('Parameter preprocessing error', {
           parameter: fullKey,
           value,
           error: errorMessage,
@@ -325,7 +325,7 @@ export class ParameterPreprocessor {
 /**
  * Global parameter preprocessor instance with default configuration
  */
-export const parameterPreprocessor = new ParameterPreprocessor();
+export const PARAMETER_PREPROCESSOR = new ParameterPreprocessor();
 
 /**
  * Convenience function to preprocess parameters with default configuration
@@ -336,7 +336,7 @@ export const parameterPreprocessor = new ParameterPreprocessor();
 export function preprocessParameters(
   parameters: Record<string, unknown>
 ): PreprocessingResult {
-  return parameterPreprocessor.preprocessParameters(parameters);
+  return PARAMETER_PREPROCESSOR.preprocessParameters(parameters);
 }
 
 /**

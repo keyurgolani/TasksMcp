@@ -10,7 +10,7 @@
 
 import { z, ZodSchema, ZodError } from 'zod';
 
-import { logger } from './logger.js';
+import { LOGGER } from './logger.js';
 import { TemplateEngine } from './template-engine.js';
 
 /**
@@ -51,7 +51,7 @@ export class Validator {
    * @example
    * ```typescript
    * const schema = z.string().min(1);
-   * const result = validator.validate(schema, "hello");
+   * const result = VALIDATOR.validate(schema, "hello");
    * if (result.isValid) {
    *   console.log(result.data); // "hello"
    * } else {
@@ -97,7 +97,7 @@ export class Validator {
    *
    * @example
    * ```typescript
-   * const result = validator.validateSafely(
+   * const result = VALIDATOR.validateSafely(
    *   () => parseUserInput(input),
    *   defaultValue,
    *   'user-input-parsing'
@@ -115,7 +115,7 @@ export class Validator {
       const result = validationFn();
       return { isValid: true, result };
     } catch (error) {
-      logger.warn('Validation failed, using fallback', {
+      LOGGER.warn('Validation failed, using fallback', {
         context,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -191,7 +191,7 @@ export class Validator {
    *
    * @example
    * ```typescript
-   * const result = validator.validateDate('2023-12-25T10:30:00Z');
+   * const result = VALIDATOR.validateDate('2023-12-25T10:30:00Z');
    * if (result.isValid) {
    *   console.log(result.data); // Date object
    * }
@@ -495,4 +495,6 @@ export class Validator {
 }
 
 // Global validator instance
-export const validator = new Validator();
+export const VALIDATOR = new Validator();
+// Export alias for backward compatibility
+export { VALIDATOR as validator };

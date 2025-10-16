@@ -11,7 +11,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 import { TemplateEngine } from '../../shared/utils/template-engine.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
@@ -59,7 +59,7 @@ export async function handleGetAgentPrompt(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing get_agent_prompt request', {
+    LOGGER.debug('Processing get_agent_prompt request', {
       params: request.params?.arguments,
     });
 
@@ -129,7 +129,7 @@ export async function handleGetAgentPrompt(
       ...(errors && errors.length > 0 && { errors }),
     };
 
-    logger.info('Agent prompt retrieved successfully', {
+    LOGGER.info('Agent prompt retrieved successfully', {
       listId: args.listId,
       taskId: args.taskId,
       hasCustomTemplate,

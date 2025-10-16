@@ -12,7 +12,7 @@ import type { CallToolRequest } from '../../../../src/shared/types/mcp-types.js'
 
 // Mock the logger
 vi.mock('../../../../src/shared/utils/logger.js', () => ({
-  logger: {
+  LOGGER: {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),

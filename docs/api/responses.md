@@ -196,7 +196,7 @@ Some tools (like `show_tasks`) return formatted text:
 }
 ```
 
-### Bulk Operations Response
+### Bulk Operations Response (REST API Only - Not Available in MCP)
 
 ```json
 {

@@ -6,7 +6,7 @@
  * and fallback/error recovery mechanisms.
  */
 
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import {
   StorageFactory,
@@ -100,7 +100,7 @@ export class DataSourceRouter {
       enableFallback: routerConfig.enableFallback ?? true,
     };
 
-    logger.info('DataSourceRouter created', {
+    LOGGER.info('DataSourceRouter created', {
       sources: this.config.length,
       config: this.routerConfig,
     });
@@ -110,7 +110,7 @@ export class DataSourceRouter {
    * Initialize all configured data sources
    */
   async initialize(): Promise<void> {
-    logger.info('Initializing DataSourceRouter', {
+    LOGGER.info('Initializing DataSourceRouter', {
       sources: this.config.length,
     });
 
@@ -134,14 +134,14 @@ export class DataSourceRouter {
           failureCount: 0,
         });
 
-        logger.info('Data source initialized', {
+        LOGGER.info('Data source initialized', {
           id: sourceConfig.id,
           name: sourceConfig.name,
           type: sourceConfig.type,
           healthy,
         });
       } catch (error) {
-        logger.error('Failed to initialize data source', {
+        LOGGER.error('Failed to initialize data source', {
           id: sourceConfig.id,
           name: sourceConfig.name,
           error,
@@ -163,7 +163,7 @@ export class DataSourceRouter {
     // Start periodic health checks
     this.startHealthChecks();
 
-    logger.info('DataSourceRouter initialized', {
+    LOGGER.info('DataSourceRouter initialized', {
       healthy: this.getHealthySources().length,
       total: this.connectionPool.size,
     });
@@ -186,7 +186,7 @@ export class DataSourceRouter {
       throw new Error('No available data sources for operation');
     }
 
-    logger.debug('Routing operation', {
+    LOGGER.debug('Routing operation', {
       type: operation.type,
       key: operation.key,
       sources: sources.map(s => s.config.id),
@@ -258,7 +258,7 @@ export class DataSourceRouter {
 
         return result;
       } catch (error) {
-        logger.warn('Read operation failed on source, trying next', {
+        LOGGER.warn('Read operation failed on source, trying next', {
           sourceId: source.config.id,
           error,
         });
@@ -307,7 +307,7 @@ export class DataSourceRouter {
 
       return result;
     } catch (error) {
-      logger.error('Write operation failed on primary source', {
+      LOGGER.error('Write operation failed on primary source', {
         sourceId: primarySource.config.id,
         error,
       });
@@ -316,7 +316,7 @@ export class DataSourceRouter {
 
       // Try fallback sources if enabled
       if (this.routerConfig.enableFallback && sources.length > 1) {
-        logger.info('Attempting write on fallback source');
+        LOGGER.info('Attempting write on fallback source');
 
         for (let i = 1; i < sources.length; i++) {
           const fallbackSource = sources[i];
@@ -330,13 +330,13 @@ export class DataSourceRouter {
 
             fallbackSource.failureCount = 0;
 
-            logger.info('Write succeeded on fallback source', {
+            LOGGER.info('Write succeeded on fallback source', {
               sourceId: fallbackSource.config.id,
             });
 
             return result;
           } catch (fallbackError) {
-            logger.warn('Write failed on fallback source', {
+            LOGGER.warn('Write failed on fallback source', {
               sourceId: fallbackSource.config.id,
               error: fallbackError,
             });
@@ -378,7 +378,7 @@ export class DataSourceRouter {
 
       return result;
     } catch (error) {
-      logger.error('Delete operation failed on primary source', {
+      LOGGER.error('Delete operation failed on primary source', {
         sourceId: primarySource.config.id,
         error,
       });
@@ -457,7 +457,7 @@ export class DataSourceRouter {
     source.failureCount++;
 
     if (source.failureCount >= this.routerConfig.maxFailures) {
-      logger.warn('Data source marked as unhealthy due to failures', {
+      LOGGER.warn('Data source marked as unhealthy due to failures', {
         sourceId: source.config.id,
         failures: source.failureCount,
       });
@@ -485,7 +485,7 @@ export class DataSourceRouter {
       }
     }, this.routerConfig.healthCheckInterval);
 
-    logger.debug('Health check interval started', {
+    LOGGER.debug('Health check interval started', {
       interval: this.routerConfig.healthCheckInterval,
     });
   }
@@ -513,17 +513,17 @@ export class DataSourceRouter {
       source.lastHealthCheck = new Date();
 
       if (healthy && !wasHealthy) {
-        logger.info('Data source recovered', {
+        LOGGER.info('Data source recovered', {
           sourceId: source.config.id,
         });
         source.failureCount = 0;
       } else if (!healthy && wasHealthy) {
-        logger.warn('Data source became unhealthy', {
+        LOGGER.warn('Data source became unhealthy', {
           sourceId: source.config.id,
         });
       }
     } catch (error) {
-      logger.error('Health check failed', {
+      LOGGER.error('Health check failed', {
         sourceId: source.config.id,
         error,
       });
@@ -542,7 +542,7 @@ export class DataSourceRouter {
     try {
       return await backend.healthCheck();
     } catch (error) {
-      logger.debug('Health check threw error', { error });
+      LOGGER.debug('Health check threw error', { error });
       return false;
     }
   }
@@ -629,7 +629,7 @@ export class DataSourceRouter {
     }
 
     this.isShuttingDown = true;
-    logger.info('DataSourceRouter shutting down');
+    LOGGER.info('DataSourceRouter shutting down');
 
     // Stop health checks
     if (this.healthCheckInterval) {
@@ -643,11 +643,11 @@ export class DataSourceRouter {
         if (entry.backend && typeof entry.backend.shutdown === 'function') {
           try {
             await entry.backend.shutdown();
-            logger.debug('Backend shutdown complete', {
+            LOGGER.debug('Backend shutdown complete', {
               sourceId: entry.config.id,
             });
           } catch (error) {
-            logger.error('Backend shutdown failed', {
+            LOGGER.error('Backend shutdown failed', {
               sourceId: entry.config.id,
               error,
             });
@@ -661,6 +661,6 @@ export class DataSourceRouter {
     // Clear connection pool
     this.connectionPool.clear();
 
-    logger.info('DataSourceRouter shutdown complete');
+    LOGGER.info('DataSourceRouter shutdown complete');
   }
 }

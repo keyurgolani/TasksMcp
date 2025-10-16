@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { ApiError } from '../../shared/errors/api-error.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { DependencyValidationResult } from '../../domain/tasks/dependency-manager.js';
 import type {
@@ -48,7 +48,7 @@ export async function getDependencyGraphHandler(
     throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
   }
 
-  logger.info('Getting dependency graph', {
+  LOGGER.info('Getting dependency graph', {
     requestId: req.id,
     listId,
   });
@@ -96,7 +96,7 @@ export async function getDependencyGraphHandler(
     },
   };
 
-  logger.info('Dependency graph retrieved successfully', {
+  LOGGER.info('Dependency graph retrieved successfully', {
     requestId: req.id,
     listId,
     nodeCount: graph.nodes.size,
@@ -121,7 +121,7 @@ export async function validateDependenciesHandler(
     // Validate request body
     const input = validateDependenciesSchema.parse(req.body);
 
-    logger.info('Validating dependencies', {
+    LOGGER.info('Validating dependencies', {
       requestId: req.id,
       listId: input.listId,
       taskId: input.taskId,
@@ -162,7 +162,7 @@ export async function validateDependenciesHandler(
       },
     };
 
-    logger.info('Dependencies validated', {
+    LOGGER.info('Dependencies validated', {
       requestId: req.id,
       listId: input.listId,
       taskId: input.taskId,
@@ -197,7 +197,7 @@ export async function getReadyTasksHandler(
     throw new ApiError('BAD_REQUEST', 'List ID is required', 400);
   }
 
-  logger.info('Getting ready tasks', {
+  LOGGER.info('Getting ready tasks', {
     requestId: req.id,
     listId,
   });
@@ -226,7 +226,7 @@ export async function getReadyTasksHandler(
     },
   };
 
-  logger.info('Ready tasks retrieved successfully', {
+  LOGGER.info('Ready tasks retrieved successfully', {
     requestId: req.id,
     listId,
     readyCount: readyTasks.length,
@@ -251,7 +251,7 @@ export async function setDependenciesHandler(
     // Validate request body
     const input = setDependenciesSchema.parse(req.body);
 
-    logger.info('Setting task dependencies', {
+    LOGGER.info('Setting task dependencies', {
       requestId: req.id,
       listId: input.listId,
       taskId: input.taskId,
@@ -319,7 +319,7 @@ export async function setDependenciesHandler(
       },
     };
 
-    logger.info('Task dependencies set successfully', {
+    LOGGER.info('Task dependencies set successfully', {
       requestId: req.id,
       listId: input.listId,
       taskId: input.taskId,

@@ -47,7 +47,8 @@ describe('Exit Criteria Integration Tests', () => {
   });
 
   afterEach(async () => {
-    // Cleanup is handled automatically by test setup
+    // Cleanup test resources
+    await TestCleanup.cleanupAll();
   });
 
   /**

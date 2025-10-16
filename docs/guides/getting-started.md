@@ -1,12 +1,13 @@
 # Getting Started Guide
 
-This guide will walk you through your first steps with the MCP Task Manager, from basic task creation to advanced workflow management.
+This guide will walk you through your first steps with the Task MCP Unified system, from basic task creation to advanced workflow management with agent prompt templates and dependency management.
 
 ## Prerequisites
 
 Before starting, ensure you have:
 
-- ✅ **Installed the MCP Task Manager** - See [Installation Guide](installation.md)
+- ✅ **Installed the Task MCP Unified system** - See [Installation Guide](installation.md)
+- ✅ **Built the project** - Run `npm run build`
 - ✅ **Configured your MCP client** - Claude Desktop, Kiro IDE, or custom client
 - ✅ **Verified the connection** - Server appears in available tools
 
@@ -85,14 +86,14 @@ Excellent! You've added your first task. Let's add a few more to build a complet
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
     "title": "Explore advanced features",
-    "description": "Learn about dependencies, exit criteria, and bulk operations",
+    "description": "Learn about dependencies, exit criteria, and advanced workflows",
     "priority": 3,
     "tags": ["learning", "advanced"],
     "estimatedDuration": 60,
     "exitCriteria": [
       "Understand task dependencies",
       "Learn exit criteria system",
-      "Try bulk operations"
+      "Try advanced workflows"
     ]
   }
 }
@@ -144,12 +145,12 @@ Excellent! You've added your first task. Let's add a few more to build a complet
 
 🔸 MEDIUM PRIORITY (3):
   🔴 Explore advanced features
-     📝 Learn about dependencies, exit criteria, and bulk operations
+     📝 Learn about dependencies, exit criteria, and advanced workflows
      ⏱️  60 min | 🏷️  learning, advanced
      ✅ Exit Criteria: 0/3 complete
         • Understand task dependencies
         • Learn exit criteria system
-        • Try bulk operations
+        • Try advanced workflows
 ```
 
 Perfect! You can see your tasks organized by priority, with dependencies and exit criteria clearly displayed.
@@ -284,7 +285,7 @@ Continue updating the remaining exit criteria:
     "taskId": "789abcde-e89b-12d3-a456-426614174002",
     "criteriaId": "criteria-uuid-3",
     "isMet": true,
-    "notes": "Successfully used bulk operations for multiple tasks"
+    "notes": "Successfully used advanced workflows for multiple tasks"
   }
 }
 ```
@@ -395,28 +396,28 @@ This analysis helps you understand your project structure and plan your work eff
 
 ## 🚀 Advanced Features
 
-### Bulk Operations
+### Multiple Task Management
 
-When you have many tasks to manage, use bulk operations:
+When you have many tasks to manage, create them individually:
 
 ```json
 {
-  "tool": "bulk_task_operations",
+  "tool": "add_task",
   "parameters": {
     "listId": "123e4567-e89b-12d3-a456-426614174000",
-    "operations": [
-      {
-        "type": "create",
-        "data": {
-          "title": "Review documentation",
-          "priority": 2,
-          "tags": ["review"]
-        }
-      },
-      {
-        "type": "create",
-        "data": {
-          "title": "Write tests",
+    "title": "Review documentation",
+    "priority": 2,
+    "tags": ["review"]
+  }
+}
+```
+
+```json
+{
+  "tool": "add_task",
+  "parameters": {
+    "listId": "123e4567-e89b-12d3-a456-426614174000",
+    "title": "Write tests",
           "priority": 4,
           "tags": ["testing"]
         }
@@ -526,7 +527,10 @@ Get AI-powered insights about task complexity:
 2. **Add initial tasks**:
 
    ```json
-   {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
+   {
+     "tool": "add_task",
+     "parameters": { "listId": "project-id", "title": "Task Title" }
+   }
    ```
 
 3. **Set up dependencies**:
@@ -556,7 +560,14 @@ Get AI-powered insights about task complexity:
 
 3. **Update priorities**:
    ```json
-   {"tool": "bulk_task_operations", "parameters": {"operations": [...]}}
+   {
+     "tool": "set_task_priority",
+     "parameters": {
+       "listId": "project-id",
+       "taskId": "task-id",
+       "priority": 5
+     }
+   }
    ```
 
 ## 🆘 Troubleshooting
@@ -598,7 +609,7 @@ Congratulations! You've learned the basics of the MCP Task Manager. Here's what 
 
 - **[Performance Optimization](../reference/performance.md)** - Scale to large projects
 - **[Custom Integration](../examples/agents.md)** - Build custom AI agent workflows
-- **[Contributing](../../CONTRIBUTING.md)** - Help improve the project
+- **[Contributing](../../contributing.md)** - Help improve the project
 
 ### Practice Projects
 

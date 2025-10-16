@@ -13,7 +13,7 @@ import {
   UpdateListData,
   ListFilters,
 } from '../../../shared/types/list-operations.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { LOGGER } from '../../../shared/utils/logger.js';
 
 // Validation schemas
 const createListSchema = z.object({
@@ -62,7 +62,7 @@ export class ListController {
       const startTime = Date.now();
       const listData = createListSchema.parse(req.body);
 
-      logger.info('Creating list', {
+      LOGGER.info('Creating list', {
         title: listData.title,
         projectTag: listData.projectTag,
         requestId: req.headers['x-request-id'],
@@ -109,7 +109,7 @@ export class ListController {
         filters.limit = parseInt(req.query['limit'] as string);
       }
 
-      logger.info('Getting all lists', {
+      LOGGER.info('Getting all lists', {
         filters,
         requestId: req.headers['x-request-id'],
       });
@@ -144,7 +144,7 @@ export class ListController {
         return;
       }
 
-      logger.info('Getting list', {
+      LOGGER.info('Getting list', {
         listId: id,
         requestId: req.headers['x-request-id'],
       });
@@ -179,7 +179,7 @@ export class ListController {
       }
       const updateData = updateListSchema.parse(req.body);
 
-      logger.info('Updating list', {
+      LOGGER.info('Updating list', {
         listId: id,
         updates: Object.keys(updateData),
         requestId: req.headers['x-request-id'],
@@ -224,7 +224,7 @@ export class ListController {
         return;
       }
 
-      logger.info('Deleting list', {
+      LOGGER.info('Deleting list', {
         listId: id,
         requestId: req.headers['x-request-id'],
       });
@@ -252,7 +252,7 @@ export class ListController {
       const startTime = Date.now();
       const { lists } = bulkCreateListSchema.parse(req.body);
 
-      logger.info('Creating bulk lists', {
+      LOGGER.info('Creating bulk lists', {
         count: lists.length,
         requestId: req.headers['x-request-id'],
       });
@@ -292,7 +292,7 @@ export class ListController {
       const startTime = Date.now();
       const { updates } = bulkUpdateListSchema.parse(req.body);
 
-      logger.info('Updating bulk lists', {
+      LOGGER.info('Updating bulk lists', {
         count: updates.length,
         requestId: req.headers['x-request-id'],
       });
@@ -337,7 +337,7 @@ export class ListController {
       const startTime = Date.now();
       const { listIds } = bulkListSchema.parse(req.body);
 
-      logger.info('Deleting bulk lists', {
+      LOGGER.info('Deleting bulk lists', {
         count: listIds.length,
         requestId: req.headers['x-request-id'],
       });
@@ -365,7 +365,7 @@ export class ListController {
     const requestId = req.headers['x-request-id'];
 
     if (error instanceof z.ZodError) {
-      logger.warn('Validation error', {
+      LOGGER.warn('Validation error', {
         error: error.issues,
         requestId,
       });
@@ -386,7 +386,7 @@ export class ListController {
     if (error instanceof OrchestrationError) {
       const statusCode = this.getStatusCodeForError(error);
 
-      logger.warn('Orchestration error', {
+      LOGGER.warn('Orchestration error', {
         error: error.message,
         context: error.context,
         requestId,
@@ -409,7 +409,7 @@ export class ListController {
     }
 
     // Handle unexpected errors
-    logger.error('Unexpected error', {
+    LOGGER.error('Unexpected error', {
       error: error instanceof Error ? error.message : String(error),
       requestId,
     });

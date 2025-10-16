@@ -1,7 +1,7 @@
 /**
  * Vitest setup file to configure test environment
  * Addresses EventEmitter memory leak warnings during parallel test execution
- * Provides comprehensive cleanup utilities for all test types
+ * Provides cleanup utilities for all test types
  */
 
 import { EventEmitter } from 'events';
@@ -40,11 +40,13 @@ interface TestArtifacts {
   serverInstances: Array<{
     stop?: () => Promise<void>;
     shutdown?: () => Promise<void>;
+    close?: () => Promise<void>;
   }>;
   managerInstances: Array<{ shutdown?: () => Promise<void> }>;
   environmentVariables: Set<string>;
   timers: Set<NodeJS.Timeout>;
   intervals: Set<NodeJS.Timeout>;
+  childProcesses: Set<any>;
 }
 
 // Global test artifacts registry
@@ -55,6 +57,7 @@ const testArtifacts: TestArtifacts = {
   environmentVariables: new Set(),
   timers: new Set(),
   intervals: new Set(),
+  childProcesses: new Set(),
 };
 
 // Helper functions for test artifact management
@@ -76,6 +79,7 @@ export const TestCleanup = {
   registerServer(server: {
     stop?: () => Promise<void>;
     shutdown?: () => Promise<void>;
+    close?: () => Promise<void>;
   }) {
     testArtifacts.serverInstances.push(server);
     return server;
@@ -124,6 +128,29 @@ export const TestCleanup = {
   },
 
   /**
+   * Register a child process for cleanup
+   */
+  registerProcess(process: any) {
+    testArtifacts.childProcesses.add(process);
+
+    // Remove from registry when process exits naturally
+    process.on('close', () => {
+      testArtifacts.childProcesses.delete(process);
+    });
+
+    process.on('exit', () => {
+      testArtifacts.childProcesses.delete(process);
+    });
+
+    // Also remove when process is killed
+    process.on('disconnect', () => {
+      testArtifacts.childProcesses.delete(process);
+    });
+
+    return process;
+  },
+
+  /**
    * Manually clean up all registered artifacts
    */
   async cleanupAll() {
@@ -148,6 +175,54 @@ export const TestCleanup = {
     }
     testArtifacts.intervals.clear();
 
+    // Clean up child processes more aggressively
+    const processCleanupPromises: Promise<void>[] = [];
+    testArtifacts.childProcesses.forEach(process => {
+      const cleanupPromise = (async () => {
+        try {
+          // Check if process is still alive before trying to kill it
+          if (process && process.pid) {
+            try {
+              // Check if process exists by sending signal 0
+              process.kill(0);
+
+              // If we get here, process exists, so kill it
+              if (!process.killed) {
+                // Try graceful shutdown first
+                process.kill('SIGTERM');
+
+                // Wait a shorter time for graceful shutdown
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Force kill if still running
+                if (!process.killed) {
+                  process.kill('SIGKILL');
+                }
+              }
+            } catch (killError: any) {
+              // Process doesn't exist or already killed (ESRCH error)
+              if (killError.code !== 'ESRCH') {
+                // Some other error occurred
+                errors.push(killError);
+              }
+            }
+          }
+        } catch (error) {
+          errors.push(
+            error instanceof Error ? error : new Error(String(error))
+          );
+        }
+      })();
+      processCleanupPromises.push(cleanupPromise);
+    });
+
+    // Wait for all process cleanup to complete with timeout
+    await Promise.race([
+      Promise.all(processCleanupPromises),
+      new Promise(resolve => setTimeout(resolve, 2000)), // 2 second timeout
+    ]);
+    testArtifacts.childProcesses.clear();
+
     // Clean up managers
     for (const manager of testArtifacts.managerInstances) {
       try {
@@ -167,6 +242,8 @@ export const TestCleanup = {
           await server.stop();
         } else if (server.shutdown) {
           await server.shutdown();
+        } else if (server.close) {
+          await server.close();
         }
       } catch (error) {
         errors.push(error instanceof Error ? error : new Error(String(error)));
@@ -194,6 +271,31 @@ export const TestCleanup = {
       delete process.env[key];
     }
     testArtifacts.environmentVariables.clear();
+
+    // Additional cleanup: kill any lingering test-spawned processes (not vitest itself)
+    try {
+      const { execSync } = await import('child_process');
+      // Kill any test-spawned server processes
+      execSync('pkill -f "node.*mcp\\.js|node.*rest\\.js" || true', {
+        timeout: 2000,
+        stdio: 'ignore',
+      });
+      // Kill any long-running tool processes spawned by tests
+      execSync(
+        'pkill -f "eslint.*--format|tsc.*--noEmit|prettier.*--check" || true',
+        {
+          timeout: 2000,
+          stdio: 'ignore',
+        }
+      );
+      // Kill any orphaned npx processes that might be left behind
+      execSync('pkill -f "npx.*eslint|npx.*prettier|npx.*tsc" || true', {
+        timeout: 2000,
+        stdio: 'ignore',
+      });
+    } catch {
+      // Ignore cleanup errors
+    }
 
     // If there were errors, log them but don't fail the test
     if (errors.length > 0) {
@@ -230,7 +332,62 @@ beforeEach(async () => {
   }
 });
 
-// Comprehensive cleanup after each test
+// Cleanup after each test
 afterEach(async () => {
   await TestCleanup.cleanupAll();
+
+  // Additional aggressive cleanup after each test
+  try {
+    const { execSync } = await import('child_process');
+    // Kill any processes that might have been missed
+    execSync('pkill -f "npx.*eslint|npx.*prettier|npx.*tsc" || true', {
+      timeout: 1000,
+      stdio: 'ignore',
+    });
+  } catch {
+    // Ignore cleanup errors
+  }
+});
+
+// Global cleanup when test process exits
+process.on('exit', () => {
+  try {
+    const { execSync } = require('child_process');
+    // Kill test-spawned processes
+    execSync('pkill -f "node.*mcp\\.js|node.*rest\\.js" || true', {
+      timeout: 1000,
+      stdio: 'ignore',
+    });
+    // Kill orphaned npx processes
+    execSync('pkill -f "npx.*eslint|npx.*prettier|npx.*tsc" || true', {
+      timeout: 1000,
+      stdio: 'ignore',
+    });
+  } catch {
+    // Ignore cleanup errors on exit
+  }
+});
+
+// Handle process termination signals
+process.on('SIGTERM', async () => {
+  await TestCleanup.cleanupAll();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  await TestCleanup.cleanupAll();
+  process.exit(0);
+});
+
+// Handle uncaught exceptions to ensure cleanup
+process.on('uncaughtException', async error => {
+  console.error('Uncaught exception:', error);
+  await TestCleanup.cleanupAll();
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+  await TestCleanup.cleanupAll();
+  process.exit(1);
 });

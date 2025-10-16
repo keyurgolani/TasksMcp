@@ -7,19 +7,29 @@ describe('TypeScript Ignore Comments Removal', () => {
   const getAllTsFiles = (dir: string): string[] => {
     const files: string[] = [];
 
-    const items = readdirSync(dir);
-    for (const item of items) {
-      const fullPath = join(dir, item);
-      const stat = statSync(fullPath);
+    try {
+      const items = readdirSync(dir);
+      for (const item of items) {
+        const fullPath = join(dir, item);
+        try {
+          const stat = statSync(fullPath);
 
-      if (stat.isDirectory()) {
-        // Skip node_modules, dist, coverage directories
-        if (!['node_modules', 'dist', 'coverage', '.git'].includes(item)) {
-          files.push(...getAllTsFiles(fullPath));
+          if (stat.isDirectory()) {
+            // Skip node_modules, dist, coverage directories
+            if (!['node_modules', 'dist', 'coverage', '.git'].includes(item)) {
+              files.push(...getAllTsFiles(fullPath));
+            }
+          } else if (item.endsWith('.ts') || item.endsWith('.tsx')) {
+            files.push(fullPath);
+          }
+        } catch (_error) {
+          // Skip files/directories that can't be accessed
+          continue;
         }
-      } else if (item.endsWith('.ts') || item.endsWith('.tsx')) {
-        files.push(fullPath);
       }
+    } catch (_error) {
+      // Skip directories that can't be read
+      return files;
     }
 
     return files;

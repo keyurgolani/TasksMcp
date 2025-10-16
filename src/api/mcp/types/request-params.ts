@@ -3,7 +3,7 @@
  * Defines type-safe interfaces for MCP tool request parameters
  */
 
-import { Priority } from '../../../domain/models/task';
+import { Priority } from '../../../domain/models/task.js';
 
 export interface AddTaskParams {
   listId: string;

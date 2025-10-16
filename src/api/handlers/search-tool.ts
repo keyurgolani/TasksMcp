@@ -11,7 +11,7 @@ import {
   createHandlerErrorFormatter,
   ERROR_CONFIGS,
 } from '../../shared/utils/handler-error-formatter.js';
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER } from '../../shared/utils/logger.js';
 
 import type { TaskListManager } from '../../domain/lists/task-list-manager.js';
 import type {
@@ -76,7 +76,7 @@ export async function handleSearchTool(
   taskListManager: TaskListManager
 ): Promise<CallToolResult> {
   try {
-    logger.debug('Processing search_tool request', {
+    LOGGER.debug('Processing search_tool request', {
       params: request.params?.arguments,
     });
 
@@ -300,7 +300,7 @@ export async function handleSearchTool(
       hasMore: filteredTasks.length > args.limit,
     };
 
-    logger.info('Search tool completed successfully', {
+    LOGGER.info('Search tool completed successfully', {
       query: args.query,
       listId: args.listId,
       totalResults: response.totalCount,
