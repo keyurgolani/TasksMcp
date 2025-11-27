@@ -1,5 +1,7 @@
 # Task MCP Unified
 
+> ⚠️ **MAINTENANCE NOTICE**: This project is currently undergoing major architectural reform to eliminate technical debt and ensure future scalability. During this period, breaking changes may occur. We recommend waiting for the next stable release before using in production environments.
+
 A comprehensive Model Context Protocol (MCP) server that provides enterprise-grade task management capabilities for AI agents. Built with domain-driven architecture, featuring task orchestration, dependency management, and **multi-interface support** (MCP, REST API) for seamless AI integration.
 
 ## 🤖 Agent-Friendly Features
